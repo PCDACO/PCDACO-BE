@@ -8,7 +8,7 @@ FROM mcr.microsoft.com/dotnet/sdk:8.0.401-1-alpine3.20-amd64 AS build
 WORKDIR /app/src
 
 # Copy the solution file and restore dependencies
-COPY ["src/API.csproj", "API/"]
+COPY ["src/API/API.csproj", "API/"]
 
 # Restore the dependencies
 RUN dotnet restore "API/API.csproj"
