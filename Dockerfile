@@ -4,31 +4,33 @@ WORKDIR /app
 EXPOSE 8080
 
 # Use the official Microsoft .NET SDK as a build image
-FROM mcr.microsoft.com/dotnet/sdk:8.0.401-1-alpine3.20-amd64 AS build
-WORKDIR /app/src
+FROM mcr.microsoft.com/dotnet/sdk:8.0.404-alpine3.20-amd64 AS build
+WORKDIR /src
 
-# Copy the solution file and restore dependencies
-COPY ["src/API/API.csproj", "API/"]
+# # Copy project files and restore dependencies (optimize caching)
+# COPY ["src/API/API.csproj", "API/"]
+# COPY ["src/Domain/Domain.csproj", "Domain/"]
+# COPY ["src/Infrastructure/Infrastructure.csproj", "Infrastructure/"]
+# COPY ["src/UseCases/UseCases.csproj", "UseCases/"]
+# COPY ["src/Persistance/Persistance.csproj", "Persistance/"]
 
-# Restore the dependencies
-RUN dotnet restore "API/API.csproj"
+# # # Restore dependencies
+# RUN dotnet restore "/src/API/API.csproj"
 
-# Copy the rest of the project files and build the project
-COPY ./src .
+# Copy the rest of the source files
+COPY /src /src
 
+WORKDIR /src
 # Build the project
-WORKDIR /app/src/API
-RUN dotnet build "API.csproj" -c Release --no-restore
+RUN dotnet build "API/API.csproj" -c Release
 
 # Publish the project
-FROM build AS publish
-WORKDIR /app/src/API
-RUN dotnet publish API.csproj -c Release --no-restore -o /app/publish
+RUN dotnet publish "API/API.csproj" -c Release --no-restore -o /app/publish
 
-# Create a new image from the ASP.NET Core runtime image
+# Use the runtime image for the final stage
 FROM base AS final
-WORKDIR /app/src
-COPY --from=publish /app/publish .
+WORKDIR /app
+COPY --from=build /app/publish .
 
-# Define the entry point for the container
+# Set the entry point for the container
 ENTRYPOINT ["dotnet", "API.dll"]
