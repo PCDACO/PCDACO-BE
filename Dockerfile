@@ -14,11 +14,11 @@ COPY ["src/API/API.csproj", "API/"]
 RUN dotnet restore "API/API.csproj"
 
 # Copy the rest of the project files and build the project
-COPY ./src /app/src
+COPY ./src .
 
 # Build the project
-WORKDIR /app/src
-RUN dotnet build "API/API.csproj" -c Release --no-restore
+WORKDIR /app/src/API
+RUN dotnet build "API.csproj" -c Release --no-restore
 
 # Publish the project
 FROM build AS publish
