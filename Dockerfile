@@ -18,7 +18,7 @@ COPY ./src /app/src
 
 # Build the project
 WORKDIR /app/src
-RUN dotnet build
+RUN dotnet build "API/API.csproj" -c Release --no-restore
 
 # Publish the project
 FROM build AS publish
