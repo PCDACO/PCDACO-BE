@@ -1,0 +1,39 @@
+# Ignore files from .gitignore
+.git
+.gitignore
+
+# Ignore build outputs
+bin/
+obj/
+
+# Ignore user-specific files
+*.swp
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Ignore dependencies
+node_modules/
+bower_components/
+
+# Ignore test results
+TestResults/
+
+# Ignore publish output
+wwwroot/
+
+# Ignore Docker files
+Dockerfile
+Dockerfile.*
+
+# Ignore build artifacts
+*.db
+*.log
+*.pdb
+
+# Ignore sensitive configuration files
+appsettings*.json
+!appsettings.json
+appsettings.Development.json
+secrets.json

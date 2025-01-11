@@ -17,7 +17,8 @@ public class TestEndpoint : CarterModule
         .WithTags("Test");
     }
 
-    private static async Task<Microsoft.AspNetCore.Http.IResult> Handle(ISender sender)
+    private static async Task<Microsoft.AspNetCore.Http.IResult> 
+        Handle(ISender sender)
     {
         Result<string> result = await sender.Send(new Test.Query());
         return result.MapResult();
