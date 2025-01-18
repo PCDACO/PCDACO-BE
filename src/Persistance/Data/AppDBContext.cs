@@ -1,11 +1,36 @@
+using Domain.Entities;
+
 using Microsoft.EntityFrameworkCore;
+
+using UseCases.Abstractions;
 
 namespace Persistance.Data;
 
-public class AppDBContext(DbContextOptions context) : DbContext(context)
+public class AppDBContext(DbContextOptions context) : DbContext(context), IAppDBContext
 {
-    protected override void OnModelCreating(ModelBuilder modelBuilder)
-    {
-        base.OnModelCreating(modelBuilder);
-    }
+    public DbSet<Amenity> Amenities => Set<Amenity>();
+
+    public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
+    public DbSet<Booking> Bookings => Set<Booking>();
+    public DbSet<Car> Cars => Set<Car>();
+    public DbSet<CarAmenity> CarAmenities => Set<CarAmenity>();
+    public DbSet<CarReport> CarReports => Set<CarReport>();
+    public DbSet<CarStatistic> CarStatistics => Set<CarStatistic>();
+    public DbSet<Driver> Drivers => Set<Driver>();
+    public DbSet<EncryptionKey> EncryptionKeys => Set<EncryptionKey>();
+    public DbSet<Feedback> Feedbacks => Set<Feedback>();
+    public DbSet<FinancialReport> FinancialReports => Set<FinancialReport>();
+    public DbSet<ImageCar> ImageCars => Set<ImageCar>();
+    public DbSet<ImageFeedback> ImageFeedbacks => Set<ImageFeedback>();
+    public DbSet<ImageReport> ImageReports => Set<ImageReport>();
+    public DbSet<Manufacturer> Manufacturers => Set<Manufacturer>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Transaction> Transactions => Set<Transaction>();
+    public DbSet<TripTracking> TripTrackings => Set<TripTracking>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<UserStatistic> UserStatistics => Set<UserStatistic>();
+    public DbSet<Withdrawal> Withdrawals => Set<Withdrawal>();
+
+    async Task IAppDBContext.SaveChangesAsync(CancellationToken cancellationToken)
+        => await SaveChangesAsync(cancellationToken);
 }

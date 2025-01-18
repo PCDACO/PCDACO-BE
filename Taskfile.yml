@@ -1,0 +1,39 @@
+version: '3'
+
+tasks:
+
+  build:
+    cmds:
+      - dotnet build src/API/API.csproj
+    silent: true
+
+  restore:
+    cmds:
+      - dotnet restore src/API/API.csproj --no-cache --force
+    silent: true
+
+  run:
+    cmds:
+      - dotnet run --project src/API/API.csproj
+    silent: true
+  
+  dropdb:
+    cmds:
+      - dotnet ef database drop --project src/Persistance/Persistance.csproj --startup-project src/API/API.csproj --force
+    silent: true
+
+  updatedb:
+    cmds:
+      - dotnet ef database update --project src/Persistance/Persistance.csproj --startup-project src/API/API.csproj
+    silent: true
+
+  deletemigrations:
+    cmds:
+      - dotnet ef migrations remove --project src/Persistance/Persistance.csproj --startup-project src/API/API.csproj --force
+    silent: true
+
+  addmigration:
+    cmds:
+      - dotnet ef migrations add InitDB --project src/Persistance/Persistance.csproj --startup-project src/API/API.csproj
+    silent: true
+
