@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace UseCases.Abstractions;
 
-public interface IAppDBContext
+public interface IAppDBContext : IDisposable
 {
     Task SaveChangesAsync(CancellationToken cancellationToken);
     DbSet<Amenity> Amenities { get; }

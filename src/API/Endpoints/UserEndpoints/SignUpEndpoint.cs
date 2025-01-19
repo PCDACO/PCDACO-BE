@@ -8,18 +8,19 @@ using MediatR;
 
 using UseCases.UC_User.Commands;
 
+using IResult = Microsoft.AspNetCore.Http.IResult;
 namespace API.Endpoints.UserEndpoints;
 
-public class SignUpEndpoint : CarterModule
+public class SignUpEndpoint : ICarterModule
 {
-    public override void AddRoutes(IEndpointRouteBuilder app)
+    public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPost("/api/users/signup", Handle)
             .WithSummary("Sign up a new user")
             .WithTags("Users");
     }
-
-    private async Task<Microsoft.AspNetCore.Http.IResult> Handle(ISender sender, SignUpRequest request)
+    
+    private async Task<IResult> Handle(ISender sender, SignUpRequest request)
     {
         Result<SignUp.Response> result = await sender.Send(new SignUp.Command(
             request.Name,

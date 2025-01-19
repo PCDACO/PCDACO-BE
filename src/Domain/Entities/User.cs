@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
+using Domain.Enums;
 using Domain.Shared;
 
 namespace Domain.Entities;
@@ -12,11 +13,12 @@ public class User : BaseEntity
     public required string Name { get; set; }
     public required string Email { get; set; }
     public required string Password { get; set; }
+    public UserRole Role { get; set; } = UserRole.Driver;
     public required string Address { get; set; }
     public required DateTimeOffset DateOfBirth { get; set; }
     public required string Phone { get; set; }
+    public decimal Balance { get; set; } = 0;
     [Range(1, 5)]
-    public decimal Rating { get; set; } = 5;
     // Navigation Properties
     [ForeignKey(nameof(EncryptionKeyId))]
     public EncryptionKey EncryptionKey { get; set; } = null!;
