@@ -27,7 +27,7 @@ tasks:
       - dotnet ef database update --project src/Persistance/Persistance.csproj --startup-project src/API/API.csproj
     silent: true
 
-  deletemigrations:
+  removemigrations:
     cmds:
       - dotnet ef migrations remove --project src/Persistance/Persistance.csproj --startup-project src/API/API.csproj --force
     silent: true

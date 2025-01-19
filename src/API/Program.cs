@@ -1,5 +1,6 @@
 using API;
 using API.Middlewares;
+using API.Utils;
 
 using dotenv.net;
 
@@ -21,6 +22,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+UpdateDatabase.Execute(app);
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseMiddleware<AuthMiddleware>();

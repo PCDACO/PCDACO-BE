@@ -9,7 +9,8 @@ public class FinancialReport : BaseEntity
 {
     public required Guid UserId { get; set; }
     public required decimal Amount { get; set; }
-    public FinancialReportEnum Status { get; set; } = FinancialReportEnum.Pending;
+    public FinancialReportType Type { get; set; } = FinancialReportType.Income;
+    public FinancialReportStatus Status { get; set; } = FinancialReportStatus.Pending;
     public string Description { get; set; } = string.Empty;
     // Navigation properties
     [ForeignKey(nameof(UserId))]

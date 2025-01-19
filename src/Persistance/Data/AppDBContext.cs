@@ -9,7 +9,6 @@ namespace Persistance.Data;
 public class AppDBContext(DbContextOptions context) : DbContext(context), IAppDBContext
 {
     public DbSet<Amenity> Amenities => Set<Amenity>();
-
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<Car> Cars => Set<Car>();

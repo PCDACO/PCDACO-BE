@@ -12,7 +12,7 @@ using Persistance.Data;
 namespace Persistance.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20250117145622_InitDB")]
+    [Migration("20250118154236_InitDB")]
     partial class InitDB
     {
         /// <inheritdoc />
@@ -29,9 +29,6 @@ namespace Persistance.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("CarId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
@@ -179,6 +176,9 @@ namespace Persistance.Migrations
                     b.Property<decimal>("FuelConsumption")
                         .HasColumnType("numeric");
 
+                    b.Property<int>("FuelType")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
@@ -215,10 +215,16 @@ namespace Persistance.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("TotalEarning")
                         .HasColumnType("numeric");
 
                     b.Property<int>("TotalRented")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TransmissionType")
                         .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
@@ -489,6 +495,9 @@ namespace Persistance.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -517,6 +526,9 @@ namespace Persistance.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -662,8 +674,14 @@ namespace Persistance.Migrations
                     b.Property<decimal>("PlatformFee")
                         .HasColumnType("numeric");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("numeric");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -730,6 +748,9 @@ namespace Persistance.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<decimal>("Balance")
+                        .HasColumnType("numeric");
+
                     b.Property<DateTimeOffset>("DateOfBirth")
                         .HasColumnType("timestamp with time zone");
 
@@ -758,8 +779,8 @@ namespace Persistance.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<decimal>("Rating")
-                        .HasColumnType("numeric");
+                    b.Property<int>("Role")
+                        .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

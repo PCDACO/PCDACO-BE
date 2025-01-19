@@ -1,11 +1,9 @@
 namespace Domain.Enums;
 
-public enum FinancialReportEnum
+public enum TransactionStatus
 {
     Pending,
     Completed,
-    Refunded,
     Cancelled,
-    Failed,
-    Expired
+    Refunded
 }

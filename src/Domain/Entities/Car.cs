@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
+using Domain.Enums;
 using Domain.Shared;
 
 namespace Domain.Entities;
@@ -15,8 +16,11 @@ public class Car : BaseEntity
     public required string Color { get; set; }
     public required string Seat { get; set; }
     public string Description { get; set; } = string.Empty;
+    public TransmissionType TransmissionType { get; set; } = TransmissionType.Auto;
+    public FuelType FuelType { get; set; } = FuelType.Electric;
     public required decimal FuelConsumption { get; set; }
     public bool RequiresCollateral { get; set; } = false;
+    public CarStatus Status { get; set; } = CarStatus.Available;
     public required decimal PricePerHour { get; set; }
     public required decimal PricePerDay { get; set; }
     public decimal? Latitude { get; set; } = null!;
