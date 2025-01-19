@@ -2,6 +2,8 @@ using API;
 using API.Middlewares;
 using API.Utils;
 
+using CloudinaryDotNet;
+
 using dotenv.net;
 
 using Scalar.AspNetCore;
@@ -15,6 +17,9 @@ builder.Services.AddSwaggerGen();
 
 DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
 builder.Configuration.AddEnvironmentVariables();
+Cloudinary cloudinary = new(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
+cloudinary.Api.Secure = true;
+builder.Services.AddSingleton(cloudinary);
 builder.Services.AddServices(builder.Configuration);
 var app = builder.Build();
 
