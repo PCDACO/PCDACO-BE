@@ -1,22 +1,23 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-
-
-using Microsoft.IdentityModel.Tokens;
-
-using UseCases.Abstractions;
 using UseCases.DTOs;
 
 namespace API.Middlewares;
 
-public class AuthMiddleware: IMiddleware
+public class AuthMiddleware(IConfiguration configuration): IMiddleware
 {
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         // configure issuer
-        string issuer = "";
+        string issuer = configuration["ISSUER"] ?? throw new ArgumentNullException("Issuer is not configured");
+        Console.WriteLine(issuer);
         string? authHeader = context.Request.Headers.Authorization.ToString();
         if (string.IsNullOrEmpty(authHeader) || !authHeader.Contains("Bearer "))
+        {
+            await next.Invoke(context);
+            return;
+        }
+        if(!IsValidJwt(authHeader))
         {
             await next.Invoke(context);
             return;
@@ -42,4 +43,10 @@ public class AuthMiddleware: IMiddleware
         CurrentUser currentUser = context.RequestServices.GetRequiredService<CurrentUser>();
         await next.Invoke(context);
     }
+
+    private bool IsValidJwt(string token)
+{
+    var handler = new JwtSecurityTokenHandler();
+    return handler.CanReadToken(token);
+}
 }

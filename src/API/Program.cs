@@ -4,6 +4,8 @@ using API.Utils;
 
 using dotenv.net;
 
+using Scalar.AspNetCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -16,16 +18,21 @@ builder.Configuration.AddEnvironmentVariables();
 builder.Services.AddServices(builder.Configuration);
 var app = builder.Build();
 
+app.UseStaticFiles();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "MyAPI");
+        c.InjectStylesheet("/swagger-ui/SwaggerDark.css");
+    });
 }
 UpdateDatabase.Execute(app);
 app.UseAuthentication();
-app.UseAuthorization();
 app.UseMiddleware<AuthMiddleware>();
+app.UseAuthorization();
 app.UseHttpsRedirection();
 app.AddAppConfig();
 app.Run();
