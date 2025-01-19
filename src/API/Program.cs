@@ -2,7 +2,11 @@ using API;
 using API.Middlewares;
 using API.Utils;
 
+using CloudinaryDotNet;
+
 using dotenv.net;
+
+using Scalar.AspNetCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,19 +17,27 @@ builder.Services.AddSwaggerGen();
 
 DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
 builder.Configuration.AddEnvironmentVariables();
+Cloudinary cloudinary = new(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
+cloudinary.Api.Secure = true;
+builder.Services.AddSingleton(cloudinary);
 builder.Services.AddServices(builder.Configuration);
 var app = builder.Build();
 
+app.UseStaticFiles();
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "MyAPI");
+        c.InjectStylesheet("/swagger-ui/SwaggerDark.css");
+    });
 }
 UpdateDatabase.Execute(app);
 app.UseAuthentication();
-app.UseAuthorization();
 app.UseMiddleware<AuthMiddleware>();
+app.UseAuthorization();
 app.UseHttpsRedirection();
 app.AddAppConfig();
 app.Run();
