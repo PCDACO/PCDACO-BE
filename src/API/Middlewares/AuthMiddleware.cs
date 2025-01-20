@@ -1,10 +1,16 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+
+using Domain.Entities;
+
+using Microsoft.EntityFrameworkCore;
+
+using UseCases.Abstractions;
 using UseCases.DTOs;
 
 namespace API.Middlewares;
 
-public class AuthMiddleware(IConfiguration configuration): IMiddleware
+public class AuthMiddleware(IConfiguration configuration) : IMiddleware
 {
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
@@ -13,11 +19,6 @@ public class AuthMiddleware(IConfiguration configuration): IMiddleware
         Console.WriteLine(issuer);
         string? authHeader = context.Request.Headers.Authorization.ToString();
         if (string.IsNullOrEmpty(authHeader) || !authHeader.Contains("Bearer "))
-        {
-            await next.Invoke(context);
-            return;
-        }
-        if(!IsValidJwt(authHeader))
         {
             await next.Invoke(context);
             return;
@@ -40,13 +41,18 @@ public class AuthMiddleware(IConfiguration configuration): IMiddleware
                     c.Type.Equals("sub", StringComparison.InvariantCultureIgnoreCase)
                 )
                 ?.Value ?? string.Empty;
+        if (!Guid.TryParse(id, out Guid userId))
+        {
+            return;
+        }
+        IAppDBContext dbContext = context.RequestServices.GetRequiredService<IAppDBContext>();
+        User? user = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        if (user is null)
+        {
+            return;
+        }
         CurrentUser currentUser = context.RequestServices.GetRequiredService<CurrentUser>();
+        currentUser.SetUser(user);
         await next.Invoke(context);
     }
-
-    private bool IsValidJwt(string token)
-{
-    var handler = new JwtSecurityTokenHandler();
-    return handler.CanReadToken(token);
-}
 }

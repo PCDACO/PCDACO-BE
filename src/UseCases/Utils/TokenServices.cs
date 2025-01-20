@@ -6,7 +6,6 @@ using System.Text;
 using Domain.Entities;
 using Domain.Shared;
 
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace UseCases.Utils;
@@ -22,7 +21,7 @@ public class TokenService(JwtSettings jwtSettings)
         var expirationMinutes = jwtSettings.TokenExpirationInMinutes;
 
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
-        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha512Signature);
 
         var claims = new[]
         {

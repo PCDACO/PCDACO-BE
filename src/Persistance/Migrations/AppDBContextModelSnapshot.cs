@@ -167,6 +167,10 @@ namespace Persistance.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("EncryptedLicensePlate")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<Guid>("EncryptionKeyId")
                         .HasColumnType("uuid");
 
@@ -182,19 +186,11 @@ namespace Persistance.Migrations
                     b.Property<decimal?>("Latitude")
                         .HasColumnType("numeric");
 
-                    b.Property<string>("LicensePlate")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<decimal?>("Longtitude")
                         .HasColumnType("numeric");
 
                     b.Property<Guid>("ManufacturerId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid");
@@ -208,9 +204,8 @@ namespace Persistance.Migrations
                     b.Property<bool>("RequiresCollateral")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("Seat")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Seat")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Status")
                         .HasColumnType("integer");
