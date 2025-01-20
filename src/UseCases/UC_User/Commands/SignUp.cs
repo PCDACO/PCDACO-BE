@@ -3,7 +3,11 @@ using Ardalis.Result;
 
 using Domain.Entities;
 
+using FluentValidation;
+
 using MediatR;
+
+using Microsoft.EntityFrameworkCore;
 
 using UseCases.Abstractions;
 using UseCases.Utils;
@@ -30,6 +34,16 @@ public class SignUp
     {
         public async Task<Result<Response>> Handle(Command request, CancellationToken cancellationToken)
         {
+            User? checkingUser = await context.Users.FirstOrDefaultAsync(x =>
+                x.Email == request.Email ||
+                x.Phone == request.Phone, cancellationToken);
+            if (checkingUser is not null)
+            {
+                if (checkingUser.Email == request.Email)
+                    return Result.Error("Email đã tồn tại");
+                if (checkingUser.Phone == request.Phone)
+                    return Result.Error("Số điện thoại đã tồn tại");
+            }
             string refreshToken = tokenService.GenerateRefreshToken();
             EncryptionKey encryptionKey = new()
             {
@@ -56,6 +70,30 @@ public class SignUp
             await context.SaveChangesAsync(cancellationToken);
             string accessToken = tokenService.GenerateAccessToken(user);
             return Result.Created(new Response(accessToken, refreshToken));
+        }
+    }
+
+    private sealed class Validator : AbstractValidator<Command>
+    {
+        public Validator()
+        {
+            RuleFor(x => x.Name)
+                .NotEmpty().WithMessage("Tên không được để trống")
+                .MinimumLength(5).WithMessage("Tên phải có ít nhất 3 ký tự")
+                .MaximumLength(50).WithMessage("Tên không được quá 50 ký tự");
+            RuleFor(x => x.Email)
+                .NotEmpty().WithMessage("Email không được để trống")
+                .EmailAddress().WithMessage("Email không hợp lệ");
+            RuleFor(x => x.Password)
+                .NotEmpty().WithMessage("Mật khẩu không được để trống")
+                .MinimumLength(6).WithMessage("Mật khẩu phải có ít nhất 6 ký tự");
+            RuleFor(x => x.Address)
+                .NotEmpty().WithMessage("Địa chỉ không được để trống");
+            RuleFor(x => x.DateOfBirth)
+                .NotEmpty().WithMessage("Ngày sinh không được để trống")
+                .LessThan(DateTimeOffset.UtcNow).WithMessage("Ngày sinh không hợp lệ");
+            RuleFor(x => x.Phone)
+                .NotEmpty().WithMessage("Số điện thoại không được để trống");
         }
     }
 }

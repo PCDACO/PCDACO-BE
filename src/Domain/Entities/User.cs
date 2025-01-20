@@ -31,4 +31,6 @@ public class User : BaseEntity
     public ICollection<Feedback> Feedbacks { get; set; } = [];
     public ICollection<Transaction> Transactions { get; set; } = [];
     public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
+
+    public bool IsAdmin() => Role == UserRole.Admin;
 }

@@ -11,10 +11,9 @@ public class Car : BaseEntity
     public required Guid OwnerId { get; set; }
     public required Guid ManufacturerId { get; set; }
     public required Guid EncryptionKeyId { get; set; }
-    public required string Name { get; set; }
-    public required string LicensePlate { get; set; }
+    public required string EncryptedLicensePlate { get; set; }
     public required string Color { get; set; }
-    public required string Seat { get; set; }
+    public required int Seat { get; set; }
     public string Description { get; set; } = string.Empty;
     public TransmissionType TransmissionType { get; set; } = TransmissionType.Auto;
     public FuelType FuelType { get; set; } = FuelType.Electric;

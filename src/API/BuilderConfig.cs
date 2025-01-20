@@ -1,12 +1,24 @@
+using System.Text;
+
 using API.Middlewares;
+
 using Carter;
+
 using Domain.Shared;
+
 using Infrastructure;
+using Infrastructure.Encryption;
+using Infrastructure.Medias;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+
 using Persistance;
+
 using UseCases;
+using UseCases.Abstractions;
 using UseCases.Utils;
 
 namespace API;
@@ -48,20 +60,19 @@ public static class BuilderConfig
             }
             });
         });
-        services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
+        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
-                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = false,
-                    ValidateIssuerSigningKey = true,
-                    ValidIssuer = configuration["ISSUER"],
-                    ValidAudience = configuration["AUDIENCE"],
+                    options.Authority = configuration["ISSUER"];
+                    options.Audience = configuration["AUDIENCE"];
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = false,
+                        ValidateAudience = true,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["SECRET_KEY"] ?? throw new Exception("Secret Key is missing"))),
+                    };
                 });
         services.AddAuthorization();
         // Add cors
@@ -86,10 +97,15 @@ public static class BuilderConfig
                 configuration["TOKEN_EXPIRATION_IN_MINUTES"] ?? throw new Exception("TokenExpirationInMinutes is missing")
             )
         });
+        services.AddScoped<IAesEncryptionService, AesEncryptionService>();
+        services.AddScoped<IKeyManagementService, KeyManagementService>();
+        services.AddScoped<ICloudinaryServices, CloudinaryServices>();
         services.AddScoped<TokenService>();
         services.AddScoped<AuthMiddleware>();
-        services.AddExceptionHandler<ExceptionHandlerMiddleware>();
         services.AddProblemDetails();
+        // Add exception handlers
+        services.AddExceptionHandler<ValidationAppExceptionHandler>();
+        services.AddExceptionHandler<ExceptionHandlerMiddleware>();
         services.AddCarter();
         // Add services of other layers
         services.AddPersistance(configuration);
