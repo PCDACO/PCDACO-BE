@@ -6,7 +6,6 @@ using MediatR;
 
 using UseCases.Abstractions;
 using UseCases.DTOs;
-
 namespace UseCases.UC_Amenity.Commands;
 
 public sealed class CreateAmenity
@@ -33,7 +32,7 @@ public sealed class CreateAmenity
     {
         public async Task<Result<Response>> Handle(Command request, CancellationToken cancellationToken)
         {
-            if (!currentUser.User!.IsAdmin()) return Result.Unauthorized("Bạn không có quyền thực hiện thao tác này");
+            if (!currentUser.User!.IsAdmin()) return Result.Forbidden("Bạn không có quyền thực hiện thao tác này");
             Amenity amenity = new()
             {
                 Name = request.Name,
@@ -41,8 +40,7 @@ public sealed class CreateAmenity
             };
             await context.Amenities.AddAsync(amenity, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
-
-            return Result.Success(Response.FromEntity(amenity));
+            return Result.Created(Response.FromEntity(amenity));
         }
     }
 }
