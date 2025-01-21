@@ -51,18 +51,21 @@ public sealed class CreateCar
         {
             if (currentUser.User!.IsAdmin()) return Result.Error("Bạn không có quyền thực hiện chức năng này !");
             // Check if amenities are exist
-            List<Amenity> amenities = await context.Amenities
-                .AsNoTracking()
-                .Where(a => request.AmenityIds.Contains(a.Id) && !a.IsDeleted)
-                .ToListAsync(cancellationToken);
-            if (amenities.Count != request.AmenityIds.Length) return Result.Error("Một số tiện ích không tồn tại !");
+            if(request.AmenityIds.Length > 0)
+            {
+                List<Amenity> amenities = await context.Amenities
+                    .AsNoTracking()
+                    .Where(a => request.AmenityIds.Contains(a.Id) && !a.IsDeleted)
+                    .ToListAsync(cancellationToken);
+                if (amenities.Count != request.AmenityIds.Length) return Result.Error("Một số tiện ích không tồn tại !");
+            }
             // Check if manufacturer is exist
             Manufacturer? checkingManufacturer = await context.Manufacturers
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m =>
                     m.Id == request.ManufacturerId && !m.IsDeleted,
                     cancellationToken);
-            if (checkingManufacturer is null) return Result.Error();
+            if (checkingManufacturer is null) return Result.Error("Hãng xe không tồn tại !");
             (string key, string iv) = await keyManagementService.GenerateKeyAsync();
             string encryptedLicensePlate = await aesEncryptionService.Encrypt(request.LicensePlate, key, iv);
             string encryptedKey = keyManagementService.EncryptKey(key, encryptionSettings.Key);

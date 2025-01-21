@@ -21,6 +21,7 @@ public sealed class UpdateCar
 {
     public sealed record Commamnd(
         Guid CarId,
+        Guid[] AmenityIds,
         Guid ManufacturerId,
         string LicensePlate,
         string Color,
@@ -52,11 +53,25 @@ public sealed class UpdateCar
                 .Include(c => c.EncryptionKey)
                 .FirstOrDefaultAsync(c => c.Id == request.CarId && !c.IsDeleted, cancellationToken);
             if (checkingCar is null) return Result.Error("Xe không tồn tại");
+            List<Amenity> amenities = await context.Amenities
+                .AsNoTracking()
+                .Where(a => request.AmenityIds.Contains(a.Id) && !a.IsDeleted)
+                .ToListAsync(cancellationToken);
+            if (amenities.Count != request.AmenityIds.Length) return Result.Error("Một số tiện ích không tồn tại !");
             // Check if manufacturer is exist
             Manufacturer? checkingManufacturer = await context.Manufacturers.FirstOrDefaultAsync(m =>
                 m.Id == request.ManufacturerId && !m.IsDeleted,
                 cancellationToken);
-            if (checkingManufacturer is null) return Result.Error("Nhà sản xuất không tồn tại");
+            if (checkingManufacturer is null) return Result.Error("Hãng xe không tồn tại !");
+            // Update car amenities
+            await context.CarAmenities.Where(ca => ca.CarId == checkingCar.Id)
+                .ExecuteDeleteAsync(cancellationToken);
+            List<CarAmenity> carAmenities = [.. amenities.Select(a => new CarAmenity
+            {
+                CarId = checkingCar.Id,
+                AmenityId = a.Id
+            })];
+            await context.CarAmenities.AddRangeAsync(carAmenities, cancellationToken);
             string decryptedKey = keyManagementService.DecryptKey(checkingCar.EncryptionKey.EncryptedKey, encryptionSettings.Key);
             string encryptedLicensePlate = await aesEncryptionService.Encrypt(request.LicensePlate,
                                                                             decryptedKey,
@@ -74,6 +89,7 @@ public sealed class UpdateCar
             checkingCar.PricePerHour = request.PricePerHour;
             checkingCar.PricePerDay = request.PricePerDay;
             checkingCar.Location = geometryFactory.CreatePoint(new Coordinate((double)request.Longtitude!, (double)request.Latitude!));
+            checkingCar.UpdatedAt = DateTimeOffset.UtcNow;
             // Save changes
             await context.SaveChangesAsync(cancellationToken);
             return Result.NoContent();
