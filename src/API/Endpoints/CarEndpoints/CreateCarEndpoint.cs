@@ -26,6 +26,7 @@ public class CreateCarEndpoint : ICarterModule
     private async Task<IResult> Handle(ISender sender, CreateCarRequest request)
     {
         Result<CreateCar.Response> result = await sender.Send(new CreateCar.Query(
+            request.AmenityIds,
             request.ManufacturerId,
             request.LicensePlate,
             request.Color,
@@ -43,6 +44,7 @@ public class CreateCarEndpoint : ICarterModule
         return result.MapResult();
     }
     private sealed record CreateCarRequest(
+        Guid[] AmenityIds,
         Guid ManufacturerId,
         string LicensePlate,
         string Color,
