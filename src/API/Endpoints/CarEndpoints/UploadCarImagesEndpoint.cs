@@ -18,6 +18,7 @@ public class UploadCarImagesEndpoint : ICarterModule
     {
         app.MapPatch("/api/cars/{carId}/images", Handle)
             .WithSummary("Upload car images")
+            .WithTags("Cars")
             .RequireAuthorization()
             .DisableAntiforgery();
     }

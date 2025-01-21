@@ -13,7 +13,7 @@ public class GetCarByIdEndpoint : ICarterModule
     {
         app.MapGet("/api/car/{id}", Handle)
             .WithSummary("Get car by id")
-            .WithTags("Car");
+            .WithTags("Cars");
     }
 
     private async Task<IResult> Handle(ISender sender, Guid id)

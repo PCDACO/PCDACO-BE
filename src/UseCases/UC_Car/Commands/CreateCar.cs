@@ -38,7 +38,10 @@ public sealed class CreateCar
         decimal? Longtitude
         ) : IRequest<Result<Response>>;
 
-    public sealed record Response(Guid Id);
+    public sealed record Response(Guid Id)
+    {
+        public static Response FromEntity(Car car) => new(car.Id);
+    };
 
     private sealed class Handler(IAppDBContext context,
         CurrentUser currentUser,
@@ -51,7 +54,7 @@ public sealed class CreateCar
         {
             if (currentUser.User!.IsAdmin()) return Result.Error("Bạn không có quyền thực hiện chức năng này !");
             // Check if amenities are exist
-            if(request.AmenityIds.Length > 0)
+            if (request.AmenityIds.Length > 0)
             {
                 List<Amenity> amenities = await context.Amenities
                     .AsNoTracking()
@@ -107,7 +110,7 @@ public sealed class CreateCar
             };
             await context.Cars.AddAsync(newCar, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
-            return Result.Created(new Response(newCar.Id), "Tạo xe thành công !");
+            return Result.Created(Response.FromEntity(newCar), "Tạo xe thành công !");
         }
     }
 
