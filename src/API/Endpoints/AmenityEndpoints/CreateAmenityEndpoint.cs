@@ -16,7 +16,10 @@ public class CreateAmenityEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/amenities", Handle);
+        app.MapPost("/api/amenities", Handle)
+            .WithSummary("Create an amenity")
+            .WithTags("Amenities")
+            .RequireAuthorization();
     }
 
     private async Task<IResult> Handle(ISender sender, CreateAmenityRequest request)
