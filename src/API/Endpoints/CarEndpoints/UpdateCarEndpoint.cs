@@ -29,6 +29,7 @@ public class UpdateCarEndpoint : ICarterModule
     {
         Result result = await sender.Send(new UpdateCar.Commamnd(
             id,
+            request.AmenityIds,
             request.ManufacturerId,
             request.LicensePlate,
             request.Color,
@@ -46,6 +47,7 @@ public class UpdateCarEndpoint : ICarterModule
         return result.MapResult();
     }
     private record UpdateCarRequest(
+        Guid[] AmenityIds,
         Guid ManufacturerId,
         string LicensePlate,
         string Color,
