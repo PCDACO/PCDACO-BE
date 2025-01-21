@@ -7,8 +7,8 @@ namespace Infrastructure.Medias;
 
 public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
 {
-    public async Task<string> UploadCarImageAsync(string name, Stream image,CancellationToken cancellationToken = default)
-    
+    public async Task<string> UploadCarImageAsync(string name, Stream image, CancellationToken cancellationToken = default)
+
     {
         ImageUploadParams uploadParams = new()
         {
@@ -18,11 +18,11 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             UniqueFilename = false,
             Overwrite = true
         };
-        ImageUploadResult uploadResult = await cloudinary.UploadAsync(uploadParams,cancellationToken);
+        ImageUploadResult uploadResult = await cloudinary.UploadAsync(uploadParams, cancellationToken);
         return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
     }
-    
-    public async Task<string> UploadReportImageAsync(string name, Stream image,CancellationToken cancellationToken = default)
+
+    public async Task<string> UploadReportImageAsync(string name, Stream image, CancellationToken cancellationToken = default)
     {
         ImageUploadParams uploadParams = new()
         {
@@ -32,11 +32,11 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             UniqueFilename = false,
             Overwrite = true
         };
-        ImageUploadResult uploadResult = await cloudinary.UploadAsync(uploadParams,cancellationToken);
+        ImageUploadResult uploadResult = await cloudinary.UploadAsync(uploadParams, cancellationToken);
         return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
     }
 
-    public async Task<string> UploadUserImageAsync(string name, Stream image,CancellationToken cancellationToken = default)
+    public async Task<string> UploadUserImageAsync(string name, Stream image, CancellationToken cancellationToken = default)
     {
         ImageUploadParams uploadParams = new()
         {
@@ -46,11 +46,11 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             UniqueFilename = false,
             Overwrite = true
         };
-        ImageUploadResult uploadResult = await cloudinary.UploadAsync(uploadParams,cancellationToken);
+        ImageUploadResult uploadResult = await cloudinary.UploadAsync(uploadParams, cancellationToken);
         return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
     }
 
-    public async Task<string> UploadFeedbackImageAsync(string name, Stream image,CancellationToken cancellationToken = default)
+    public async Task<string> UploadFeedbackImageAsync(string name, Stream image, CancellationToken cancellationToken = default)
     {
         ImageUploadParams uploadParams = new()
         {
@@ -60,7 +60,7 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             UniqueFilename = false,
             Overwrite = true
         };
-        ImageUploadResult uploadResult = await cloudinary.UploadAsync(uploadParams,cancellationToken);
+        ImageUploadResult uploadResult = await cloudinary.UploadAsync(uploadParams, cancellationToken);
         return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
     }
 }
