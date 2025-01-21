@@ -1,6 +1,9 @@
+using System.Threading.Tasks;
+
 using Ardalis.Result;
 
 using Domain.Entities;
+using Domain.Shared;
 
 using MediatR;
 
@@ -24,42 +27,56 @@ public class GetCarById
         string FuelType,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        decimal PricePerHour,
-        decimal PricePerDay,
-        double? Longtitude,
-        double? Latitude,
-        string ManufacturerName
+        PriceDetail Price,
+        LocationDetail Location,
+        ManufacturerDetail Manufacturer
     )
     {
-        public static Response FromEntity(Car car)
-            => new(
-                car.Id,
-                car.EncryptedLicensePlate,
-                car.Color,
-                car.Seat,
-                car.Description,
-                car.TransmissionType.ToString(),
-                car.FuelType.ToString(),
-                car.FuelConsumption,
-                car.RequiresCollateral,
-                car.PricePerHour,
-                car.PricePerDay,
-                car.Location.X,
-                car.Location.Y,
-                car.Manufacturer.Name
-            );
+        public static async Task<Response> FromEntity(Car car, string masterKey, IAesEncryptionService aesEncryptionService, IKeyManagementService keyManagementService)
+        {
+            string decryptedKey = keyManagementService.DecryptKey(car.EncryptionKey.EncryptedKey, masterKey);
+            string decryptedLicensePlate = await aesEncryptionService.Decrypt(car.EncryptedLicensePlate, decryptedKey, car.EncryptionKey.IV);
+            return new(
+            car.Id,
+            decryptedLicensePlate,
+            car.Color,
+            car.Seat,
+            car.Description,
+            car.TransmissionType.ToString(),
+            car.FuelType.ToString(),
+            car.FuelConsumption,
+            car.RequiresCollateral,
+            new PriceDetail(car.PricePerHour, car.PricePerDay),
+            new LocationDetail(car.Location.X, car.Location.Y),
+            new ManufacturerDetail(car.Manufacturer.Id, car.Manufacturer.Name)
+             );
+        }
     };
 
-    private sealed class Handler(IAppDBContext context) : IRequestHandler<Query, Result<Response>>
+    public record PriceDetail(decimal PerHour, decimal PerDay);
+
+    public record LocationDetail(double Longtitude, double Latitude);
+
+    public record ManufacturerDetail(
+        Guid Id,
+        string Name
+    );
+
+    private sealed class Handler(
+        IAppDBContext context,
+        IAesEncryptionService aesEncryptionService,
+        IKeyManagementService keyManagementService,
+        EncryptionSettings encryptionSettings) : IRequestHandler<Query, Result<Response>>
     {
         public async Task<Result<Response>> Handle(Query request, CancellationToken cancellationToken)
             => await context.Cars
                 .Include(c => c.Manufacturer)
+                .Include(c => c.EncryptionKey)
                 .FirstOrDefaultAsync(c => c.Id == request.Id && !c.IsDeleted, cancellationToken)
                 switch
             {
                 null => Result<Response>.NotFound(),
-                var car => Result<Response>.Success(Response.FromEntity(car))
+                var car => Result<Response>.Success(await Response.FromEntity(car, encryptionSettings.Key, aesEncryptionService, keyManagementService), "Lấy thông tin xe thành công")
             };
     }
 }
