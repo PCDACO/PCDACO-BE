@@ -29,7 +29,9 @@ public class GetCarById
         bool RequiresCollateral,
         PriceDetail Price,
         LocationDetail Location,
-        ManufacturerDetail Manufacturer
+        ManufacturerDetail Manufacturer,
+        ImageDetail[] Images,
+        AmenityDetail[] Amenities
     )
     {
         public static async Task<Response> FromEntity(Car car, string masterKey, IAesEncryptionService aesEncryptionService, IKeyManagementService keyManagementService)
@@ -48,7 +50,9 @@ public class GetCarById
             car.RequiresCollateral,
             new PriceDetail(car.PricePerHour, car.PricePerDay),
             new LocationDetail(car.Location.X, car.Location.Y),
-            new ManufacturerDetail(car.Manufacturer.Id, car.Manufacturer.Name)
+            new ManufacturerDetail(car.Manufacturer.Id, car.Manufacturer.Name),
+            [.. car.ImageCars.Select(i => new ImageDetail(i.Id, i.Url))],
+            [.. car.CarAmenities.Select(a => new AmenityDetail(a.Id, a.Amenity.Name, a.Amenity.Description))]
              );
         }
     };
@@ -62,6 +66,17 @@ public class GetCarById
         string Name
     );
 
+    public record ImageDetail(
+        Guid Id,
+        string Url
+    );
+
+    public record AmenityDetail(
+        Guid Id,
+        string Name,
+        string Description
+    );
+
     private sealed class Handler(
         IAppDBContext context,
         IAesEncryptionService aesEncryptionService,
@@ -72,6 +87,8 @@ public class GetCarById
             => await context.Cars
                 .Include(c => c.Manufacturer)
                 .Include(c => c.EncryptionKey)
+                .Include(c => c.ImageCars)
+                .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .FirstOrDefaultAsync(c => c.Id == request.Id && !c.IsDeleted, cancellationToken)
                 switch
             {

@@ -22,6 +22,7 @@ namespace UseCases.UC_Car.Commands;
 public sealed class CreateCar
 {
     public sealed record Query(
+        Guid[] AmenityIds,
         Guid ManufacturerId,
         string LicensePlate,
         string Color,
@@ -49,6 +50,12 @@ public sealed class CreateCar
         public async Task<Result<Response>> Handle(Query request, CancellationToken cancellationToken)
         {
             if (currentUser.User!.IsAdmin()) return Result.Error("Bạn không có quyền thực hiện chức năng này !");
+            // Check if amenities are exist
+            List<Amenity> amenities = await context.Amenities
+                .AsNoTracking()
+                .Where(a => request.AmenityIds.Contains(a.Id) && !a.IsDeleted)
+                .ToListAsync(cancellationToken);
+            if (amenities.Count != request.AmenityIds.Length) return Result.Error("Một số tiện ích không tồn tại !");
             // Check if manufacturer is exist
             Manufacturer? checkingManufacturer = await context.Manufacturers
                 .AsNoTracking()
@@ -88,7 +95,12 @@ public sealed class CreateCar
                 CarStatistic = new()
                 {
                     CarId = carId
-                }
+                },
+                CarAmenities = [.. request.AmenityIds.Select(a => new CarAmenity
+                {
+                    CarId = carId,
+                    AmenityId = a
+                })]
             };
             await context.Cars.AddAsync(newCar, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
