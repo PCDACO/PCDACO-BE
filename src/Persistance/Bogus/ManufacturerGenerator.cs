@@ -6,8 +6,7 @@ namespace Persistance.Bogus;
 
 public class ManufacturerGenerator
 {
-    private static readonly string[] CarBrands =
-[
+    private static readonly string[] CarBrands =[
     "Toyota",
     "Honda",
     "Ford",

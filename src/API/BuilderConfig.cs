@@ -15,6 +15,8 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
+using NetTopologySuite.Geometries;
+
 using Persistance;
 
 using UseCases;
@@ -102,6 +104,12 @@ public static class BuilderConfig
         services.AddScoped<ICloudinaryServices, CloudinaryServices>();
         services.AddScoped<TokenService>();
         services.AddScoped<AuthMiddleware>();
+        // Add singletons
+        services.AddSingleton(new EncryptionSettings()
+        {
+            Key = configuration["MASTER_KEY"] ?? throw new Exception("Encryption Key is missing")
+        });
+        services.AddSingleton<GeometryFactory>(NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
         services.AddProblemDetails();
         // Add exception handlers
         services.AddExceptionHandler<ValidationAppExceptionHandler>();

@@ -1,5 +1,6 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore.Migrations;
+using NetTopologySuite.Geometries;
 
 #nullable disable
 
@@ -11,6 +12,9 @@ namespace Persistance.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AlterDatabase()
+                .Annotation("Npgsql:PostgresExtension:postgis", ",,");
+
             migrationBuilder.CreateTable(
                 name: "Amenities",
                 columns: table => new
@@ -137,8 +141,7 @@ namespace Persistance.Migrations
                     Status = table.Column<int>(type: "integer", nullable: false),
                     PricePerHour = table.Column<decimal>(type: "numeric", nullable: false),
                     PricePerDay = table.Column<decimal>(type: "numeric", nullable: false),
-                    Latitude = table.Column<decimal>(type: "numeric", nullable: true),
-                    Longtitude = table.Column<decimal>(type: "numeric", nullable: true),
+                    Location = table.Column<Point>(type: "geometry", nullable: false),
                     TotalRented = table.Column<int>(type: "integer", nullable: false),
                     TotalEarning = table.Column<decimal>(type: "numeric", nullable: false),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),

@@ -15,13 +15,12 @@ using NetTopologySuite.Geometries;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
-using UUIDNext;
-
 namespace UseCases.UC_Car.Commands;
 
-public sealed class CreateCar
+public sealed class UpdateCar
 {
-    public sealed record Query(
+    public sealed record Commamnd(
+        Guid CarId,
         Guid ManufacturerId,
         string LicensePlate,
         string Color,
@@ -35,68 +34,53 @@ public sealed class CreateCar
         decimal PricePerDay,
         decimal? Latitude,
         decimal? Longtitude
-        ) : IRequest<Result<Response>>;
+    ) : IRequest<Result>;
 
-    public sealed record Response(Guid Id);
-
-    private sealed class Handler(IAppDBContext context,
+    private class Handler(
+        IAppDBContext context,
         CurrentUser currentUser,
         GeometryFactory geometryFactory,
         IAesEncryptionService aesEncryptionService,
-        IKeyManagementService keyManagementService,
-        EncryptionSettings encryptionSettings) : IRequestHandler<Query, Result<Response>>
+        EncryptionSettings encryptionSettings,
+        IKeyManagementService keyManagementService
+    ) : IRequestHandler<Commamnd, Result>
     {
-        public async Task<Result<Response>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result> Handle(Commamnd request, CancellationToken cancellationToken)
         {
             if (currentUser.User!.IsAdmin()) return Result.Error("Bạn không có quyền thực hiện chức năng này !");
+            Car? checkingCar = await context.Cars
+                .Include(c => c.EncryptionKey)
+                .FirstOrDefaultAsync(c => c.Id == request.CarId && !c.IsDeleted, cancellationToken);
+            if (checkingCar is null) return Result.Error("Xe không tồn tại");
             // Check if manufacturer is exist
-            Manufacturer? checkingManufacturer = await context.Manufacturers
-                .AsNoTracking()
-                .FirstOrDefaultAsync(m =>
-                    m.Id == request.ManufacturerId && !m.IsDeleted,
-                    cancellationToken);
-            if (checkingManufacturer is null) return Result.Error();
-            (string key, string iv) = await keyManagementService.GenerateKeyAsync();
-            string encryptedLicensePlate = await aesEncryptionService.Encrypt(request.LicensePlate, key, iv);
-            string encryptedKey = keyManagementService.EncryptKey(key, encryptionSettings.Key);
-            EncryptionKey newEncryptionKey = new()
-            {
-                EncryptedKey = encryptedKey,
-                IV = iv
-            };
-            context.EncryptionKeys.Add(newEncryptionKey);
-            Guid carId = Uuid.NewDatabaseFriendly(Database.PostgreSql);
-            Car newCar = new()
-            {
-                Id = carId,
-                ManufacturerId = request.ManufacturerId,
-                OwnerId = currentUser.User!.Id,
-                EncryptedLicensePlate = encryptedLicensePlate,
-                EncryptionKeyId = newEncryptionKey.Id,
-                Color = request.Color,
-                Seat = request.Seat,
-                Description = request.Description,
-                TransmissionType = request.TransmissionType,
-                FuelType = request.FuelType,
-                FuelConsumption = request.FuelConsumption,
-                RequiresCollateral = request.RequiresCollateral,
-                PricePerHour = request.PricePerHour,
-                PricePerDay = request.PricePerDay,
-                // Latitude = request.Latitude,
-                // Longtitude = request.Longtitude,
-                Location = geometryFactory.CreatePoint(new Coordinate((double)request.Longtitude!, (double)request.Latitude!)),
-                CarStatistic = new()
-                {
-                    CarId = carId
-                }
-            };
-            await context.Cars.AddAsync(newCar, cancellationToken);
+            Manufacturer? checkingManufacturer = await context.Manufacturers.FirstOrDefaultAsync(m =>
+                m.Id == request.ManufacturerId && !m.IsDeleted,
+                cancellationToken);
+            if (checkingManufacturer is null) return Result.Error("Nhà sản xuất không tồn tại");
+            string decryptedKey = keyManagementService.DecryptKey(checkingCar.EncryptionKey.EncryptedKey, encryptionSettings.Key);
+            string encryptedLicensePlate = await aesEncryptionService.Encrypt(request.LicensePlate,
+                                                                            decryptedKey,
+                                                                            checkingCar.EncryptionKey.IV);
+            // Update car
+            checkingCar.ManufacturerId = request.ManufacturerId;
+            checkingCar.EncryptedLicensePlate = encryptedLicensePlate;
+            checkingCar.Color = request.Color;
+            checkingCar.Seat = request.Seat;
+            checkingCar.Description = request.Description;
+            checkingCar.TransmissionType = request.TransmissionType;
+            checkingCar.FuelType = request.FuelType;
+            checkingCar.FuelConsumption = request.FuelConsumption;
+            checkingCar.RequiresCollateral = request.RequiresCollateral;
+            checkingCar.PricePerHour = request.PricePerHour;
+            checkingCar.PricePerDay = request.PricePerDay;
+            checkingCar.Location = geometryFactory.CreatePoint(new Coordinate((double)request.Longtitude!, (double)request.Latitude!));
+            // Save changes
             await context.SaveChangesAsync(cancellationToken);
-            return Result.Created(new Response(newCar.Id), "Tạo xe thành công !");
+            return Result.NoContent();
         }
     }
 
-    public sealed class Validator : AbstractValidator<Query>
+    public sealed class Validator : AbstractValidator<Commamnd>
     {
         public Validator()
         {

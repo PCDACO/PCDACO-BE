@@ -23,7 +23,7 @@ public class Login
         string RefreshToken
     );
 
-    private sealed class Handler(IAppDBContext context,TokenService tokenService) : IRequestHandler<Command, Result<Response>>
+    private sealed class Handler(IAppDBContext context, TokenService tokenService) : IRequestHandler<Command, Result<Response>>
     {
         public async Task<Result<Response>> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -31,13 +31,13 @@ public class Login
             User? user = await context.Users
                 .AsNoTracking()
                 .FirstOrDefaultAsync(u => u.Email == request.Email && u.Password == hashedPassword, cancellationToken);
-            if (user is null) 
+            if (user is null)
                 return Result.NotFound();
             string newRefreshToken = tokenService.GenerateRefreshToken();
-            await context.RefreshTokens.Where(rt=>rt.UserId == user.Id)
-                .ExecuteUpdateAsync(rt =>rt
-                    .SetProperty(u=>u.IsUsed ,true)
-                    .SetProperty(u=>u.IsRevoked ,true), cancellationToken);
+            await context.RefreshTokens.Where(rt => rt.UserId == user.Id)
+                .ExecuteUpdateAsync(rt => rt
+                    .SetProperty(u => u.IsUsed, true)
+                    .SetProperty(u => u.IsRevoked, true), cancellationToken);
             RefreshToken addingRefreshToken = new()
             {
                 Token = newRefreshToken,
@@ -47,7 +47,7 @@ public class Login
             await context.RefreshTokens.AddAsync(addingRefreshToken, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
             string accessToken = tokenService.GenerateAccessToken(user);
-            return Result.Success(new Response(accessToken, newRefreshToken));
+            return Result.Success(new Response(accessToken, newRefreshToken), "Đăng nhập thành công");
         }
     }
 }
