@@ -3,6 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 using Domain.Enums;
 using Domain.Shared;
 
+using NetTopologySuite.Geometries;
+
 namespace Domain.Entities;
 
 public class Car : BaseEntity
@@ -22,8 +24,9 @@ public class Car : BaseEntity
     public CarStatus Status { get; set; } = CarStatus.Available;
     public required decimal PricePerHour { get; set; }
     public required decimal PricePerDay { get; set; }
-    public decimal? Latitude { get; set; } = null!;
-    public decimal? Longtitude { get; set; } = null!;
+    // public decimal? Latitude { get; set; } = null!;
+    // public decimal? Longtitude { get; set; } = null!;
+    public Point Location { get; set; } = null!;
     public int TotalRented { get; set; } = 0;
     public decimal TotalEarning { get; set; } = 0;
     // Navigation Properties

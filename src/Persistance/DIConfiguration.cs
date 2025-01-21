@@ -13,9 +13,8 @@ public static class DIConfiguration
     public static IServiceCollection AddPersistance(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<IAppDBContext, AppDBContext>(options => {
-            options.UseNpgsql(configuration["CONNECTION_STRING"]);
-            options.EnableDetailedErrors();
-            options.EnableSensitiveDataLogging();
+            options.UseNpgsql(configuration["CONNECTION_STRING"],
+            o => o.UseNetTopologySuite());
         });
         return services;
     }

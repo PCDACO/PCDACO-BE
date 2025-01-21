@@ -2,6 +2,7 @@
 using Ardalis.Result;
 
 using Domain.Entities;
+using Domain.Shared;
 
 using FluentValidation;
 
@@ -30,7 +31,11 @@ public class SignUp
         string RefreshToken
     );
 
-    private sealed class Handler(IAppDBContext context, TokenService tokenService) : IRequestHandler<Command, Result<Response>>
+    private sealed class Handler(IAppDBContext context,
+         TokenService tokenService,
+         IAesEncryptionService aesEncryptionService,
+        IKeyManagementService keyManagementService,
+        EncryptionSettings encryptionSettings) : IRequestHandler<Command, Result<Response>>
     {
         public async Task<Result<Response>> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -45,9 +50,13 @@ public class SignUp
                     return Result.Error("Số điện thoại đã tồn tại");
             }
             string refreshToken = tokenService.GenerateRefreshToken();
+            (string key, string iv) = await keyManagementService.GenerateKeyAsync();
+            string encryptedPhone = await aesEncryptionService.Encrypt(request.Phone, key, iv);
+            string encryptedKey = keyManagementService.EncryptKey(key, encryptionSettings.Key);
             EncryptionKey encryptionKey = new()
             {
-                EncryptedKey = StringGenerator.GenerateRandomString(),
+                EncryptedKey = encryptedKey,
+                IV = iv,
             };
             await context.EncryptionKeys.AddAsync(encryptionKey, cancellationToken);
             User user = new()
@@ -58,7 +67,7 @@ public class SignUp
                 Password = request.Password.HashString(),
                 Address = request.Address,
                 DateOfBirth = request.DateOfBirth,
-                Phone = request.Phone,
+                Phone = encryptedPhone,
             };
             user.RefreshTokens.Add(new RefreshToken
             {
@@ -69,7 +78,7 @@ public class SignUp
             await context.Users.AddAsync(user, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
             string accessToken = tokenService.GenerateAccessToken(user);
-            return Result.Created(new Response(accessToken, refreshToken));
+            return Result.Created(new Response(accessToken, refreshToken),"Đăng ký thành công");
         }
     }
 
