@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
+using Domain.Enums;
 using Domain.Shared;
 
 namespace Domain.Entities;
@@ -17,6 +18,7 @@ public class Booking : BaseEntity
     public required decimal ExcessDayFee { get; set; }
     public required decimal TotalAmount { get; set; }
     public required string Note { get; set; }
+    public BookingStatus Status { get; set; } = BookingStatus.Pending;
     // Navigation properties
     [ForeignKey(nameof(UserId))]
     public User User { get; set; } = null!;

@@ -317,6 +317,7 @@ namespace Persistance.Migrations
                     ExcessDayFee = table.Column<decimal>(type: "numeric", nullable: false),
                     TotalAmount = table.Column<decimal>(type: "numeric", nullable: false),
                     Note = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<int>(type: "integer", nullable: false),
                     UpdatedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     DeletedAt = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
                     IsDeleted = table.Column<bool>(type: "boolean", nullable: false)

@@ -13,7 +13,7 @@ using Persistance.Data;
 namespace Persistance.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    [Migration("20250121042826_InitDB")]
+    [Migration("20250122102650_InitDB")]
     partial class InitDB
     {
         /// <inheritdoc />
@@ -136,6 +136,9 @@ namespace Persistance.Migrations
 
                     b.Property<DateTimeOffset>("StartTime")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
 
                     b.Property<decimal>("TotalAmount")
                         .HasColumnType("numeric");
