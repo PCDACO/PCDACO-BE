@@ -12,7 +12,7 @@ using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.AmenityEndpoints;
 
-public sealed class GetAmenityEndpoint : ICarterModule
+public sealed class GetAmenityByIdEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {

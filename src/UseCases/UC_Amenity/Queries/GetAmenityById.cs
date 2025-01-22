@@ -1,4 +1,3 @@
-
 using Ardalis.Result;
 
 using Domain.Entities;
