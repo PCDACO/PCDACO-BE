@@ -36,7 +36,7 @@ public sealed class UpdateAmenity
             updatingAmenity.Description = request.Description;
             updatingAmenity.UpdatedAt = DateTimeOffset.UtcNow;
             await context.SaveChangesAsync(cancellationToken);
-            return Result.NoContent();
+            return Result.SuccessWithMessage("Cập nhật tiện ích thành công");
         }
     }
 }

@@ -92,7 +92,7 @@ public sealed class UpdateCar
             checkingCar.UpdatedAt = DateTimeOffset.UtcNow;
             // Save changes
             await context.SaveChangesAsync(cancellationToken);
-            return Result.NoContent();
+            return Result.SuccessWithMessage("Cập nhật xe thành công");
         }
     }
 
