@@ -1,8 +1,13 @@
 using API.Utils;
+
 using Ardalis.Result;
+
 using Carter;
+
 using MediatR;
+
 using UseCases.UC_Car.Queries;
+
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.CarEndpoints;
@@ -13,7 +18,8 @@ public class GetCarByIdEndpoint : ICarterModule
     {
         app.MapGet("/api/car/{id}", Handle)
             .WithSummary("Get car by id")
-            .WithTags("Cars");
+            .WithTags("Cars")
+            .RequireAuthorization();
     }
 
     private async Task<IResult> Handle(ISender sender, Guid id)
