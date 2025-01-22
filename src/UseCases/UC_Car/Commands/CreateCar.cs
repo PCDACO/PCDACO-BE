@@ -110,7 +110,7 @@ public sealed class CreateCar
             };
             await context.Cars.AddAsync(newCar, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
-            return Result.Created(Response.FromEntity(newCar), "Tạo xe thành công !");
+            return Result.Created(await Task.FromResult(Response.FromEntity(newCar)), "Tạo xe thành công !");
         }
     }
 
