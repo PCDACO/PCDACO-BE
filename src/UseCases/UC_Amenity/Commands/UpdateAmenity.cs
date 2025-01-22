@@ -30,13 +30,13 @@ public sealed class UpdateAmenity
             if (!currentUser.User!.IsAdmin()) return Result.Forbidden("Bạn không có quyền thực hiện thao tác này");
             Amenity? updatingAmenity = await context.Amenities
                 .FirstOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
-            if (updatingAmenity is null) return Result.NotFound("Không tìm thấy tiện ích");
+            if (updatingAmenity is null) return Result.NotFound("Không tìm thấy tiện nghi");
             // Update the amenity
             updatingAmenity.Name = request.Name;
             updatingAmenity.Description = request.Description;
             updatingAmenity.UpdatedAt = DateTimeOffset.UtcNow;
             await context.SaveChangesAsync(cancellationToken);
-            return Result.SuccessWithMessage("Cập nhật tiện ích thành công");
+            return Result.SuccessWithMessage("Cập nhật tiện nghi thành công");
         }
     }
 }
