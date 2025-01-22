@@ -61,7 +61,7 @@ public sealed class GetAmenities
                 count,
                 request.PageNumber,
                 request.PageSize
-            ));
+            ), "Lấy danh sách tiện ích thành công");
         }
     }
 }

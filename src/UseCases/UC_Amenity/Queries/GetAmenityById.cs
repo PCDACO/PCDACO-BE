@@ -43,7 +43,7 @@ public sealed class GetAmenityById
 
             if (gettingAmenity is null)
                 return Result.NotFound("Không tìm thấy tiện nghi");
-            return Result.Success(Response.FromEntity(gettingAmenity));
+            return Result.Success(Response.FromEntity(gettingAmenity), "Lấy thông tin tiện ích thành công");
         }
     }
 }
