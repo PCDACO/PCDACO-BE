@@ -107,7 +107,7 @@ public class GetCars
         {
             Point userLocation = geometryFactory.CreatePoint(new Coordinate((double)request.Longtitude!, (double)request.Latitude!));
             IQueryable<Car> query = context.Cars
-                .Include(c => c.Owner)
+                .Include(c => c.Owner).ThenInclude(o => o.Feedbacks)
                 .Include(c => c.Manufacturer)
                 .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars)
@@ -116,7 +116,7 @@ public class GetCars
                 .Where(c => request.Manufacturer == null || c.ManufacturerId == request.Manufacturer)
                 .Where(c => request.Amenities == null || request.Amenities.All(a => c.CarAmenities.Select(ca => ca.AmenityId).Contains(a)))
                 .Where(c => ((decimal)c.Location.Distance(userLocation) * 111320) <= (request.Radius ?? 0))
-                .OrderByDescending(c => c.Id)
+                .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point)).ThenByDescending(c => c.Id)
                 .Where(c => request.LastCarId == null || c.Id.CompareTo(request.LastCarId) < 0);
             int count = await query.CountAsync(cancellationToken);
             List<Car> cars = await query
