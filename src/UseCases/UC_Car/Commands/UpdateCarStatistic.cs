@@ -26,6 +26,7 @@ public sealed class UpdateCarStatistic
             Car? gettingCar = await context.Cars
                 .Include(x => x.Bookings).ThenInclude(b => b.TripTrackings)
                 .Include(x => x.Bookings).ThenInclude(b => b.Feedbacks)
+                .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
             if (gettingCar is null)
                 return Result.NotFound($"Không tìm thấy xe với Id : {request.Id}");
