@@ -11,14 +11,14 @@ public class BaseEntity
 
     public void Delete()
     {
-        UpdatedAt = DateTimeOffset.UtcNow;
-        DeletedAt = DateTimeOffset.UtcNow;
+        UpdatedAt = DateTime.UtcNow;
+        DeletedAt = DateTime.UtcNow;
         IsDeleted = true;
     }
 
     public void Restore()
     {
-        UpdatedAt = DateTimeOffset.UtcNow;
+        UpdatedAt = DateTime.UtcNow;
         DeletedAt = null;
         IsDeleted = false;
     }

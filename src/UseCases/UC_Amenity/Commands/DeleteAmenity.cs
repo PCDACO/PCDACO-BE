@@ -23,15 +23,14 @@ public sealed class DeleteAmenity
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
-            if (!currentUser.User!.IsAdmin()) return Result.Forbidden("Bạn không có quyền xóa tiện ích");
+            if (!currentUser.User!.IsAdmin()) return Result.Forbidden("Bạn không có quyền xóa tiện nghi");
             Amenity? deletingAmenity = await context.Amenities.FirstOrDefaultAsync(a => a.Id == request.Id &&
                 !a.IsDeleted, cancellationToken);
             if (deletingAmenity is null)
-                return Result.Error("Không tìm thấy tiện ích");
-            deletingAmenity.IsDeleted = true;
-            deletingAmenity.DeletedAt = DateTimeOffset.UtcNow;
+                return Result.Error("Không tìm thấy tiện nghi");
+            deletingAmenity.Delete();
             await context.SaveChangesAsync(cancellationToken);
-            return Result.SuccessWithMessage("Xóa tiện ích thành công");
+            return Result.SuccessWithMessage("Xóa tiện nghi thành công");
         }
     }
 }

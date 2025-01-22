@@ -57,7 +57,7 @@ public sealed class UpdateCar
                 .AsNoTracking()
                 .Where(a => request.AmenityIds.Contains(a.Id) && !a.IsDeleted)
                 .ToListAsync(cancellationToken);
-            if (amenities.Count != request.AmenityIds.Length) return Result.Error("Một số tiện ích không tồn tại !");
+            if (amenities.Count != request.AmenityIds.Length) return Result.Error("Một số tiện nghi không tồn tại !");
             // Check if manufacturer is exist
             Manufacturer? checkingManufacturer = await context.Manufacturers.FirstOrDefaultAsync(m =>
                 m.Id == request.ManufacturerId && !m.IsDeleted,
