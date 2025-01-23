@@ -42,7 +42,7 @@ public sealed class CreateManufacturer
             Manufacturer manufacturer = new() { Name = request.ManufacturerName };
             await context.Manufacturers.AddAsync(manufacturer, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
-            return Result.Created(Response.FromEntity(manufacturer), "Tạo hãng xe thành công");
+            return Result.Success(Response.FromEntity(manufacturer), "Tạo hãng xe thành công");
         }
     }
 }
