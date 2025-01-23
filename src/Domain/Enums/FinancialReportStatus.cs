@@ -1,7 +1,8 @@
 namespace Domain.Enums;
 
-public enum FinancialReportStatus
+public enum WithdrawalRequestStatus
 {
     Pending,
-    Completed
+    Completed,
+    Rejected
 }

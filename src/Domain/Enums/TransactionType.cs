@@ -2,6 +2,8 @@ namespace Domain.Enums;
 
 public enum TransactionType
 {
-    Transfer,
-    Receive
+    BookingPayment,
+    Withdrawal, // Owner Withdrawal
+    Income, // Owner Earning
+    PlatformFee // Platform Fee
 }

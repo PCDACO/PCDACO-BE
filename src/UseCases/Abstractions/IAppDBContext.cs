@@ -1,5 +1,4 @@
 using Domain.Entities;
-
 using Microsoft.EntityFrameworkCore;
 
 namespace UseCases.Abstractions;
@@ -17,7 +16,6 @@ public interface IAppDBContext : IDisposable
     DbSet<Driver> Drivers { get; }
     DbSet<EncryptionKey> EncryptionKeys { get; }
     DbSet<Feedback> Feedbacks { get; }
-    DbSet<FinancialReport> FinancialReports { get; }
     DbSet<ImageCar> ImageCars { get; }
     DbSet<ImageFeedback> ImageFeedbacks { get; }
     DbSet<ImageReport> ImageReports { get; }
@@ -27,5 +25,5 @@ public interface IAppDBContext : IDisposable
     DbSet<TripTracking> TripTrackings { get; }
     DbSet<User> Users { get; }
     DbSet<UserStatistic> UserStatistics { get; }
-    DbSet<Withdrawal> Withdrawals { get; }
+    DbSet<WithdrawalRequest> WithdrawalRequests { get; }
 }

@@ -1,7 +1,5 @@
 using Domain.Entities;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 
 namespace Persistance.Data;
@@ -18,7 +16,6 @@ public class AppDBContext(DbContextOptions context) : DbContext(context), IAppDB
     public DbSet<Driver> Drivers => Set<Driver>();
     public DbSet<EncryptionKey> EncryptionKeys => Set<EncryptionKey>();
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
-    public DbSet<FinancialReport> FinancialReports => Set<FinancialReport>();
     public DbSet<ImageCar> ImageCars => Set<ImageCar>();
     public DbSet<ImageFeedback> ImageFeedbacks => Set<ImageFeedback>();
     public DbSet<ImageReport> ImageReports => Set<ImageReport>();
@@ -28,8 +25,8 @@ public class AppDBContext(DbContextOptions context) : DbContext(context), IAppDB
     public DbSet<TripTracking> TripTrackings => Set<TripTracking>();
     public DbSet<User> Users => Set<User>();
     public DbSet<UserStatistic> UserStatistics => Set<UserStatistic>();
-    public DbSet<Withdrawal> Withdrawals => Set<Withdrawal>();
+    public DbSet<WithdrawalRequest> WithdrawalRequests => Set<WithdrawalRequest>();
 
-    async Task IAppDBContext.SaveChangesAsync(CancellationToken cancellationToken)
-        => await SaveChangesAsync(cancellationToken);
+    async Task IAppDBContext.SaveChangesAsync(CancellationToken cancellationToken) =>
+        await SaveChangesAsync(cancellationToken);
 }
