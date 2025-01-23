@@ -18,13 +18,8 @@ public sealed class CreateManufacturer
         public static Response FromEntity(Manufacturer manufacturer) => new(manufacturer.Id);
     };
 
-    private sealed class Handler(
-        IAppDBContext context,
-        CurrentUser currentUser,
-        IAesEncryptionService aesEncryptionService,
-        IKeyManagementService keyManagementService,
-        EncryptionSettings encryptionSettings
-    ) : IRequestHandler<Command, Result<Response>>
+    private sealed class Handler(IAppDBContext context, CurrentUser currentUser)
+        : IRequestHandler<Command, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
             Command request,
