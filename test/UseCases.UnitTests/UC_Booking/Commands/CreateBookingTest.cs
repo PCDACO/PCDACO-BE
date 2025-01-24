@@ -59,8 +59,10 @@ public class CreateBookingTests
     private static Mock<DbSet<T>> CreateMockDbSet<T>(List<T> data)
         where T : class
     {
+        // Use MockQueryable.Moq to create a mock DbSet from in-memory data
         var mockSet = data.BuildMock().BuildMockDbSet();
 
+        // Setup FindAsync to return the first item in the list (simulates EF's FindAsync)
         mockSet
             .Setup(x => x.FindAsync(It.IsAny<object[]>()))
             .ReturnsAsync((object[] ids) => data.FirstOrDefault());
@@ -203,5 +205,115 @@ public class CreateBookingTests
         Assert.Contains(result.Errors, e => e.ErrorMessage == "Car không được để trống");
         Assert.Contains(result.Errors, e => e.ErrorMessage == "Phải chọn thời gian bắt đầu thuê");
         Assert.Contains(result.Errors, e => e.ErrorMessage == "Phải chọn thời gian kết thúc thuê");
+    }
+
+    private static Booking CreateTestBooking(
+        Guid userId,
+        Guid carId,
+        DateTime startTime,
+        DateTime endTime,
+        Car car
+    )
+    {
+        var totalBookingDays = (endTime - startTime).Days;
+        var basePrice = car.PricePerDay * totalBookingDays;
+        var platformFee = basePrice * 0.1m;
+        var totalAmount = basePrice + platformFee;
+
+        return new Booking
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            CarId = carId,
+            StartTime = startTime,
+            EndTime = endTime,
+            ActualReturnTime = endTime,
+            BasePrice = basePrice,
+            PlatformFee = platformFee,
+            ExcessDay = 0,
+            ExcessDayFee = 0,
+            TotalAmount = totalAmount,
+            Note = string.Empty // Required field
+        };
+    }
+
+    [Fact]
+    public async Task Handle_SameUserOverlappingBooking_ReturnsConflict()
+    {
+        // Arrange
+        var testUser = CreateTestUser(UserRole.Driver);
+        _currentUser.SetUser(testUser);
+        var testCar = CreateTestCar();
+
+        // Create existing booking with required fields
+        var existingBooking = CreateTestBooking(
+            userId: testUser.Id,
+            carId: testCar.Id,
+            startTime: DateTime.Now.AddHours(1),
+            endTime: DateTime.Now.AddHours(3),
+            car: testCar // Use the test car to calculate prices
+        );
+
+        // Mock Cars and Bookings
+        var mockCars = CreateMockDbSet([testCar]);
+        var mockBookings = CreateMockDbSet([existingBooking]);
+        _mockContext.Setup(c => c.Cars).Returns(mockCars.Object);
+        _mockContext.Setup(c => c.Bookings).Returns(mockBookings.Object);
+
+        // Create new overlapping command
+        var command = new CreateBooking.CreateBookingCommand(
+            testUser.Id,
+            testCar.Id,
+            DateTime.Now.AddHours(2), // Overlaps
+            DateTime.Now.AddHours(4)
+        );
+
+        var handler = new CreateBooking.Handler(_mockContext.Object, _currentUser);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Conflict, result.Status);
+    }
+
+    [Fact]
+    public async Task Handle_DifferentUserOverlappingBooking_CreatesSuccessfully()
+    {
+        // Arrange
+        var testUser1 = CreateTestUser(UserRole.Driver);
+        var testUser2 = CreateTestUser(UserRole.Driver); // Different user
+        var testCar = CreateTestCar();
+
+        // Create existing booking with required fields
+        var existingBooking = CreateTestBooking(
+            userId: testUser1.Id,
+            carId: testCar.Id,
+            startTime: DateTime.Now.AddHours(1),
+            endTime: DateTime.Now.AddHours(3),
+            car: testCar // Use the test car to calculate prices
+        );
+
+        // Mock Cars and Bookings
+        var mockCars = CreateMockDbSet([testCar]);
+        var mockBookings = CreateMockDbSet([existingBooking]);
+        _mockContext.Setup(c => c.Cars).Returns(mockCars.Object);
+        _mockContext.Setup(c => c.Bookings).Returns(mockBookings.Object);
+
+        // Use User2 for the new booking
+        _currentUser.SetUser(testUser2);
+        var handler = new CreateBooking.Handler(_mockContext.Object, _currentUser);
+        var command = new CreateBooking.CreateBookingCommand(
+            testUser2.Id,
+            testCar.Id,
+            DateTime.Now.AddHours(2), // Overlaps with User1's booking
+            DateTime.Now.AddHours(4)
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status); // Should succeed
     }
 }

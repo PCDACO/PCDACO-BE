@@ -36,7 +36,6 @@ public sealed class CreateBooking
             if (!currentUser.User!.IsDriver())
                 return Result.Error("Bạn không có quyền thực hiện chức năng này !");
 
-
             var car = await appDBContext.Cars.FirstOrDefaultAsync(
                 x => x.Id == request.CarId,
                 cancellationToken: cancellationToken
@@ -44,6 +43,23 @@ public sealed class CreateBooking
 
             if (car == null)
                 return Result<Response>.NotFound();
+
+            // Check for overlapping bookings (same user + same car)
+            bool hasOverlap = await appDBContext.Bookings.AnyAsync(
+                b =>
+                    b.UserId == request.UserId
+                    && b.CarId == request.CarId
+                    && b.StartTime < request.EndTime
+                    && b.EndTime > request.StartTime,
+                cancellationToken
+            );
+
+            if (hasOverlap)
+            {
+                return Result.Conflict(
+                    "Bạn đã có đơn đặt xe cho chiếc xe này trong khoảng thời gian này."
+                );
+            }
 
             Guid bookingId = Uuid.NewDatabaseFriendly(Database.PostgreSql);
             var totalBookingDay = (request.EndTime - request.StartTime).Days;
