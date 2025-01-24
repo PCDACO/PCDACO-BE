@@ -20,7 +20,7 @@ public sealed class UpdateAmenity
         string Description
     ) : IRequest<Result>;
 
-    private class Handler(
+    internal class Handler(
         IAppDBContext context,
         CurrentUser currentUser
     ) : IRequestHandler<Command, Result>
