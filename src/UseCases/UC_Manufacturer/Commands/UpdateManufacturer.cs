@@ -17,7 +17,7 @@ public sealed class UpdateManufacturer
             new(manufacturer.Id, manufacturer.Name);
     };
 
-    private class Handler(IAppDBContext context, CurrentUser currentUser)
+    public class Handler(IAppDBContext context, CurrentUser currentUser)
         : IRequestHandler<Command, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
