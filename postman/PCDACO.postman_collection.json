@@ -1,0 +1,377 @@
+{
+	"info": {
+		"_postman_id": "f34ca65f-62f6-4d52-bf52-a3aea561104e",
+		"name": "PCDACO",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "30663183"
+	},
+	"item": [
+		{
+			"name": "Amenity Management",
+			"item": [
+				{
+					"name": "Get All Amenities",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorization}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://{{baseUrl}}/api/amenities?pageNumber=1&pageSize=10",
+							"protocol": "http",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"amenities"
+							],
+							"query": [
+								{
+									"key": "pageNumber",
+									"value": "1"
+								},
+								{
+									"key": "pageSize",
+									"value": "10"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Create Amenity",
+					"event": [
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate unique values using Postman's built-in utilities\r",
+									"const prefix = Date.now(); // Unique prefix using timestamp\r",
+									"\r",
+									"pm.environment.set(\"amenityName\", `Amenity_${prefix}`);\r",
+									"pm.environment.set(\"amenityDescription\", `Amenity_${prefix}_description`);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{authorization}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"{{amenityName}}\",\r\n  \"description\": \"{{amenityDescription}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{baseUrl}}/api/amenities",
+							"protocol": "http",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"amenities"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Booking & Trip Management",
+			"item": []
+		},
+		{
+			"name": "Car Management",
+			"item": []
+		},
+		{
+			"name": "Feedback & Ratings Management",
+			"item": []
+		},
+		{
+			"name": "Manufacturer Management",
+			"item": []
+		},
+		{
+			"name": "User Management",
+			"item": [
+				{
+					"name": "SignUp",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Response status code is 200\", function () {\r",
+									"  pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"pm.test(\"Response time is within an acceptable range\", function () {\r",
+									"  pm.expect(pm.response.responseTime).to.be.below(300);\r",
+									"});\r",
+									"\r",
+									"\r",
+									"pm.test(\"Response has the required fields\", function () {\r",
+									"    const responseData = pm.response.json();\r",
+									"    \r",
+									"    pm.expect(responseData).to.be.an('object');\r",
+									"    pm.expect(responseData.value).to.exist;\r",
+									"    pm.expect(responseData.isSuccess).to.exist;\r",
+									"    pm.expect(responseData.message).to.exist;\r",
+									"});\r",
+									"\r",
+									"\r",
+									"pm.test(\"Access token and refresh token are non-empty strings\", function () {\r",
+									"  const responseData = pm.response.json();\r",
+									"  \r",
+									"  pm.expect(responseData.value.accessToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"Access token should not be empty\");\r",
+									"  pm.expect(responseData.value.refreshToken).to.be.a('string').and.to.have.lengthOf.at.least(1, \"Refresh token should not be empty\");\r",
+									"});\r",
+									"\r",
+									"\r",
+									"pm.test(\"IsSuccess is a boolean\", function () {\r",
+									"    const responseData = pm.response.json();\r",
+									"    \r",
+									"    pm.expect(responseData.isSuccess).to.be.a('boolean');\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Message is a non-empty string\", function () {\r",
+									"    const responseData = pm.response.json();\r",
+									"    \r",
+									"    pm.expect(responseData.message).to.be.a('string').and.to.have.lengthOf.at.least(1, \"Value should not be empty\");\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Generate unique values using Postman's built-in utilities\r",
+									"const prefix = Date.now(); // Unique prefix using timestamp\r",
+									"\r",
+									"// Function to generate random password\r",
+									"function generateStrongPassword(length = 12) {\r",
+									"    const lowercase = 'abcdefghijklmnopqrstuvwxyz';\r",
+									"    const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';\r",
+									"    const numbers = '0123456789';\r",
+									"    const symbols = '!@#$%^&*()-_=+';\r",
+									"\r",
+									"    // Ensure at least one character from each set\r",
+									"    let password = [\r",
+									"        lowercase[Math.floor(Math.random() * lowercase.length)],\r",
+									"        uppercase[Math.floor(Math.random() * uppercase.length)],\r",
+									"        numbers[Math.floor(Math.random() * numbers.length)],\r",
+									"        symbols[Math.floor(Math.random() * symbols.length)]\r",
+									"    ];\r",
+									"\r",
+									"    // Fill remaining characters with random selection from all sets\r",
+									"    const allChars = lowercase + uppercase + numbers + symbols;\r",
+									"    for (let i = password.length; i < length; i++) {\r",
+									"        password.push(allChars[Math.floor(Math.random() * allChars.length)]);\r",
+									"    }\r",
+									"\r",
+									"    // Shuffle the array and join to create final password\r",
+									"    return password.sort(() => Math.random() - 0.5).join('');\r",
+									"}\r",
+									"\r",
+									"// Random Address Generator\r",
+									"function generateRandomAddress() {\r",
+									"    const streets = ['Main St', 'Oak Ave', 'Pine Rd', 'Maple Dr', 'Cedar Ln'];\r",
+									"    const cities = [\r",
+									"        { city: 'Springfield', state: 'IL', zip: '62704' },\r",
+									"        { city: 'Phoenix', state: 'AZ', zip: '85001' },\r",
+									"        { city: 'Austin', state: 'TX', zip: '73301' },\r",
+									"        { city: 'Denver', state: 'CO', zip: '80202' },\r",
+									"        { city: 'Orlando', state: 'FL', zip: '32801' }\r",
+									"    ];\r",
+									"    \r",
+									"    return `${Math.floor(Math.random() * 9999) + 1} ${\r",
+									"        streets[Math.floor(Math.random() * streets.length)]\r",
+									"    }, ${\r",
+									"        cities[Math.floor(Math.random() * cities.length)].city\r",
+									"    }, ${\r",
+									"        cities[Math.floor(Math.random() * cities.length)].state\r",
+									"    } ${String(Math.floor(10000 + Math.random() * 90000)).slice(0,5)}`;\r",
+									"}\r",
+									"\r",
+									"// Random Date of Birth Generator (18-100 years old)\r",
+									"function generateRandomDateOfBirth() {\r",
+									"    const now = new Date();\r",
+									"    const currentYear = now.getFullYear();\r",
+									"    const birthYear = currentYear - 18 - Math.floor(Math.random() * 82);\r",
+									"    const birthMonth = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');\r",
+									"    const birthDay = String(Math.floor(Math.random() * 28) + 1).padStart(2, '0');\r",
+									"    const hours = String(Math.floor(Math.random() * 24)).padStart(2, '0');\r",
+									"    const minutes = String(Math.floor(Math.random() * 60)).padStart(2, '0');\r",
+									"    const seconds = String(Math.floor(Math.random() * 60)).padStart(2, '0');\r",
+									"    const milliseconds = String(Math.floor(Math.random() * 1000)).padStart(3, '0');\r",
+									"\r",
+									"    return `${birthYear}-${birthMonth}-${birthDay}T${hours}:${minutes}:${seconds}.${milliseconds}Z`;\r",
+									"}\r",
+									"\r",
+									"// Set variables for the request\r",
+									"pm.environment.set(\"name\", `User_${prefix}`);\r",
+									"pm.environment.set(\"email\", `user_${prefix}@example.com`);\r",
+									"pm.environment.set(\"password\", generateStrongPassword());\r",
+									"pm.environment.set(\"address\", generateRandomAddress());\r",
+									"pm.environment.set(\"dateOfBirth\", generateRandomDateOfBirth());\r",
+									"pm.environment.set(\"phone\", `+1${Math.floor(1000000000 + Math.random() * 9000000000)}`);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"name\": \"{{name}}\",\r\n  \"email\": \"{{email}}\",\r\n  \"password\": \"{{password}}\",\r\n  \"address\": \"{{address}}\",\r\n  \"dateOfBirth\": \"{{dateOfBirth}}\",\r\n  \"phone\": \"{{phone}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{baseUrl}}/api/users/signup",
+							"protocol": "http",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "SignIn",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"// Verify login succeeds\r",
+									"pm.test(\"Login - Status 200\", () => pm.response.to.have.status(200));\r",
+									"\r",
+									"pm.test(\"Response has access token\", () => {\r",
+									"  const jsonData = pm.response.json();\r",
+									"  \r",
+									"  // Check nested \"value\" object\r",
+									"  pm.expect(jsonData.value).to.be.an(\"object\");\r",
+									"  pm.expect(jsonData.value.accessToken).to.be.a(\"string\");\r",
+									"  \r",
+									"  // Save tokens to environment variables\r",
+									"  pm.environment.set(\"authToken\", jsonData.value.accessToken);\r",
+									"  pm.environment.set(\"refreshToken\", jsonData.value.refreshToken);\r",
+									"});\r",
+									"\r",
+									"// Optional: Verify success message\r",
+									"pm.test(\"Login successful\", () => {\r",
+									"  const jsonData = pm.response.json();\r",
+									"  pm.expect(jsonData.isSuccess).to.eql(true);\r",
+									"  pm.expect(jsonData.message).to.eql(\"Đăng nhập thành công\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"{{email}}\",\r\n  \"password\": \"{{password}}\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://{{baseUrl}}/api/users/login",
+							"protocol": "http",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"users",
+								"login"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
