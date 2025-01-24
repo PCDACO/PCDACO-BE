@@ -2,7 +2,7 @@ using API.Utils;
 using Ardalis.Result;
 using Carter;
 using MediatR;
-using UseCases.UC_Manufacturer;
+using UseCases.UC_Manufacturer.Commands;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.ManufacturerEndpoints;

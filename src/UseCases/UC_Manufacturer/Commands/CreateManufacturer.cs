@@ -7,7 +7,7 @@ using UseCases.Abstractions;
 using UseCases.DTOs;
 using UUIDNext;
 
-namespace UseCases.UC_Manufacturer;
+namespace UseCases.UC_Manufacturer.Commands;
 
 public sealed class CreateManufacturer
 {
