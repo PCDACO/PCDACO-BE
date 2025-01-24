@@ -38,4 +38,8 @@ public class User : BaseEntity
     public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
 
     public bool IsAdmin() => Role == UserRole.Admin;
+
+    public bool IsDriver() => Role == UserRole.Driver;
+
+    public bool IsOwner() => Role == UserRole.Owner;
 }
