@@ -11,7 +11,7 @@ namespace UseCases.UC_Manufacturer.Commands
     {
         public sealed record Command(Guid Id) : IRequest<Result>;
 
-        private class Handler(IAppDBContext context, CurrentUser currentUser)
+        public class Handler(IAppDBContext context, CurrentUser currentUser)
             : IRequestHandler<Command, Result>
         {
             public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
