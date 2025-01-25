@@ -8,6 +8,8 @@ using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.UC_Amenity.Commands;
 
+using UUIDNext;
+
 namespace UseCases.UnitTests.UC_Amenity.Commands;
 
 public class CreateAmenityTest
@@ -25,8 +27,8 @@ public class CreateAmenityTest
     {
         return new User
         {
-            Id = Guid.NewGuid(),
-            EncryptionKeyId = Guid.NewGuid(),
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            EncryptionKeyId = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             Name = "Test User",
             Email = "test@example.com",
             Password = "password",

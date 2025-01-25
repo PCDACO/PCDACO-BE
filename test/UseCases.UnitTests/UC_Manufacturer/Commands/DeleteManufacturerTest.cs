@@ -137,7 +137,8 @@ public class DeleteManufacturerTest
         var testManufacturer = CreateTestManufacturer();
         testManufacturer.IsDeleted = true; // Mark as already deleted
 
-        var mockManufacturers = CreateMockDbSet([testManufacturer]);
+        // Mock Manufacturers DbSet to return nothing (simulate query filter excluding deleted entities)
+        var mockManufacturers = CreateMockDbSet(new List<Manufacturer>());
         _mockContext.Setup(c => c.Manufacturers).Returns(mockManufacturers.Object);
 
         var handler = new DeleteManufacturer.Handler(_mockContext.Object, _currentUser);

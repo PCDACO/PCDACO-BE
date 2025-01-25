@@ -112,7 +112,6 @@ public class GetCars
                 .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
-                .Where(c => !c.IsDeleted)
                 .Where(c => request.Manufacturer == null || c.ManufacturerId == request.Manufacturer)
                 .Where(c => request.Amenities == null || request.Amenities.All(a => c.CarAmenities.Select(ca => ca.AmenityId).Contains(a)))
                 .Where(c => ((decimal)c.Location.Distance(userLocation) * 111320) <= (request.Radius ?? 0))

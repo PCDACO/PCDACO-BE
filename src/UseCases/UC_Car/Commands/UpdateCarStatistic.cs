@@ -37,30 +37,23 @@ public sealed class UpdateCarStatistic
             // Update
             updatingCarStatistic.TotalRented = gettingCar.Bookings
                 .Where(b => b.Status == BookingStatus.Completed)
-                .Where(b => !b.IsDeleted)
                 .Count();
             updatingCarStatistic.TotalCancellation = gettingCar.Bookings
                 .Where(b => b.Status == BookingStatus.Cancelled)
-                .Where(b => !b.IsDeleted)
                 .Count();
             updatingCarStatistic.TotalEarning = gettingCar.Bookings
                 .Where(b => b.Status == BookingStatus.Completed)
-                .Where(b => !b.IsDeleted)
                 .Sum(b => b.TotalAmount);
             updatingCarStatistic.TotalDistance = gettingCar.Bookings
                 .Where(b => b.Status == BookingStatus.Completed)
-                .Where(b => !b.IsDeleted)
                 .Sum(b => b.TripTrackings.OrderByDescending(t => t.Id).FirstOrDefault()?.CumulativeDistance ?? 0);
             updatingCarStatistic.AverageRating = gettingCar.Bookings
                 .Where(b => b.Status == BookingStatus.Completed)
-                .Where(b => !b.IsDeleted)
                 .Average(b => b.Feedbacks
-                    .Where(f => !f.IsDeleted)
                     .Where(f => f.Type == FeedbackTypeEnum.Owner)
                     .Average(f => (decimal)f.Point));
             updatingCarStatistic.LastRented = gettingCar.Bookings
                 .Where(b => b.Status == BookingStatus.Completed)
-                .Where(b => !b.IsDeleted)
                 .OrderByDescending(b => b.Id)
                 .FirstOrDefault()?.EndTime ?? null!;
             // Save

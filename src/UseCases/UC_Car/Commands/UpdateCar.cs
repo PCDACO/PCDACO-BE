@@ -51,16 +51,16 @@ public sealed class UpdateCar
             if (currentUser.User!.IsAdmin()) return Result.Error("Bạn không có quyền thực hiện chức năng này !");
             Car? checkingCar = await context.Cars
                 .Include(c => c.EncryptionKey)
-                .FirstOrDefaultAsync(c => c.Id == request.CarId && !c.IsDeleted, cancellationToken);
+                .FirstOrDefaultAsync(c => c.Id == request.CarId, cancellationToken);
             if (checkingCar is null) return Result.Error("Xe không tồn tại");
             List<Amenity> amenities = await context.Amenities
                 .AsNoTracking()
-                .Where(a => request.AmenityIds.Contains(a.Id) && !a.IsDeleted)
+                .Where(a => request.AmenityIds.Contains(a.Id))
                 .ToListAsync(cancellationToken);
             if (amenities.Count != request.AmenityIds.Length) return Result.Error("Một số tiện nghi không tồn tại !");
             // Check if manufacturer is exist
             Manufacturer? checkingManufacturer = await context.Manufacturers.FirstOrDefaultAsync(m =>
-                m.Id == request.ManufacturerId && !m.IsDeleted,
+                m.Id == request.ManufacturerId,
                 cancellationToken);
             if (checkingManufacturer is null) return Result.Error("Hãng xe không tồn tại !");
             // Update car amenities

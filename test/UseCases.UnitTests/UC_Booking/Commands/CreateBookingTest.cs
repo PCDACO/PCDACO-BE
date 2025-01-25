@@ -8,6 +8,7 @@ using NetTopologySuite.Geometries;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.UC_Booking.Commands;
+using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Booking.Commands;
 
@@ -26,8 +27,8 @@ public class CreateBookingTests
     {
         return new User
         {
-            Id = Guid.NewGuid(),
-            EncryptionKeyId = Guid.NewGuid(),
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            EncryptionKeyId = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             Name = "Test User",
             Email = "test@example.com",
             Password = "password",
@@ -42,10 +43,10 @@ public class CreateBookingTests
     {
         return new Car
         {
-            Id = Guid.NewGuid(),
-            OwnerId = Guid.NewGuid(),
-            ManufacturerId = Guid.NewGuid(),
-            EncryptionKeyId = Guid.NewGuid(),
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            OwnerId = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            ManufacturerId = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            EncryptionKeyId = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             EncryptedLicensePlate = "ABC123",
             Color = "Red",
             Seat = 4,
@@ -80,7 +81,7 @@ public class CreateBookingTests
         var handler = new CreateBooking.Handler(_mockContext.Object, _currentUser);
         var command = new CreateBooking.CreateBookingCommand(
             testUser.Id,
-            Guid.NewGuid(),
+            Uuid.NewDatabaseFriendly(Database.PostgreSql),
             DateTime.Now,
             DateTime.Now.AddDays(1)
         );
@@ -107,7 +108,7 @@ public class CreateBookingTests
         var handler = new CreateBooking.Handler(_mockContext.Object, _currentUser);
         var command = new CreateBooking.CreateBookingCommand(
             testUser.Id,
-            Guid.NewGuid(),
+            Uuid.NewDatabaseFriendly(Database.PostgreSql),
             DateTime.Now,
             DateTime.Now.AddDays(1)
         );
@@ -167,8 +168,8 @@ public class CreateBookingTests
         // Arrange
         var validator = new CreateBooking.Validator();
         var command = new CreateBooking.CreateBookingCommand(
-            Guid.NewGuid(),
-            Guid.NewGuid(),
+            Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            Uuid.NewDatabaseFriendly(Database.PostgreSql),
             DateTime.Now,
             DateTime.Now.AddDays(-1)
         );
@@ -222,7 +223,7 @@ public class CreateBookingTests
 
         return new Booking
         {
-            Id = Guid.NewGuid(),
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             UserId = userId,
             CarId = carId,
             StartTime = startTime,

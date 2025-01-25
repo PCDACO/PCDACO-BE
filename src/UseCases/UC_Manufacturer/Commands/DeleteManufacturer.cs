@@ -21,7 +21,7 @@ namespace UseCases.UC_Manufacturer.Commands
 
                 Manufacturer? deletingManufacturer =
                     await context.Manufacturers.FirstOrDefaultAsync(
-                        m => m.Id == request.Id && !m.IsDeleted,
+                        m => m.Id == request.Id,
                         cancellationToken
                     );
                 if (deletingManufacturer is null)

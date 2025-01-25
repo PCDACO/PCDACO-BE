@@ -30,7 +30,7 @@ public sealed class UpdateManufacturer
 
             // Check if manufacturer is exist
             Manufacturer? updatingManufacturer = await context.Manufacturers.FirstOrDefaultAsync(
-                m => m.Id == request.Id && !m.IsDeleted,
+                m => m.Id == request.Id,
                 cancellationToken
             );
             if (updatingManufacturer is null)

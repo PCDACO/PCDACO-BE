@@ -43,7 +43,7 @@ public sealed class CreateCar
         public static Response FromEntity(Car car) => new(car.Id);
     };
 
-    private sealed class Handler(IAppDBContext context,
+    internal sealed class Handler(IAppDBContext context,
         CurrentUser currentUser,
         GeometryFactory geometryFactory,
         IAesEncryptionService aesEncryptionService,
@@ -58,7 +58,7 @@ public sealed class CreateCar
             {
                 List<Amenity> amenities = await context.Amenities
                     .AsNoTracking()
-                    .Where(a => request.AmenityIds.Contains(a.Id) && !a.IsDeleted)
+                    .Where(a => request.AmenityIds.Contains(a.Id))
                     .ToListAsync(cancellationToken);
                 if (amenities.Count != request.AmenityIds.Length) return Result.Error("Một số tiện nghi không tồn tại !");
             }
@@ -66,7 +66,7 @@ public sealed class CreateCar
             Manufacturer? checkingManufacturer = await context.Manufacturers
                 .AsNoTracking()
                 .FirstOrDefaultAsync(m =>
-                    m.Id == request.ManufacturerId && !m.IsDeleted,
+                    m.Id == request.ManufacturerId,
                     cancellationToken);
             if (checkingManufacturer is null) return Result.Error("Hãng xe không tồn tại !");
             (string key, string iv) = await keyManagementService.GenerateKeyAsync();

@@ -46,8 +46,7 @@ public sealed class GetAmenities
             // Query amenities
             IQueryable<Amenity> query = context.Amenities
                 .AsNoTracking()
-                .Where(a => !a.IsDeleted)
-                .Where(a => a.Name.Contains(request.keyword, StringComparison.CurrentCultureIgnoreCase));
+                .Where(a => a.Name.ToLower().Contains(request.keyword.ToLower()));
             // Get total result count
             int count = await query.CountAsync(cancellationToken);
             // Get amenities

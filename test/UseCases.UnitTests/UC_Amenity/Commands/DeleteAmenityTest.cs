@@ -8,6 +8,8 @@ using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.UC_Amenity.Commands;
 
+using UUIDNext;
+
 namespace UseCases.UnitTests.UC_Amenity.Commands;
 
 public class DeleteAmenityTests
@@ -25,8 +27,8 @@ public class DeleteAmenityTests
     {
         return new User
         {
-            Id = Guid.NewGuid(),
-            EncryptionKeyId = Guid.NewGuid(),
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            EncryptionKeyId = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             Name = "Test User",
             Email = "test@example.com",
             Password = "password",
@@ -41,7 +43,7 @@ public class DeleteAmenityTests
     {
         return new Amenity
         {
-            Id = Guid.NewGuid(),
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             Name = "WiFi",
             Description = "High-speed internet",
             IsDeleted = false
@@ -70,7 +72,7 @@ public class DeleteAmenityTests
         _currentUser.SetUser(testUser);
 
         var handler = new DeleteAmenity.Handler(_mockContext.Object, _currentUser);
-        var command = new DeleteAmenity.Command(Guid.NewGuid());
+        var command = new DeleteAmenity.Command(Uuid.NewDatabaseFriendly(Database.PostgreSql));
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -92,7 +94,7 @@ public class DeleteAmenityTests
         _mockContext.Setup(c => c.Amenities).Returns(mockAmenities.Object);
 
         var handler = new DeleteAmenity.Handler(_mockContext.Object, _currentUser);
-        var command = new DeleteAmenity.Command(Guid.NewGuid());
+        var command = new DeleteAmenity.Command(Uuid.NewDatabaseFriendly(Database.PostgreSql));
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -138,7 +140,8 @@ public class DeleteAmenityTests
         var testAmenity = CreateTestAmenity();
         testAmenity.IsDeleted = true; // Mark as already deleted
 
-        var mockAmenities = CreateMockDbSet([testAmenity]);
+        // Mock Amenities DbSet to return nothing (simulate query filter excluding deleted entities)
+        var mockAmenities = CreateMockDbSet(new List<Amenity>()); // Empty list
         _mockContext.Setup(c => c.Amenities).Returns(mockAmenities.Object);
 
         var handler = new DeleteAmenity.Handler(_mockContext.Object, _currentUser);
