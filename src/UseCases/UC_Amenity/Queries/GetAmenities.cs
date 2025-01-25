@@ -1,12 +1,7 @@
-
 using Ardalis.Result;
-
 using Domain.Entities;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Utils;
@@ -15,21 +10,13 @@ namespace UseCases.UC_Amenity.Queries;
 
 public sealed class GetAmenities
 {
-    public record Query(
-        int PageNumber = 1,
-        int PageSize = 10,
-        string keyword = ""
-    ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
+    public record Query(int PageNumber = 1, int PageSize = 10, string keyword = "")
+        : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
-    public record Response(
-        Guid Id,
-        string Name,
-        string Description,
-        DateTimeOffset CreatedAt
-    )
+    public record Response(Guid Id, string Name, string Description, DateTimeOffset CreatedAt)
     {
-        public static Response FromEntity(Amenity amenity)
-            => new(
+        public static Response FromEntity(Amenity amenity) =>
+            new(
                 amenity.Id,
                 amenity.Name,
                 amenity.Description,
@@ -37,30 +24,37 @@ public sealed class GetAmenities
             );
     };
 
-    public class Handler(
-        IAppDBContext context
-    ) : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
+    public class Handler(IAppDBContext context)
+        : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
     {
-        public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(
+            Query request,
+            CancellationToken cancellationToken
+        )
         {
             // Query amenities
-            IQueryable<Amenity> query = context.Amenities
-                .AsNoTracking()
+            IQueryable<Amenity> query = context
+                .Amenities.AsNoTracking()
                 .Where(a => a.Name.ToLower().Contains(request.keyword.ToLower()));
             // Get total result count
             int count = await query.CountAsync(cancellationToken);
             // Get amenities
-            IEnumerable<Response> amenities = await query.OrderByDescending(a => a.Id)
+            IEnumerable<Response> amenities = await query
+                .OrderByDescending(a => a.Id)
                 .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .Select(a => Response.FromEntity(a))
                 .ToListAsync(cancellationToken);
             // Return result
-            return Result.Success(OffsetPaginatedResponse<Response>.Map(
-                amenities,
-                count,
-                request.PageNumber,
-                request.PageSize
-            ), "Lấy danh sách tiện ích thành công");
+            return Result.Success(
+                OffsetPaginatedResponse<Response>.Map(
+                    amenities,
+                    count,
+                    request.PageNumber,
+                    request.PageSize
+                ),
+                "Lấy danh sách tiện ích thành công"
+            );
         }
     }
 }

@@ -69,6 +69,7 @@ public class GetAmenitiesTests : IAsyncLifetime
             }
         };
 
+
         await _dbContext.Amenities.AddRangeAsync(amenities);
         await _dbContext.SaveChangesAsync();
     }
@@ -100,9 +101,9 @@ public class GetAmenitiesTests : IAsyncLifetime
         var result = await handler.Handle(query, CancellationToken.None);
 
         // Assert
-        Assert.Equal(3, result.Value.TotalItems);
-        Assert.Equal(2, result.Value.Items.Count());
-        Assert.Equal("Parking", result.Value.Items.First().Name);
+        Assert.Equal(3, result.Value.TotalItems); // Total items in database
+        Assert.Equal(2, result.Value.Items.Count()); // Items per page
+        Assert.Equal("Parking", result.Value.Items.First().Name); // First item in descending order
     }
 
     [Fact]
