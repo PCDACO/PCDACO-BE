@@ -33,7 +33,7 @@ public sealed class CreateManufacturer
             Manufacturer? checkingManufacturer = await context
                 .Manufacturers.AsNoTracking()
                 .FirstOrDefaultAsync(
-                    m => m.Name == request.ManufacturerName,
+                    m => m.Name.Trim().ToLower() == request.ManufacturerName.Trim().ToLower(),
                     cancellationToken
                 );
             if (checkingManufacturer is not null)
