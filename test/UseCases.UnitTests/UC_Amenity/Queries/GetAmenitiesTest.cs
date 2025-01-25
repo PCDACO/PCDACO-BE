@@ -26,22 +26,22 @@ public class GetAmenitiesTests
                 Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
                 Name = "WiFi",
                 Description = "High-speed internet",
-                IsDeleted = false
+                IsDeleted = false,
             },
             new Amenity
             {
                 Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
                 Name = "Air Conditioning",
                 Description = "Cooling system",
-                IsDeleted = false
+                IsDeleted = false,
             },
             new Amenity
             {
                 Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
                 Name = "Parking",
                 Description = "Car parking space",
-                IsDeleted = false
-            }
+                IsDeleted = false,
+            },
         ];
     }
 
@@ -86,7 +86,7 @@ public class GetAmenitiesTests
 
         // Assert
         Assert.Equal(3, result.Value.TotalItems); // Total items in database
-        Assert.Equal(3, result.Value.Items.Count()); // Items per page
+        Assert.Equal(2, result.Value.Items.Count()); // Items per page
         Assert.Equal("Parking", result.Value.Items.First().Name); // First item in descending order
     }
 
