@@ -37,6 +37,7 @@ public class GetAllManufacturers
             IEnumerable<Response> manufacturers = await query
                 .OrderByDescending(m => m.Id)
                 .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .Select(m => Response.FromEntity(m))
                 .ToListAsync(cancellationToken);
             // Return result
