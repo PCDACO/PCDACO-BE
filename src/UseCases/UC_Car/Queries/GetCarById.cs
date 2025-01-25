@@ -98,7 +98,7 @@ public class GetCarById
                 .Include(c => c.ImageCars)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .Include(c => c.Owner)
-                .FirstOrDefaultAsync(c => c.Id == request.Id && !c.IsDeleted, cancellationToken)
+                .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken)
                 switch
             {
                 null => Result<Response>.NotFound(),
