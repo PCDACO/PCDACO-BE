@@ -43,7 +43,7 @@ public sealed class CreateCar
         public static Response FromEntity(Car car) => new(car.Id);
     };
 
-    private sealed class Handler(IAppDBContext context,
+    internal sealed class Handler(IAppDBContext context,
         CurrentUser currentUser,
         GeometryFactory geometryFactory,
         IAesEncryptionService aesEncryptionService,
