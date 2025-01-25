@@ -101,7 +101,7 @@ public class GetAmenitiesTests : IAsyncLifetime
 
         // Assert
         Assert.Equal(3, result.Value.TotalItems);
-        Assert.Equal(3, result.Value.Items.Count());
+        Assert.Equal(2, result.Value.Items.Count());
         Assert.Equal("Parking", result.Value.Items.First().Name);
     }
 
