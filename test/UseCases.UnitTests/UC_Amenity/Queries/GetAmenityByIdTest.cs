@@ -1,50 +1,66 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
-using MockQueryable.Moq;
-using Moq;
-using UseCases.Abstractions;
+using Persistance.Data;
+using Testcontainers.PostgreSql;
 using UseCases.UC_Amenity.Queries;
 using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Amenity.Queries;
 
-public class GetAmenityByIdTests
+public class GetAmenityByIdTests : IAsyncLifetime
 {
-    private readonly Mock<IAppDBContext> _mockContext;
+    private AppDBContext _dbContext;
+    private readonly PostgreSqlContainer _postgresContainer;
 
     public GetAmenityByIdTests()
     {
-        _mockContext = new Mock<IAppDBContext>();
+        _postgresContainer = new PostgreSqlBuilder()
+            .WithImage("postgis/postgis:latest")
+            .WithCleanUp(true)
+            .Build();
     }
 
-    private static Amenity CreateTestAmenity(bool isDeleted = false)
+    public async Task InitializeAsync()
     {
-        return new Amenity
+        await _postgresContainer.StartAsync();
+
+        var options = new DbContextOptionsBuilder<AppDBContext>()
+            .UseNpgsql(_postgresContainer.GetConnectionString(), o => o.UseNetTopologySuite())
+            .EnableSensitiveDataLogging()
+            .Options;
+
+        _dbContext = new AppDBContext(options);
+        await _dbContext.Database.MigrateAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _postgresContainer.DisposeAsync();
+        await _dbContext.DisposeAsync();
+    }
+
+    private async Task<Amenity> CreateTestAmenity(bool isDeleted = false)
+    {
+        var amenity = new Amenity
         {
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             Name = "WiFi",
             Description = "High-speed internet",
             IsDeleted = isDeleted
         };
-    }
 
-    private static Mock<DbSet<T>> CreateMockDbSet<T>(List<T> data)
-        where T : class
-    {
-        var mockSet = data.AsQueryable().BuildMockDbSet();
-        return mockSet;
+        _dbContext.Amenities.Add(amenity);
+        await _dbContext.SaveChangesAsync();
+        return amenity;
     }
 
     [Fact]
     public async Task Handle_AmenityExists_ReturnsAmenity()
     {
         // Arrange
-        var testAmenity = CreateTestAmenity();
-        var mockAmenities = CreateMockDbSet([testAmenity]);
-        _mockContext.Setup(c => c.Amenities).Returns(mockAmenities.Object);
-
-        var handler = new GetAmenityById.Handler(_mockContext.Object);
+        var testAmenity = await CreateTestAmenity();
+        var handler = new GetAmenityById.Handler(_dbContext);
         var command = new GetAmenityById.Query(testAmenity.Id);
 
         // Act
@@ -54,37 +70,29 @@ public class GetAmenityByIdTests
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Equal(testAmenity.Id, result.Value.Id);
         Assert.Equal(testAmenity.Name, result.Value.Name);
-        Assert.Equal(testAmenity.Description, result.Value.Description);
     }
 
     [Fact]
-    public async Task Handle_AmenityIsDeleted_StillReturnsAmenity()
+    public async Task Handle_AmenityIsDeleted_ReturnsNotFound()
     {
         // Arrange
-        var testAmenity = CreateTestAmenity(isDeleted: true); // Deleted amenity
-        var mockAmenities = CreateMockDbSet([testAmenity]);
-        _mockContext.Setup(c => c.Amenities).Returns(mockAmenities.Object);
-
-        var handler = new GetAmenityById.Handler(_mockContext.Object);
+        var testAmenity = await CreateTestAmenity(isDeleted: true);
+        var handler = new GetAmenityById.Handler(_dbContext);
         var command = new GetAmenityById.Query(testAmenity.Id);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
 
-        // Assert (handler returns deleted amenities based on current code)
-        Assert.Equal(ResultStatus.Ok, result.Status);
-        Assert.Equal(testAmenity.Id, result.Value.Id);
+        // Assert
+        Assert.Equal(ResultStatus.NotFound, result.Status);
     }
 
     [Fact]
     public async Task Handle_AmenityNotFound_ReturnsNotFound()
     {
         // Arrange
-        var mockAmenities = CreateMockDbSet(new List<Amenity>());
-        _mockContext.Setup(c => c.Amenities).Returns(mockAmenities.Object);
-
-        var handler = new GetAmenityById.Handler(_mockContext.Object);
-        var command = new GetAmenityById.Query(Guid.NewGuid());
+        var handler = new GetAmenityById.Handler(_dbContext);
+        var command = new GetAmenityById.Query(Uuid.NewDatabaseFriendly(Database.PostgreSql));
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);

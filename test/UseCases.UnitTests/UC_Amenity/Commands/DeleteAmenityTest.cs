@@ -1,77 +1,118 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
+using Domain.Shared;
+using Infrastructure.Encryption;
 using Microsoft.EntityFrameworkCore;
-using MockQueryable.Moq;
-using Moq;
+using Persistance.Data;
+using Testcontainers.PostgreSql;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.UC_Amenity.Commands;
-
 using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Amenity.Commands;
 
-public class DeleteAmenityTests
+public class DeleteAmenityTests : IAsyncLifetime
 {
-    private readonly Mock<IAppDBContext> _mockContext;
+    private AppDBContext _dbContext;
     private readonly CurrentUser _currentUser;
+    private readonly PostgreSqlContainer _postgresContainer;
+    private readonly EncryptionSettings _encryptionSettings;
+    private readonly IKeyManagementService _keyService;
 
     public DeleteAmenityTests()
     {
-        _mockContext = new Mock<IAppDBContext>();
+        _postgresContainer = new PostgreSqlBuilder()
+            .WithImage("postgis/postgis:latest")
+            .WithCleanUp(true)
+            .Build();
+
         _currentUser = new CurrentUser();
+        _encryptionSettings = new EncryptionSettings
+        {
+            Key = "dnjGHqR9O/2hKCQUgImXcEjZ9YPaAVcfz4l5VcTBLcY="
+        };
+        _keyService = new KeyManagementService();
     }
 
-    private static User CreateTestUser(UserRole role)
+    public async Task InitializeAsync()
     {
-        return new User
+        await _postgresContainer.StartAsync();
+
+        var options = new DbContextOptionsBuilder<AppDBContext>()
+            .UseNpgsql(_postgresContainer.GetConnectionString(), o => o.UseNetTopologySuite())
+            .EnableSensitiveDataLogging()
+            .Options;
+
+        _dbContext = new AppDBContext(options);
+        await _dbContext.Database.MigrateAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _postgresContainer.DisposeAsync();
+        await _dbContext.DisposeAsync();
+    }
+
+    private async Task<User> CreateTestUser(UserRole role)
+    {
+        var (key, iv) = await _keyService.GenerateKeyAsync();
+        var encryptedKey = _keyService.EncryptKey(key, _encryptionSettings.Key);
+
+        var encryptionKey = new EncryptionKey
         {
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            EncryptionKeyId = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            EncryptedKey = encryptedKey,
+            IV = iv
+        };
+
+        _dbContext.EncryptionKeys.Add(encryptionKey);
+        await _dbContext.SaveChangesAsync();
+
+        var user = new User
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            EncryptionKeyId = encryptionKey.Id,
             Name = "Test User",
             Email = "test@example.com",
             Password = "password",
             Role = role,
             Address = "Test Address",
-            DateOfBirth = DateTime.Now.AddYears(-30),
+            DateOfBirth = DateTime.UtcNow.AddYears(-30),
             Phone = "1234567890"
         };
+
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync();
+
+        return user;
     }
 
-    private static Amenity CreateTestAmenity()
+    private async Task<Amenity> CreateTestAmenity(bool isDeleted = false)
     {
-        return new Amenity
+        var amenity = new Amenity
         {
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             Name = "WiFi",
             Description = "High-speed internet",
-            IsDeleted = false
+            IsDeleted = isDeleted
         };
-    }
 
-    private static Mock<DbSet<T>> CreateMockDbSet<T>(List<T> data)
-        where T : class
-    {
-        // Use MockQueryable.Moq to create a mock DbSet from in-memory data
-        var mockSet = data.BuildMock().BuildMockDbSet();
+        _dbContext.Amenities.Add(amenity);
+        await _dbContext.SaveChangesAsync();
 
-        // Setup FindAsync to return the first item in the list (simulates EF's FindAsync)
-        mockSet
-            .Setup(x => x.FindAsync(It.IsAny<object[]>()))
-            .ReturnsAsync((object[] ids) => data.FirstOrDefault());
-
-        return mockSet;
+        return amenity;
     }
 
     [Fact]
     public async Task Handle_UserNotAdmin_ReturnsForbidden()
     {
         // Arrange
-        var testUser = CreateTestUser(UserRole.Driver); // Non-admin user
+        var testUser = await CreateTestUser(UserRole.Driver);
         _currentUser.SetUser(testUser);
 
-        var handler = new DeleteAmenity.Handler(_mockContext.Object, _currentUser);
+        var handler = new DeleteAmenity.Handler(_dbContext, _currentUser);
         var command = new DeleteAmenity.Command(Uuid.NewDatabaseFriendly(Database.PostgreSql));
 
         // Act
@@ -86,14 +127,10 @@ public class DeleteAmenityTests
     public async Task Handle_AmenityNotFound_ReturnsError()
     {
         // Arrange
-        var testUser = CreateTestUser(UserRole.Admin);
+        var testUser = await CreateTestUser(UserRole.Admin);
         _currentUser.SetUser(testUser);
 
-        // Mock empty Amenities DbSet
-        var mockAmenities = CreateMockDbSet(new List<Amenity>());
-        _mockContext.Setup(c => c.Amenities).Returns(mockAmenities.Object);
-
-        var handler = new DeleteAmenity.Handler(_mockContext.Object, _currentUser);
+        var handler = new DeleteAmenity.Handler(_dbContext, _currentUser);
         var command = new DeleteAmenity.Command(Uuid.NewDatabaseFriendly(Database.PostgreSql));
 
         // Act
@@ -108,17 +145,11 @@ public class DeleteAmenityTests
     public async Task Handle_ValidRequest_DeletesAmenitySuccessfully()
     {
         // Arrange
-        var testUser = CreateTestUser(UserRole.Admin);
+        var testUser = await CreateTestUser(UserRole.Admin);
         _currentUser.SetUser(testUser);
+        var testAmenity = await CreateTestAmenity();
 
-        var testAmenity = CreateTestAmenity();
-        var mockAmenities = CreateMockDbSet([testAmenity]);
-        _mockContext.Setup(c => c.Amenities).Returns(mockAmenities.Object);
-        _mockContext
-            .Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        var handler = new DeleteAmenity.Handler(_mockContext.Object, _currentUser);
+        var handler = new DeleteAmenity.Handler(_dbContext, _currentUser);
         var command = new DeleteAmenity.Command(testAmenity.Id);
 
         // Act
@@ -126,25 +157,23 @@ public class DeleteAmenityTests
 
         // Assert
         Assert.Contains("Xóa tiện nghi thành công", result.SuccessMessage);
-        Assert.True(testAmenity.IsDeleted); // Verify soft delete
-        _mockContext.Verify(m => m.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+
+        // Verify soft delete
+        var deletedAmenity = await _dbContext
+            .Amenities.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(a => a.Id == testAmenity.Id);
+        Assert.True(deletedAmenity?.IsDeleted);
     }
 
     [Fact]
     public async Task Handle_AmenityAlreadyDeleted_ReturnsError()
     {
         // Arrange
-        var testUser = CreateTestUser(UserRole.Admin);
+        var testUser = await CreateTestUser(UserRole.Admin);
         _currentUser.SetUser(testUser);
+        var testAmenity = await CreateTestAmenity(isDeleted: true);
 
-        var testAmenity = CreateTestAmenity();
-        testAmenity.IsDeleted = true; // Mark as already deleted
-
-        // Mock Amenities DbSet to return nothing (simulate query filter excluding deleted entities)
-        var mockAmenities = CreateMockDbSet(new List<Amenity>()); // Empty list
-        _mockContext.Setup(c => c.Amenities).Returns(mockAmenities.Object);
-
-        var handler = new DeleteAmenity.Handler(_mockContext.Object, _currentUser);
+        var handler = new DeleteAmenity.Handler(_dbContext, _currentUser);
         var command = new DeleteAmenity.Command(testAmenity.Id);
 
         // Act

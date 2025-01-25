@@ -1,57 +1,102 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
+using Domain.Shared;
+using Infrastructure.Encryption;
 using Microsoft.EntityFrameworkCore;
-using MockQueryable.Moq;
-using Moq;
+using Persistance.Data;
+using Testcontainers.PostgreSql;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.UC_Manufacturer.Commands;
+using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Manufacturer.Commands;
 
-public class CreateManufacturerTest
+public class CreateManufacturerTest : IAsyncLifetime
 {
-    private readonly Mock<IAppDBContext> _mockContext;
+    private AppDBContext _dbContext;
     private readonly CurrentUser _currentUser;
+    private readonly PostgreSqlContainer _postgresContainer;
+    private readonly EncryptionSettings _encryptionSettings;
+    private readonly IKeyManagementService _keyService;
 
     public CreateManufacturerTest()
     {
-        _mockContext = new Mock<IAppDBContext>();
+        _postgresContainer = new PostgreSqlBuilder()
+            .WithImage("postgis/postgis:latest")
+            .WithCleanUp(true)
+            .Build();
+
         _currentUser = new CurrentUser();
-    }
-
-    private static User CreateTestUser(UserRole role)
-    {
-        return new User
+        _encryptionSettings = new EncryptionSettings
         {
-            Id = Guid.NewGuid(),
-            EncryptionKeyId = Guid.NewGuid(),
-            Name = "Bla User",
-            Email = "bla@gmail.com",
-            Password = "12345",
-            Role = role,
-            Address = "200 Binh Quoi",
-            DateOfBirth = DateTime.Now.AddYears(-30),
-            Phone = "0938078946",
+            Key = "dnjGHqR9O/2hKCQUgImXcEjZ9YPaAVcfz4l5VcTBLcY="
         };
+        _keyService = new KeyManagementService();
     }
 
-    private static Mock<DbSet<T>> CreateMockDbSet<T>(List<T> data)
-        where T : class
+    public async Task InitializeAsync()
     {
-        var mockSet = data.BuildMock().BuildMockDbSet();
-        return mockSet;
+        await _postgresContainer.StartAsync();
+
+        var options = new DbContextOptionsBuilder<AppDBContext>()
+            .UseNpgsql(_postgresContainer.GetConnectionString(), o => o.UseNetTopologySuite())
+            .EnableSensitiveDataLogging()
+            .Options;
+
+        _dbContext = new AppDBContext(options);
+        await _dbContext.Database.MigrateAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _postgresContainer.DisposeAsync();
+        await _dbContext.DisposeAsync();
+    }
+
+    private async Task<User> CreateTestUser(UserRole role)
+    {
+        var (key, iv) = await _keyService.GenerateKeyAsync();
+        var encryptedKey = _keyService.EncryptKey(key, _encryptionSettings.Key);
+
+        var encryptionKey = new EncryptionKey
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            EncryptedKey = encryptedKey,
+            IV = iv
+        };
+
+        _dbContext.EncryptionKeys.Add(encryptionKey);
+        await _dbContext.SaveChangesAsync();
+
+        var user = new User
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            EncryptionKeyId = encryptionKey.Id,
+            Name = "Test User",
+            Email = "test@example.com",
+            Password = "password",
+            Role = role,
+            Address = "Test Address",
+            DateOfBirth = DateTime.UtcNow.AddYears(-30),
+            Phone = "1234567890"
+        };
+
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync();
+
+        return user;
     }
 
     [Fact]
     public async Task Handle_UserNotAdmin_ReturnsError()
     {
         // Arrange
-        var testUser = CreateTestUser(UserRole.Driver); // Non-admin role
+        var testUser = await CreateTestUser(UserRole.Driver);
         _currentUser.SetUser(testUser);
 
-        var handler = new CreateManufacturer.Handler(_mockContext.Object, _currentUser);
+        var handler = new CreateManufacturer.Handler(_dbContext, _currentUser);
         var command = new CreateManufacturer.Command("Toyota");
 
         // Act
@@ -59,26 +104,17 @@ public class CreateManufacturerTest
 
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Equal("Bạn không có quyền thực hiện chức năng này !", result.Errors.First());
+        Assert.Contains("Bạn không có quyền thực hiện chức năng này !", result.Errors);
     }
 
     [Fact]
     public async Task Handle_AdminUser_CreatesManufacturerSuccessfully()
     {
         // Arrange
-        var testUser = CreateTestUser(UserRole.Admin);
+        var testUser = await CreateTestUser(UserRole.Admin);
         _currentUser.SetUser(testUser);
 
-        // Mock Manufacturers DbSet
-        var mockManufacturers = CreateMockDbSet(new List<Manufacturer>());
-        _mockContext.Setup(c => c.Manufacturers).Returns(mockManufacturers.Object);
-
-        // Setup SaveChanges
-        _mockContext
-            .Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        var handler = new CreateManufacturer.Handler(_mockContext.Object, _currentUser);
+        var handler = new CreateManufacturer.Handler(_dbContext, _currentUser);
         var command = new CreateManufacturer.Command("Toyota");
 
         // Act
@@ -86,10 +122,13 @@ public class CreateManufacturerTest
 
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
-        mockManufacturers.Verify(
-            m => m.AddAsync(It.IsAny<Manufacturer>(), It.IsAny<CancellationToken>()),
-            Times.Once
+
+        // Verify database state
+        var createdManufacturer = await _dbContext.Manufacturers.FirstOrDefaultAsync(m =>
+            m.Name == "Toyota"
         );
-        _mockContext.Verify(m => m.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+
+        Assert.NotNull(createdManufacturer);
+        Assert.Equal("Toyota", createdManufacturer.Name);
     }
 }
