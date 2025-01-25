@@ -13,7 +13,7 @@ public class Login
 
     public sealed record Response(string AccessToken, string RefreshToken);
 
-    private sealed class Handler(IAppDBContext context, TokenService tokenService)
+    public sealed class Handler(IAppDBContext context, TokenService tokenService)
         : IRequestHandler<Command, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
