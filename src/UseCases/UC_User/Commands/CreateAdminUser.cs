@@ -13,7 +13,7 @@ public sealed class CreateAdminUser
 {
     public record Command() : IRequest<Result>;
 
-    private class Handler(
+    public class Handler(
         IAppDBContext context,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
@@ -28,7 +28,7 @@ public sealed class CreateAdminUser
                 cancellationToken
             );
             if (checkingAdmin is not null)
-                return Result.Forbidden("Tài khoản đã được khởi tạo !");
+                return Result.Error("Tài khoản đã được khởi tạo !");
             //
             string adminName = "Admin";
             string adminPhoneNumber = "0123456789";
