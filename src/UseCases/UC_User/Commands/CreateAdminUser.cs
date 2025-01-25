@@ -1,7 +1,6 @@
 using Ardalis.Result;
 
 using Domain.Entities;
-using Domain.Enums;
 using Domain.Shared;
 
 using MediatR;
