@@ -8,6 +8,8 @@ using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.UC_Amenity.Commands;
 
+using UUIDNext;
+
 namespace UseCases.UnitTests.UC_Amenity.Commands;
 
 public class UpdateAmenityTests
@@ -25,8 +27,8 @@ public class UpdateAmenityTests
     {
         return new User
         {
-            Id = Guid.NewGuid(),
-            EncryptionKeyId = Guid.NewGuid(),
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            EncryptionKeyId = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             Name = "Test User",
             Email = "test@example.com",
             Password = "password",
@@ -41,7 +43,7 @@ public class UpdateAmenityTests
     {
         return new Amenity
         {
-            Id = Guid.NewGuid(),
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             Name = "Old Name",
             Description = "Old Description",
             UpdatedAt = DateTimeOffset.UtcNow.AddDays(-1)
@@ -70,7 +72,7 @@ public class UpdateAmenityTests
         _currentUser.SetUser(testUser);
 
         var handler = new UpdateAmenity.Handler(_mockContext.Object, _currentUser);
-        var command = new UpdateAmenity.Command(Guid.NewGuid(), "New Name", "New Description");
+        var command = new UpdateAmenity.Command(Uuid.NewDatabaseFriendly(Database.PostgreSql), "New Name", "New Description");
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -92,7 +94,7 @@ public class UpdateAmenityTests
         _mockContext.Setup(c => c.Amenities).Returns(mockAmenities.Object);
 
         var handler = new UpdateAmenity.Handler(_mockContext.Object, _currentUser);
-        var command = new UpdateAmenity.Command(Guid.NewGuid(), "New Name", "New Description");
+        var command = new UpdateAmenity.Command(Uuid.NewDatabaseFriendly(Database.PostgreSql), "New Name", "New Description");
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
