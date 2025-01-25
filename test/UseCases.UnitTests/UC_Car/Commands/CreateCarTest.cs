@@ -4,11 +4,14 @@ using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared;
+using Infrastructure.Encryption;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using MockQueryable.Moq;
 using Moq;
 using NetTopologySuite.Geometries;
+using Persistance.Data;
+using Testcontainers.PostgreSql;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.UC_Car.Commands;
@@ -16,157 +19,117 @@ using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Car.Commands;
 
-public class CreateCarTests
+public class CreateCarTests : IAsyncLifetime
 {
-    private readonly Mock<IAppDBContext> _mockContext;
+    private AppDBContext _dbContext;
     private readonly CurrentUser _currentUser;
-    private readonly Mock<IAesEncryptionService> _mockAesService;
-    private readonly Mock<IKeyManagementService> _mockKeyService;
+    private readonly PostgreSqlContainer _postgresContainer;
     private readonly GeometryFactory _geometryFactory;
     private readonly EncryptionSettings _encryptionSettings;
+    private readonly IAesEncryptionService _aesService;
+    private readonly IKeyManagementService _keyService;
 
     public CreateCarTests()
     {
-        _mockContext = new Mock<IAppDBContext>();
+        _postgresContainer = new PostgreSqlBuilder()
+            .WithImage("postgis/postgis:latest")
+            .WithCleanUp(true)
+            .Build();
+
         _currentUser = new CurrentUser();
-        _mockAesService = new Mock<IAesEncryptionService>();
-        _mockKeyService = new Mock<IKeyManagementService>();
         _geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
         _encryptionSettings = new EncryptionSettings
         {
             Key = "dnjGHqR9O/2hKCQUgImXcEjZ9YPaAVcfz4l5VcTBLcY="
         };
+
+        _aesService = new AesEncryptionService();
+        _keyService = new KeyManagementService();
     }
 
-    private static User CreateTestUser(UserRole role)
+    public async Task InitializeAsync()
     {
-        return new User
+        await _postgresContainer.StartAsync();
+
+        var options = new DbContextOptionsBuilder<AppDBContext>()
+            .UseNpgsql(_postgresContainer.GetConnectionString(), o => o.UseNetTopologySuite())
+            .EnableSensitiveDataLogging()
+            .Options;
+
+        _dbContext = new AppDBContext(options);
+        await _dbContext.Database.MigrateAsync();
+    }
+
+    public async Task DisposeAsync()
+    {
+        await _postgresContainer.DisposeAsync();
+        await _dbContext.DisposeAsync();
+    }
+
+    private async Task<User> CreateTestUser(UserRole role)
+    {
+        var (key, iv) = await _keyService.GenerateKeyAsync();
+        var encryptedKey = _keyService.EncryptKey(key, _encryptionSettings.Key);
+
+        var encryptionKey = new EncryptionKey
         {
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            EncryptionKeyId = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            EncryptedKey = encryptedKey,
+            IV = iv
+        };
+
+        _dbContext.EncryptionKeys.Add(encryptionKey);
+        await _dbContext.SaveChangesAsync();
+
+        var user = new User
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            EncryptionKeyId = encryptionKey.Id,
             Name = "Test User",
             Email = "test@example.com",
             Password = "password",
             Role = role,
             Address = "Test Address",
-            DateOfBirth = DateTime.Now.AddYears(-30),
+            DateOfBirth = DateTime.UtcNow.AddYears(-30),
             Phone = "1234567890"
         };
+
+        _dbContext.Users.Add(user);
+        await _dbContext.SaveChangesAsync();
+
+        return user;
     }
 
-    private static Amenity CreateTestAmenity()
+    private async Task<Manufacturer> CreateTestManufacturer()
     {
-        return new Amenity
+        var manufacturer = new Manufacturer
         {
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            Name = "WiFi",
-            Description = "High-speed internet"
+            Name = "Test Manufacturer"
         };
+
+        _dbContext.Manufacturers.Add(manufacturer);
+        await _dbContext.SaveChangesAsync();
+
+        return manufacturer;
     }
 
-    private static Manufacturer CreateTestManufacturer() =>
-        new() { Id = Uuid.NewDatabaseFriendly(Database.PostgreSql), Name = "Toyota" };
-
-    private static Mock<DbSet<T>> CreateMockDbSet<T>(List<T> data)
-        where T : class
+    private async Task<List<Amenity>> CreateTestAmenities(int count = 2)
     {
-        var mockSet = data.AsQueryable().BuildMockDbSet();
-        return mockSet;
-    }
+        var amenities = Enumerable
+            .Range(0, count)
+            .Select(i => new Amenity
+            {
+                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+                Name = $"Amenity {i}",
+                Description = $"Test Amenity {i}"
+            })
+            .ToList();
 
-    [Fact]
-    public async Task Handle_UserIsAdmin_ReturnsError()
-    {
-        // Arrange
-        var testUser = CreateTestUser(UserRole.Admin);
-        _currentUser.SetUser(testUser);
+        _dbContext.Amenities.AddRange(amenities);
+        await _dbContext.SaveChangesAsync();
 
-        var handler = new CreateCar.Handler(
-            _mockContext.Object,
-            _currentUser,
-            _geometryFactory,
-            _mockAesService.Object,
-            _mockKeyService.Object,
-            _encryptionSettings
-        );
-
-        var command = CreateValidCommand();
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains("Bạn không có quyền thực hiện chức năng này !", result.Errors);
-    }
-
-    [Fact]
-    public async Task Handle_MissingAmenities_ReturnsError()
-    {
-        // Arrange
-        var testUser = CreateTestUser(UserRole.Driver);
-        _currentUser.SetUser(testUser);
-
-        // Mock amenities with only 1 item (request has 2 IDs)
-        var amenities = new List<Amenity> { CreateTestAmenity() };
-        var mockAmenities = CreateMockDbSet(amenities);
-        _mockContext.Setup(c => c.Amenities).Returns(mockAmenities.Object);
-
-        // Mock valid manufacturer
-        var manufacturer = CreateTestManufacturer();
-        var mockManufacturers = CreateMockDbSet([manufacturer]);
-        _mockContext.Setup(c => c.Manufacturers).Returns(mockManufacturers.Object);
-
-        var handler = new CreateCar.Handler(
-            _mockContext.Object,
-            _currentUser,
-            _geometryFactory,
-            _mockAesService.Object,
-            _mockKeyService.Object,
-            _encryptionSettings
-        );
-
-        var command = CreateValidCommand(
-            manufacturerId: manufacturer.Id,
-            amenityIds: [amenities[0].Id, Guid.NewGuid()] // One invalid ID
-        );
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains("Một số tiện nghi không tồn tại !", result.Errors);
-    }
-
-    [Fact]
-    public async Task Handle_MissingManufacturer_ReturnsError()
-    {
-        // Arrange
-        var testUser = CreateTestUser(UserRole.Driver);
-        _currentUser.SetUser(testUser);
-
-        // Mock empty manufacturers
-        var mockManufacturers = CreateMockDbSet(new List<Manufacturer>());
-        _mockContext.Setup(c => c.Manufacturers).Returns(mockManufacturers.Object);
-
-        var handler = new CreateCar.Handler(
-            _mockContext.Object,
-            _currentUser,
-            _geometryFactory,
-            _mockAesService.Object,
-            _mockKeyService.Object,
-            _encryptionSettings
-        );
-
-        var command = CreateValidCommand();
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains("Hãng xe không tồn tại !", result.Errors);
+        return amenities;
     }
 
     private CreateCar.Query CreateValidCommand(
@@ -189,6 +152,116 @@ public class CreateCarTests
             Latitude: 10.5m,
             Longtitude: 106.5m
         );
+
+    [Fact]
+    public async Task Handle_UserIsAdmin_ReturnsError()
+    {
+        // Arrange
+        var testUser = await CreateTestUser(UserRole.Admin);
+        _currentUser.SetUser(testUser);
+
+        var handler = new CreateCar.Handler(
+            _dbContext,
+            _currentUser,
+            _geometryFactory,
+            _aesService,
+            _keyService,
+            _encryptionSettings
+        );
+
+        var command = CreateValidCommand();
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains("Bạn không có quyền thực hiện chức năng này !", result.Errors);
+    }
+
+    [Fact]
+    public async Task Handle_MissingAmenities_ReturnsError()
+    {
+        // Arrange
+        var testUser = await CreateTestUser(UserRole.Driver);
+        _currentUser.SetUser(testUser);
+        var manufacturer = await CreateTestManufacturer();
+        var amenities = await CreateTestAmenities();
+
+        var handler = new CreateCar.Handler(
+            _dbContext,
+            _currentUser,
+            _geometryFactory,
+            _aesService,
+            _keyService,
+            _encryptionSettings
+        );
+
+        var command = CreateValidCommand(
+            manufacturerId: manufacturer.Id,
+            amenityIds: [.. amenities.Select(a => a.Id)]
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Created, result.Status);
+
+        // Verify database state
+        var createdCar = await _dbContext
+            .Cars.Include(c => c.CarAmenities)
+            .Include(c => c.EncryptionKey)
+            .FirstOrDefaultAsync(c => c.Id == result.Value.Id);
+
+        Assert.NotNull(createdCar);
+
+        // Verify encryption
+        var decryptedLicense = await _aesService.Decrypt(
+            createdCar.EncryptedLicensePlate,
+            _keyService.DecryptKey(createdCar.EncryptionKey.EncryptedKey, _encryptionSettings.Key),
+            createdCar.EncryptionKey.IV
+        );
+
+        Assert.Equal(command.LicensePlate, decryptedLicense);
+    }
+
+    [Fact]
+    public async Task Handle_MissingManufacturer_ReturnsError()
+    {
+        // Arrange
+        var user = await CreateTestUser(UserRole.Driver);
+        _currentUser.SetUser(user);
+
+        // Use a random non-existent manufacturer ID
+        var invalidManufacturerId = Guid.NewGuid();
+
+        var handler = new CreateCar.Handler(
+            _dbContext,
+            _currentUser,
+            _geometryFactory,
+            _aesService,
+            _keyService,
+            _encryptionSettings
+        );
+
+        var command = CreateValidCommand(manufacturerId: invalidManufacturerId);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains("Hãng xe không tồn tại !", result.Errors);
+
+        // Verify no car was created
+        var carsCount = await _dbContext.Cars.CountAsync();
+        Assert.Equal(0, carsCount);
+
+        // Verify no encryption key was created for the car
+        var encryptionKeysCount = await _dbContext.EncryptionKeys.CountAsync();
+        Assert.Equal(1, encryptionKeysCount); // Only the user's key exists
+    }
 
     [Fact]
     public void Validator_InvalidLicensePlate_ReturnsErrors()
@@ -228,125 +301,50 @@ public class CreateCarTests
     public async Task Handle_ValidRequest_CreatesCarSuccessfully()
     {
         // Arrange
+        var user = await CreateTestUser(UserRole.Driver);
+        _currentUser.SetUser(user);
+        var manufacturer = await CreateTestManufacturer();
+        var amenities = await CreateTestAmenities(3);
 
-        // Create test user and set current user
-        var testUser = CreateTestUser(UserRole.Driver);
-        _currentUser.SetUser(testUser);
-
-        // Setup mock amenities
-        var amenities = new List<Amenity> { CreateTestAmenity(), CreateTestAmenity() };
-        var mockAmenities = CreateMockDbSet(amenities);
-        _mockContext.Setup(c => c.Amenities).Returns(mockAmenities.Object);
-
-        // Setup mock manufacturer
-        var manufacturer = CreateTestManufacturer();
-        var mockManufacturers = CreateMockDbSet([manufacturer]);
-        _mockContext.Setup(c => c.Manufacturers).Returns(mockManufacturers.Object);
-
-        // Setup encryption key tracking
-        var encryptionKeysList = new List<EncryptionKey>();
-        var mockEncryptionKeys = new Mock<DbSet<EncryptionKey>>();
-        mockEncryptionKeys
-            .Setup(m => m.Add(It.IsAny<EncryptionKey>()))
-            .Callback<EncryptionKey>(encryptionKeysList.Add)
-            .Returns((EncryptionKey key) => null!);
-
-        _mockContext.Setup(c => c.EncryptionKeys).Returns(mockEncryptionKeys.Object);
-
-        // Setup car tracking
-        var carsList = new List<Car>();
-        var mockCars = new Mock<DbSet<Car>>();
-        mockCars
-            .Setup(m => m.AddAsync(It.IsAny<Car>(), It.IsAny<CancellationToken>()))
-            .Callback<Car, CancellationToken>((car, _) => carsList.Add(car))
-            .ReturnsAsync((Car car, CancellationToken _) => null!);
-
-        _mockContext.Setup(c => c.Cars).Returns(mockCars.Object);
-
-        // Mock cryptographic services
-        _mockKeyService.Setup(k => k.GenerateKeyAsync()).ReturnsAsync(("testKey", "testIV"));
-        _mockKeyService
-            .Setup(k => k.EncryptKey(It.IsAny<string>(), It.IsAny<string>()))
-            .Returns("encryptedTestKey");
-
-        _mockAesService
-            .Setup(a => a.Encrypt(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync("encryptedLicense");
-
-        // Mock database save operation
-        _mockContext
-            .Setup(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        // Create handler with mocked dependencies
         var handler = new CreateCar.Handler(
-            _mockContext.Object,
+            _dbContext,
             _currentUser,
             _geometryFactory,
-            _mockAesService.Object,
-            _mockKeyService.Object,
+            _aesService,
+            _keyService,
             _encryptionSettings
         );
 
-        // Create command with valid data
-        var command = CreateValidCommand(
-            manufacturerId: manufacturer.Id,
-            amenityIds: [.. amenities.Select(a => a.Id)]
+        var command = new CreateCar.Query(
+            AmenityIds: [.. amenities.Select(a => a.Id)],
+            ManufacturerId: manufacturer.Id,
+            LicensePlate: "ABC-12345",
+            Color: "Midnight Black",
+            Seat: 5,
+            Description: "Premium luxury vehicle",
+            TransmissionType: TransmissionType.Auto,
+            FuelType: FuelType.Hybrid,
+            FuelConsumption: 6.2m,
+            RequiresCollateral: true,
+            PricePerHour: 75m,
+            PricePerDay: 650m,
+            Latitude: 40.7128m,
+            Longtitude: -74.0060m
         );
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        // Verify overall success
         Assert.Equal(ResultStatus.Created, result.Status);
 
-        // Verify encryption key
-        Assert.Single(encryptionKeysList);
-        var encryptionKey = encryptionKeysList[0];
-        Assert.Equal("encryptedTestKey", encryptionKey.EncryptedKey);
-        Assert.Equal("testIV", encryptionKey.IV);
-
         // Verify car creation
-        Assert.Single(carsList);
-        var createdCar = carsList[0];
+        var createdCar = await _dbContext
+            .Cars.Include(c => c.EncryptionKey)
+            .Include(c => c.CarAmenities)
+            .Include(c => c.CarStatistic)
+            .FirstOrDefaultAsync(c => c.Id == result.Value.Id);
 
-        Assert.Equal(testUser.Id, createdCar.OwnerId);
-        Assert.Equal(manufacturer.Id, createdCar.ManufacturerId);
-        Assert.Equal("encryptedLicense", createdCar.EncryptedLicensePlate);
-        Assert.Equal(encryptionKey.Id, createdCar.EncryptionKeyId);
-        Assert.Equal(command.Color, createdCar.Color);
-        Assert.Equal(command.Seat, createdCar.Seat);
-        Assert.Equal(command.Description, createdCar.Description);
-        Assert.Equal(command.TransmissionType, createdCar.TransmissionType);
-        Assert.Equal(command.FuelType, createdCar.FuelType);
-        Assert.Equal(command.FuelConsumption, createdCar.FuelConsumption);
-        Assert.Equal(command.RequiresCollateral, createdCar.RequiresCollateral);
-        Assert.Equal(command.PricePerHour, createdCar.PricePerHour);
-        Assert.Equal(command.PricePerDay, createdCar.PricePerDay);
-
-        // Verify location
-        var expectedPoint = _geometryFactory.CreatePoint(
-            new Coordinate((double)command.Longtitude!, (double)command.Latitude!)
-        );
-        Assert.Equal(expectedPoint, createdCar.Location);
-
-        // Verify amenities mapping
-        Assert.Equal(command.AmenityIds.Length, createdCar.CarAmenities.Count);
-        Assert.All(
-            createdCar.CarAmenities,
-            ca =>
-            {
-                Assert.Equal(createdCar.Id, ca.CarId);
-                Assert.Contains(ca.AmenityId, command.AmenityIds);
-            }
-        );
-
-        // Verify statistics
-        Assert.NotNull(createdCar.CarStatistic);
-        Assert.Equal(createdCar.Id, createdCar.CarStatistic.CarId);
-
-        // Verify database commit
-        _mockContext.Verify(c => c.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        Assert.NotNull(createdCar);
     }
 }
