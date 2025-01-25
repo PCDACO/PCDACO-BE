@@ -1,4 +1,6 @@
+using System.Linq.Expressions;
 using Domain.Entities;
+using Domain.Shared;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
 
@@ -29,4 +31,25 @@ public class AppDBContext(DbContextOptions context) : DbContext(context), IAppDB
 
     async Task IAppDBContext.SaveChangesAsync(CancellationToken cancellationToken) =>
         await SaveChangesAsync(cancellationToken);
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Apply query filter for BaseEntity
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+            {
+                var parameter = Expression.Parameter(entityType.ClrType, "e");
+                var body = Expression.Equal(
+                    Expression.Property(parameter, nameof(BaseEntity.IsDeleted)),
+                    Expression.Constant(false)
+                );
+                modelBuilder
+                    .Entity(entityType.ClrType)
+                    .HasQueryFilter(Expression.Lambda(body, parameter));
+            }
+        }
+    }
 }
