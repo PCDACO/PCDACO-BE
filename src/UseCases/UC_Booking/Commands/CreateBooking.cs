@@ -1,10 +1,16 @@
 using Ardalis.Result;
+
 using Domain.Entities;
+
 using FluentValidation;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
+
 using UUIDNext;
 
 namespace UseCases.UC_Booking.Commands;
@@ -14,7 +20,7 @@ public sealed class CreateBooking
     public sealed record CreateBookingCommand(
         Guid UserId,
         Guid CarId,
-        // Guid StatusId,
+        Guid StatusId,
         DateTime StartTime,
         DateTime EndTime
     ) : IRequest<Result<Response>>;
@@ -72,7 +78,7 @@ public sealed class CreateBooking
                 Id = bookingId,
                 UserId = request.UserId,
                 CarId = request.CarId,
-                // StatusId = request.StatusId,
+                StatusId = request.StatusId,
                 StartTime = request.StartTime,
                 EndTime = request.EndTime,
                 ActualReturnTime = request.EndTime, // Update later when user return car

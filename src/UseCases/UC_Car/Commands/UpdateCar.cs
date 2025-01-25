@@ -23,12 +23,13 @@ public sealed class UpdateCar
         Guid CarId,
         Guid[] AmenityIds,
         Guid ManufacturerId,
+        Guid TransmissionTypeId,
+        Guid FuelTypeId,
+        Guid StatusId,
         string LicensePlate,
         string Color,
         int Seat,
         string Description,
-        TransmissionType TransmissionType,
-        FuelType FuelType,
         decimal FuelConsumption,
         bool RequiresCollateral,
         decimal PricePerHour,
@@ -58,6 +59,19 @@ public sealed class UpdateCar
                 .Where(a => request.AmenityIds.Contains(a.Id))
                 .ToListAsync(cancellationToken);
             if (amenities.Count != request.AmenityIds.Length) return Result.Error("Một số tiện nghi không tồn tại !");
+            // Check if status is exist
+            CarStatus? checkingStatus = await context.CarStatuses.FirstOrDefaultAsync(cs =>
+                cs.Id == request.StatusId && !cs.IsDeleted,
+                cancellationToken);
+            if (checkingStatus is null) return Result.Error("Trạng thái xe không tồn tại !");
+            // Check if transmission type is exist
+            TransmissionType? checkingTransmissionType = await context.TransmissionTypes
+                .FirstOrDefaultAsync(tt => tt.Id == request.TransmissionTypeId && !tt.IsDeleted, cancellationToken);
+            if (checkingTransmissionType is null) return Result.Error("Kiểu hộp số không tồn tại !");
+            // Check if fuel type is exist
+            FuelType? checkingFuelType = await context.FuelTypes
+                .FirstOrDefaultAsync(ft => ft.Id == request.FuelTypeId && !ft.IsDeleted, cancellationToken);
+            if (checkingFuelType is null) return Result.Error("Kiểu nhiên liệu không tồn tại !");
             // Check if manufacturer is exist
             Manufacturer? checkingManufacturer = await context.Manufacturers.FirstOrDefaultAsync(m =>
                 m.Id == request.ManufacturerId,
@@ -82,8 +96,9 @@ public sealed class UpdateCar
             checkingCar.Color = request.Color;
             checkingCar.Seat = request.Seat;
             checkingCar.Description = request.Description;
-            checkingCar.TransmissionType = request.TransmissionType;
-            checkingCar.FuelType = request.FuelType;
+            checkingCar.TransmissionTypeId = request.TransmissionTypeId;
+            checkingCar.FuelTypeId = request.FuelTypeId;
+            checkingCar.StatusId = request.StatusId;
             checkingCar.FuelConsumption = request.FuelConsumption;
             checkingCar.RequiresCollateral = request.RequiresCollateral;
             checkingCar.PricePerHour = request.PricePerHour;

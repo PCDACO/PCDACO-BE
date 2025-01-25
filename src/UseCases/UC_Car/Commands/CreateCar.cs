@@ -1,7 +1,6 @@
 using Ardalis.Result;
 
 using Domain.Entities;
-using Domain.Enums;
 using Domain.Shared;
 
 using FluentValidation;
@@ -24,12 +23,12 @@ public sealed class CreateCar
     public sealed record Query(
         Guid[] AmenityIds,
         Guid ManufacturerId,
+        Guid TransmissionTypeId,
+        Guid FuelTypeId,
         string LicensePlate,
         string Color,
         int Seat,
         string Description,
-        TransmissionType TransmissionType,
-        FuelType FuelType,
         decimal FuelConsumption,
         bool RequiresCollateral,
         decimal PricePerHour,
@@ -62,6 +61,24 @@ public sealed class CreateCar
                     .ToListAsync(cancellationToken);
                 if (amenities.Count != request.AmenityIds.Length) return Result.Error("Một số tiện nghi không tồn tại !");
             }
+            // Check if transmission type is exist
+            TransmissionType? checkingTransmissionType = await context.TransmissionTypes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(t => t.Id == request.TransmissionTypeId
+                    && !t.IsDeleted, cancellationToken);
+            if (checkingTransmissionType is null) return Result.Error("Kiểu truyền động không tồn tại !");
+            // Check if fuel type is exist
+            FuelType? checkingFuelType = await context.FuelTypes
+                .AsNoTracking()
+                .FirstOrDefaultAsync(f => f.Id == request.FuelTypeId
+                    && !f.IsDeleted, cancellationToken);
+            if (checkingFuelType is null) return Result.Error("Kiểu nhiên liệu không tồn tại !");
+            // Check if status is exist
+            CarStatus? checkingStatus = await context.CarStatuses
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Name.Contains("available", StringComparison.OrdinalIgnoreCase)
+                    && !s.IsDeleted, cancellationToken);
+            if (checkingStatus is null) return Result.Error("Trạng thái không tồn tại !");
             // Check if manufacturer is exist
             Manufacturer? checkingManufacturer = await context.Manufacturers
                 .AsNoTracking()
@@ -88,15 +105,14 @@ public sealed class CreateCar
                 EncryptionKeyId = newEncryptionKey.Id,
                 Color = request.Color,
                 Seat = request.Seat,
+                TransmissionTypeId = request.TransmissionTypeId,
                 Description = request.Description,
-                TransmissionType = request.TransmissionType,
-                FuelType = request.FuelType,
+                FuelTypeId = request.FuelTypeId,
                 FuelConsumption = request.FuelConsumption,
                 RequiresCollateral = request.RequiresCollateral,
                 PricePerHour = request.PricePerHour,
                 PricePerDay = request.PricePerDay,
-                // Latitude = request.Latitude,
-                // Longtitude = request.Longtitude,
+                StatusId = checkingStatus.Id,
                 Location = geometryFactory.CreatePoint(new Coordinate((double)request.Longtitude!, (double)request.Latitude!)),
                 CarStatistic = new()
                 {

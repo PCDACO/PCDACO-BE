@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-using Domain.Enums;
 using Domain.Shared;
 
 using NetTopologySuite.Geometries;
@@ -13,19 +12,17 @@ public class Car : BaseEntity
     public required Guid OwnerId { get; set; }
     public required Guid ManufacturerId { get; set; }
     public required Guid EncryptionKeyId { get; set; }
+    public required Guid FuelTypeId { get; set; }
+    public required Guid TransmissionTypeId { get; set; }
+    public required Guid StatusId { get; set; }
     public required string EncryptedLicensePlate { get; set; }
     public required string Color { get; set; }
     public required int Seat { get; set; }
     public string Description { get; set; } = string.Empty;
-    public TransmissionType TransmissionType { get; set; } = TransmissionType.Auto;
-    public FuelType FuelType { get; set; } = FuelType.Electric;
     public required decimal FuelConsumption { get; set; }
     public bool RequiresCollateral { get; set; } = false;
-    public CarStatus Status { get; set; } = CarStatus.Available;
     public required decimal PricePerHour { get; set; }
     public required decimal PricePerDay { get; set; }
-    // public decimal? Latitude { get; set; } = null!;
-    // public decimal? Longtitude { get; set; } = null!;
     public Point Location { get; set; } = null!;
     public int TotalRented { get; set; } = 0;
     public decimal TotalEarning { get; set; } = 0;
@@ -36,6 +33,12 @@ public class Car : BaseEntity
     public Manufacturer Manufacturer { get; set; } = null!;
     [ForeignKey(nameof(EncryptionKeyId))]
     public EncryptionKey EncryptionKey { get; set; } = null!;
+    [ForeignKey(nameof(FuelTypeId))]
+    public FuelType FuelType { get; set; } = null!;
+    [ForeignKey(nameof(TransmissionTypeId))]
+    public TransmissionType TransmissionType { get; set; } = null!;
+    [ForeignKey(nameof(StatusId))]
+    public CarStatus CarStatus { get; set; } = null!;
     public CarStatistic CarStatistic { get; set; } = null!;
     public ICollection<CarAmenity> CarAmenities { get; set; } = [];
     public ICollection<ImageCar> ImageCars { get; set; } = [];
