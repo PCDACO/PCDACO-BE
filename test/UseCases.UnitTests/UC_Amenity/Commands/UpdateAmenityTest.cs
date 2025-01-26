@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using UseCases.UC_Amenity.Commands;
@@ -14,7 +15,8 @@ public class UpdateAmenityTests : DatabaseTestBase
     public async Task Handle_UserNotAdmin_ReturnsForbidden()
     {
         // Arrange
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Driver);
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
         var handler = new UpdateAmenity.Handler(_dbContext, _currentUser);
@@ -36,7 +38,8 @@ public class UpdateAmenityTests : DatabaseTestBase
     public async Task Handle_AmenityNotFound_ReturnsNotFound()
     {
         // Arrange
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Admin);
+        UserRole adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
 
         var handler = new UpdateAmenity.Handler(_dbContext, _currentUser);
@@ -58,7 +61,8 @@ public class UpdateAmenityTests : DatabaseTestBase
     public async Task Handle_ValidRequest_UpdatesAmenitySuccessfully()
     {
         // Arrange
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Admin);
+        UserRole adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
         var testAmenity = await TestDataCreateAmenity.CreateTestAmenity(
             _dbContext,

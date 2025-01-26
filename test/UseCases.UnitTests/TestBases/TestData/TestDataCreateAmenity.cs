@@ -12,7 +12,7 @@ public static class TestDataCreateAmenity
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             Name = "WiFi",
             Description = "High-speed internet",
-            IsDeleted = isDeleted
+            IsDeleted = isDeleted,
         };
 
     public static async Task<Amenity> CreateTestAmenity(
@@ -32,9 +32,9 @@ public static class TestDataCreateAmenity
     {
         List<Amenity> amenityList =
         [
-            new() { Name = "WiFi", Description = "High-speed internet", },
-            new() { Name = "Air Conditioning", Description = "Cooling system", },
-            new() { Name = "Parking", Description = "Car parking space", },
+            new() { Name = "WiFi", Description = "High-speed internet" },
+            new() { Name = "Air Conditioning", Description = "Cooling system" },
+            new() { Name = "Parking", Description = "Car parking space" },
         ];
 
         var amenities = new List<Amenity>();

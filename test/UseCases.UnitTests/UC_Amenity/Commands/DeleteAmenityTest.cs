@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using UseCases.UC_Amenity.Commands;
@@ -14,7 +15,8 @@ public class DeleteAmenityTests : DatabaseTestBase
     public async Task Handle_UserNotAdmin_ReturnsForbidden()
     {
         // Arrange
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Driver);
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
         var handler = new DeleteAmenity.Handler(_dbContext, _currentUser);
@@ -32,7 +34,8 @@ public class DeleteAmenityTests : DatabaseTestBase
     public async Task Handle_AmenityNotFound_ReturnsError()
     {
         // Arrange
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Admin);
+        UserRole adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
 
         var handler = new DeleteAmenity.Handler(_dbContext, _currentUser);
@@ -50,7 +53,8 @@ public class DeleteAmenityTests : DatabaseTestBase
     public async Task Handle_ValidRequest_DeletesAmenitySuccessfully()
     {
         // Arrange
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Admin);
+        UserRole adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
         var testAmenity = await TestDataCreateAmenity.CreateTestAmenity(
             _dbContext,
@@ -78,7 +82,8 @@ public class DeleteAmenityTests : DatabaseTestBase
     public async Task Handle_AmenityAlreadyDeleted_ReturnsError()
     {
         // Arrange
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Admin);
+        UserRole adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
         var testAmenity = await TestDataCreateAmenity.CreateTestAmenity(
             _dbContext,
