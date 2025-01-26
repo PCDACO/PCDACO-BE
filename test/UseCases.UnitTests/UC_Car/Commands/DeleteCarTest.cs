@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using UseCases.UC_Car.Commands;
@@ -14,13 +15,23 @@ public class DeleteCarTests : DatabaseTestBase
     public async Task Handle_UserIsAdmin_ReturnsForbidden()
     {
         // Arrange
-        var user = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Admin);
+        UserRole adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        CarStatus carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
+
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(user);
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var testCar = await TestDataCreateCar.CreateTestCar(
-            _dbContext,
-            user.Id,
-            testManufacturer.Id
+            dBContext: _dbContext,
+            ownerId: user.Id,
+            manufacturerId: testManufacturer.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: carStatus
         );
 
         var handler = new DeleteCar.Handler(_dbContext, _currentUser);
@@ -38,7 +49,8 @@ public class DeleteCarTests : DatabaseTestBase
     public async Task Handle_CarNotFound_ReturnsNotFound()
     {
         // Arrange
-        var user = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Driver);
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(user);
 
         var handler = new DeleteCar.Handler(_dbContext, _currentUser);
@@ -56,15 +68,26 @@ public class DeleteCarTests : DatabaseTestBase
     public async Task Handle_UserNotOwner_ReturnsForbidden()
     {
         // Arrange
-        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Owner);
-        var requester = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Driver);
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        CarStatus carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
+
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var requester = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(requester);
 
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var testCar = await TestDataCreateCar.CreateTestCar(
-            _dbContext,
-            owner.Id,
-            testManufacturer.Id
+            dBContext: _dbContext,
+            ownerId: owner.Id,
+            manufacturerId: testManufacturer.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: carStatus
         );
 
         var handler = new DeleteCar.Handler(_dbContext, _currentUser);
@@ -82,13 +105,22 @@ public class DeleteCarTests : DatabaseTestBase
     public async Task Handle_ValidRequest_DeletesCarSuccessfully()
     {
         // Arrange
-        var user = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Owner);
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        CarStatus status = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
+
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(user);
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var testCar = await TestDataCreateCar.CreateTestCar(
-            _dbContext,
-            user.Id,
-            testManufacturer.Id
+            dBContext: _dbContext,
+            ownerId: user.Id,
+            manufacturerId: testManufacturer.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: status
         );
 
         var handler = new DeleteCar.Handler(_dbContext, _currentUser);
@@ -122,15 +154,25 @@ public class DeleteCarTests : DatabaseTestBase
     public async Task Handle_CarAlreadyDeleted_ReturnsError()
     {
         // Arrange
-        var user = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Owner);
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        CarStatus status = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
+
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(user);
 
         // Create and immediately delete a car
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var testCar = await TestDataCreateCar.CreateTestCar(
-            _dbContext,
-            user.Id,
-            testManufacturer.Id,
+            dBContext: _dbContext,
+            ownerId: user.Id,
+            manufacturerId: testManufacturer.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: status,
             isDeleted: true
         );
 

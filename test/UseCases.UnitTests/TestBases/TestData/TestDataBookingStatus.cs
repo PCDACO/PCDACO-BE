@@ -4,7 +4,7 @@ using UUIDNext;
 
 namespace UseCases.UnitTests.TestBases.TestData;
 
-public static class TestDataCreateBookingStatus
+public static class TestDataBookingStatus
 {
     private static BookingStatus CreateBookingStatus(string statusName) =>
         new() { Id = Uuid.NewDatabaseFriendly(Database.PostgreSql), Name = statusName };

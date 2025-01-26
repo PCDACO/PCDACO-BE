@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared;
 using Infrastructure.Encryption;
@@ -8,6 +9,7 @@ using UseCases.Abstractions;
 using UseCases.UC_Car.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
+using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Car.Commands;
 
@@ -27,6 +29,8 @@ public class CreateCarTests : DatabaseTestBase
     }
 
     private CreateCar.Query CreateValidCommand(
+        TransmissionType transmissionType,
+        FuelType fuelType,
         Guid? manufacturerId = null,
         Guid[]? amenityIds = null
     ) =>
@@ -37,8 +41,8 @@ public class CreateCarTests : DatabaseTestBase
             Color: "Red",
             Seat: 4,
             Description: "Test car",
-            TransmissionType: TransmissionType.Auto,
-            FuelType: FuelType.Petrol,
+            TransmissionTypeId: transmissionType.Id,
+            FuelTypeId: fuelType.Id,
             FuelConsumption: 7.5m,
             RequiresCollateral: true,
             PricePerHour: 50m,
@@ -51,7 +55,11 @@ public class CreateCarTests : DatabaseTestBase
     public async Task Handle_UserIsAdmin_ReturnsError()
     {
         // Arrange
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Admin);
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        UserRole adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
 
         var handler = new CreateCar.Handler(
@@ -63,7 +71,7 @@ public class CreateCarTests : DatabaseTestBase
             _encryptionSettings
         );
 
-        var command = CreateValidCommand();
+        var command = CreateValidCommand(transmissionType: transmissionType, fuelType: fuelType);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -77,7 +85,11 @@ public class CreateCarTests : DatabaseTestBase
     public async Task Handle_MissingAmenities_ReturnsError()
     {
         // Arrange
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Driver);
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var amenities = await TestDataCreateAmenity.CreateTestAmenities(_dbContext);
@@ -92,6 +104,8 @@ public class CreateCarTests : DatabaseTestBase
         );
 
         var command = CreateValidCommand(
+            transmissionType: transmissionType,
+            fuelType: fuelType,
             manufacturerId: manufacturer.Id,
             amenityIds: [.. amenities.Select(a => a.Id)]
         );
@@ -124,7 +138,11 @@ public class CreateCarTests : DatabaseTestBase
     public async Task Handle_MissingManufacturer_ReturnsError()
     {
         // Arrange
-        var user = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Driver);
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(user);
 
         // Use a random non-existent manufacturer ID
@@ -139,7 +157,11 @@ public class CreateCarTests : DatabaseTestBase
             _encryptionSettings
         );
 
-        var command = CreateValidCommand(manufacturerId: invalidManufacturerId);
+        var command = CreateValidCommand(
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            manufacturerId: invalidManufacturerId
+        );
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -158,9 +180,12 @@ public class CreateCarTests : DatabaseTestBase
     }
 
     [Fact]
-    public void Validator_InvalidLicensePlate_ReturnsErrors()
+    public async Task Validator_InvalidLicensePlate_ReturnsErrors()
     {
         // Arrange
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
         var validator = new CreateCar.Validator();
 
         var invalidCommand = new CreateCar.Query(
@@ -170,8 +195,8 @@ public class CreateCarTests : DatabaseTestBase
             Color: "",
             Seat: 0,
             Description: new string('a', 501),
-            TransmissionType: TransmissionType.Auto,
-            FuelType: FuelType.Electric,
+            TransmissionTypeId: transmissionType.Id,
+            FuelTypeId: fuelType.Id,
             FuelConsumption: 0,
             RequiresCollateral: true,
             PricePerHour: 0,
@@ -196,7 +221,11 @@ public class CreateCarTests : DatabaseTestBase
     public async Task Handle_ValidRequest_CreatesCarSuccessfully()
     {
         // Arrange
-        var user = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Driver);
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(user);
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var amenities = await TestDataCreateAmenity.CreateTestAmenities(_dbContext);
@@ -211,6 +240,8 @@ public class CreateCarTests : DatabaseTestBase
         );
 
         var command = CreateValidCommand(
+            transmissionType: transmissionType,
+            fuelType: fuelType,
             manufacturerId: manufacturer.Id,
             amenityIds: [.. amenities.Select(a => a.Id)]
         );
