@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using UseCases.UC_Manufacturer.Commands;
@@ -13,7 +14,8 @@ public class DeleteManufacturerTest : DatabaseTestBase
     public async Task Handle_UserNotAdmin_ReturnsError()
     {
         // Arrange
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Driver);
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
         var handler = new DeleteManufacturer.Handler(_dbContext, _currentUser);
@@ -31,7 +33,8 @@ public class DeleteManufacturerTest : DatabaseTestBase
     public async Task Handle_ManufacturerNotFound_ReturnsNotFound()
     {
         // Arrange
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Admin);
+        UserRole adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
 
         var handler = new DeleteManufacturer.Handler(_dbContext, _currentUser);
@@ -49,7 +52,8 @@ public class DeleteManufacturerTest : DatabaseTestBase
     public async Task Handle_ValidRequest_DeletesManufacturerSuccessfully()
     {
         // Arrange
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Admin);
+        UserRole adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
 
@@ -74,7 +78,8 @@ public class DeleteManufacturerTest : DatabaseTestBase
     public async Task Handle_ManufacturerAlreadyDeleted_ReturnsNotFound()
     {
         // Arrange
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Admin);
+        UserRole adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(
             _dbContext,

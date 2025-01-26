@@ -11,7 +11,7 @@ public static class TestDataCreateManufacturer
         {
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             Name = "Test Manufacturer",
-            IsDeleted = isDeleted
+            IsDeleted = isDeleted,
         };
 
     public static async Task<Manufacturer> CreateTestManufacturer(
