@@ -27,7 +27,7 @@ public class SignUpTest : DatabaseTestBase
         _keyService = new KeyManagementService();
         var jwtSettings = new JwtSettings
         {
-            SecretKey = "your_secret_key_for_testing_purposes_only",
+            SecretKey = TestConstants.SecretKey,
             Issuer = "test_issuer",
             Audience = "test_audience",
             TokenExpirationInMinutes = 60,
@@ -39,6 +39,8 @@ public class SignUpTest : DatabaseTestBase
     public async Task Handle_ValidRequest_CreatesUserSuccessfully()
     {
         // Arrange
+        await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+
         var handler = new SignUp.Handler(
             _dbContext,
             _tokenService,
@@ -86,12 +88,12 @@ public class SignUpTest : DatabaseTestBase
             _encryptionSettings
         );
         var command = new SignUp.Command(
-            "New User",
+            existingUser.Name,
             existingUser.Email,
-            "password",
-            "Hanoi",
+            existingUser.Password,
+            existingUser.Address,
             DateTimeOffset.UtcNow.AddYears(-30),
-            "0987654321"
+            existingUser.Phone
         );
 
         // Act
@@ -102,7 +104,7 @@ public class SignUpTest : DatabaseTestBase
         Assert.Equal("Email đã tồn tại", result.Errors.First());
     }
 
-    [Fact]
+    [Fact(Timeout = 3000)]
     public async Task Handle_PhoneAlreadyExists_ReturnsError()
     {
         // Arrange
@@ -138,13 +140,9 @@ public class SignUpTest : DatabaseTestBase
     public async Task Handle_InvalidEmailFormat_ReturnsValidationError()
     {
         // Arrange
-        var handler = new SignUp.Handler(
-            _dbContext,
-            _tokenService,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+
+        var validator = new SignUp.Validator();
         var command = new SignUp.Command(
             "New User",
             "invalid-email",
@@ -155,24 +153,20 @@ public class SignUpTest : DatabaseTestBase
         );
 
         // Act
-        var result = await handler.Handle(command, CancellationToken.None);
+        var result = validator.Validate(command);
 
         // Assert
-        Assert.Equal(ResultStatus.Invalid, result.Status);
-        Assert.Contains("Email không hợp lệ", result.Errors);
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.ErrorMessage == "Email không hợp lệ");
     }
 
     [Fact]
-    public async Task Handle_WeakPassword_ReturnsValidationError()
+    public async Task Validator_WeakPassword_ReturnsValidationError()
     {
         // Arrange
-        var handler = new SignUp.Handler(
-            _dbContext,
-            _tokenService,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+
+        var validator = new SignUp.Validator();
         var command = new SignUp.Command(
             "New User",
             "newuser@example.com",
@@ -183,10 +177,10 @@ public class SignUpTest : DatabaseTestBase
         );
 
         // Act
-        var result = await handler.Handle(command, CancellationToken.None);
+        var result = validator.Validate(command);
 
         // Assert
-        Assert.Equal(ResultStatus.Invalid, result.Status);
-        Assert.Contains("Mật khẩu phải có ít nhất 6 ký tự", result.Errors);
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, e => e.ErrorMessage == "Mật khẩu phải có ít nhất 6 ký tự");
     }
 }

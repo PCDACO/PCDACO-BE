@@ -27,7 +27,7 @@ public static class TestDataCarStatus
         List<string> statusNames
     )
     {
-        var carStatuses = statusNames.Select(statusName => CreateCarStatus(statusName)).ToList();
+        var carStatuses = statusNames.Select(CreateCarStatus).ToList();
 
         await dBContext.CarStatuses.AddRangeAsync(carStatuses);
         await dBContext.SaveChangesAsync();
@@ -37,7 +37,7 @@ public static class TestDataCarStatus
 
     public static async Task<List<CarStatus>> InitializeTestCarStatuses(AppDBContext dBContext)
     {
-        List<string> statusNames = new() { "Available", "Rented", "Inactive" };
+        List<string> statusNames = ["Available", "Rented", "Inactive"];
 
         var carStatuses = new List<CarStatus>();
 

@@ -81,7 +81,7 @@ public class CreateCarTests : DatabaseTestBase
         Assert.Contains("Bạn không có quyền thực hiện chức năng này !", result.Errors);
     }
 
-    [Fact]
+    [Fact(Timeout = 3000)]
     public async Task Handle_MissingAmenities_ReturnsError()
     {
         // Arrange
@@ -89,10 +89,12 @@ public class CreateCarTests : DatabaseTestBase
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
+
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
-        var amenities = await TestDataCreateAmenity.CreateTestAmenities(_dbContext);
+        // var amenities = await TestDataCreateAmenity.CreateTestAmenities(_dbContext);
 
         var handler = new CreateCar.Handler(
             _dbContext,
@@ -107,31 +109,14 @@ public class CreateCarTests : DatabaseTestBase
             transmissionType: transmissionType,
             fuelType: fuelType,
             manufacturerId: manufacturer.Id,
-            amenityIds: [.. amenities.Select(a => a.Id)]
+            amenityIds: [Guid.Empty]
         );
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Created, result.Status);
-
-        // Verify database state
-        var createdCar = await _dbContext
-            .Cars.Include(c => c.CarAmenities)
-            .Include(c => c.EncryptionKey)
-            .FirstOrDefaultAsync(c => c.Id == result.Value.Id);
-
-        Assert.NotNull(createdCar);
-
-        // Verify encryption
-        var decryptedLicense = await _aesService.Decrypt(
-            createdCar.EncryptedLicensePlate,
-            _keyService.DecryptKey(createdCar.EncryptionKey.EncryptedKey, _encryptionSettings.Key),
-            createdCar.EncryptionKey.IV
-        );
-
-        Assert.Equal(command.LicensePlate, decryptedLicense);
+        Assert.Equal(ResultStatus.Error, result.Status);
     }
 
     [Fact]
@@ -143,6 +128,7 @@ public class CreateCarTests : DatabaseTestBase
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
         var user = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
         _currentUser.SetUser(user);
 
         // Use a random non-existent manufacturer ID
@@ -226,7 +212,9 @@ public class CreateCarTests : DatabaseTestBase
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
         var user = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
         _currentUser.SetUser(user);
+
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var amenities = await TestDataCreateAmenity.CreateTestAmenities(_dbContext);
 

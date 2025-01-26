@@ -45,7 +45,7 @@ public class DeleteCarTests : DatabaseTestBase
         Assert.Contains("Bạn không có quyền thực hiện chức năng này", result.Errors);
     }
 
-    [Fact]
+    [Fact(Timeout = 3000)]
     public async Task Handle_CarNotFound_ReturnsNotFound()
     {
         // Arrange
@@ -64,7 +64,7 @@ public class DeleteCarTests : DatabaseTestBase
         Assert.Contains("Không tìm thấy xe cần xóa", result.Errors);
     }
 
-    [Fact]
+    [Fact(Timeout = 3000)]
     public async Task Handle_UserNotOwner_ReturnsForbidden()
     {
         // Arrange

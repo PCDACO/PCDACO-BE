@@ -1,12 +1,8 @@
 using Ardalis.Result;
-
 using Domain.Entities;
 using Domain.Shared;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.Utils;
 
@@ -33,7 +29,7 @@ public sealed class CreateAdminUser
             if (checkingAdmin is not null)
                 return Result.Forbidden("Tài khoản đã được khởi tạo !");
             UserRole? checkingAdminRole = await context.UserRoles.FirstOrDefaultAsync(
-                ur => ur.Name.Contains("admin", StringComparison.OrdinalIgnoreCase),
+                ur => ur.Name.ToLower().Contains("admin"),
                 cancellationToken
             );
             if (checkingAdminRole is null)
@@ -52,17 +48,18 @@ public sealed class CreateAdminUser
             );
             EncryptionKey newEncryptionKey = new() { EncryptedKey = encryptedKey, IV = iv };
             await context.EncryptionKeys.AddAsync(newEncryptionKey, cancellationToken);
-            User admin = new()
-            {
-                Name = adminName,
-                Password = adminPassword.HashString(),
-                Email = adminEmail,
-                Address = adminAddress,
-                DateOfBirth = DateTimeOffset.UtcNow,
-                Phone = encryptedPhoneNumber,
-                RoleId = checkingAdminRole.Id,
-                EncryptionKeyId = newEncryptionKey.Id,
-            };
+            User admin =
+                new()
+                {
+                    Name = adminName,
+                    Password = adminPassword.HashString(),
+                    Email = adminEmail,
+                    Address = adminAddress,
+                    DateOfBirth = DateTimeOffset.UtcNow,
+                    Phone = encryptedPhoneNumber,
+                    RoleId = checkingAdminRole.Id,
+                    EncryptionKeyId = newEncryptionKey.Id,
+                };
             await context.Users.AddAsync(admin, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
             return Result.SuccessWithMessage("Tạo tài khoản admin thành công");

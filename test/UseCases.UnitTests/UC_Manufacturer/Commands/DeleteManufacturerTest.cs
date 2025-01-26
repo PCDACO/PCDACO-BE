@@ -10,7 +10,7 @@ namespace UseCases.UnitTests.UC_Manufacturer.Commands;
 
 public class DeleteManufacturerTest : DatabaseTestBase
 {
-    [Fact]
+    [Fact(Timeout = 3000)]
     public async Task Handle_UserNotAdmin_ReturnsError()
     {
         // Arrange
@@ -29,7 +29,7 @@ public class DeleteManufacturerTest : DatabaseTestBase
         Assert.Contains("Bạn không có quyền xóa hãng xe", result.Errors);
     }
 
-    [Fact]
+    [Fact(Timeout = 3000)]
     public async Task Handle_ManufacturerNotFound_ReturnsNotFound()
     {
         // Arrange
@@ -48,7 +48,7 @@ public class DeleteManufacturerTest : DatabaseTestBase
         Assert.Contains("Không tìm thấy hãng xe", result.Errors);
     }
 
-    [Fact]
+    [Fact(Timeout = 3000)]
     public async Task Handle_ValidRequest_DeletesManufacturerSuccessfully()
     {
         // Arrange

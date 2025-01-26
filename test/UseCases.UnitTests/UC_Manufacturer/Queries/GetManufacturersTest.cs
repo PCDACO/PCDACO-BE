@@ -47,7 +47,7 @@ public class GetManufacturersTest : DatabaseTestBase
         Assert.Empty(result.Value.Items);
     }
 
-    [Fact]
+    [Fact(Timeout = 3000)]
     public async Task Handle_ManufacturersExist_ReturnsPaginatedList()
     {
         // Arrange
@@ -64,7 +64,7 @@ public class GetManufacturersTest : DatabaseTestBase
         Assert.Equal("Ford", result.Value.Items.First().Name); // First item in descending order
     }
 
-    [Fact]
+    [Fact(Timeout = 3000)]
     public async Task Handle_KeywordFilter_ReturnsFilteredResults()
     {
         // Arrange
@@ -80,7 +80,7 @@ public class GetManufacturersTest : DatabaseTestBase
         Assert.Equal("Honda", result.Value.Items.First().Name);
     }
 
-    [Fact]
+    [Fact(Timeout = 3000)]
     public async Task Handle_Pagination_ReturnsCorrectPage()
     {
         // Arrange

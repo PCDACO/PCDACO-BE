@@ -17,7 +17,7 @@ public class LoginTest : DatabaseTestBase
     {
         var jwtSettings = new JwtSettings
         {
-            SecretKey = "your_secret_key_for_testing_purposes_only",
+            SecretKey = TestConstants.SecretKey,
             Issuer = "test_issuer",
             Audience = "test_audience",
             TokenExpirationInMinutes = 60,
@@ -79,7 +79,7 @@ public class LoginTest : DatabaseTestBase
         Assert.Equal(ResultStatus.NotFound, result.Status);
     }
 
-    [Fact]
+    [Fact(Timeout = 3000)]
     public async Task Handle_ValidRequest_ReturnsSuccess()
     {
         // Arrange

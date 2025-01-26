@@ -27,7 +27,11 @@ public class CreateAdminTest : DatabaseTestBase
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
-        var existingAdmin = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
+        var existingAdmin = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            adminRole,
+            "admin@gmail.com"
+        );
         _currentUser.SetUser(existingAdmin);
 
         var handler = new CreateAdminUser.Handler(
@@ -46,10 +50,12 @@ public class CreateAdminTest : DatabaseTestBase
         Assert.Equal("Tài khoản đã được khởi tạo !", result.Errors.First());
     }
 
-    [Fact]
+    [Fact(Timeout = 3000)]
     public async Task Handle_CreatesAdminSuccessfully()
     {
         // Arrange
+        await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+
         var handler = new CreateAdminUser.Handler(
             _dbContext,
             _aesService,

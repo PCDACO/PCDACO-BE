@@ -10,7 +10,7 @@ namespace UseCases.UnitTests.UC_Manufacturer.Commands;
 
 public class CreateManufacturerTest : DatabaseTestBase
 {
-    [Fact]
+    [Fact(Timeout = 3000)]
     public async Task Handle_UserNotAdmin_ReturnsError()
     {
         // Arrange
@@ -29,7 +29,7 @@ public class CreateManufacturerTest : DatabaseTestBase
         Assert.Contains("Bạn không có quyền thực hiện chức năng này !", result.Errors);
     }
 
-    [Fact]
+    [Fact(Timeout = 3000)]
     public async Task Handle_AdminUser_CreatesManufacturerSuccessfully()
     {
         // Arrange
