@@ -1,65 +1,21 @@
 using Ardalis.Result;
-using Domain.Entities;
-using Microsoft.EntityFrameworkCore;
-using Persistance.Data;
-using Testcontainers.PostgreSql;
 using UseCases.UC_Amenity.Queries;
+using UseCases.UnitTests.TestBases;
+using UseCases.UnitTests.TestBases.TestData;
 using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Amenity.Queries;
 
-public class GetAmenityByIdTests : IAsyncLifetime
+public class GetAmenityByIdTests : DatabaseTestBase
 {
-    private AppDBContext _dbContext;
-    private readonly PostgreSqlContainer _postgresContainer;
-
-    public GetAmenityByIdTests()
-    {
-        _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgis/postgis:latest")
-            .WithCleanUp(true)
-            .Build();
-    }
-
-    public async Task InitializeAsync()
-    {
-        await _postgresContainer.StartAsync();
-
-        var options = new DbContextOptionsBuilder<AppDBContext>()
-            .UseNpgsql(_postgresContainer.GetConnectionString(), o => o.UseNetTopologySuite())
-            .EnableSensitiveDataLogging()
-            .Options;
-
-        _dbContext = new AppDBContext(options);
-        await _dbContext.Database.MigrateAsync();
-    }
-
-    public async Task DisposeAsync()
-    {
-        await _postgresContainer.DisposeAsync();
-        await _dbContext.DisposeAsync();
-    }
-
-    private async Task<Amenity> CreateTestAmenity(bool isDeleted = false)
-    {
-        var amenity = new Amenity
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            Name = "WiFi",
-            Description = "High-speed internet",
-            IsDeleted = isDeleted
-        };
-
-        _dbContext.Amenities.Add(amenity);
-        await _dbContext.SaveChangesAsync();
-        return amenity;
-    }
-
     [Fact]
     public async Task Handle_AmenityExists_ReturnsAmenity()
     {
         // Arrange
-        var testAmenity = await CreateTestAmenity();
+        var testAmenity = await TestDataCreateAmenity.CreateTestAmenity(
+            _dbContext,
+            isDeleted: false
+        );
         var handler = new GetAmenityById.Handler(_dbContext);
         var command = new GetAmenityById.Query(testAmenity.Id);
 
@@ -76,7 +32,10 @@ public class GetAmenityByIdTests : IAsyncLifetime
     public async Task Handle_AmenityIsDeleted_ReturnsNotFound()
     {
         // Arrange
-        var testAmenity = await CreateTestAmenity(isDeleted: true);
+        var testAmenity = await TestDataCreateAmenity.CreateTestAmenity(
+            _dbContext,
+            isDeleted: true
+        );
         var handler = new GetAmenityById.Handler(_dbContext);
         var command = new GetAmenityById.Query(testAmenity.Id);
 

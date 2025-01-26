@@ -2,234 +2,191 @@ using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
-using NetTopologySuite.Geometries;
-using Persistance.Data;
-using Testcontainers.PostgreSql;
-using UseCases.DTOs;
 using UseCases.UC_Car.Commands;
+using UseCases.UnitTests.TestBases;
+using UseCases.UnitTests.TestBases.TestData;
 using UUIDNext;
 
-namespace UseCases.UnitTests.UC_Car.Commands
+namespace UseCases.UnitTests.UC_Car.Commands;
+
+public class DeleteCarTests : DatabaseTestBase
 {
-    public class DeleteCarTests : IAsyncLifetime
+    [Fact]
+    public async Task Handle_UserIsAdmin_ReturnsForbidden()
     {
-        private AppDBContext _dbContext;
-        private readonly CurrentUser _currentUser;
-        private readonly PostgreSqlContainer _postgresContainer;
+        // Arrange
+        UserRole adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
 
-        public DeleteCarTests()
-        {
-            _postgresContainer = new PostgreSqlBuilder()
-                .WithImage("postgis/postgis:latest")
-                .WithCleanUp(true)
-                .Build();
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        CarStatus carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
-            _currentUser = new CurrentUser();
-        }
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
+        _currentUser.SetUser(user);
+        var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testCar = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: user.Id,
+            manufacturerId: testManufacturer.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: carStatus
+        );
 
-        public async Task InitializeAsync()
-        {
-            await _postgresContainer.StartAsync();
+        var handler = new DeleteCar.Handler(_dbContext, _currentUser);
+        var command = new DeleteCar.Command(testCar.Id);
 
-            var options = new DbContextOptionsBuilder<AppDBContext>()
-                .UseNpgsql(_postgresContainer.GetConnectionString(), o => o.UseNetTopologySuite())
-                .EnableSensitiveDataLogging()
-                .Options;
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
 
-            _dbContext = new AppDBContext(options);
-            await _dbContext.Database.MigrateAsync();
-        }
+        // Assert
+        Assert.Equal(ResultStatus.Forbidden, result.Status);
+        Assert.Contains("Bạn không có quyền thực hiện chức năng này", result.Errors);
+    }
 
-        public async Task DisposeAsync()
-        {
-            await _postgresContainer.DisposeAsync();
-            await _dbContext.DisposeAsync();
-        }
+    [Fact(Timeout = 3000)]
+    public async Task Handle_CarNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        _currentUser.SetUser(user);
 
-        private async Task<User> CreateTestUser(UserRole role)
-        {
-            var encryptionKey = new EncryptionKey
-            {
-                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-                EncryptedKey = "test-user-key",
-                IV = "test-user-iv"
-            };
+        var handler = new DeleteCar.Handler(_dbContext, _currentUser);
+        var command = new DeleteCar.Command(Uuid.NewDatabaseFriendly(Database.PostgreSql));
 
-            _dbContext.EncryptionKeys.Add(encryptionKey);
-            // await _dbContext.SaveChangesAsync(); // Save encryption key first
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
 
-            var user = new User
-            {
-                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-                EncryptionKeyId = encryptionKey.Id,
-                Name = "Test User",
-                Email = "test@example.com",
-                Password = "password",
-                Role = role,
-                Address = "Test Address",
-                DateOfBirth = DateTime.UtcNow.AddYears(-30),
-                Phone = "1234567890"
-            };
+        // Assert
+        Assert.Equal(ResultStatus.NotFound, result.Status);
+        Assert.Contains("Không tìm thấy xe cần xóa", result.Errors);
+    }
 
-            _dbContext.Users.Add(user);
-            await _dbContext.SaveChangesAsync();
+    [Fact(Timeout = 3000)]
+    public async Task Handle_UserNotOwner_ReturnsForbidden()
+    {
+        // Arrange
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
 
-            return user;
-        }
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        CarStatus carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
-        private async Task<Car> CreateTestCar(Guid ownerId)
-        {
-            var encryptionKey = new EncryptionKey
-            {
-                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-                EncryptedKey = "test-key",
-                IV = "test-iv"
-            };
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var requester = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        _currentUser.SetUser(requester);
 
-            var manufacturer = new Manufacturer
-            {
-                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-                Name = "Test Manufacturer"
-            };
+        var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testCar = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: owner.Id,
+            manufacturerId: testManufacturer.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: carStatus
+        );
 
-            var car = new Car
-            {
-                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-                OwnerId = ownerId,
-                ManufacturerId = manufacturer.Id,
-                EncryptionKeyId = encryptionKey.Id,
-                EncryptedLicensePlate = "ABC123",
-                Color = "Red",
-                Seat = 4,
-                FuelConsumption = 5.5m,
-                PricePerDay = 100m,
-                PricePerHour = 10m,
-                Location = new Point(0, 0),
-                EncryptionKey = encryptionKey
-            };
+        var handler = new DeleteCar.Handler(_dbContext, _currentUser);
+        var command = new DeleteCar.Command(testCar.Id);
 
-            _dbContext.Manufacturers.Add(manufacturer);
-            _dbContext.EncryptionKeys.Add(encryptionKey);
-            _dbContext.Cars.Add(car);
-            await _dbContext.SaveChangesAsync();
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
 
-            return car;
-        }
+        // Assert
+        Assert.Equal(ResultStatus.Forbidden, result.Status);
+        Assert.Contains("Bạn không có quyền xóa xe này", result.Errors);
+    }
 
-        [Fact]
-        public async Task Handle_UserIsAdmin_ReturnsForbidden()
-        {
-            // Arrange
-            var user = await CreateTestUser(UserRole.Admin);
-            _currentUser.SetUser(user);
-            var testCar = await CreateTestCar(user.Id);
+    [Fact]
+    public async Task Handle_ValidRequest_DeletesCarSuccessfully()
+    {
+        // Arrange
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        CarStatus status = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
-            var handler = new DeleteCar.Handler(_dbContext, _currentUser);
-            var command = new DeleteCar.Command(testCar.Id);
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        _currentUser.SetUser(user);
+        var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testCar = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: user.Id,
+            manufacturerId: testManufacturer.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: status
+        );
 
-            // Act
-            var result = await handler.Handle(command, CancellationToken.None);
+        var handler = new DeleteCar.Handler(_dbContext, _currentUser);
+        var command = new DeleteCar.Command(testCar.Id);
 
-            // Assert
-            Assert.Equal(ResultStatus.Forbidden, result.Status);
-            Assert.Contains("Bạn không có quyền thực hiện chức năng này", result.Errors);
-        }
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
 
-        [Fact]
-        public async Task Handle_CarNotFound_ReturnsNotFound()
-        {
-            // Arrange
-            var user = await CreateTestUser(UserRole.Driver);
-            _currentUser.SetUser(user);
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
 
-            var handler = new DeleteCar.Handler(_dbContext, _currentUser);
-            var command = new DeleteCar.Command(Uuid.NewDatabaseFriendly(Database.PostgreSql));
+        // Verify car soft-delete
+        var deletedCar = await _dbContext
+            .Cars.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(c => c.Id == testCar.Id);
 
-            // Act
-            var result = await handler.Handle(command, CancellationToken.None);
+        Assert.NotNull(deletedCar);
+        Assert.True(deletedCar!.IsDeleted);
+        Assert.NotNull(deletedCar.DeletedAt);
 
-            // Assert
-            Assert.Equal(ResultStatus.NotFound, result.Status);
-            Assert.Contains("Không tìm thấy xe cần xóa", result.Errors);
-        }
+        // Verify related entities soft-delete
+        Assert.Empty(
+            await _dbContext
+                .ImageCars.IgnoreQueryFilters()
+                .Where(ic => ic.CarId == testCar.Id && !ic.IsDeleted)
+                .ToListAsync()
+        );
+    }
 
-        [Fact]
-        public async Task Handle_UserNotOwner_ReturnsForbidden()
-        {
-            // Arrange
-            var owner = await CreateTestUser(UserRole.Owner);
-            var requester = await CreateTestUser(UserRole.Driver);
-            _currentUser.SetUser(requester);
+    [Fact]
+    public async Task Handle_CarAlreadyDeleted_ReturnsError()
+    {
+        // Arrange
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
 
-            var testCar = await CreateTestCar(owner.Id);
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        CarStatus status = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
-            var handler = new DeleteCar.Handler(_dbContext, _currentUser);
-            var command = new DeleteCar.Command(testCar.Id);
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        _currentUser.SetUser(user);
 
-            // Act
-            var result = await handler.Handle(command, CancellationToken.None);
+        // Create and immediately delete a car
+        var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testCar = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: user.Id,
+            manufacturerId: testManufacturer.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: status,
+            isDeleted: true
+        );
 
-            // Assert
-            Assert.Equal(ResultStatus.Forbidden, result.Status);
-            Assert.Contains("Bạn không có quyền xóa xe này", result.Errors);
-        }
+        var handler = new DeleteCar.Handler(_dbContext, _currentUser);
+        await handler.Handle(new DeleteCar.Command(testCar.Id), CancellationToken.None);
 
-        [Fact]
-        public async Task Handle_ValidRequest_DeletesCarSuccessfully()
-        {
-            // Arrange
-            var user = await CreateTestUser(UserRole.Owner);
-            _currentUser.SetUser(user);
-            var testCar = await CreateTestCar(user.Id);
+        // Act - Try to delete again
+        var result = await handler.Handle(
+            new DeleteCar.Command(testCar.Id),
+            CancellationToken.None
+        );
 
-            var handler = new DeleteCar.Handler(_dbContext, _currentUser);
-            var command = new DeleteCar.Command(testCar.Id);
-
-            // Act
-            var result = await handler.Handle(command, CancellationToken.None);
-
-            // Assert
-            Assert.Equal(ResultStatus.Ok, result.Status);
-
-            // Verify car soft-delete
-            var deletedCar = await _dbContext
-                .Cars.IgnoreQueryFilters()
-                .FirstOrDefaultAsync(c => c.Id == testCar.Id);
-
-            Assert.NotNull(deletedCar);
-            Assert.True(deletedCar!.IsDeleted);
-            Assert.NotNull(deletedCar.DeletedAt);
-
-            // Verify related entities soft-delete
-            Assert.Empty(
-                await _dbContext
-                    .ImageCars.IgnoreQueryFilters()
-                    .Where(ic => ic.CarId == testCar.Id && !ic.IsDeleted)
-                    .ToListAsync()
-            );
-        }
-
-        [Fact]
-        public async Task Handle_CarAlreadyDeleted_ReturnsError()
-        {
-            // Arrange
-            var user = await CreateTestUser(UserRole.Owner);
-            _currentUser.SetUser(user);
-
-            // Create and immediately delete a car
-            var testCar = await CreateTestCar(user.Id);
-            var handler = new DeleteCar.Handler(_dbContext, _currentUser);
-            await handler.Handle(new DeleteCar.Command(testCar.Id), CancellationToken.None);
-
-            // Act - Try to delete again
-            var result = await handler.Handle(
-                new DeleteCar.Command(testCar.Id),
-                CancellationToken.None
-            );
-
-            // Assert
-            Assert.Equal(ResultStatus.NotFound, result.Status);
-            Assert.Contains("Không tìm thấy xe cần xóa", result.Errors);
-        }
+        // Assert
+        Assert.Equal(ResultStatus.NotFound, result.Status);
+        Assert.Contains("Không tìm thấy xe cần xóa", result.Errors);
     }
 }

@@ -1,154 +1,37 @@
+using System.Threading.Tasks;
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
-using Domain.Shared;
-using Infrastructure.Encryption;
 using Microsoft.EntityFrameworkCore;
-using NetTopologySuite.Geometries;
-using Persistance.Data;
-using Testcontainers.PostgreSql;
-using UseCases.Abstractions;
-using UseCases.DTOs;
 using UseCases.UC_Booking.Commands;
+using UseCases.UnitTests.TestBases;
+using UseCases.UnitTests.TestBases.TestData;
 using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Booking.Commands;
 
-public class CreateBookingTests : IAsyncLifetime
+public class CreateBookingTests : DatabaseTestBase
 {
-    private AppDBContext _dbContext;
-    private readonly CurrentUser _currentUser;
-    private readonly PostgreSqlContainer _postgresContainer;
-    private readonly EncryptionSettings _encryptionSettings;
-    private readonly IKeyManagementService _keyService;
-
-    public CreateBookingTests()
-    {
-        _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgis/postgis:latest")
-            .WithCleanUp(true)
-            .Build();
-
-        _currentUser = new CurrentUser();
-        _encryptionSettings = new EncryptionSettings
-        {
-            Key = "dnjGHqR9O/2hKCQUgImXcEjZ9YPaAVcfz4l5VcTBLcY="
-        };
-        _keyService = new KeyManagementService();
-    }
-
-    public async Task InitializeAsync()
-    {
-        await _postgresContainer.StartAsync();
-
-        var options = new DbContextOptionsBuilder<AppDBContext>()
-            .UseNpgsql(_postgresContainer.GetConnectionString(), o => o.UseNetTopologySuite())
-            .EnableSensitiveDataLogging()
-            .Options;
-
-        _dbContext = new AppDBContext(options);
-        await _dbContext.Database.MigrateAsync();
-    }
-
-    public async Task DisposeAsync()
-    {
-        await _postgresContainer.DisposeAsync();
-        await _dbContext.DisposeAsync();
-    }
-
-    private async Task<User> CreateTestUser(UserRole role)
-    {
-        var encryptionKey = await CreateTestEncryptKey();
-
-        var user = new User
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            EncryptionKeyId = encryptionKey.Id,
-            Name = "Test User",
-            Email = "test@example.com",
-            Password = "password",
-            Role = role,
-            Address = "Test Address",
-            DateOfBirth = DateTime.UtcNow.AddYears(-30),
-            Phone = "1234567890"
-        };
-
-        _dbContext.Users.Add(user);
-        await _dbContext.SaveChangesAsync();
-
-        return user;
-    }
-
-    private async Task<Car> CreateTestCar(User user)
-    {
-        var encryptionKey = await CreateTestEncryptKey();
-        var manufacturer = await CreateTestManufacturer();
-
-        var car = new Car
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            OwnerId = user.Id,
-            ManufacturerId = manufacturer.Id,
-            EncryptionKeyId = encryptionKey.Id,
-            EncryptedLicensePlate = "ABC123",
-            Color = "Red",
-            Seat = 4,
-            FuelConsumption = 5.5m,
-            PricePerDay = 100m,
-            PricePerHour = 10m,
-            Location = new Point(0, 0)
-        };
-
-        _dbContext.Cars.Add(car);
-        await _dbContext.SaveChangesAsync();
-        return car;
-    }
-
-    private async Task<EncryptionKey> CreateTestEncryptKey()
-    {
-        var (key, iv) = await _keyService.GenerateKeyAsync();
-        var encryptedKey = _keyService.EncryptKey(key, _encryptionSettings.Key);
-
-        var encryptionKey = new EncryptionKey
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            EncryptedKey = encryptedKey,
-            IV = iv
-        };
-
-        _dbContext.EncryptionKeys.Add(encryptionKey);
-        await _dbContext.SaveChangesAsync();
-
-        return encryptionKey;
-    }
-
-    private async Task<Manufacturer> CreateTestManufacturer()
-    {
-        var manufacturer = new Manufacturer
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            Name = "Test Manufacturer"
-        };
-
-        _dbContext.Manufacturers.Add(manufacturer);
-        await _dbContext.SaveChangesAsync();
-
-        return manufacturer;
-    }
-
     [Fact]
     public async Task Handle_UserNotDriver_ReturnsError()
     {
         // Arrange
-        var testUser = await CreateTestUser(UserRole.Admin);
+        UserRole adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        BookingStatus bookingStatus = await TestDataBookingStatus.CreateTestBookingStatus(
+            _dbContext,
+            "Pending"
+        );
+
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
 
         var handler = new CreateBooking.Handler(_dbContext, _currentUser);
         var command = new CreateBooking.CreateBookingCommand(
-            testUser.Id,
-            Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            DateTime.UtcNow,
-            DateTime.UtcNow.AddDays(1)
+            UserId: testUser.Id,
+            CarId: Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            StatusId: bookingStatus.Id,
+            StartTime: DateTime.UtcNow,
+            EndTime: DateTime.UtcNow.AddDays(1)
         );
 
         // Act
@@ -163,15 +46,22 @@ public class CreateBookingTests : IAsyncLifetime
     public async Task Handle_CarNotFound_ReturnsNotFound()
     {
         // Arrange
-        var testUser = await CreateTestUser(UserRole.Driver);
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        BookingStatus bookingStatus = await TestDataBookingStatus.CreateTestBookingStatus(
+            _dbContext,
+            "Pending"
+        );
+
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
         var handler = new CreateBooking.Handler(_dbContext, _currentUser);
         var command = new CreateBooking.CreateBookingCommand(
-            testUser.Id,
-            Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            DateTime.UtcNow,
-            DateTime.UtcNow.AddDays(1)
+            UserId: testUser.Id,
+            CarId: Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            StatusId: bookingStatus.Id,
+            StartTime: DateTime.UtcNow,
+            EndTime: DateTime.UtcNow.AddDays(1)
         );
 
         // Act
@@ -185,8 +75,26 @@ public class CreateBookingTests : IAsyncLifetime
     public async Task Handle_ValidRequest_CreatesBookingWithCorrectValues()
     {
         // Arrange
-        var testUser = await CreateTestUser(UserRole.Driver);
-        var testCar = await CreateTestCar(testUser);
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        BookingStatus bookingStatus = await TestDataBookingStatus.CreateTestBookingStatus(
+            _dbContext,
+            "Pending"
+        );
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        CarStatus carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
+
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testCar = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: testUser.Id,
+            manufacturerId: testManufacturer.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: carStatus
+        );
         var startTime = DateTime.UtcNow;
         var endTime = DateTime.UtcNow.AddDays(3);
 
@@ -194,10 +102,11 @@ public class CreateBookingTests : IAsyncLifetime
 
         var handler = new CreateBooking.Handler(_dbContext, _currentUser);
         var command = new CreateBooking.CreateBookingCommand(
-            testUser.Id,
-            testCar.Id,
-            startTime,
-            endTime
+            UserId: testUser.Id,
+            CarId: testCar.Id,
+            StatusId: bookingStatus.Id,
+            StartTime: startTime,
+            EndTime: endTime
         );
 
         // Act
@@ -216,13 +125,18 @@ public class CreateBookingTests : IAsyncLifetime
     }
 
     [Fact]
-    public void Validator_EndTimeBeforeStartTime_ReturnsValidationError()
+    public async Task Validator_EndTimeBeforeStartTime_ReturnsValidationError()
     {
         // Arrange
+        BookingStatus bookingStatus = await TestDataBookingStatus.CreateTestBookingStatus(
+            _dbContext,
+            "Pending"
+        );
         var validator = new CreateBooking.Validator();
         var command = new CreateBooking.CreateBookingCommand(
             Uuid.NewDatabaseFriendly(Database.PostgreSql),
             Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            bookingStatus.Id,
             DateTime.UtcNow,
             DateTime.UtcNow.AddDays(-1)
         );
@@ -242,90 +156,112 @@ public class CreateBookingTests : IAsyncLifetime
     public async Task Handle_SameUserOverlappingBooking_ReturnsConflict()
     {
         // Arrange
-        var testUser = await CreateTestUser(UserRole.Driver);
-        var testCar = await CreateTestCar(testUser);
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        CarStatus carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
+
+        BookingStatus bookingStatus = await TestDataBookingStatus.CreateTestBookingStatus(
+            _dbContext,
+            "Pending"
+        );
+
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testCar = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: testUser.Id,
+            manufacturerId: testManufacturer.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: carStatus
+        );
         _currentUser.SetUser(testUser);
 
-        // Create existing booking
-        var existingBooking = new Booking
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            UserId = testUser.Id,
-            CarId = testCar.Id,
-            StartTime = DateTime.UtcNow.AddHours(1),
-            EndTime = DateTime.UtcNow.AddHours(3),
-            ActualReturnTime = DateTime.UtcNow.AddHours(3),
-            BasePrice = 100m,
-            PlatformFee = 10m,
-            ExcessDay = 0,
-            ExcessDayFee = 0,
-            TotalAmount = 110m,
-            Note = "Test note"
-        };
+        // Create overlapping booking
+        var command1 = new CreateBooking.CreateBookingCommand(
+            UserId: testUser.Id,
+            CarId: testCar.Id,
+            StatusId: bookingStatus.Id,
+            StartTime: DateTime.UtcNow.AddHours(1),
+            EndTime: DateTime.UtcNow.AddHours(3)
+        );
 
-        _dbContext.Bookings.Add(existingBooking);
-        await _dbContext.SaveChangesAsync();
-
-        // Create overlapping command
-        var command = new CreateBooking.CreateBookingCommand(
-            testUser.Id,
-            testCar.Id,
-            DateTime.UtcNow.AddHours(2), // Overlaps
-            DateTime.UtcNow.AddHours(4)
+        // Overlapping booking
+        var command2 = new CreateBooking.CreateBookingCommand(
+            UserId: testUser.Id,
+            CarId: testCar.Id,
+            StatusId: bookingStatus.Id,
+            StartTime: DateTime.UtcNow.AddHours(2), // Overlaps
+            EndTime: DateTime.UtcNow.AddHours(4)
         );
 
         var handler = new CreateBooking.Handler(_dbContext, _currentUser);
 
         // Act
-        var result = await handler.Handle(command, CancellationToken.None);
+        var result1 = await handler.Handle(command1, CancellationToken.None);
+        var result2 = await handler.Handle(command2, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Conflict, result.Status);
+        Assert.Equal(ResultStatus.Conflict, result2.Status);
     }
 
     [Fact]
     public async Task Handle_DifferentUserOverlappingBooking_CreatesSuccessfully()
     {
         // Arrange
-        var testUser1 = await CreateTestUser(UserRole.Driver);
-        var testUser2 = await CreateTestUser(UserRole.Driver);
-        var testCar = await CreateTestCar(testUser1);
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
 
-        // Create existing booking for User1
-        var existingBooking = new Booking
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            UserId = testUser1.Id,
-            CarId = testCar.Id,
-            StartTime = DateTime.UtcNow.AddHours(1),
-            EndTime = DateTime.UtcNow.AddHours(3),
-            ActualReturnTime = DateTime.UtcNow.AddHours(3),
-            BasePrice = 100m,
-            PlatformFee = 10m,
-            ExcessDay = 0,
-            ExcessDayFee = 0,
-            TotalAmount = 110m,
-            Note = "Test note"
-        };
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        CarStatus carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
-        _dbContext.Bookings.Add(existingBooking);
-        await _dbContext.SaveChangesAsync();
+        BookingStatus bookingStatus = await TestDataBookingStatus.CreateTestBookingStatus(
+            _dbContext,
+            "Pending"
+        );
 
-        // Use User2 for new booking
+        var testUser1 = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        var testUser2 = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testCar = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: testUser1.Id,
+            manufacturerId: testManufacturer.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: carStatus
+        );
+
+        // Use users 2
         _currentUser.SetUser(testUser2);
         var handler = new CreateBooking.Handler(_dbContext, _currentUser);
-        var command = new CreateBooking.CreateBookingCommand(
-            testUser2.Id,
-            testCar.Id,
-            DateTime.UtcNow.AddHours(2), // Overlaps
-            DateTime.UtcNow.AddHours(4)
+
+        var command1 = new CreateBooking.CreateBookingCommand(
+            UserId: testUser1.Id,
+            CarId: testCar.Id,
+            StatusId: bookingStatus.Id,
+            StartTime: DateTime.UtcNow.AddHours(1),
+            EndTime: DateTime.UtcNow.AddHours(3)
+        );
+
+        var command2 = new CreateBooking.CreateBookingCommand(
+            UserId: testUser2.Id,
+            CarId: testCar.Id,
+            StatusId: bookingStatus.Id,
+            StartTime: DateTime.UtcNow.AddHours(2), // Overlaps
+            EndTime: DateTime.UtcNow.AddHours(4)
         );
 
         // Act
-        var result = await handler.Handle(command, CancellationToken.None);
+        var result1 = await handler.Handle(command1, CancellationToken.None);
+        var result2 = await handler.Handle(command2, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Equal(ResultStatus.Ok, result2.Status);
 
         var newBooking = await _dbContext.Bookings.FirstOrDefaultAsync(b =>
             b.UserId == testUser2.Id

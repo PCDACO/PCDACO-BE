@@ -1,14 +1,9 @@
 using Ardalis.Result;
-
 using Domain.Entities;
 using Domain.Shared;
-
 using FluentValidation;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.Utils;
 
@@ -27,7 +22,7 @@ public class SignUp
 
     public record Response(string AccessToken, string RefreshToken);
 
-    private sealed class Handler(
+    public sealed class Handler(
         IAppDBContext context,
         TokenService tokenService,
         IAesEncryptionService aesEncryptionService,
@@ -44,9 +39,11 @@ public class SignUp
                 x => x.Email == request.Email || x.Phone == request.Phone,
                 cancellationToken
             );
-            UserRole? checkingUserRole = await context.UserRoles.FirstOrDefaultAsync(ur => ur.Name
-                .Contains("driver", StringComparison.OrdinalIgnoreCase), cancellationToken);
-            if (checkingUserRole is not null)
+            UserRole? checkingUserRole = await context.UserRoles.FirstOrDefaultAsync(
+                ur => ur.Name.ToLower() == "driver",
+                cancellationToken
+            );
+            if (checkingUserRole is null)
                 return Result.Error("Không thể đăng ký tài khoản với vai trò này");
             if (checkingUser is not null)
             {
@@ -61,17 +58,18 @@ public class SignUp
             string encryptedKey = keyManagementService.EncryptKey(key, encryptionSettings.Key);
             EncryptionKey encryptionKey = new() { EncryptedKey = encryptedKey, IV = iv };
             await context.EncryptionKeys.AddAsync(encryptionKey, cancellationToken);
-            User user = new()
-            {
-                EncryptionKeyId = encryptionKey.Id,
-                Name = request.Name,
-                Email = request.Email,
-                Password = request.Password.HashString(),
-                Address = request.Address,
-                RoleId = checkingUserRole!.Id,
-                DateOfBirth = request.DateOfBirth,
-                Phone = encryptedPhone,
-            };
+            User user =
+                new()
+                {
+                    EncryptionKeyId = encryptionKey.Id,
+                    Name = request.Name,
+                    Email = request.Email,
+                    Password = request.Password.HashString(),
+                    Address = request.Address,
+                    RoleId = checkingUserRole!.Id,
+                    DateOfBirth = request.DateOfBirth,
+                    Phone = encryptedPhone,
+                };
             user.RefreshTokens.Add(
                 new RefreshToken
                 {
@@ -87,7 +85,7 @@ public class SignUp
         }
     }
 
-    private sealed class Validator : AbstractValidator<Command>
+    public sealed class Validator : AbstractValidator<Command>
     {
         public Validator()
         {
@@ -98,22 +96,27 @@ public class SignUp
                 .WithMessage("Tên phải có ít nhất 3 ký tự")
                 .MaximumLength(50)
                 .WithMessage("Tên không được quá 50 ký tự");
+
             RuleFor(x => x.Email)
                 .NotEmpty()
                 .WithMessage("Email không được để trống")
                 .EmailAddress()
                 .WithMessage("Email không hợp lệ");
+
             RuleFor(x => x.Password)
                 .NotEmpty()
                 .WithMessage("Mật khẩu không được để trống")
                 .MinimumLength(6)
                 .WithMessage("Mật khẩu phải có ít nhất 6 ký tự");
+
             RuleFor(x => x.Address).NotEmpty().WithMessage("Địa chỉ không được để trống");
+
             RuleFor(x => x.DateOfBirth)
                 .NotEmpty()
                 .WithMessage("Ngày sinh không được để trống")
                 .LessThan(DateTimeOffset.UtcNow)
                 .WithMessage("Ngày sinh không hợp lệ");
+
             RuleFor(x => x.Phone).NotEmpty().WithMessage("Số điện thoại không được để trống");
         }
     }
