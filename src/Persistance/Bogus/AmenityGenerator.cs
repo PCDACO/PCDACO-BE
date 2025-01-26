@@ -14,7 +14,6 @@ public class AmenityGenerator
             bool isRandomUpdate = new Random().Next(0, 2) == 1;
             return new Amenity
             {
-                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
                 Name = feature.Key,
                 Description = feature.Value,
                 UpdatedAt = isRandomUpdate ? DateTime.UtcNow : null,

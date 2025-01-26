@@ -1,9 +1,12 @@
 using Ardalis.Result;
+
 using Domain.Entities;
-using Domain.Enums;
 using Domain.Shared;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 using UseCases.Utils;
 
@@ -28,7 +31,13 @@ public sealed class CreateAdminUser
                 cancellationToken
             );
             if (checkingAdmin is not null)
-                return Result.Error("Tài khoản đã được khởi tạo !");
+                return Result.Forbidden("Tài khoản đã được khởi tạo !");
+            UserRole? checkingAdminRole = await context.UserRoles.FirstOrDefaultAsync(
+                ur => ur.Name.Contains("admin", StringComparison.OrdinalIgnoreCase),
+                cancellationToken
+            );
+            if (checkingAdminRole is null)
+                return Result.Error("Không thể tạo tài khoản admin");
             //
             string adminName = "Admin";
             string adminPhoneNumber = "0123456789";
@@ -51,7 +60,7 @@ public sealed class CreateAdminUser
                 Address = adminAddress,
                 DateOfBirth = DateTimeOffset.UtcNow,
                 Phone = encryptedPhoneNumber,
-                Role = UserRole.Admin,
+                RoleId = checkingAdminRole.Id,
                 EncryptionKeyId = newEncryptionKey.Id,
             };
             await context.Users.AddAsync(admin, cancellationToken);

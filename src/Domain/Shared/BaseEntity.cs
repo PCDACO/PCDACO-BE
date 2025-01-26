@@ -22,4 +22,7 @@ public class BaseEntity
         DeletedAt = null;
         IsDeleted = false;
     }
+
+    public bool IsCurrentObject(Guid id)
+        => Id == id || !IsDeleted;
 }

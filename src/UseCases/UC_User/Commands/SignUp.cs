@@ -1,9 +1,14 @@
 using Ardalis.Result;
+
 using Domain.Entities;
 using Domain.Shared;
+
 using FluentValidation;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 using UseCases.Utils;
 
@@ -39,6 +44,10 @@ public class SignUp
                 x => x.Email == request.Email || x.Phone == request.Phone,
                 cancellationToken
             );
+            UserRole? checkingUserRole = await context.UserRoles.FirstOrDefaultAsync(ur => ur.Name
+                .Contains("driver", StringComparison.OrdinalIgnoreCase), cancellationToken);
+            if (checkingUserRole is not null)
+                return Result.Error("Không thể đăng ký tài khoản với vai trò này");
             if (checkingUser is not null)
             {
                 if (checkingUser.Email == request.Email)
@@ -59,6 +68,7 @@ public class SignUp
                 Email = request.Email,
                 Password = request.Password.HashString(),
                 Address = request.Address,
+                RoleId = checkingUserRole!.Id,
                 DateOfBirth = request.DateOfBirth,
                 Phone = encryptedPhone,
             };

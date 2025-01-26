@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Domain.Enums;
+
 using Domain.Shared;
 
 namespace Domain.Entities;
@@ -9,10 +9,10 @@ public class User : BaseEntity
 {
     // Properties
     public required Guid EncryptionKeyId { get; set; }
+    public required Guid RoleId { get; set; }
     public required string Name { get; set; }
     public required string Email { get; set; }
     public required string Password { get; set; }
-    public UserRole Role { get; set; } = UserRole.Driver;
     public required string Address { get; set; }
     public required DateTimeOffset DateOfBirth { get; set; }
     public required string Phone { get; set; }
@@ -22,6 +22,8 @@ public class User : BaseEntity
     // Navigation Properties
     [ForeignKey(nameof(EncryptionKeyId))]
     public EncryptionKey EncryptionKey { get; set; } = null!;
+    [ForeignKey(nameof(RoleId))]
+    public UserRole Role { get; set; } = null!;
     public Driver Driver { get; set; } = null!;
     public UserStatistic UserStatistic { get; set; } = null!;
     public WithdrawalRequest WithdrawalRequest { get; set; } = null!;
@@ -37,9 +39,9 @@ public class User : BaseEntity
     public ICollection<Transaction> ReceivedTransactions { get; set; } = [];
     public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
 
-    public bool IsAdmin() => Role == UserRole.Admin;
+    public bool IsAdmin() => Role.Name == "Admin";
 
-    public bool IsDriver() => Role == UserRole.Driver;
+    public bool IsDriver() => Role.Name == "Driver";
 
-    public bool IsOwner() => Role == UserRole.Owner;
+    public bool IsOwner() => Role.Name == "Owner";
 }

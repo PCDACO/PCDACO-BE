@@ -1,9 +1,13 @@
 using API.Utils;
+
 using Ardalis.Result;
+
 using Carter;
-using Domain.Enums;
+
 using MediatR;
+
 using UseCases.UC_Booking.Commands;
+
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.BookingEndpoints;
@@ -24,6 +28,7 @@ public class CreateBookingEndpoint : ICarterModule
             new CreateBooking.CreateBookingCommand(
                 request.UserId,
                 request.CarId,
+                request.StatusId,
                 request.StartTime,
                 request.EndTime
             )
@@ -35,6 +40,7 @@ public class CreateBookingEndpoint : ICarterModule
     private sealed record CreateBookingRequest(
         Guid UserId,
         Guid CarId,
+        Guid StatusId,
         DateTime StartTime,
         DateTime EndTime
     );

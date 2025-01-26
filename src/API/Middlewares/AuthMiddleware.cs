@@ -46,7 +46,12 @@ public class AuthMiddleware(IConfiguration configuration) : IMiddleware
             return;
         }
         IAppDBContext dbContext = context.RequestServices.GetRequiredService<IAppDBContext>();
-        User? user = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId);
+        User? user = await dbContext.Users
+            .AsNoTracking()
+            .Include(u => u.Role)
+            .Include(u => u.Driver)
+            .Include(u => u.EncryptionKey)
+            .FirstOrDefaultAsync(u => u.Id == userId);
         if (user is null)
         {
             return;

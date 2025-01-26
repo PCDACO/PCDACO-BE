@@ -6,6 +6,7 @@ using Bogus;
 
 using Carter;
 
+using Domain.Entities;
 using Domain.Enums;
 
 using MediatR;
@@ -28,33 +29,35 @@ public class UpdateCarEndpoint : ICarterModule
     private async Task<IResult> Handle(ISender sender, Guid id, UpdateCarRequest request)
     {
         Result result = await sender.Send(new UpdateCar.Commamnd(
-            id,
-            request.AmenityIds,
-            request.ManufacturerId,
-            request.LicensePlate,
-            request.Color,
-            request.Seat,
-            request.Description,
-            request.TransmissionType,
-            request.FuelType,
-            request.FuelConsumption,
-            request.RequiresCollateral,
-            request.PricePerHour,
-            request.PricePerDay,
-            request.Latitude,
-            request.Longtitude
+            CarId: id,
+            AmenityIds: request.AmenityIds,
+            ManufacturerId: request.ManufacturerId,
+            TransmissionTypeId: request.TransmissionTypeId,
+            FuelTypeId: request.FuelTypeId,
+            StatusId: request.StatusId,
+            LicensePlate: request.LicensePlate,
+            Color: request.Color,
+            Seat: request.Seat,
+            Description: request.Description,
+            FuelConsumption: request.FuelConsumption,
+            RequiresCollateral: request.RequiresCollateral,
+            PricePerHour: request.PricePerHour,
+            PricePerDay: request.PricePerDay,
+            Latitude: request.Latitude,
+            Longtitude: request.Longtitude
         ));
         return result.MapResult();
     }
     private record UpdateCarRequest(
         Guid[] AmenityIds,
         Guid ManufacturerId,
+        Guid TransmissionTypeId,
+        Guid FuelTypeId,
+        Guid StatusId,
         string LicensePlate,
         string Color,
         int Seat,
         string Description,
-        TransmissionType TransmissionType,
-        FuelType FuelType,
         decimal FuelConsumption,
         bool RequiresCollateral,
         decimal PricePerHour,
