@@ -17,7 +17,7 @@ public static class TestDataCreateEncryptionKey
         {
             Id = Guid.NewGuid(),
             EncryptedKey = _keyService.EncryptKey(key, TestConstants.MasterKey),
-            IV = iv
+            IV = iv,
         };
     }
 
