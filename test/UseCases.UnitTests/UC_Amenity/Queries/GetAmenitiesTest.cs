@@ -1,79 +1,11 @@
-using Domain.Entities;
-using Microsoft.EntityFrameworkCore;
-using MockQueryable.Moq;
-using Moq;
-using Persistance.Data;
-using Testcontainers.PostgreSql;
-using UseCases.Abstractions;
 using UseCases.UC_Amenity.Queries;
-using UUIDNext;
+using UseCases.UnitTests.TestBases;
+using UseCases.UnitTests.TestBases.TestData;
 
 namespace UseCases.UnitTests.UC_Amenity.Queries;
 
-public class GetAmenitiesTests : IAsyncLifetime
+public class GetAmenitiesTests : DatabaseTestBase
 {
-    private AppDBContext _dbContext;
-    private readonly PostgreSqlContainer _postgresContainer;
-
-    public GetAmenitiesTests()
-    {
-        _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgis/postgis:latest")
-            .WithCleanUp(true)
-            .Build();
-    }
-
-    public async Task InitializeAsync()
-    {
-        await _postgresContainer.StartAsync();
-
-        var options = new DbContextOptionsBuilder<AppDBContext>()
-            .UseNpgsql(_postgresContainer.GetConnectionString(), o => o.UseNetTopologySuite())
-            .EnableSensitiveDataLogging()
-            .Options;
-
-        _dbContext = new AppDBContext(options);
-        await _dbContext.Database.MigrateAsync();
-    }
-
-    public async Task DisposeAsync()
-    {
-        await _postgresContainer.DisposeAsync();
-        await _dbContext.DisposeAsync();
-    }
-
-    private async Task SeedTestData()
-    {
-        var amenities = new[]
-        {
-            new Amenity
-            {
-                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-                Name = "WiFi",
-                Description = "High-speed internet",
-                IsDeleted = false
-            },
-            new Amenity
-            {
-                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-                Name = "Air Conditioning",
-                Description = "Cooling system",
-                IsDeleted = false
-            },
-            new Amenity
-            {
-                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-                Name = "Parking",
-                Description = "Car parking space",
-                IsDeleted = false
-            }
-        };
-
-
-        await _dbContext.Amenities.AddRangeAsync(amenities);
-        await _dbContext.SaveChangesAsync();
-    }
-
     [Fact]
     public async Task Handle_NoAmenitiesExist_ReturnsEmptyList()
     {
@@ -93,7 +25,7 @@ public class GetAmenitiesTests : IAsyncLifetime
     public async Task Handle_AmenitiesExist_ReturnsPaginatedList()
     {
         // Arrange
-        await SeedTestData();
+        await TestDataCreateAmenity.CreateTestAmenities(_dbContext);
         var handler = new GetAmenities.Handler(_dbContext);
         var query = new GetAmenities.Query(PageNumber: 1, PageSize: 2);
 
@@ -110,7 +42,7 @@ public class GetAmenitiesTests : IAsyncLifetime
     public async Task Handle_KeywordFilter_ReturnsFilteredResults()
     {
         // Arrange
-        await SeedTestData();
+        await TestDataCreateAmenity.CreateTestAmenities(_dbContext);
         var handler = new GetAmenities.Handler(_dbContext);
         var query = new GetAmenities.Query(keyword: "con");
 
@@ -126,7 +58,7 @@ public class GetAmenitiesTests : IAsyncLifetime
     public async Task Handle_Pagination_ReturnsCorrectPage()
     {
         // Arrange
-        await SeedTestData();
+        await TestDataCreateAmenity.CreateTestAmenities(_dbContext);
         var handler = new GetAmenities.Handler(_dbContext);
         var query = new GetAmenities.Query(PageNumber: 2, PageSize: 2);
 

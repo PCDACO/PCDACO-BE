@@ -1,29 +1,18 @@
-using System.Security.Cryptography;
-using System.Text;
 using Ardalis.Result;
-using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared;
 using Infrastructure.Encryption;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.ChangeTracking;
-using MockQueryable.Moq;
-using Moq;
 using NetTopologySuite.Geometries;
-using Persistance.Data;
-using Testcontainers.PostgreSql;
 using UseCases.Abstractions;
-using UseCases.DTOs;
 using UseCases.UC_Car.Commands;
-using UUIDNext;
+using UseCases.UnitTests.TestBases;
+using UseCases.UnitTests.TestBases.TestData;
 
 namespace UseCases.UnitTests.UC_Car.Commands;
 
-public class CreateCarTests : IAsyncLifetime
+public class CreateCarTests : DatabaseTestBase
 {
-    private AppDBContext _dbContext;
-    private readonly CurrentUser _currentUser;
-    private readonly PostgreSqlContainer _postgresContainer;
     private readonly GeometryFactory _geometryFactory;
     private readonly EncryptionSettings _encryptionSettings;
     private readonly IAesEncryptionService _aesService;
@@ -31,105 +20,10 @@ public class CreateCarTests : IAsyncLifetime
 
     public CreateCarTests()
     {
-        _postgresContainer = new PostgreSqlBuilder()
-            .WithImage("postgis/postgis:latest")
-            .WithCleanUp(true)
-            .Build();
-
-        _currentUser = new CurrentUser();
         _geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
-        _encryptionSettings = new EncryptionSettings
-        {
-            Key = "dnjGHqR9O/2hKCQUgImXcEjZ9YPaAVcfz4l5VcTBLcY="
-        };
-
+        _encryptionSettings = new EncryptionSettings { Key = TestConstants.MasterKey };
         _aesService = new AesEncryptionService();
         _keyService = new KeyManagementService();
-    }
-
-    public async Task InitializeAsync()
-    {
-        await _postgresContainer.StartAsync();
-
-        var options = new DbContextOptionsBuilder<AppDBContext>()
-            .UseNpgsql(_postgresContainer.GetConnectionString(), o => o.UseNetTopologySuite())
-            .EnableSensitiveDataLogging()
-            .Options;
-
-        _dbContext = new AppDBContext(options);
-        await _dbContext.Database.MigrateAsync();
-    }
-
-    public async Task DisposeAsync()
-    {
-        await _postgresContainer.DisposeAsync();
-        await _dbContext.DisposeAsync();
-    }
-
-    private async Task<User> CreateTestUser(UserRole role)
-    {
-        var (key, iv) = await _keyService.GenerateKeyAsync();
-        var encryptedKey = _keyService.EncryptKey(key, _encryptionSettings.Key);
-
-        var encryptionKey = new EncryptionKey
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            EncryptedKey = encryptedKey,
-            IV = iv
-        };
-
-        _dbContext.EncryptionKeys.Add(encryptionKey);
-        await _dbContext.SaveChangesAsync();
-
-        var user = new User
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            EncryptionKeyId = encryptionKey.Id,
-            Name = "Test User",
-            Email = "test@example.com",
-            Password = "password",
-            Role = role,
-            Address = "Test Address",
-            DateOfBirth = DateTime.UtcNow.AddYears(-30),
-            Phone = "1234567890"
-        };
-
-        _dbContext.Users.Add(user);
-        await _dbContext.SaveChangesAsync();
-
-        return user;
-    }
-
-    private async Task<Manufacturer> CreateTestManufacturer()
-    {
-        var manufacturer = new Manufacturer
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            Name = "Test Manufacturer"
-        };
-
-        _dbContext.Manufacturers.Add(manufacturer);
-        await _dbContext.SaveChangesAsync();
-
-        return manufacturer;
-    }
-
-    private async Task<List<Amenity>> CreateTestAmenities(int count = 2)
-    {
-        var amenities = Enumerable
-            .Range(0, count)
-            .Select(i => new Amenity
-            {
-                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-                Name = $"Amenity {i}",
-                Description = $"Test Amenity {i}"
-            })
-            .ToList();
-
-        _dbContext.Amenities.AddRange(amenities);
-        await _dbContext.SaveChangesAsync();
-
-        return amenities;
     }
 
     private CreateCar.Query CreateValidCommand(
@@ -157,7 +51,7 @@ public class CreateCarTests : IAsyncLifetime
     public async Task Handle_UserIsAdmin_ReturnsError()
     {
         // Arrange
-        var testUser = await CreateTestUser(UserRole.Admin);
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Admin);
         _currentUser.SetUser(testUser);
 
         var handler = new CreateCar.Handler(
@@ -183,10 +77,10 @@ public class CreateCarTests : IAsyncLifetime
     public async Task Handle_MissingAmenities_ReturnsError()
     {
         // Arrange
-        var testUser = await CreateTestUser(UserRole.Driver);
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Driver);
         _currentUser.SetUser(testUser);
-        var manufacturer = await CreateTestManufacturer();
-        var amenities = await CreateTestAmenities();
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var amenities = await TestDataCreateAmenity.CreateTestAmenities(_dbContext);
 
         var handler = new CreateCar.Handler(
             _dbContext,
@@ -230,7 +124,7 @@ public class CreateCarTests : IAsyncLifetime
     public async Task Handle_MissingManufacturer_ReturnsError()
     {
         // Arrange
-        var user = await CreateTestUser(UserRole.Driver);
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Driver);
         _currentUser.SetUser(user);
 
         // Use a random non-existent manufacturer ID
@@ -268,6 +162,7 @@ public class CreateCarTests : IAsyncLifetime
     {
         // Arrange
         var validator = new CreateCar.Validator();
+
         var invalidCommand = new CreateCar.Query(
             AmenityIds: [],
             ManufacturerId: Guid.Empty,
@@ -301,10 +196,10 @@ public class CreateCarTests : IAsyncLifetime
     public async Task Handle_ValidRequest_CreatesCarSuccessfully()
     {
         // Arrange
-        var user = await CreateTestUser(UserRole.Driver);
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, UserRole.Driver);
         _currentUser.SetUser(user);
-        var manufacturer = await CreateTestManufacturer();
-        var amenities = await CreateTestAmenities(3);
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var amenities = await TestDataCreateAmenity.CreateTestAmenities(_dbContext);
 
         var handler = new CreateCar.Handler(
             _dbContext,
@@ -315,21 +210,9 @@ public class CreateCarTests : IAsyncLifetime
             _encryptionSettings
         );
 
-        var command = new CreateCar.Query(
-            AmenityIds: [.. amenities.Select(a => a.Id)],
-            ManufacturerId: manufacturer.Id,
-            LicensePlate: "ABC-12345",
-            Color: "Midnight Black",
-            Seat: 5,
-            Description: "Premium luxury vehicle",
-            TransmissionType: TransmissionType.Auto,
-            FuelType: FuelType.Hybrid,
-            FuelConsumption: 6.2m,
-            RequiresCollateral: true,
-            PricePerHour: 75m,
-            PricePerDay: 650m,
-            Latitude: 40.7128m,
-            Longtitude: -74.0060m
+        var command = CreateValidCommand(
+            manufacturerId: manufacturer.Id,
+            amenityIds: [.. amenities.Select(a => a.Id)]
         );
 
         // Act

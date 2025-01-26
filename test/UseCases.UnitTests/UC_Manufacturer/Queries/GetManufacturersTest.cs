@@ -1,63 +1,42 @@
 using Domain.Entities;
-using Microsoft.EntityFrameworkCore;
-using MockQueryable.Moq;
-using Moq;
-using UseCases.Abstractions;
 using UseCases.UC_Manufacturer.Queries;
+using UseCases.UnitTests.TestBases;
 using UUIDNext;
-using Xunit;
 
 namespace UseCases.UnitTests.UC_Manufacturer.Queries;
 
-public class GetManufacturersTest
+public class GetManufacturersTest : DatabaseTestBase
 {
-    private readonly Mock<IAppDBContext> _mockContext;
-
-    public GetManufacturersTest()
+    private async Task SeedTestData()
     {
-        _mockContext = new Mock<IAppDBContext>();
-    }
-
-    private static List<Manufacturer> CreateTestManufacturers()
-    {
-        return new List<Manufacturer>
+        var manufacturers = new[]
         {
-            new Manufacturer
-            {
-                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-                Name = "Toyota",
-                IsDeleted = false,
-            },
-            new Manufacturer
-            {
-                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-                Name = "Honda",
-                IsDeleted = false,
-            },
-            new Manufacturer
-            {
-                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-                Name = "Ford",
-                IsDeleted = false,
-            },
+            CreateCustomManufacturer("Toyota"),
+            CreateCustomManufacturer("Honda"),
+            CreateCustomManufacturer("Ford")
         };
+
+        await _dbContext.Manufacturers.AddRangeAsync(manufacturers);
+        await _dbContext.SaveChangesAsync();
     }
 
-    private static Mock<DbSet<T>> CreateMockDbSet<T>(List<T> data)
-        where T : class
+    private static Manufacturer CreateCustomManufacturer(string name)
     {
-        var mockSet = data.AsQueryable().BuildMockDbSet();
-        return mockSet;
+        var manufacturer = new Manufacturer
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            Name = name,
+            IsDeleted = false,
+        };
+
+        return manufacturer;
     }
 
     [Fact]
     public async Task Handle_NoManufacturersExist_ReturnsEmptyList()
     {
         // Arrange
-        var mockManufacturers = CreateMockDbSet(new List<Manufacturer>());
-        _mockContext.Setup(c => c.Manufacturers).Returns(mockManufacturers.Object);
-
-        var handler = new GetAllManufacturers.Handler(_mockContext.Object);
+        var handler = new GetAllManufacturers.Handler(_dbContext);
         var query = new GetAllManufacturers.Query();
 
         // Act
@@ -72,11 +51,8 @@ public class GetManufacturersTest
     public async Task Handle_ManufacturersExist_ReturnsPaginatedList()
     {
         // Arrange
-        var testManufacturers = CreateTestManufacturers();
-        var mockManufacturers = CreateMockDbSet(testManufacturers);
-        _mockContext.Setup(c => c.Manufacturers).Returns(mockManufacturers.Object);
-
-        var handler = new GetAllManufacturers.Handler(_mockContext.Object);
+        await SeedTestData();
+        var handler = new GetAllManufacturers.Handler(_dbContext);
         var query = new GetAllManufacturers.Query(PageNumber: 1, PageSize: 2);
 
         // Act
@@ -92,11 +68,8 @@ public class GetManufacturersTest
     public async Task Handle_KeywordFilter_ReturnsFilteredResults()
     {
         // Arrange
-        var testManufacturers = CreateTestManufacturers();
-        var mockManufacturers = CreateMockDbSet(testManufacturers);
-        _mockContext.Setup(c => c.Manufacturers).Returns(mockManufacturers.Object);
-
-        var handler = new GetAllManufacturers.Handler(_mockContext.Object);
+        await SeedTestData();
+        var handler = new GetAllManufacturers.Handler(_dbContext);
         var query = new GetAllManufacturers.Query(keyword: "hon"); // Partial keyword
 
         // Act
@@ -111,11 +84,8 @@ public class GetManufacturersTest
     public async Task Handle_Pagination_ReturnsCorrectPage()
     {
         // Arrange
-        var testManufacturers = CreateTestManufacturers();
-        var mockManufacturers = CreateMockDbSet(testManufacturers);
-        _mockContext.Setup(c => c.Manufacturers).Returns(mockManufacturers.Object);
-
-        var handler = new GetAllManufacturers.Handler(_mockContext.Object);
+        await SeedTestData();
+        var handler = new GetAllManufacturers.Handler(_dbContext);
         var query = new GetAllManufacturers.Query(PageNumber: 2, PageSize: 2);
 
         // Act
@@ -131,23 +101,25 @@ public class GetManufacturersTest
     public async Task Handle_Ordering_ReturnsDescendingById()
     {
         // Arrange
-        var testManufacturers = CreateTestManufacturers();
+        var manufacturer1 = CreateCustomManufacturer("Toyota");
+        var manufacturer2 = CreateCustomManufacturer("Honda");
+        var manufacturer3 = CreateCustomManufacturer("Ford");
 
-        // Explicitly set IDs to control order
-        var uuid = Uuid.NewDatabaseFriendly(Database.PostgreSql);
-        testManufacturers[2].Id = uuid;
+        // Add to database
+        await _dbContext.Manufacturers.AddRangeAsync([manufacturer1, manufacturer2, manufacturer3]);
+        await _dbContext.SaveChangesAsync();
 
-        var mockManufacturers = CreateMockDbSet(testManufacturers);
-        _mockContext.Setup(c => c.Manufacturers).Returns(mockManufacturers.Object);
-
-        var handler = new GetAllManufacturers.Handler(_mockContext.Object);
+        var handler = new GetAllManufacturers.Handler(_dbContext);
         var query = new GetAllManufacturers.Query();
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
 
         // Assert
-        // Expect descending order: Id3, Id2, Id1
-        Assert.Equal(uuid.ToString(), result.Value.Items.First().Id.ToString());
+        var items = result.Value.Items.ToList();
+        // Expect descending order: uuid3 (newest) -> uuid1 (oldest)
+        Assert.Equal(manufacturer3.Id, items[0].Id);
+        Assert.Equal(manufacturer2.Id, items[1].Id);
+        Assert.Equal(manufacturer1.Id, items[2].Id);
     }
 }

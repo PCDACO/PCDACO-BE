@@ -12,7 +12,8 @@ public abstract class DatabaseTestBase : IAsyncLifetime
     protected AppDBContext _dbContext { get; private set; }
     protected CurrentUser _currentUser { get; private set; }
     private readonly PostgreSqlContainer _postgresContainer;
-    private TransactionScope _transactionScope;
+
+    // private TransactionScope _transactionScope;
 
     protected DatabaseTestBase()
     {
