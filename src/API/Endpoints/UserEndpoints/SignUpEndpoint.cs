@@ -1,14 +1,10 @@
 using API.Utils;
-
 using Ardalis.Result;
-
 using Carter;
-
 using MediatR;
-
 using UseCases.UC_User.Commands;
-
 using IResult = Microsoft.AspNetCore.Http.IResult;
+
 namespace API.Endpoints.UserEndpoints;
 
 public class SignUpEndpoint : ICarterModule
@@ -19,17 +15,20 @@ public class SignUpEndpoint : ICarterModule
             .WithSummary("Sign up a new user")
             .WithTags("Users");
     }
-    
+
     private async Task<IResult> Handle(ISender sender, SignUpRequest request)
     {
-        Result<SignUp.Response> result = await sender.Send(new SignUp.Command(
-            request.Name,
-            request.Email,
-            request.Password,
-            request.Address,
-            request.DateOfBirth,
-            request.Phone
-        ));
+        Result<SignUp.Response> result = await sender.Send(
+            new SignUp.Command(
+                request.Name,
+                request.Email,
+                request.Password,
+                request.Address,
+                request.DateOfBirth,
+                request.Phone,
+                request.RoleName!
+            )
+        );
         return result.MapResult();
     }
 
@@ -39,6 +38,7 @@ public class SignUpEndpoint : ICarterModule
         string Password,
         string Address,
         DateTimeOffset DateOfBirth,
-        string Phone
+        string Phone,
+        string? RoleName = "Driver"
     );
 }

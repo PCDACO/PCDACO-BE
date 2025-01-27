@@ -48,7 +48,7 @@ public class GetAllManufacturers
                     request.PageNumber,
                     request.PageSize
                 ),
-                "Get all manufacturers successfully"
+                "Lấy danh sách hãng xe thành công"
             );
         }
     }

@@ -48,7 +48,7 @@ public class SignUpTest : IAsyncLifetime
     public async Task DisposeAsync() => await _resetDatabase();
 
     [Fact]
-    public async Task Handle_ValidRequest_CreatesUserSuccessfully()
+    public async Task Handle_ValidRequest_CreatesDriverUserSuccessfully()
     {
         // Arrange
         await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
@@ -81,7 +81,78 @@ public class SignUpTest : IAsyncLifetime
             u.Email == "newuser@example.com"
         );
         Assert.NotNull(createdUser);
+        Assert.Equal("Driver", createdUser.Role.Name);
         Assert.Equal("newuser@example.com", createdUser.Email);
+    }
+
+    [Fact]
+    public async Task Handle_ValidRequest_CreatesOwnerUserSuccessfully()
+    {
+        // Arrange
+        await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+
+        var handler = new SignUp.Handler(
+            _dbContext,
+            _tokenService,
+            _aesService,
+            _keyService,
+            _encryptionSettings
+        );
+        var command = new SignUp.Command(
+            "New Owner",
+            "newowner@example.com",
+            "12345",
+            "Hanoi",
+            DateTimeOffset.UtcNow.AddYears(-30),
+            "0987654999",
+            "Owner"
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Equal("Đăng ký thành công", result.SuccessMessage);
+
+        // Verify database state
+        var createdUser = await _dbContext.Users.FirstOrDefaultAsync(u =>
+            u.Email == "newowner@example.com"
+        );
+        Assert.NotNull(createdUser);
+        Assert.Equal("Owner", createdUser.Role.Name);
+        Assert.Equal("newowner@example.com", createdUser.Email);
+    }
+
+    [Fact]
+    public async Task Handle_InValidRole_CreatesAdminUserError()
+    {
+        // Arrange
+        await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+
+        var handler = new SignUp.Handler(
+            _dbContext,
+            _tokenService,
+            _aesService,
+            _keyService,
+            _encryptionSettings
+        );
+        var command = new SignUp.Command(
+            "New Admin User",
+            "newadmin@example.com",
+            "password",
+            "Hanoi",
+            DateTimeOffset.UtcNow.AddYears(-30),
+            "0987654321",
+            "Admin"
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Equal("Không thể đăng ký tài khoản với vai trò này", result.Errors.First());
     }
 
     [Fact]

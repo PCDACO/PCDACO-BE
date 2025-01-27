@@ -29,7 +29,7 @@ public class Login
                     cancellationToken
                 );
             if (user is null)
-                return Result.NotFound();
+                return Result.NotFound("Không tìm thấy thông tin người dùng");
             string newRefreshToken = tokenService.GenerateRefreshToken();
             await context
                 .RefreshTokens.Where(rt => rt.UserId == user.Id)
