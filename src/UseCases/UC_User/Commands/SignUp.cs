@@ -17,7 +17,8 @@ public class SignUp
         string Password,
         string Address,
         DateTimeOffset DateOfBirth,
-        string Phone
+        string Phone,
+        string RoleName = "Driver"
     ) : IRequest<Result<Response>>;
 
     public record Response(string AccessToken, string RefreshToken);
@@ -40,11 +41,15 @@ public class SignUp
                 cancellationToken
             );
             UserRole? checkingUserRole = await context.UserRoles.FirstOrDefaultAsync(
-                ur => ur.Name.ToLower() == "driver",
+                ur => ur.Name.ToLower() == request.RoleName.ToLower(),
                 cancellationToken
             );
             if (checkingUserRole is null)
                 return Result.Error("Không thể đăng ký tài khoản với vai trò này");
+
+            if (checkingUserRole.Name.Equals("admin", StringComparison.CurrentCultureIgnoreCase))
+                return Result.Error("Không thể đăng ký tài khoản với vai trò này");
+
             if (checkingUser is not null)
             {
                 if (checkingUser.Email == request.Email)
@@ -58,18 +63,17 @@ public class SignUp
             string encryptedKey = keyManagementService.EncryptKey(key, encryptionSettings.Key);
             EncryptionKey encryptionKey = new() { EncryptedKey = encryptedKey, IV = iv };
             await context.EncryptionKeys.AddAsync(encryptionKey, cancellationToken);
-            User user =
-                new()
-                {
-                    EncryptionKeyId = encryptionKey.Id,
-                    Name = request.Name,
-                    Email = request.Email,
-                    Password = request.Password.HashString(),
-                    Address = request.Address,
-                    RoleId = checkingUserRole!.Id,
-                    DateOfBirth = request.DateOfBirth,
-                    Phone = encryptedPhone,
-                };
+            User user = new()
+            {
+                EncryptionKeyId = encryptionKey.Id,
+                Name = request.Name,
+                Email = request.Email,
+                Password = request.Password.HashString(),
+                Address = request.Address,
+                RoleId = checkingUserRole!.Id,
+                DateOfBirth = request.DateOfBirth,
+                Phone = encryptedPhone,
+            };
             user.RefreshTokens.Add(
                 new RefreshToken
                 {
