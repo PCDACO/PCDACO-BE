@@ -1,32 +1,34 @@
+using System.Data.Common;
 using DotNet.Testcontainers.Builders;
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using Persistance.Data;
+using Respawn;
 using Testcontainers.PostgreSql;
 using UseCases.DTOs;
 
 namespace UseCases.UnitTests.TestBases;
 
-public abstract class DatabaseTestBase : IAsyncLifetime
+public class DatabaseTestBase : IAsyncLifetime
 {
-    protected AppDBContext _dbContext { get; private set; }
-    protected CurrentUser _currentUser { get; private set; }
+    public AppDBContext DbContext { get; private set; } = null!;
+    public CurrentUser CurrentUser { get; private set; } = null!;
     private readonly PostgreSqlContainer _postgresContainer;
+    private DbConnection _dbConnection = default!;
+    private Respawner _respawner = default!;
 
-    // private TransactionScope _transactionScope;
-
-    protected DatabaseTestBase()
+    public DatabaseTestBase()
     {
+        CurrentUser = new CurrentUser();
+
         _postgresContainer = new PostgreSqlBuilder()
             .WithImage("postgis/postgis:13-3.1")
-            // .WithReuse(true) // Enable container reuse
             .WithUsername("postgres")
             .WithPassword("postgres")
             .WithPortBinding(5432, true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(5432))
-            .WithCleanUp(true) // Clean up the container after the test
+            .WithCleanUp(true)
             .Build();
-
-        _currentUser = new CurrentUser();
     }
 
     public async Task InitializeAsync()
@@ -38,21 +40,43 @@ public abstract class DatabaseTestBase : IAsyncLifetime
             .EnableSensitiveDataLogging()
             .Options;
 
-        _dbContext = new AppDBContext(options);
-        await _dbContext.Database.MigrateAsync();
+        DbContext = new AppDBContext(options);
+        await DbContext.Database.MigrateAsync();
 
-        // Rollback transaction after each test
-        // _transactionScope = new TransactionScope(
-        //     TransactionScopeOption.RequiresNew,
-        //     new TransactionOptions { IsolationLevel = IsolationLevel.ReadCommitted },
-        //     TransactionScopeAsyncFlowOption.Enabled
-        // );
+        await InitializeRespawner();
+    }
+
+    private async Task InitializeRespawner()
+    {
+        // Initialize connection for Respawner
+        _dbConnection = DbContext.Database.GetDbConnection();
+
+        // Check if connection is already open
+        if (_dbConnection.State != System.Data.ConnectionState.Open)
+        {
+            await _dbConnection.OpenAsync();
+        }
+
+        // Initialize Respawner
+        _respawner = await Respawner.CreateAsync(
+            _dbConnection,
+            new RespawnerOptions { DbAdapter = DbAdapter.Postgres, SchemasToInclude = ["public"] }
+        );
+    }
+
+    public async Task ResetDatabaseAsync()
+    {
+        await _respawner.ResetAsync(_dbConnection);
     }
 
     public async Task DisposeAsync()
     {
-        // _transactionScope?.Dispose(); // Rollback transaction
-        await _dbContext.DisposeAsync();
+        if (_dbConnection != null)
+        {
+            await _dbConnection.DisposeAsync();
+        }
+
+        await DbContext.DisposeAsync();
         await _postgresContainer.DisposeAsync();
     }
 }

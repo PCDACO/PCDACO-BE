@@ -1,12 +1,23 @@
 using Domain.Entities;
+using Persistance.Data;
+using UseCases.DTOs;
 using UseCases.UC_Manufacturer.Queries;
 using UseCases.UnitTests.TestBases;
 using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Manufacturer.Queries;
 
-public class GetManufacturersTest : DatabaseTestBase
+[Collection("Test Collection")]
+public class GetManufacturersTest(DatabaseTestBase fixture) : IAsyncLifetime
 {
+    private readonly AppDBContext _dbContext = fixture.DbContext;
+    private readonly CurrentUser _currentUser = fixture.CurrentUser;
+    private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync() => await _resetDatabase();
+
     private async Task SeedTestData()
     {
         var manufacturers = new[]
@@ -47,7 +58,7 @@ public class GetManufacturersTest : DatabaseTestBase
         Assert.Empty(result.Value.Items);
     }
 
-    [Fact(Timeout = 3000)]
+    [Fact]
     public async Task Handle_ManufacturersExist_ReturnsPaginatedList()
     {
         // Arrange
@@ -64,7 +75,7 @@ public class GetManufacturersTest : DatabaseTestBase
         Assert.Equal("Ford", result.Value.Items.First().Name); // First item in descending order
     }
 
-    [Fact(Timeout = 3000)]
+    [Fact]
     public async Task Handle_KeywordFilter_ReturnsFilteredResults()
     {
         // Arrange
@@ -80,7 +91,7 @@ public class GetManufacturersTest : DatabaseTestBase
         Assert.Equal("Honda", result.Value.Items.First().Name);
     }
 
-    [Fact(Timeout = 3000)]
+    [Fact]
     public async Task Handle_Pagination_ReturnsCorrectPage()
     {
         // Arrange

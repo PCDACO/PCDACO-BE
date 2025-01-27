@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Persistance.Data;
 using UseCases.UC_Amenity.Queries;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
@@ -6,8 +7,16 @@ using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Amenity.Queries;
 
-public class GetAmenityByIdTests : DatabaseTestBase
+[Collection("Test Collection")]
+public class GetAmenityByIdTests(DatabaseTestBase fixture) : IAsyncLifetime
 {
+    private readonly AppDBContext _dbContext = fixture.DbContext;
+    private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync() => await _resetDatabase();
+
     [Fact]
     public async Task Handle_AmenityExists_ReturnsAmenity()
     {

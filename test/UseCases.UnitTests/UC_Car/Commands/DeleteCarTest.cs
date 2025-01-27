@@ -1,7 +1,8 @@
 using Ardalis.Result;
 using Domain.Entities;
-using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Persistance.Data;
+using UseCases.DTOs;
 using UseCases.UC_Car.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
@@ -9,8 +10,17 @@ using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Car.Commands;
 
-public class DeleteCarTests : DatabaseTestBase
+[Collection("Test Collection")]
+public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
 {
+    private readonly AppDBContext _dbContext = fixture.DbContext;
+    private readonly CurrentUser _currentUser = fixture.CurrentUser;
+    private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync() => await _resetDatabase();
+
     [Fact]
     public async Task Handle_UserIsAdmin_ReturnsForbidden()
     {
@@ -45,7 +55,7 @@ public class DeleteCarTests : DatabaseTestBase
         Assert.Contains("Bạn không có quyền thực hiện chức năng này", result.Errors);
     }
 
-    [Fact(Timeout = 3000)]
+    [Fact]
     public async Task Handle_CarNotFound_ReturnsNotFound()
     {
         // Arrange
@@ -64,7 +74,7 @@ public class DeleteCarTests : DatabaseTestBase
         Assert.Contains("Không tìm thấy xe cần xóa", result.Errors);
     }
 
-    [Fact(Timeout = 3000)]
+    [Fact]
     public async Task Handle_UserNotOwner_ReturnsForbidden()
     {
         // Arrange
