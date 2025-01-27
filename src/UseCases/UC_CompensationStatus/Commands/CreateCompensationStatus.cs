@@ -9,7 +9,7 @@ using MediatR;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
-namespace UseCases.UC_CompensationStatus;
+namespace UseCases.UC_CompensationStatus.Commands;
 
 public class CreateCompensationStatus
 {
@@ -34,7 +34,7 @@ public class CreateCompensationStatus
             };
             await context.CompensationStatuses.AddAsync(addingCompensationStatus, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
-            return Result.Success(new Response(addingCompensationStatus.Id), "Thêm trạng thái đặt đền bù thành công");
+            return Result.Success(new Response(addingCompensationStatus.Id), "Thêm trạng thái đặt bồi thường thành công");
         }
     }
 
@@ -43,7 +43,7 @@ public class CreateCompensationStatus
         public Validator()
         {
             RuleFor(x => x.Name)
-                .NotEmpty().WithMessage("Tên trạng thái đền bù không được để trống");
+                .NotEmpty().WithMessage("Tên trạng thái bồi thường không được để trống");
         }
     }
 }
