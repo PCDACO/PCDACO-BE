@@ -38,6 +38,7 @@ public class GetBookingStatusById
         {
             Response? result = await context.BookingStatuses
                 .Where(bs => bs.Id == request.Id)
+                .Where(bs => !bs.IsDeleted)
                 .Select(bs => Response.FromEntity(bs))
                 .FirstOrDefaultAsync(cancellationToken);
             if (result is null)
