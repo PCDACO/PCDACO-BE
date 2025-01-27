@@ -1,4 +1,3 @@
-
 using Ardalis.Result;
 
 using Domain.Entities;
@@ -10,9 +9,9 @@ using MediatR;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
-namespace UseCases.UC_BookingStatus.Commands;
+namespace UseCases.UC_CompensationStatus;
 
-public class CreateBookingStatus
+public class CreateCompensationStatus
 {
     public record Command(string Name) : IRequest<Result<Response>>;
 
@@ -29,13 +28,13 @@ public class CreateBookingStatus
         {
             if (!currentUser.User!.IsAdmin())
                 return Result.Forbidden("Bạn không có quyền thực hiện thao tác này");
-            BookingStatus addingBookingStatus = new()
+            CompensationStatus addingCompensationStatus = new()
             {
                 Name = request.Name
             };
-            await context.BookingStatuses.AddAsync(addingBookingStatus, cancellationToken);
+            await context.CompensationStatuses.AddAsync(addingCompensationStatus, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
-            return Result.Success(new Response(addingBookingStatus.Id), "Thêm trạng thái đặt xe thành công");
+            return Result.Success(new Response(addingCompensationStatus.Id), "Thêm trạng thái đặt đền bù thành công");
         }
     }
 
@@ -44,7 +43,7 @@ public class CreateBookingStatus
         public Validator()
         {
             RuleFor(x => x.Name)
-                .NotEmpty().WithMessage("Tên trạng thái không được để trống");
+                .NotEmpty().WithMessage("Tên trạng thái đền bù không được để trống");
         }
     }
 }
