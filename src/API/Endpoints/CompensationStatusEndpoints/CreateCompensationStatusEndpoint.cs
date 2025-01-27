@@ -6,7 +6,7 @@ using Carter;
 
 using MediatR;
 
-using UseCases.UC_CompensationStatus;
+using UseCases.UC_CompensationStatus.Commands;
 
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
