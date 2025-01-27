@@ -1,11 +1,20 @@
+using Persistance.Data;
 using UseCases.UC_Amenity.Queries;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
 
 namespace UseCases.UnitTests.UC_Amenity.Queries;
 
-public class GetAmenitiesTests : DatabaseTestBase
+[Collection("Test Collection")]
+public class GetAmenitiesTests(DatabaseTestBase fixture) : IAsyncLifetime
 {
+    private readonly AppDBContext _dbContext = fixture.DbContext;
+    private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync() => await _resetDatabase();
+
     [Fact]
     public async Task Handle_NoAmenitiesExist_ReturnsEmptyList()
     {

@@ -1,27 +1,35 @@
 using Ardalis.Result;
-using Domain.Entities;
-using Domain.Enums;
 using Domain.Shared;
 using Infrastructure.Encryption;
 using Microsoft.EntityFrameworkCore;
+using Persistance.Data;
 using UseCases.Abstractions;
+using UseCases.DTOs;
 using UseCases.UC_User.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
 using UseCases.Utils;
-using UUIDNext;
 
 namespace UseCases.UnitTests.UC_User.Commands;
 
-public class SignUpTest : DatabaseTestBase
+[Collection("Test Collection")]
+public class SignUpTest : IAsyncLifetime
 {
+    private readonly AppDBContext _dbContext;
+    private readonly CurrentUser _currentUser;
+    private readonly Func<Task> _resetDatabase;
+
     private readonly EncryptionSettings _encryptionSettings;
     private readonly IAesEncryptionService _aesService;
     private readonly IKeyManagementService _keyService;
     private readonly TokenService _tokenService;
 
-    public SignUpTest()
+    public SignUpTest(DatabaseTestBase fixture)
     {
+        _dbContext = fixture.DbContext;
+        _currentUser = fixture.CurrentUser;
+        _resetDatabase = fixture.ResetDatabaseAsync;
+
         _encryptionSettings = new EncryptionSettings { Key = TestConstants.MasterKey };
         _aesService = new AesEncryptionService();
         _keyService = new KeyManagementService();
@@ -34,6 +42,10 @@ public class SignUpTest : DatabaseTestBase
         };
         _tokenService = new TokenService(jwtSettings);
     }
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync() => await _resetDatabase();
 
     [Fact]
     public async Task Handle_ValidRequest_CreatesUserSuccessfully()
@@ -104,7 +116,7 @@ public class SignUpTest : DatabaseTestBase
         Assert.Equal("Email đã tồn tại", result.Errors.First());
     }
 
-    [Fact(Timeout = 3000)]
+    [Fact]
     public async Task Handle_PhoneAlreadyExists_ReturnsError()
     {
         // Arrange

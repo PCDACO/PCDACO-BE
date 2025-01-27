@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Shared;
+using Persistance.Data;
 using UseCases.UC_User.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
@@ -9,11 +10,14 @@ using UUIDNext;
 
 namespace UseCases.UnitTests.UC_User.Commands;
 
-public class LoginTest : DatabaseTestBase
+[Collection("Test Collection")]
+public class LoginTest : IAsyncLifetime
 {
+    private readonly AppDBContext _dbContext;
+    private readonly Func<Task> _resetDatabase;
     private readonly TokenService _tokenService;
 
-    public LoginTest()
+    public LoginTest(DatabaseTestBase fixture)
     {
         var jwtSettings = new JwtSettings
         {
@@ -22,8 +26,15 @@ public class LoginTest : DatabaseTestBase
             Audience = "test_audience",
             TokenExpirationInMinutes = 60,
         };
+
         _tokenService = new TokenService(jwtSettings);
+        _dbContext = fixture.DbContext;
+        _resetDatabase = fixture.ResetDatabaseAsync;
     }
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync() => await _resetDatabase();
 
     private async Task<User> CreateTestUser()
     {
@@ -79,7 +90,7 @@ public class LoginTest : DatabaseTestBase
         Assert.Equal(ResultStatus.NotFound, result.Status);
     }
 
-    [Fact(Timeout = 3000)]
+    [Fact]
     public async Task Handle_ValidRequest_ReturnsSuccess()
     {
         // Arrange

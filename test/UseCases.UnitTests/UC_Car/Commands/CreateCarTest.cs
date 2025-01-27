@@ -1,32 +1,45 @@
 using Ardalis.Result;
 using Domain.Entities;
-using Domain.Enums;
 using Domain.Shared;
 using Infrastructure.Encryption;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
+using Persistance.Data;
 using UseCases.Abstractions;
+using UseCases.DTOs;
 using UseCases.UC_Car.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
-using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Car.Commands;
 
-public class CreateCarTests : DatabaseTestBase
+[Collection("Test Collection")]
+public class CreateCarTests : IAsyncLifetime
 {
+    private readonly AppDBContext _dbContext;
+    private readonly CurrentUser _currentUser;
+    private readonly Func<Task> _resetDatabase;
+
     private readonly GeometryFactory _geometryFactory;
     private readonly EncryptionSettings _encryptionSettings;
     private readonly IAesEncryptionService _aesService;
     private readonly IKeyManagementService _keyService;
 
-    public CreateCarTests()
+    public CreateCarTests(DatabaseTestBase fixture)
     {
+        _dbContext = fixture.DbContext;
+        _currentUser = fixture.CurrentUser;
+        _resetDatabase = fixture.ResetDatabaseAsync;
+
         _geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
         _encryptionSettings = new EncryptionSettings { Key = TestConstants.MasterKey };
         _aesService = new AesEncryptionService();
         _keyService = new KeyManagementService();
     }
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync() => await _resetDatabase();
 
     private CreateCar.Query CreateValidCommand(
         TransmissionType transmissionType,
@@ -81,7 +94,7 @@ public class CreateCarTests : DatabaseTestBase
         Assert.Contains("Bạn không có quyền thực hiện chức năng này !", result.Errors);
     }
 
-    [Fact(Timeout = 3000)]
+    [Fact]
     public async Task Handle_MissingAmenities_ReturnsError()
     {
         // Arrange

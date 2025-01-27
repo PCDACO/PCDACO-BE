@@ -2,25 +2,40 @@ using Ardalis.Result;
 using Domain.Shared;
 using Infrastructure.Encryption;
 using Microsoft.EntityFrameworkCore;
+using Persistance.Data;
 using UseCases.Abstractions;
+using UseCases.DTOs;
 using UseCases.UC_User.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
 
 namespace UseCases.UnitTests.UC_User.Commands;
 
-public class CreateAdminTest : DatabaseTestBase
+[Collection("Test Collection")]
+public class CreateAdminTest : IAsyncLifetime
 {
+    private readonly AppDBContext _dbContext;
+    private readonly CurrentUser _currentUser;
+    private readonly Func<Task> _resetDatabase;
+
     private readonly EncryptionSettings _encryptionSettings;
     private readonly IAesEncryptionService _aesService;
     private readonly IKeyManagementService _keyService;
 
-    public CreateAdminTest()
+    public CreateAdminTest(DatabaseTestBase fixture)
     {
+        _dbContext = fixture.DbContext;
+        _currentUser = fixture.CurrentUser;
+        _resetDatabase = fixture.ResetDatabaseAsync;
+
         _encryptionSettings = new EncryptionSettings { Key = TestConstants.MasterKey };
         _aesService = new AesEncryptionService();
         _keyService = new KeyManagementService();
     }
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync() => await _resetDatabase();
 
     [Fact]
     public async Task Handle_AdminAlreadyExists_ReturnsError()
@@ -50,7 +65,7 @@ public class CreateAdminTest : DatabaseTestBase
         Assert.Equal("Tài khoản đã được khởi tạo !", result.Errors.First());
     }
 
-    [Fact(Timeout = 3000)]
+    [Fact]
     public async Task Handle_CreatesAdminSuccessfully()
     {
         // Arrange

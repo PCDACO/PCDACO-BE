@@ -1,14 +1,24 @@
 using Ardalis.Result;
 using Domain.Entities;
-using Domain.Enums;
+using Persistance.Data;
+using UseCases.DTOs;
 using UseCases.UC_Manufacturer.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
 
 namespace UseCases.UnitTests.UC_Manufacturer.Commands;
 
-public class UpdateManufacturerTest : DatabaseTestBase
+[Collection("Test Collection")]
+public class UpdateManufacturerTest(DatabaseTestBase fixture) : IAsyncLifetime
 {
+    private readonly AppDBContext _dbContext = fixture.DbContext;
+    private readonly CurrentUser _currentUser = fixture.CurrentUser;
+    private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync() => await _resetDatabase();
+
     [Fact]
     public async Task Handle_UserNotAdmin_ReturnsError()
     {

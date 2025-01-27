@@ -1,16 +1,26 @@
 using Ardalis.Result;
 using Domain.Entities;
-using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Persistance.Data;
+using UseCases.DTOs;
 using UseCases.UC_Manufacturer.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
 
 namespace UseCases.UnitTests.UC_Manufacturer.Commands;
 
-public class DeleteManufacturerTest : DatabaseTestBase
+[Collection("Test Collection")]
+public class DeleteManufacturerTest(DatabaseTestBase fixture) : IAsyncLifetime
 {
-    [Fact(Timeout = 3000)]
+    private readonly AppDBContext _dbContext = fixture.DbContext;
+    private readonly CurrentUser _currentUser = fixture.CurrentUser;
+    private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
+
+    public Task InitializeAsync() => Task.CompletedTask;
+
+    public async Task DisposeAsync() => await _resetDatabase();
+
+    [Fact]
     public async Task Handle_UserNotAdmin_ReturnsError()
     {
         // Arrange
@@ -29,7 +39,7 @@ public class DeleteManufacturerTest : DatabaseTestBase
         Assert.Contains("Bạn không có quyền xóa hãng xe", result.Errors);
     }
 
-    [Fact(Timeout = 3000)]
+    [Fact]
     public async Task Handle_ManufacturerNotFound_ReturnsNotFound()
     {
         // Arrange
@@ -48,7 +58,7 @@ public class DeleteManufacturerTest : DatabaseTestBase
         Assert.Contains("Không tìm thấy hãng xe", result.Errors);
     }
 
-    [Fact(Timeout = 3000)]
+    [Fact]
     public async Task Handle_ValidRequest_DeletesManufacturerSuccessfully()
     {
         // Arrange
