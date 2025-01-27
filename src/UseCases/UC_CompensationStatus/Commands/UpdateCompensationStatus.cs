@@ -31,7 +31,7 @@ public class UpdateCompensationStatus
             if (!currentUser.User!.IsAdmin())
                 return Result.Unauthorized("Chỉ admin mới có quyền thực hiện chức năng này");
             CompensationStatus? updatingCompensationStatus = await context.CompensationStatuses
-                .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
+                .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, cancellationToken);
             if (updatingCompensationStatus == null)
                 return Result.NotFound("Không tìm thấy trạng thái bồi thường");
             // Update database
