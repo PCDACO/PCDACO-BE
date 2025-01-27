@@ -24,7 +24,7 @@ public class GetManufacturersTest(DatabaseTestBase fixture) : IAsyncLifetime
         {
             CreateCustomManufacturer("Toyota"),
             CreateCustomManufacturer("Honda"),
-            CreateCustomManufacturer("Ford")
+            CreateCustomManufacturer("Ford"),
         };
 
         await _dbContext.Manufacturers.AddRangeAsync(manufacturers);
