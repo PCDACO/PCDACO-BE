@@ -16,7 +16,10 @@ public class UpdateAmenityToCarEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch("/api/cars/{id:guid}/amenities", Handle);
+        app.MapPatch("/api/cars/{id:guid}/amenities", Handle)
+            .WithSummary("Update amenity to car")
+            .WithTags("Cars")
+            .RequireAuthorization();
     }
     private async Task<IResult> Handle(ISender sender, Guid id, UpdateAmenityToCarRequest request)
     {
