@@ -19,7 +19,10 @@ public class GetRentedCarsEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        throw new NotImplementedException();
+        app.MapGet("/api/cars/rented", Handle)
+            .WithSummary("Get rented cars")
+            .WithTags("Cars")
+            .RequireAuthorization();
     }
 
     private async Task<IResult> Handle(
