@@ -1,4 +1,3 @@
-
 using Ardalis.Result;
 
 using Domain.Entities;
@@ -13,7 +12,7 @@ using UseCases.DTOs;
 
 namespace UseCases.UC_Car.Queries;
 
-public class GetAvailableCar
+public class GetRentedCars
 {
     public record Query(
         int PageNumber,
@@ -106,7 +105,7 @@ public class GetAvailableCar
                 .Include(c => c.ImageCars)
                 .Include(c => c.CarStatus)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
-                .Where(c => c.CarStatus.Name.ToLower().Contains("available"))
+                .Where(c => c.CarStatus.Name.ToLower().Contains("rented"))
                 .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point)).ThenByDescending(c => c.Id);
             int count = await query.CountAsync(cancellationToken);
             List<Car> cars = await query

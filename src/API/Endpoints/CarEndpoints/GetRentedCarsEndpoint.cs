@@ -15,15 +15,16 @@ using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.CarEndpoints;
 
-public class GetAvailableCarsEndpoint : ICarterModule
+public class GetRentedCarsEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/cars/available", Handle)
-            .WithSummary("Get available cars")
+        app.MapGet("/api/cars/rented", Handle)
+            .WithSummary("Get rented cars")
             .WithTags("Cars")
             .RequireAuthorization();
     }
+
     private async Task<IResult> Handle(
         ISender sender,
         [FromQuery(Name = "index")] int pageNumber = 1,
@@ -31,7 +32,7 @@ public class GetAvailableCarsEndpoint : ICarterModule
         [FromQuery(Name = "keyword")] string? keyword = ""
         )
     {
-        Result<OffsetPaginatedResponse<GetAvailableCars.Response>> result = await sender.Send(new GetAvailableCars.Query(pageNumber, pageSize, keyword!));
+        Result<OffsetPaginatedResponse<GetRentedCars.Response>> result = await sender.Send(new GetRentedCars.Query(pageNumber, pageSize, keyword!));
         return result.MapResult();
     }
 }
