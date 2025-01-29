@@ -1,6 +1,9 @@
 using API.Utils;
 using Ardalis.Result;
 using Carter;
+
+using Infrastructure.Idempotency;
+
 using MediatR;
 using UseCases.UC_Manufacturer.Commands;
 using IResult = Microsoft.AspNetCore.Http.IResult;
@@ -14,6 +17,7 @@ public class CreateManufacturerEndpoint : ICarterModule
         app.MapPost("/api/manufacturers", Handle)
             .WithSummary("Create a new manufacturer")
             .WithTags("Manufacturers")
+            .AddEndpointFilter<IdempotencyFilter>()
             .RequireAuthorization();
     }
 

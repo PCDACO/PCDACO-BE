@@ -10,11 +10,13 @@ using MediatR;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
-namespace UseCases.UC_BookingStatus.Commands;
+namespace UseCases.UC_CarStatus.Commands;
 
-public class CreateBookingStatus
+public class CreateCarStatus
 {
-    public record Command(string Name) : IRequest<Result<Response>>;
+    public record Command(
+        string Name
+    ) : IRequest<Result<Response>>;
 
     public record Response(
         Guid Id
@@ -29,13 +31,13 @@ public class CreateBookingStatus
         {
             if (!currentUser.User!.IsAdmin())
                 return Result.Forbidden("Bạn không có quyền thực hiện thao tác này");
-            BookingStatus addingBookingStatus = new()
+            CarStatus addingCarStatus = new()
             {
                 Name = request.Name
             };
-            await context.BookingStatuses.AddAsync(addingBookingStatus, cancellationToken);
+            await context.CarStatuses.AddAsync(addingCarStatus, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
-            return Result.Success(new Response(addingBookingStatus.Id), "Thêm trạng thái đặt xe thành công");
+            return Result.Success(new Response(addingCarStatus.Id), "Thêm trạng thái xe thành công");
         }
     }
 
@@ -44,7 +46,7 @@ public class CreateBookingStatus
         public Validator()
         {
             RuleFor(x => x.Name)
-                .NotEmpty().WithMessage("Tên trạng thái không được để trống");
+                .NotEmpty().WithMessage("Thiếu tên trạng thái!");
         }
     }
 }
