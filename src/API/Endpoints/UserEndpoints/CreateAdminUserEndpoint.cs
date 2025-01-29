@@ -20,7 +20,7 @@ public class CreateAdminUserEndpoint : ICarterModule
     {
         app.MapPost("/api/users/admin", Handle)
             .WithSummary("Create an admin user")
-            .AddEndpointFilter<IdempotencyFilter>()
+            // .AddEndpointFilter<IdempotencyFilter>()
             .WithTags("Users");
     }
 
