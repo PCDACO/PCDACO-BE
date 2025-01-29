@@ -6,6 +6,8 @@ using Carter;
 
 using MediatR;
 
+using Microsoft.AspNetCore.Mvc;
+
 using Newtonsoft.Json;
 
 using UseCases.DTOs;
@@ -24,27 +26,40 @@ public class GetCarsEndpoint : ICarterModule
             .WithTags("Cars")
             .RequireAuthorization();
     }
-    private async Task<IResult> Handle(ISender sender, [AsParameters] GetCarsRequest request)
+    private async Task<IResult> Handle(
+        ISender sender,
+        [FromQuery(Name = "latitude")] decimal? latitude,
+        [FromQuery(Name = "longtitude")] decimal? longtitude,
+        [FromQuery(Name = "radius")] decimal? radius,
+        [FromQuery(Name = "manufacturer")] Guid? manufacturer,
+        [FromQuery(Name = "lastCarId")] Guid? lastCarId,
+        [FromQuery(Name = "amenities")] Guid[]? amenities,
+        [FromQuery(Name = "fuel")] Guid? fuel,
+        [FromQuery(Name = "transmission")] Guid? transmission,
+        [FromQuery(Name = "limit")] int? limit = 10
+    )
     {
         Result<OffsetPaginatedResponse<GetCars.Response>> result = await sender.Send(new GetCars.Query(
-            request.Latitude,
-            request.Longtitude,
-            request.Radius,
-            request.Manufacturer,
-            request.Amenities,
-            request.LastCarId,
-            request.Limit!.Value
+            latitude,
+            longtitude,
+            radius,
+            manufacturer,
+            amenities,
+            fuel,
+            transmission,
+            lastCarId,
+            limit!.Value
         ));
         return result.MapResult();
     }
 
     private record GetCarsRequest(
-        [JsonProperty("latitude")] decimal? Latitude,
-        [JsonProperty("longtitude")] decimal? Longtitude,
-        [JsonProperty("radius")] decimal? Radius,
-        [JsonProperty("manufacturer")] Guid? Manufacturer,
-        [JsonProperty("lastCarId")] Guid? LastCarId,
-        [JsonProperty("amenities")] Guid[]? Amenities,
-        [JsonProperty("limit")] int? Limit = 10
+        [FromQuery(Name = "latitude")] decimal? Latitude,
+        [FromQuery(Name = "longtitude")] decimal? Longtitude,
+        [FromQuery(Name = "radius")] decimal? Radius,
+        [FromQuery(Name = "manufacturer")] Guid? Manufacturer,
+        [FromQuery(Name = "lastCarId")] Guid? LastCarId,
+        [FromQuery(Name = "amenities")] Guid[]? Amenities,
+        [FromQuery(Name = "limit")] int? Limit = 10
     );
 }
