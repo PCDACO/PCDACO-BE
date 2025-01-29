@@ -1,5 +1,4 @@
 
-
 using Ardalis.Result;
 
 using Domain.Entities;
@@ -9,23 +8,17 @@ using MediatR;
 
 using Microsoft.EntityFrameworkCore;
 
-using NetTopologySuite.Geometries;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
 namespace UseCases.UC_Car.Queries;
 
-public class GetCars
+public class GetAvailableCar
 {
     public record Query(
-        decimal? Latitude,
-        decimal? Longtitude,
-        decimal? Radius,
-        Guid? Manufacturer,
-        Guid[]? Amenities,
-        Guid? LastCarId,
-        int Limit
+        int PageNumber,
+        int PageSize,
+        string Keyword
     ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
@@ -97,7 +90,7 @@ public class GetCars
 
     public class Handler(
         IAppDBContext context,
-        GeometryFactory geometryFactory,
+        CurrentUser currentUser,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings
@@ -105,7 +98,7 @@ public class GetCars
     {
         public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(Query request, CancellationToken cancellationToken)
         {
-            Point userLocation = geometryFactory.CreatePoint(new Coordinate((double)request.Longtitude!, (double)request.Latitude!));
+            if (!currentUser.User!.IsAdmin()) return Result.Forbidden("Bạn không có quyền thực hiện thao tác này");
             IQueryable<Car> query = context.Cars
                 .Include(c => c.Owner).ThenInclude(o => o.Feedbacks)
                 .Include(c => c.Manufacturer)
@@ -114,20 +107,17 @@ public class GetCars
                 .Include(c => c.CarStatus)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .Where(c => c.CarStatus.Name.ToLower().Contains("available"))
-                .Where(c => request.Manufacturer == null || c.ManufacturerId == request.Manufacturer)
-                .Where(c => request.Amenities == null || request.Amenities.All(a => c.CarAmenities.Select(ca => ca.AmenityId).Contains(a)))
-                .Where(c => ((decimal)c.Location.Distance(userLocation) * 111320) <= (request.Radius ?? 0))
-                .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point)).ThenByDescending(c => c.Id)
-                .Where(c => request.LastCarId == null || c.Id.CompareTo(request.LastCarId) < 0);
+                .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point)).ThenByDescending(c => c.Id);
             int count = await query.CountAsync(cancellationToken);
             List<Car> cars = await query
-                .Take(request.Limit)
+                .Skip(request.PageSize * (request.PageNumber - 1))
+                .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
             return Result.Success(OffsetPaginatedResponse<Response>.Map(
                 (await Task.WhenAll(cars.Select(async c => await Response.FromEntity(c, encryptionSettings.Key, aesEncryptionService, keyManagementService)))).AsEnumerable(),
                 count,
-                request.Limit,
-                0
+                request.PageNumber,
+                request.PageSize
             ));
         }
     }
