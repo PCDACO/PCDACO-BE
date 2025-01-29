@@ -1,8 +1,13 @@
 using API.Utils;
+
 using Ardalis.Result;
+
 using Carter;
+
 using MediatR;
+
 using UseCases.UC_User.Commands;
+
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.UserEndpoints;
@@ -13,12 +18,7 @@ public sealed class LoginEndpoint : ICarterModule
     {
         app.MapPost("/api/users/login", Handle)
         .WithSummary("Login a user")
-        .WithTags("Users")
-        .Produces<Login.Response>(StatusCodes.Status200OK)
-        .Produces(StatusCodes.Status400BadRequest)
-        .Produces(StatusCodes.Status401Unauthorized)
-        .Produces(StatusCodes.Status500InternalServerError)
-        .Produces(StatusCodes.Status503ServiceUnavailable);
+        .WithTags("Users");
     }
     private async Task<IResult> Handle(ISender sender, LoginRequest request)
     {
