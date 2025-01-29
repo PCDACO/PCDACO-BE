@@ -4,6 +4,8 @@ using Ardalis.Result;
 
 using Carter;
 
+using Infrastructure.Idempotency;
+
 using MediatR;
 
 using UseCases.UC_Booking.Commands;
@@ -19,6 +21,7 @@ public class CreateBookingEndpoint : ICarterModule
         app.MapPost("/api/bookings", Handle)
             .WithSummary("Create a new booking")
             .WithTags("Bookings")
+            .AddEndpointFilter<IdempotencyFilter>()
             .RequireAuthorization();
     }
 

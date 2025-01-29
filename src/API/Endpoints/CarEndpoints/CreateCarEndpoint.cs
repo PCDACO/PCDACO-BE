@@ -4,7 +4,7 @@ using Ardalis.Result;
 
 using Carter;
 
-using Domain.Enums;
+using Infrastructure.Idempotency;
 
 using MediatR;
 
@@ -21,6 +21,7 @@ public class CreateCarEndpoint : ICarterModule
         app.MapPost("/api/cars", Handle)
             .WithSummary("Create a new car")
             .WithTags("Cars")
+            .AddEndpointFilter<IdempotencyFilter>()
             .RequireAuthorization();
     }
     private async Task<IResult> Handle(ISender sender, CreateCarRequest request)
