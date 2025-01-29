@@ -4,6 +4,8 @@ using Ardalis.Result;
 
 using Carter;
 
+using Infrastructure.Idempotency;
+
 using MediatR;
 
 using UseCases.UC_Amenity.Commands;
@@ -19,6 +21,7 @@ public class CreateAmenityEndpoint : ICarterModule
         app.MapPost("/api/amenities", Handle)
             .WithSummary("Create an amenity")
             .WithTags("Amenities")
+            .AddEndpointFilter<IdempotencyFilter>()
             .RequireAuthorization();
     }
 

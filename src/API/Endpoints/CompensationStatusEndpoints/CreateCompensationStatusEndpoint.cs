@@ -4,6 +4,8 @@ using Ardalis.Result;
 
 using Carter;
 
+using Infrastructure.Idempotency;
+
 using MediatR;
 
 using UseCases.UC_CompensationStatus.Commands;
@@ -19,6 +21,7 @@ public class CreateCompensationStatusEndpoint : ICarterModule
         app.MapPost("/api/compensation-statuses", Handle)
             .WithSummary("Creates a new compensation status")
             .WithTags("Compensation Statuses")
+            .AddEndpointFilter<IdempotencyFilter>()
             .RequireAuthorization();
     }
     private async Task<IResult> Handle(ISender sender, CreateCompensationStatusRequest request)

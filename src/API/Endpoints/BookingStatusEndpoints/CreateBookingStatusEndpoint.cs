@@ -4,6 +4,8 @@ using Ardalis.Result;
 
 using Carter;
 
+using Infrastructure.Idempotency;
+
 using MediatR;
 
 using Newtonsoft.Json;
@@ -21,6 +23,7 @@ public class CreateBookingStatusEndpoint : ICarterModule
         app.MapPost("/api/booking-statuses", Handle)
             .WithSummary("Create a new booking status")
             .WithTags("Booking Statuses")
+            .AddEndpointFilter<IdempotencyFilter>()
             .RequireAuthorization();
     }
     private async Task<IResult> Handle(ISender sender, CreateBookingStatusRequest request)

@@ -119,6 +119,7 @@ public static class BuilderConfig
         services.AddPersistance(configuration);
         services.AddUseCases();
         services.AddInfrastructure();
+        services.AddDistributedMemoryCache();
         return services;
     }
 }
