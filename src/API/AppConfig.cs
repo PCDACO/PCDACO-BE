@@ -8,6 +8,7 @@ public static class AppConfig
     {
         app.MapCarter();
         app.UseExceptionHandler();
+        app.UseCors();
         return app;
     }
 }
