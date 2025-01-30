@@ -8,7 +8,7 @@ public static class AppConfig
     {
         app.MapCarter();
         app.UseExceptionHandler();
-        app.UseCors();
+        app.UseCors("AllowAll");
         return app;
     }
 }
