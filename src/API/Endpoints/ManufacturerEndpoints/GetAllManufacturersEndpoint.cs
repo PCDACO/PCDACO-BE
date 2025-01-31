@@ -1,9 +1,16 @@
 using API.Utils;
+
 using Ardalis.Result;
+
 using Carter;
+
 using MediatR;
+
+using Microsoft.AspNetCore.Mvc;
+
 using UseCases.DTOs;
 using UseCases.UC_Manufacturer.Queries;
+
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.ManufacturerEndpoints;
@@ -20,22 +27,18 @@ public class GetAllManufacturersEndpoint : ICarterModule
 
     private async Task<IResult> Handle(
         ISender sender,
-        [AsParameters] GetAllManufacturersRequest request
+        [FromQuery(Name = "index")] int? pageNumber = 1,
+        [FromQuery(Name = "size")] int? pageSize = 10,
+        [FromQuery(Name = "keyword")] string? keyword = ""
     )
     {
         Result<OffsetPaginatedResponse<GetAllManufacturers.Response>> result = await sender.Send(
             new GetAllManufacturers.Query(
-                request.pageNumber!.Value,
-                request.pageSize!.Value,
-                request.keyword!
+                pageNumber!.Value,
+                pageSize!.Value,
+                keyword!
             )
         );
         return result.MapResult();
     }
-
-    private record GetAllManufacturersRequest(
-        int? pageNumber = 1,
-        int? pageSize = 10,
-        string? keyword = ""
-    );
 }
