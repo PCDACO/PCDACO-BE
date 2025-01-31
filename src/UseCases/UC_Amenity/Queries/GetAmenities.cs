@@ -1,7 +1,11 @@
 using Ardalis.Result;
+
 using Domain.Entities;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Utils;
@@ -45,13 +49,15 @@ public sealed class GetAmenities
                 .Take(request.PageSize)
                 .Select(a => Response.FromEntity(a))
                 .ToListAsync(cancellationToken);
+            bool hasNext = query.Skip(request.PageSize * request.PageNumber).Any();
             // Return result
             return Result.Success(
                 OffsetPaginatedResponse<Response>.Map(
                     amenities,
                     count,
                     request.PageNumber,
-                    request.PageSize
+                    request.PageSize,
+                    hasNext
                 ),
                 "Lấy danh sách tiện ích thành công"
             );
