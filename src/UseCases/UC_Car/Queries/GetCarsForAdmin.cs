@@ -111,12 +111,14 @@ public class GetCarsForAdmin
                 .Skip(request.PageSize * (request.PageNumber - 1))
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
+            bool hasNext = query.Skip(request.PageSize * request.PageNumber).Any();
             return Result.Success(OffsetPaginatedResponse<Response>.Map(
                 (await Task.WhenAll(cars.Select(async c => await Response.FromEntity(c, encryptionSettings.Key, aesEncryptionService, keyManagementService)))).AsEnumerable(),
                 count,
                 request.PageNumber,
-                request.PageSize
-            ));
+                request.PageSize,
+                hasNext
+            ), "Lấy danh sách xe thành công");
         }
     }
 }

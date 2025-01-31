@@ -1,7 +1,11 @@
 using Ardalis.Result;
+
 using Domain.Entities;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Utils;
@@ -40,13 +44,15 @@ public class GetAllManufacturers
                 .Take(request.PageSize)
                 .Select(m => Response.FromEntity(m))
                 .ToListAsync(cancellationToken);
+            bool hasNext = query.Skip(request.PageSize * request.PageNumber).Any();
             // Return result
             return Result.Success(
                 OffsetPaginatedResponse<Response>.Map(
                     manufacturers,
                     count,
                     request.PageNumber,
-                    request.PageSize
+                    request.PageSize,
+                    hasNext
                 ),
                 "Lấy danh sách hãng xe thành công"
             );
