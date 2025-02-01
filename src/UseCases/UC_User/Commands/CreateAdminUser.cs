@@ -29,7 +29,7 @@ public sealed class CreateAdminUser
             if (checkingAdmin is not null)
                 return Result.Forbidden("Tài khoản đã được khởi tạo !");
             UserRole? checkingAdminRole = await context.UserRoles.FirstOrDefaultAsync(
-                ur => ur.Name.ToLower().Contains("admin"),
+                ur => EF.Functions.Like(ur.Name, "%admin%"),
                 cancellationToken
             );
             if (checkingAdminRole is null)

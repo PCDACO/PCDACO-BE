@@ -1,12 +1,19 @@
 using Ardalis.Result;
+
 using Domain.Entities;
 using Domain.Shared;
+
 using FluentValidation;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using NetTopologySuite.Geometries;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
+
 using UUIDNext;
 
 namespace UseCases.UC_Car.Commands;
@@ -55,7 +62,8 @@ public sealed class CreateCar
             if (request.AmenityIds.Length > 0)
             {
                 List<Amenity> amenities = await context
-                    .Amenities.AsNoTracking()
+                    .Amenities
+                    .AsNoTracking()
                     .Where(a => request.AmenityIds.Contains(a.Id))
                     .ToListAsync(cancellationToken);
                 if (amenities.Count != request.AmenityIds.Length)
@@ -63,7 +71,8 @@ public sealed class CreateCar
             }
             // Check if transmission type is exist
             TransmissionType? checkingTransmissionType = await context
-                .TransmissionTypes.AsNoTracking()
+                .TransmissionTypes
+                .AsNoTracking()
                 .FirstOrDefaultAsync(
                     t => t.Id == request.TransmissionTypeId && !t.IsDeleted,
                     cancellationToken
@@ -81,9 +90,10 @@ public sealed class CreateCar
                 return Result.Error("Kiểu nhiên liệu không tồn tại !");
             // Check if status is exist
             CarStatus? checkingStatus = await context
-                .CarStatuses.AsNoTracking()
+                .CarStatuses
+                .AsNoTracking()
                 .FirstOrDefaultAsync(
-                    s => s.Name.ToLower().Contains("available") && !s.IsDeleted,
+                    s => EF.Functions.Like(s.Name, $"%available%") && !s.IsDeleted,
                     cancellationToken
                 );
             if (checkingStatus is null)

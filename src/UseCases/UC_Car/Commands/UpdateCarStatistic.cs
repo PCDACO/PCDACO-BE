@@ -37,13 +37,13 @@ public sealed class UpdateCarStatistic
                 return Result.NotFound($"Không tìm thấy xe với Id : {request.Id}");
             // Get status ids
             Guid? completedStatusId = await context.BookingStatuses
-                .Where(x => x.Name.Contains("completed", StringComparison.OrdinalIgnoreCase))
+                .Where(x => EF.Functions.Like(x.Name, "%completed%"))
                 .Select(x => x.Id)
                 .FirstOrDefaultAsync(cancellationToken);
             if (completedStatusId is null)
                 return Result.Error("Không tìm thấy trạng thái hoàn thành");
             Guid? cancelledStatusId = await context.BookingStatuses
-                .Where(x => x.Name.Contains("cancelled", StringComparison.OrdinalIgnoreCase))
+                .Where(x => EF.Functions.Like(x.Name, "%cancelled%"))
                 .Select(x => x.Id)
                 .FirstOrDefaultAsync(cancellationToken);
             if (cancelledStatusId is null)

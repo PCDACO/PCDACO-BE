@@ -68,7 +68,7 @@ public sealed class DeleteCar
                 ), cancellationToken);
             deletingCar.Delete();
             await context.SaveChangesAsync(cancellationToken);
-            return Result.Success();
+            return Result.SuccessWithMessage("Xóa xe thành công");
         }
     }
 }
