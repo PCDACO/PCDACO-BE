@@ -64,13 +64,13 @@ public sealed class UploadCarImages
             // Check if type images is exist
             ImageType? carImageType = await context.ImageTypes
                 .AsNoTracking()
-                .Where(it => EF.Functions.Like(it.Name, "%car%"))
+                .Where(it => EF.Functions.ILike(it.Name, "%car%"))
                 .Where(it => !it.IsDeleted)
                 .FirstOrDefaultAsync(cancellationToken);
             if (carImageType is null) return Result.Error("Không tìm thấy loại hình ảnh đang cần");
             ImageType? paperImageType = await context.ImageTypes
                 .AsNoTracking()
-                .Where(it => EF.Functions.Like(it.Name, "%paper%"))
+                .Where(it => EF.Functions.ILike(it.Name, "%paper%"))
                 .Where(it => !it.IsDeleted)
                 .FirstOrDefaultAsync(cancellationToken);
             if (carImageType is null) return Result.Error("Không tìm thấy loại hình ảnh đang cần");

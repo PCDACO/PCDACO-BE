@@ -38,7 +38,7 @@ public class GetCarStatuses
             IQueryable<CarStatus> query = context
                 .CarStatuses.AsNoTracking()
                 .Where(cs => !cs.IsDeleted)
-                .Where(cs => EF.Functions.Like(cs.Name, $"%{request.Keyword}%"));
+                .Where(cs => EF.Functions.ILike(cs.Name, $"%{request.Keyword}%"));
             // Get total result count
             int count = await query.CountAsync(cancellationToken);
             // Get car statuses

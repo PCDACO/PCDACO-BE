@@ -34,7 +34,7 @@ public class GetAllManufacturers
             // Query manufacturers
             IQueryable<Manufacturer> query = context
                 .Manufacturers.AsNoTracking()
-                .Where(m => EF.Functions.Like(m.Name, $"%{request.keyword}%"));
+                .Where(m => EF.Functions.ILike(m.Name, $"%{request.keyword}%"));
             // Get total result count
             int count = await query.CountAsync(cancellationToken);
             // Get manufacturers

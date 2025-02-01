@@ -39,7 +39,8 @@ public sealed class GetAmenities
             // Query amenities
             IQueryable<Amenity> query = context
                 .Amenities.AsNoTracking()
-                .Where(a => EF.Functions.Like(a.Name, $"%{request.keyword}%"));
+                .Where(a => EF.Functions.ILike(a.Name, $"%{request.keyword}%"))
+            .Where(a => !a.IsDeleted);
             // Get total result count
             int count = await query.CountAsync(cancellationToken);
             // Get amenities

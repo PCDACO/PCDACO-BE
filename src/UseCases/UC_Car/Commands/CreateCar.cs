@@ -93,7 +93,7 @@ public sealed class CreateCar
                 .CarStatuses
                 .AsNoTracking()
                 .FirstOrDefaultAsync(
-                    s => EF.Functions.Like(s.Name, $"%available%") && !s.IsDeleted,
+                    s => EF.Functions.ILike(s.Name, $"%available%") && !s.IsDeleted,
                     cancellationToken
                 );
             if (checkingStatus is null)

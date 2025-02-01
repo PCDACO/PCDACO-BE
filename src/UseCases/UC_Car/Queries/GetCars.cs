@@ -117,7 +117,7 @@ public class GetCars
                 .Include(c => c.TransmissionType)
                 .Include(c => c.FuelType)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
-                .Where(c => EF.Functions.Like(c.CarStatus.Name, $"%available%"))
+                .Where(c => EF.Functions.ILike(c.CarStatus.Name, $"%available%"))
                 .Where(c => request.Manufacturer == null || c.ManufacturerId == request.Manufacturer)
                 .Where(c => request.Amenities == null || request.Amenities.All(a => c.CarAmenities.Select(ca => ca.AmenityId).Contains(a)))
                 .Where(c => request.FuelTypes == null || c.FuelTypeId == request.FuelTypes)
