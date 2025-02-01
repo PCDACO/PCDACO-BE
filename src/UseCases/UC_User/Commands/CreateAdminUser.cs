@@ -1,8 +1,12 @@
 using Ardalis.Result;
+
 using Domain.Entities;
 using Domain.Shared;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 using UseCases.Utils;
 
@@ -29,7 +33,7 @@ public sealed class CreateAdminUser
             if (checkingAdmin is not null)
                 return Result.Forbidden("Tài khoản đã được khởi tạo !");
             UserRole? checkingAdminRole = await context.UserRoles.FirstOrDefaultAsync(
-                ur => ur.Name.ToLower().Contains("admin"),
+                ur => EF.Functions.ILike(ur.Name, "%admin%"),
                 cancellationToken
             );
             if (checkingAdminRole is null)

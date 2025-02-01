@@ -106,7 +106,7 @@ public class GetAvailableCars
                 .Include(c => c.ImageCars)
                 .Include(c => c.CarStatus)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
-                .Where(c => c.CarStatus.Name.ToLower().Contains("available"))
+                .Where(c => EF.Functions.ILike(c.CarStatus.Name, $"%available%"))
                 .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point)).ThenByDescending(c => c.Id);
             int count = await query.CountAsync(cancellationToken);
             List<Car> cars = await query
