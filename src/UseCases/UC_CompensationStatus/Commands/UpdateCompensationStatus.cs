@@ -29,7 +29,7 @@ public class UpdateCompensationStatus
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
             if (!currentUser.User!.IsAdmin())
-                return Result.Unauthorized("Chỉ admin mới có quyền thực hiện chức năng này");
+                return Result.Forbidden("Chỉ admin mới có quyền thực hiện chức năng này");
             CompensationStatus? updatingCompensationStatus = await context.CompensationStatuses
                 .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, cancellationToken);
             if (updatingCompensationStatus == null)

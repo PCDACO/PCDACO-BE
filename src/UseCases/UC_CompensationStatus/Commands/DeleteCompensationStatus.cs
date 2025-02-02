@@ -26,7 +26,7 @@ public class DeleteCompensationStatus
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
             if (!currentUser.User!.IsAdmin())
-                return Result.Unauthorized("Chỉ admin mới có quyền xóa trạng thái bồi thường !");
+                return Result.Forbidden("Chỉ admin mới có quyền xóa trạng thái bồi thường !");
             CompensationStatus? deletingCompensationStatus = await context.CompensationStatuses
                 .Include(cs => cs.Compensations)
                 .FirstOrDefaultAsync(cs => cs.Id == request.Id && !cs.IsDeleted, cancellationToken);
