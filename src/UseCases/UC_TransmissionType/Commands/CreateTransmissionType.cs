@@ -32,15 +32,18 @@ public class CreateTransmissionType
     {
         public async Task<Result<Response>> Handle(Command request, CancellationToken cancellationToken)
         {
+            // Check permission
             if (!currentUser.User!.IsAdmin())
                 return Result.Forbidden("Bạn không có quyền thực hiện thao tác");
-
+            // Create transmission type object
             TransmissionType addingTransmissionType = new()
             {
                 Name = request.Name
             };
+            // Add transmission type
             await context.TransmissionTypes.AddAsync(addingTransmissionType, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
+            // Return result
             return Result.Success(Response.FromEntity(addingTransmissionType), "Tạo thành công");
         }
     }
