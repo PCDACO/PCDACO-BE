@@ -3,6 +3,8 @@ using Ardalis.Result;
 
 using Domain.Entities;
 
+using FluentValidation;
+
 using MediatR;
 
 using UseCases.Abstractions;
@@ -40,6 +42,15 @@ public class CreateFuelType
             await context.SaveChangesAsync(cancellationToken);
             // Return result
             return Result.Success(new Response(addingFuelType.Id), "Tạo loại nhiên liệu thành công");
+        }
+    }
+
+    public class Validator : AbstractValidator<Command>
+    {
+        public Validator()
+        {
+            RuleFor(x => x.Name)
+                .NotEmpty().WithMessage("Thiếu tên loại nhiên liệu !");
         }
     }
 }
