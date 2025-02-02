@@ -44,8 +44,6 @@ public sealed class GetAmenitiesOfCar
     {
         public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(Query request, CancellationToken cancellationToken)
         {
-            if (currentUser.User is null)
-                return Result.Unauthorized();
             Car? gettingCar = await context.Cars
                 .AsNoTracking()
                 .Include(u => u.CarAmenities).ThenInclude(ca => ca.Amenity)

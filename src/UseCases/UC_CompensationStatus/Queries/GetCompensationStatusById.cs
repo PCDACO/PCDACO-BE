@@ -39,7 +39,7 @@ public class GetCompensationStatusById
         public async Task<Result<Response>> Handle(Query request, CancellationToken cancellationToken)
         {
             if (!currentUser.User!.IsAdmin())
-                return Result.Unauthorized("Bạn không có quyền truy cập");
+                return Result.Forbidden("Bạn không có quyền truy cập");
             Response? gettingEntity = await context.CompensationStatuses
                 .Where(e => e.Id == request.Id && !e.IsDeleted)
                 .Select(e => Response.FromEntity(e))
