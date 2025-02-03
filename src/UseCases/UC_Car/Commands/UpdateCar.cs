@@ -22,7 +22,7 @@ public sealed class UpdateCar
     public sealed record Commamnd(
         Guid CarId,
         Guid[] AmenityIds,
-        Guid ManufacturerId,
+        Guid ModelId,
         Guid TransmissionTypeId,
         Guid FuelTypeId,
         Guid StatusId,
@@ -73,10 +73,10 @@ public sealed class UpdateCar
                 .FirstOrDefaultAsync(ft => ft.Id == request.FuelTypeId && !ft.IsDeleted, cancellationToken);
             if (checkingFuelType is null) return Result.Error("Kiểu nhiên liệu không tồn tại !");
             // Check if manufacturer is exist
-            Manufacturer? checkingManufacturer = await context.Manufacturers.FirstOrDefaultAsync(m =>
-                m.Id == request.ManufacturerId,
+            Model? checkingModel = await context.Models.FirstOrDefaultAsync(m =>
+                m.Id == request.ModelId,
                 cancellationToken);
-            if (checkingManufacturer is null) return Result.Error("Hãng xe không tồn tại !");
+            if (checkingModel is null) return Result.Error("Mô hình xe không tồn tại !");
             // Update car amenities
             await context.CarAmenities.Where(ca => ca.CarId == checkingCar.Id)
                 .ExecuteDeleteAsync(cancellationToken);
@@ -91,7 +91,7 @@ public sealed class UpdateCar
                                                                             decryptedKey,
                                                                             checkingCar.EncryptionKey.IV);
             // Update car
-            checkingCar.ManufacturerId = request.ManufacturerId;
+            checkingCar.ModelId = request.ModelId;
             checkingCar.EncryptedLicensePlate = encryptedLicensePlate;
             checkingCar.Color = request.Color;
             checkingCar.Seat = request.Seat;
@@ -115,8 +115,8 @@ public sealed class UpdateCar
     {
         public Validator()
         {
-            RuleFor(x => x.ManufacturerId)
-                .NotEmpty().WithMessage("Phải chọn 1 hãng xe !");
+            RuleFor(x => x.ModelId)
+                .NotEmpty().WithMessage("Phải chọn 1 mô hình xe !");
             RuleFor(x => x.LicensePlate)
                 .NotEmpty().WithMessage("Biển số xe không được để trống !")
                 .MinimumLength(8).WithMessage("Biển số xe không được ít hơn 8 kí tự !")
