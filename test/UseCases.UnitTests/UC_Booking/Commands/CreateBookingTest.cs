@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using Domain.Entities;
+using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
 using UseCases.DTOs;
@@ -26,19 +27,13 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     {
         // Arrange
         UserRole adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
-        BookingStatus bookingStatus = await TestDataBookingStatus.CreateTestBookingStatus(
-            _dbContext,
-            "Pending"
-        );
 
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
 
         var handler = new CreateBooking.Handler(_dbContext, _currentUser);
         var command = new CreateBooking.CreateBookingCommand(
-            UserId: testUser.Id,
             CarId: Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            StatusId: bookingStatus.Id,
             StartTime: DateTime.UtcNow,
             EndTime: DateTime.UtcNow.AddDays(1)
         );
@@ -56,19 +51,13 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     {
         // Arrange
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        BookingStatus bookingStatus = await TestDataBookingStatus.CreateTestBookingStatus(
-            _dbContext,
-            "Pending"
-        );
 
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
         var handler = new CreateBooking.Handler(_dbContext, _currentUser);
         var command = new CreateBooking.CreateBookingCommand(
-            UserId: testUser.Id,
             CarId: Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            StatusId: bookingStatus.Id,
             StartTime: DateTime.UtcNow,
             EndTime: DateTime.UtcNow.AddDays(1)
         );
@@ -85,10 +74,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     {
         // Arrange
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        BookingStatus bookingStatus = await TestDataBookingStatus.CreateTestBookingStatus(
-            _dbContext,
-            "Pending"
-        );
+        await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
         TransmissionType transmissionType =
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
@@ -111,9 +97,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         var handler = new CreateBooking.Handler(_dbContext, _currentUser);
         var command = new CreateBooking.CreateBookingCommand(
-            UserId: testUser.Id,
             CarId: testCar.Id,
-            StatusId: bookingStatus.Id,
             StartTime: startTime,
             EndTime: endTime
         );
@@ -137,15 +121,9 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     public async Task Validator_EndTimeBeforeStartTime_ReturnsValidationError()
     {
         // Arrange
-        BookingStatus bookingStatus = await TestDataBookingStatus.CreateTestBookingStatus(
-            _dbContext,
-            "Pending"
-        );
         var validator = new CreateBooking.Validator();
         var command = new CreateBooking.CreateBookingCommand(
             Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            bookingStatus.Id,
             DateTime.UtcNow,
             DateTime.UtcNow.AddDays(-1)
         );
@@ -171,11 +149,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
         CarStatus carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
-
-        BookingStatus bookingStatus = await TestDataBookingStatus.CreateTestBookingStatus(
-            _dbContext,
-            "Pending"
-        );
+        await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
 
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
@@ -191,18 +165,14 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Create overlapping booking
         var command1 = new CreateBooking.CreateBookingCommand(
-            UserId: testUser.Id,
             CarId: testCar.Id,
-            StatusId: bookingStatus.Id,
             StartTime: DateTime.UtcNow.AddHours(1),
             EndTime: DateTime.UtcNow.AddHours(3)
         );
 
         // Overlapping booking
         var command2 = new CreateBooking.CreateBookingCommand(
-            UserId: testUser.Id,
             CarId: testCar.Id,
-            StatusId: bookingStatus.Id,
             StartTime: DateTime.UtcNow.AddHours(2), // Overlaps
             EndTime: DateTime.UtcNow.AddHours(4)
         );
@@ -227,14 +197,19 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
         CarStatus carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
+        await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
 
-        BookingStatus bookingStatus = await TestDataBookingStatus.CreateTestBookingStatus(
+        var testUser1 = await TestDataCreateUser.CreateTestUser(
             _dbContext,
-            "Pending"
+            driverRole,
+            "driver1@test.com"
+        );
+        var testUser2 = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            driverRole,
+            "driver2@test.com"
         );
 
-        var testUser1 = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
-        var testUser2 = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var testCar = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
@@ -245,36 +220,45 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             carStatus: carStatus
         );
 
-        // Use users 2
-        _currentUser.SetUser(testUser2);
-        var handler = new CreateBooking.Handler(_dbContext, _currentUser);
-
+        // First booking with user1
+        _currentUser.SetUser(testUser1);
+        var handler1 = new CreateBooking.Handler(_dbContext, _currentUser);
         var command1 = new CreateBooking.CreateBookingCommand(
-            UserId: testUser1.Id,
             CarId: testCar.Id,
-            StatusId: bookingStatus.Id,
             StartTime: DateTime.UtcNow.AddHours(1),
             EndTime: DateTime.UtcNow.AddHours(3)
         );
 
+        // Act for User 1
+        var result1 = await handler1.Handle(command1, CancellationToken.None);
+
+        // Second booking with user2
+        _currentUser.SetUser(testUser2);
+        var handler2 = new CreateBooking.Handler(_dbContext, _currentUser);
         var command2 = new CreateBooking.CreateBookingCommand(
-            UserId: testUser2.Id,
             CarId: testCar.Id,
-            StatusId: bookingStatus.Id,
             StartTime: DateTime.UtcNow.AddHours(2), // Overlaps
             EndTime: DateTime.UtcNow.AddHours(4)
         );
 
-        // Act
-        var result1 = await handler.Handle(command1, CancellationToken.None);
-        var result2 = await handler.Handle(command2, CancellationToken.None);
+        // Act for User 2
+        var result2 = await handler2.Handle(command2, CancellationToken.None);
 
         // Assert
         Assert.Equal(ResultStatus.Ok, result2.Status);
 
-        var newBooking = await _dbContext.Bookings.FirstOrDefaultAsync(b =>
-            b.UserId == testUser2.Id
+        // Verify both bookings exist
+        var bookings = await _dbContext
+            .Bookings.Include(b => b.Status)
+            .Where(b => b.CarId == testCar.Id)
+            .ToListAsync();
+
+        Assert.Equal(2, bookings.Count);
+        Assert.Contains(bookings, b => b.UserId == testUser1.Id);
+        Assert.Contains(bookings, b => b.UserId == testUser2.Id);
+        Assert.All(
+            bookings,
+            b => Assert.Equal(BookingStatusEnum.Pending.ToString(), b.Status.Name)
         );
-        Assert.NotNull(newBooking);
     }
 }

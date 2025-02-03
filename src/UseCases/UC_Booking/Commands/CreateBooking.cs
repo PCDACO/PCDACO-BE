@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using Domain.Entities;
+using Domain.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -11,13 +12,8 @@ namespace UseCases.UC_Booking.Commands;
 
 public sealed class CreateBooking
 {
-    public sealed record CreateBookingCommand(
-        Guid UserId,
-        Guid CarId,
-        Guid StatusId,
-        DateTime StartTime,
-        DateTime EndTime
-    ) : IRequest<Result<Response>>;
+    public sealed record CreateBookingCommand(Guid CarId, DateTime StartTime, DateTime EndTime)
+        : IRequest<Result<Response>>;
 
     public sealed record Response(Guid Id)
     {
@@ -44,13 +40,23 @@ public sealed class CreateBooking
             if (car == null)
                 return Result<Response>.NotFound();
 
+            var bookingStatus = await appDBContext.BookingStatuses.FirstOrDefaultAsync(
+                x => EF.Functions.Like(x.Name, BookingStatusEnum.Pending.ToString()),
+                cancellationToken: cancellationToken
+            );
+
+            if (bookingStatus == null)
+                return Result<Response>.NotFound("Không tìm thấy trạng thái phù hợp");
+
             // Check for overlapping bookings (same user + same car)
             bool hasOverlap = await appDBContext.Bookings.AnyAsync(
                 b =>
-                    b.UserId == request.UserId
+                    b.UserId == currentUser.User.Id
                     && b.CarId == request.CarId
                     && b.StartTime < request.EndTime
-                    && b.EndTime > request.StartTime,
+                    && b.EndTime > request.StartTime
+                    && b.Status.Name != BookingStatusEnum.Rejected.ToString() // Exclude rejected bookings
+                    && b.Status.Name != BookingStatusEnum.Cancelled.ToString(), // Exclude cancelled bookings
                 cancellationToken
             );
 
@@ -70,9 +76,9 @@ public sealed class CreateBooking
             var booking = new Booking
             {
                 Id = bookingId,
-                UserId = request.UserId,
+                UserId = currentUser.User.Id,
                 CarId = request.CarId,
-                StatusId = request.StatusId,
+                StatusId = bookingStatus.Id,
                 StartTime = request.StartTime,
                 EndTime = request.EndTime,
                 ActualReturnTime = request.EndTime, // Update later when user return car
@@ -95,11 +101,13 @@ public sealed class CreateBooking
     {
         public Validator()
         {
-            RuleFor(x => x.UserId).NotEmpty().WithMessage("User không được để trống");
-
             RuleFor(x => x.CarId).NotEmpty().WithMessage("Car không được để trống");
 
-            RuleFor(x => x.StartTime).NotEmpty().WithMessage("Phải chọn thời gian bắt đầu thuê");
+            RuleFor(x => x.StartTime)
+                .NotEmpty()
+                .WithMessage("Phải chọn thời gian bắt đầu thuê")
+                .GreaterThan(DateTime.Now)
+                .WithMessage("Thời gian bắt đầu thuê phải sau thời gian hiện tại");
 
             RuleFor(x => x.EndTime).NotEmpty().WithMessage("Phải chọn thời gian kết thúc thuê");
 
