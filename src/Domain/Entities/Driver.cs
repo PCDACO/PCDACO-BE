@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations.Schema;
-
 using Domain.Shared;
 
 namespace Domain.Entities;
@@ -14,10 +13,11 @@ public class Driver : BaseEntity
     public required string Fullname { get; set; }
     public required string ExpiryDate { get; set; }
     public bool? IsApprove { get; set; } = null!;
-    public string EncryptedKey { get; set; } = string.Empty;
+
     // Navigation properties
     [ForeignKey(nameof(UserId))]
     public User User { get; set; } = null!;
+
     [ForeignKey(nameof(EncryptionKeyId))]
     public EncryptionKey EncryptionKey { get; set; } = null!;
 }
