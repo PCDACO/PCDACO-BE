@@ -52,6 +52,7 @@ public sealed class StartBookingTrip
                 return Result.NotFound("Không tìm thấy trạng thái phù hợp");
 
             booking.StatusId = status.Id;
+            booking.IsCarReturned = false;
             await context.SaveChangesAsync(cancellationToken);
 
             return Result.SuccessWithMessage("Đã bắt đầu chuyến đi");
