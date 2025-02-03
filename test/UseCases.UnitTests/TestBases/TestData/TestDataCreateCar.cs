@@ -9,7 +9,7 @@ public static class TestDataCreateCar
 {
     private static Car CreateCar(
         Guid ownerId,
-        Guid manufacturerId,
+        Guid modelId,
         Guid encryptionKeyId,
         TransmissionType transmissionType,
         FuelType fuelType,
@@ -20,7 +20,7 @@ public static class TestDataCreateCar
         {
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             OwnerId = ownerId,
-            ManufacturerId = manufacturerId,
+            ModelId = modelId,
             EncryptionKeyId = encryptionKeyId,
             FuelTypeId = fuelType.Id,
             TransmissionTypeId = transmissionType.Id,
@@ -38,7 +38,7 @@ public static class TestDataCreateCar
     public static async Task<Car> CreateTestCar(
         AppDBContext dBContext,
         Guid ownerId,
-        Guid manufacturerId,
+        Guid modelId,
         TransmissionType transmissionType,
         FuelType fuelType,
         CarStatus carStatus,
@@ -48,7 +48,7 @@ public static class TestDataCreateCar
         var encryptionKey = await TestDataCreateEncryptionKey.CreateTestEncryptionKey(dBContext);
         var car = CreateCar(
             ownerId: ownerId,
-            manufacturerId: manufacturerId,
+            modelId: modelId,
             encryptionKeyId: encryptionKey.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,

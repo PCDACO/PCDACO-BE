@@ -44,12 +44,12 @@ public class CreateCarTests : IAsyncLifetime
     private CreateCar.Query CreateValidCommand(
         TransmissionType transmissionType,
         FuelType fuelType,
-        Guid? manufacturerId = null,
+        Guid? modelId = null,
         Guid[]? amenityIds = null
     ) =>
         new(
             AmenityIds: amenityIds ?? [],
-            ManufacturerId: manufacturerId ?? Guid.NewGuid(),
+            ModelId: modelId ?? Guid.NewGuid(),
             LicensePlate: "ABC-12345",
             Color: "Red",
             Seat: 4,
@@ -107,6 +107,7 @@ public class CreateCarTests : IAsyncLifetime
         _currentUser.SetUser(testUser);
 
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         // var amenities = await TestDataCreateAmenity.CreateTestAmenities(_dbContext);
 
         var handler = new CreateCar.Handler(
@@ -121,7 +122,7 @@ public class CreateCarTests : IAsyncLifetime
         var command = CreateValidCommand(
             transmissionType: transmissionType,
             fuelType: fuelType,
-            manufacturerId: manufacturer.Id,
+            modelId: model.Id,
             amenityIds: [Guid.Empty]
         );
 
@@ -144,8 +145,8 @@ public class CreateCarTests : IAsyncLifetime
         await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
         _currentUser.SetUser(user);
 
-        // Use a random non-existent manufacturer ID
-        var invalidManufacturerId = Guid.NewGuid();
+        // Use a random non-existent model ID
+        var invalidModelId = Guid.NewGuid();
 
         var handler = new CreateCar.Handler(
             _dbContext,
@@ -159,7 +160,7 @@ public class CreateCarTests : IAsyncLifetime
         var command = CreateValidCommand(
             transmissionType: transmissionType,
             fuelType: fuelType,
-            manufacturerId: invalidManufacturerId
+            modelId: invalidModelId
         );
 
         // Act
@@ -167,7 +168,7 @@ public class CreateCarTests : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains("Hãng xe không tồn tại !", result.Errors);
+        Assert.Contains("Mô hình xe không tồn tại !", result.Errors);
 
         // Verify no car was created
         var carsCount = await _dbContext.Cars.CountAsync();
@@ -189,7 +190,7 @@ public class CreateCarTests : IAsyncLifetime
 
         var invalidCommand = new CreateCar.Query(
             AmenityIds: [],
-            ManufacturerId: Guid.Empty,
+            ModelId: Guid.Empty,
             LicensePlate: "SHORT",
             Color: "",
             Seat: 0,
@@ -209,7 +210,7 @@ public class CreateCarTests : IAsyncLifetime
 
         // Assert
         Assert.False(result.IsValid);
-        Assert.Contains("Phải chọn 1 hãng xe !", result.Errors.Select(e => e.ErrorMessage));
+        Assert.Contains("Phải chọn 1 mô hình xe !", result.Errors.Select(e => e.ErrorMessage));
         Assert.Contains(
             "Biển số xe không được ít hơn 8 kí tự !",
             result.Errors.Select(e => e.ErrorMessage)
@@ -229,6 +230,7 @@ public class CreateCarTests : IAsyncLifetime
         _currentUser.SetUser(user);
 
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var amenities = await TestDataCreateAmenity.CreateTestAmenities(_dbContext);
 
         var handler = new CreateCar.Handler(
@@ -243,7 +245,7 @@ public class CreateCarTests : IAsyncLifetime
         var command = CreateValidCommand(
             transmissionType: transmissionType,
             fuelType: fuelType,
-            manufacturerId: manufacturer.Id,
+            modelId: model.Id,
             amenityIds: [.. amenities.Select(a => a.Id)]
         );
 
