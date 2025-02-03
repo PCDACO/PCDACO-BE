@@ -18,7 +18,8 @@ public sealed class UploadCarImages
 {
     public record Command(
         Guid CarId,
-        Stream[] Images
+        Stream[] CarImages,
+        Stream[] PaperImages
     ) : IRequest<Result<Response>>;
 
     public record Response(ImageDetail[] Images)
@@ -60,18 +61,50 @@ public sealed class UploadCarImages
                 .Where(i => i.CarId == car.Id)
                 .ExecuteDeleteAsync(cancellationToken);
             // Upload new images
-            List<Task<string>> tasks = [];
-            int index = 0;
-            foreach (var image in request.Images)
+            // Check if type images is exist
+            ImageType? carImageType = await context.ImageTypes
+                .AsNoTracking()
+                .Where(it => EF.Functions.ILike(it.Name, "%car%"))
+                .Where(it => !it.IsDeleted)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (carImageType is null) return Result.Error("Không tìm thấy loại hình ảnh đang cần");
+            ImageType? paperImageType = await context.ImageTypes
+                .AsNoTracking()
+                .Where(it => EF.Functions.ILike(it.Name, "%paper%"))
+                .Where(it => !it.IsDeleted)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (carImageType is null) return Result.Error("Không tìm thấy loại hình ảnh đang cần");
+            List<Task<string>> carTasks = [];
+            List<Task<string>> paperTasks = [];
+            int carIndex = 0;
+            int paperIndex = 0;
+            foreach (var image in request.CarImages)
             {
-                tasks.Add(cloudinaryServices.UploadCarImageAsync($"Car-{car.Id}-Image-{++index}", image, cancellationToken));
+                carTasks.Add(cloudinaryServices.UploadCarImageAsync($"Car-{car.Id}-Image-{++carIndex}", image, cancellationToken));
             }
-            string[] urls = await Task.WhenAll(tasks);
-            ImageCar[] images = [.. urls.Select(url => new ImageCar
+            foreach (var image in request.CarImages)
             {
+                paperTasks.Add(cloudinaryServices.UploadCarImageAsync($"Car-{car.Id}-Image-{++paperIndex}-Paper", image, cancellationToken));
+            }
+            string[] carImageUrls = await Task.WhenAll(carTasks);
+            string[] paperImageUrls = await Task.WhenAll(paperTasks);
+            ImageCar[] images =
+            [
+                .. carImageUrls
+                    .Select(url => new ImageCar
+                    {
+                        CarId = car.Id,
+                        Url = url,
+                        TypeId = carImageType.Id
+                    }),
+                .. paperImageUrls.Select(url => new ImageCar
+                {
                 CarId = car.Id,
-                Url = url
-            })];
+                Url = url,
+                TypeId = paperImageType!.Id
+                }),
+            ];
+
             car.ImageCars = images;
             // Save new images
             await context.ImageCars.AddRangeAsync(images, cancellationToken);
@@ -86,8 +119,10 @@ public sealed class UploadCarImages
         {
             RuleFor(x => x.CarId)
                 .NotEmpty().WithMessage("Phải chọn xe cần cập nhật !");
-            RuleFor(x => x.Images)
+            RuleFor(x => x.CarImages)
                 .NotEmpty().WithMessage("Phải chọn ảnh !");
+            RuleFor(x => x.PaperImages)
+            .NotEmpty().WithMessage("Phải chọn ảnh !");
         }
     }
 }

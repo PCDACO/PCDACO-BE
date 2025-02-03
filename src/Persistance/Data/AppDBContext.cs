@@ -1,5 +1,9 @@
+using System.Linq.Expressions;
 using Domain.Entities;
+using Domain.Shared;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 
 namespace Persistance.Data;
@@ -26,7 +30,42 @@ public class AppDBContext(DbContextOptions context) : DbContext(context), IAppDB
     public DbSet<User> Users => Set<User>();
     public DbSet<UserStatistic> UserStatistics => Set<UserStatistic>();
     public DbSet<WithdrawalRequest> WithdrawalRequests => Set<WithdrawalRequest>();
+    public DbSet<BookingStatus> BookingStatuses => Set<BookingStatus>();
+    public DbSet<CarStatus> CarStatuses => Set<CarStatus>();
+    public DbSet<Compensation> Compensations => Set<Compensation>();
+    public DbSet<CompensationStatus> CompensationStatuses => Set<CompensationStatus>();
+    public DbSet<Contract> Contracts => Set<Contract>();
+    public DbSet<ContractStatus> ContractStatuses => Set<ContractStatus>();
+    public DbSet<FuelType> FuelTypes => Set<FuelType>();
+    public DbSet<ImageType> ImageTypes => Set<ImageType>();
+    public DbSet<TransactionStatus> TransactionStatuses => Set<TransactionStatus>();
+    public DbSet<TransactionType> TransactionTypes => Set<TransactionType>();
+    public DbSet<WithdrawalRequestStatus> WithdrawalRequestStatuses => Set<WithdrawalRequestStatus>();
+    public DbSet<TransmissionType> TransmissionTypes => Set<TransmissionType>();
+
+    public DbSet<UserRole> UserRoles => Set<UserRole>();
 
     async Task IAppDBContext.SaveChangesAsync(CancellationToken cancellationToken) =>
         await SaveChangesAsync(cancellationToken);
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+
+        // Apply query filter for BaseEntity
+        foreach (var entityType in modelBuilder.Model.GetEntityTypes())
+        {
+            if (typeof(BaseEntity).IsAssignableFrom(entityType.ClrType))
+            {
+                var parameter = Expression.Parameter(entityType.ClrType, "e");
+                var body = Expression.Equal(
+                    Expression.Property(parameter, nameof(BaseEntity.IsDeleted)),
+                    Expression.Constant(false)
+                );
+                modelBuilder
+                    .Entity(entityType.ClrType)
+                    .HasQueryFilter(Expression.Lambda(body, parameter));
+            }
+        }
+    }
 }

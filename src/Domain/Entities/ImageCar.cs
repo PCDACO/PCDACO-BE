@@ -9,9 +9,12 @@ public class ImageCar : BaseEntity
 {
     // Properties
     public required Guid CarId { get; set; }
+    public required Guid TypeId { get; set; }
     public required string Url { get; set; }
-    public ImageCarType Type { get; set; } = ImageCarType.Car;
     // Navigation Properties
     [ForeignKey(nameof(CarId))]
     public Car Car { get; set; } = null!;
+    [ForeignKey(nameof(TypeId))]
+    public ImageType Type { get; set; } = null!;
+
 }

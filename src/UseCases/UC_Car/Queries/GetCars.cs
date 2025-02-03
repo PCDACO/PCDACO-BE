@@ -24,6 +24,8 @@ public class GetCars
         decimal? Radius,
         Guid? Manufacturer,
         Guid[]? Amenities,
+        Guid? FuelTypes,
+        Guid? TransmissionTypes,
         Guid? LastCarId,
         int Limit
     ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
@@ -63,8 +65,8 @@ public class GetCars
             car.Color,
             car.Seat,
             car.Description,
-            car.TransmissionType.ToString(),
-            car.FuelType.ToString(),
+            car.TransmissionType.ToString() ?? string.Empty,
+            car.FuelType.ToString() ?? string.Empty,
             car.FuelConsumption,
             car.RequiresCollateral,
             new PriceDetail(car.PricePerHour, car.PricePerDay),
@@ -111,10 +113,15 @@ public class GetCars
                 .Include(c => c.Manufacturer)
                 .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars)
+                .Include(c => c.CarStatus)
+                .Include(c => c.TransmissionType)
+                .Include(c => c.FuelType)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
-                .Where(c => !c.IsDeleted)
+                .Where(c => EF.Functions.ILike(c.CarStatus.Name, $"%available%"))
                 .Where(c => request.Manufacturer == null || c.ManufacturerId == request.Manufacturer)
                 .Where(c => request.Amenities == null || request.Amenities.All(a => c.CarAmenities.Select(ca => ca.AmenityId).Contains(a)))
+                .Where(c => request.FuelTypes == null || c.FuelTypeId == request.FuelTypes)
+                .Where(c => request.TransmissionTypes == null || c.TransmissionTypeId == request.TransmissionTypes)
                 .Where(c => ((decimal)c.Location.Distance(userLocation) * 111320) <= (request.Radius ?? 0))
                 .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point)).ThenByDescending(c => c.Id)
                 .Where(c => request.LastCarId == null || c.Id.CompareTo(request.LastCarId) < 0);

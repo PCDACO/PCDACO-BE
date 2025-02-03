@@ -1,6 +1,6 @@
 namespace Domain.Enums;
 
-public enum WithdrawalRequestStatus
+public enum FinancialReportStatus
 {
     Pending,
     Completed,

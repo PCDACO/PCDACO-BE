@@ -6,6 +6,8 @@ using Carter;
 
 using MediatR;
 
+using Microsoft.AspNetCore.Mvc;
+
 using UseCases.DTOs;
 using UseCases.UC_Amenity.Queries;
 
@@ -25,21 +27,17 @@ public class GetAmenitiesEndpoint : ICarterModule
 
     private async Task<IResult> Handle(
         ISender sender,
-        [AsParameters] GetAmenitiesRequest request)
+        [FromQuery(Name = "index")] int? pageNumber = 1,
+        [FromQuery(Name = "size")] int? pageSize = 10,
+        [FromQuery(Name = "keyword")] string? keyword = "")
     {
         Result<OffsetPaginatedResponse<GetAmenities.Response>> result = await sender.Send(
             new GetAmenities.Query(
-                request.pageNumber!.Value,
-                request.pageSize!.Value,
-                request.keyword!
+                pageNumber!.Value,
+                pageSize!.Value,
+                keyword!
             )
         );
         return result.MapResult();
     }
-
-    private record GetAmenitiesRequest(
-        int? pageNumber = 1,
-        int? pageSize = 10,
-        string? keyword = ""
-    );
 }

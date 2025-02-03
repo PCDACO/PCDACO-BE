@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
-using Domain.Enums;
 using Domain.Shared;
 
 namespace Domain.Entities;
@@ -9,6 +8,7 @@ public class Booking : BaseEntity
 {
     public required Guid UserId { get; set; }
     public required Guid CarId { get; set; }
+    public required Guid StatusId { get; set; }
     public required DateTimeOffset StartTime { get; set; }
     public required DateTimeOffset EndTime { get; set; }
     public required DateTimeOffset ActualReturnTime { get; set; }
@@ -18,12 +18,16 @@ public class Booking : BaseEntity
     public required decimal ExcessDayFee { get; set; }
     public required decimal TotalAmount { get; set; }
     public required string Note { get; set; }
-    public BookingStatus Status { get; set; } = BookingStatus.Pending;
+    public bool IsCarReturned { get; set; } = true;
     // Navigation properties
     [ForeignKey(nameof(UserId))]
     public User User { get; set; } = null!;
     [ForeignKey(nameof(CarId))]
     public Car Car { get; set; } = null!;
+    [ForeignKey(nameof(StatusId))]
+    public BookingStatus Status { get; set; } = null!;
+    public ICollection<Contract> Contracts { get; set; } = [];
+    public ICollection<Compensation> Compensations { get; set; } = [];
     public ICollection<CarReport> CarReports { get; set; } = [];
     public ICollection<TripTracking> TripTrackings { get; set; } = [];
     public ICollection<Feedback> Feedbacks { get; set; } = [];

@@ -4,6 +4,8 @@ using Ardalis.Result;
 
 using Carter;
 
+using Infrastructure.Idempotency;
+
 using MediatR;
 
 using UseCases.UC_User.Commands;
@@ -18,6 +20,7 @@ public class CreateAdminUserEndpoint : ICarterModule
     {
         app.MapPost("/api/users/admin", Handle)
             .WithSummary("Create an admin user")
+            // .AddEndpointFilter<IdempotencyFilter>()
             .WithTags("Users");
     }
 

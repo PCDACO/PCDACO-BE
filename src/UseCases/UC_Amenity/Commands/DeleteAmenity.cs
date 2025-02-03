@@ -24,8 +24,7 @@ public sealed class DeleteAmenity
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
             if (!currentUser.User!.IsAdmin()) return Result.Forbidden("Bạn không có quyền xóa tiện nghi");
-            Amenity? deletingAmenity = await context.Amenities.FirstOrDefaultAsync(a => a.Id == request.Id &&
-                !a.IsDeleted, cancellationToken);
+            Amenity? deletingAmenity = await context.Amenities.FirstOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
             if (deletingAmenity is null)
                 return Result.Error("Không tìm thấy tiện nghi");
             deletingAmenity.Delete();
