@@ -1,7 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
-
 using Domain.Shared;
-
 using NetTopologySuite.Geometries;
 
 namespace Domain.Entities;
@@ -10,7 +8,7 @@ public class Car : BaseEntity
 {
     // Properties
     public required Guid OwnerId { get; set; }
-    public required Guid ManufacturerId { get; set; }
+    public required Guid ModelId { get; set; }
     public required Guid EncryptionKeyId { get; set; }
     public required Guid FuelTypeId { get; set; }
     public required Guid TransmissionTypeId { get; set; }
@@ -26,17 +24,23 @@ public class Car : BaseEntity
     public Point Location { get; set; } = null!;
     public int TotalRented { get; set; } = 0;
     public decimal TotalEarning { get; set; } = 0;
+
     // Navigation Properties
     [ForeignKey(nameof(OwnerId))]
     public User Owner { get; set; } = null!;
-    [ForeignKey(nameof(ManufacturerId))]
-    public Manufacturer Manufacturer { get; set; } = null!;
+
+    [ForeignKey(nameof(ModelId))]
+    public Model Model { get; set; } = null!;
+
     [ForeignKey(nameof(EncryptionKeyId))]
     public EncryptionKey EncryptionKey { get; set; } = null!;
+
     [ForeignKey(nameof(FuelTypeId))]
     public FuelType FuelType { get; set; } = null!;
+
     [ForeignKey(nameof(TransmissionTypeId))]
     public TransmissionType TransmissionType { get; set; } = null!;
+
     [ForeignKey(nameof(StatusId))]
     public CarStatus CarStatus { get; set; } = null!;
     public CarStatistic CarStatistic { get; set; } = null!;
