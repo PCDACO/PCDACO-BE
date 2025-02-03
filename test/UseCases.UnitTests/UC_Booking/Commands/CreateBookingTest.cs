@@ -82,10 +82,11 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testModel = await TestDataCreateModel.CreateTestModel(_dbContext, testManufacturer.Id);
         var testCar = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
             ownerId: testUser.Id,
-            manufacturerId: testManufacturer.Id,
+            modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
             carStatus: carStatus
@@ -153,10 +154,11 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testModel = await TestDataCreateModel.CreateTestModel(_dbContext, testManufacturer.Id);
         var testCar = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
             ownerId: testUser.Id,
-            manufacturerId: testManufacturer.Id,
+            modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
             carStatus: carStatus
@@ -211,10 +213,11 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         );
 
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testModel = await TestDataCreateModel.CreateTestModel(_dbContext, testManufacturer.Id);
         var testCar = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
             ownerId: testUser1.Id,
-            manufacturerId: testManufacturer.Id,
+            modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
             carStatus: carStatus

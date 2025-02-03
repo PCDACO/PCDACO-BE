@@ -81,6 +81,7 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Setup car and booking
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
             _dbContext,
             "Automatic"
@@ -91,7 +92,7 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var car = await TestDataCreateCar.CreateTestCar(
             _dbContext,
             owner.Id,
-            manufacturer.Id,
+            model.Id,
             transmissionType,
             fuelType,
             carStatus
@@ -138,6 +139,7 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Setup car and booking
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
             _dbContext,
             "Automatic"
@@ -148,7 +150,7 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var car = await TestDataCreateCar.CreateTestCar(
             _dbContext,
             owner.Id,
-            manufacturer.Id,
+            model.Id,
             transmissionType,
             fuelType,
             carStatus
