@@ -1,16 +1,17 @@
 using Domain.Entities;
+using Domain.Enums;
+
 namespace Persistance.Bogus;
 
 public class BookingStatusGenerator
 {
-    private static readonly string[] _bookingStatus = ["Pending", "Confirmed", "Cancelled"];
     public static BookingStatus[] Execute()
     {
-        return [.. _bookingStatus.Select(status => {
-            return new BookingStatus()
-            {
-                Name = status,
-            };
-        })];
+        return
+        [
+            .. Enum.GetValues(typeof(BookingStatusEnum))
+                .Cast<BookingStatusEnum>()
+                .Select(status => new BookingStatus() { Name = status.ToString(), })
+        ];
     }
 }
