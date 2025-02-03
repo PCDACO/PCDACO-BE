@@ -1,9 +1,7 @@
 using System.Linq.Expressions;
 using Domain.Entities;
 using Domain.Shared;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 
 namespace Persistance.Data;
@@ -40,10 +38,12 @@ public class AppDBContext(DbContextOptions context) : DbContext(context), IAppDB
     public DbSet<ImageType> ImageTypes => Set<ImageType>();
     public DbSet<TransactionStatus> TransactionStatuses => Set<TransactionStatus>();
     public DbSet<TransactionType> TransactionTypes => Set<TransactionType>();
-    public DbSet<WithdrawalRequestStatus> WithdrawalRequestStatuses => Set<WithdrawalRequestStatus>();
+    public DbSet<WithdrawalRequestStatus> WithdrawalRequestStatuses =>
+        Set<WithdrawalRequestStatus>();
     public DbSet<TransmissionType> TransmissionTypes => Set<TransmissionType>();
 
     public DbSet<UserRole> UserRoles => Set<UserRole>();
+    public DbSet<Model> Models => Set<Model>();
 
     async Task IAppDBContext.SaveChangesAsync(CancellationToken cancellationToken) =>
         await SaveChangesAsync(cancellationToken);

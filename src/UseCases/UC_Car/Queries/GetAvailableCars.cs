@@ -1,13 +1,8 @@
-
 using Ardalis.Result;
-
 using Domain.Entities;
 using Domain.Shared;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -15,16 +10,13 @@ namespace UseCases.UC_Car.Queries;
 
 public class GetAvailableCars
 {
-    public record Query(
-        int PageNumber,
-        int PageSize,
-        string Keyword
-    ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
+    public record Query(int PageNumber, int PageSize, string Keyword)
+        : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
         Guid Id,
-        Guid ManufacturerId,
-        string ManufacturerName,
+        Guid ModelId,
+        string ModelName,
         Guid OwnerId,
         string OwnerName,
         string LicensePlate,
@@ -42,51 +34,60 @@ public class GetAvailableCars
         AmenityDetail[] Amenities
     )
     {
-        public static async Task<Response> FromEntity(Car car, string masterKey, IAesEncryptionService aesEncryptionService, IKeyManagementService keyManagementService)
+        public static async Task<Response> FromEntity(
+            Car car,
+            string masterKey,
+            IAesEncryptionService aesEncryptionService,
+            IKeyManagementService keyManagementService
+        )
         {
-            string decryptedKey = keyManagementService.DecryptKey(car.EncryptionKey.EncryptedKey, masterKey);
-            string decryptedLicensePlate = await aesEncryptionService.Decrypt(car.EncryptedLicensePlate, decryptedKey, car.EncryptionKey.IV);
+            string decryptedKey = keyManagementService.DecryptKey(
+                car.EncryptionKey.EncryptedKey,
+                masterKey
+            );
+            string decryptedLicensePlate = await aesEncryptionService.Decrypt(
+                car.EncryptedLicensePlate,
+                decryptedKey,
+                car.EncryptionKey.IV
+            );
             return new(
-            car.Id,
-            car.Manufacturer.Id,
-            car.Manufacturer.Name,
-            car.Owner.Id,
-            car.Owner.Name,
-            decryptedLicensePlate,
-            car.Color,
-            car.Seat,
-            car.Description,
-            car.TransmissionType.ToString() ?? string.Empty,
-            car.FuelType.ToString() ?? string.Empty,
-            car.FuelConsumption,
-            car.RequiresCollateral,
-            new PriceDetail(car.PricePerHour, car.PricePerDay),
-            new LocationDetail(car.Location.X, car.Location.Y),
-            new ManufacturerDetail(car.Manufacturer.Id, car.Manufacturer.Name),
-            [.. car.ImageCars.Select(i => new ImageDetail(i.Id, i.Url))],
-            [.. car.CarAmenities.Select(a => new AmenityDetail(a.Id, a.Amenity.Name, a.Amenity.Description))]
-             );
+                car.Id,
+                car.Model.Id,
+                car.Model.Name,
+                car.Owner.Id,
+                car.Owner.Name,
+                decryptedLicensePlate,
+                car.Color,
+                car.Seat,
+                car.Description,
+                car.TransmissionType.ToString() ?? string.Empty,
+                car.FuelType.ToString() ?? string.Empty,
+                car.FuelConsumption,
+                car.RequiresCollateral,
+                new PriceDetail(car.PricePerHour, car.PricePerDay),
+                new LocationDetail(car.Location.X, car.Location.Y),
+                new ManufacturerDetail(car.Model.Id, car.Model.Name),
+                [.. car.ImageCars.Select(i => new ImageDetail(i.Id, i.Url))],
+                [
+                    .. car.CarAmenities.Select(a => new AmenityDetail(
+                        a.Id,
+                        a.Amenity.Name,
+                        a.Amenity.Description
+                    )),
+                ]
+            );
         }
     };
+
     public record PriceDetail(decimal PerHour, decimal PerDay);
 
     public record LocationDetail(double Longtitude, double Latitude);
 
-    public record ManufacturerDetail(
-        Guid Id,
-        string Name
-    );
+    public record ManufacturerDetail(Guid Id, string Name);
 
-    public record ImageDetail(
-        Guid Id,
-        string Url
-    );
+    public record ImageDetail(Guid Id, string Url);
 
-    public record AmenityDetail(
-        Guid Id,
-        string Name,
-        string Description
-    );
+    public record AmenityDetail(Guid Id, string Name, string Description);
 
     public class Handler(
         IAppDBContext context,
@@ -96,29 +97,50 @@ public class GetAvailableCars
         EncryptionSettings encryptionSettings
     ) : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
     {
-        public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(
+            Query request,
+            CancellationToken cancellationToken
+        )
         {
-            if (!currentUser.User!.IsAdmin()) return Result.Forbidden("Bạn không có quyền thực hiện thao tác này");
-            IQueryable<Car> query = context.Cars
-                .Include(c => c.Owner).ThenInclude(o => o.Feedbacks)
-                .Include(c => c.Manufacturer)
+            if (!currentUser.User!.IsAdmin())
+                return Result.Forbidden("Bạn không có quyền thực hiện thao tác này");
+            IQueryable<Car> query = context
+                .Cars.Include(c => c.Owner)
+                .ThenInclude(o => o.Feedbacks)
+                .Include(c => c.Model)
+                .ThenInclude(o => o.Manufacturer)
                 .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars)
                 .Include(c => c.CarStatus)
-                .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
+                .Include(c => c.CarAmenities)
+                .ThenInclude(ca => ca.Amenity)
                 .Where(c => EF.Functions.ILike(c.CarStatus.Name, $"%available%"))
-                .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point)).ThenByDescending(c => c.Id);
+                .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point))
+                .ThenByDescending(c => c.Id);
             int count = await query.CountAsync(cancellationToken);
             List<Car> cars = await query
                 .Skip(request.PageSize * (request.PageNumber - 1))
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
-            return Result.Success(OffsetPaginatedResponse<Response>.Map(
-                (await Task.WhenAll(cars.Select(async c => await Response.FromEntity(c, encryptionSettings.Key, aesEncryptionService, keyManagementService)))).AsEnumerable(),
-                count,
-                request.PageNumber,
-                request.PageSize
-            ));
+            return Result.Success(
+                OffsetPaginatedResponse<Response>.Map(
+                    (
+                        await Task.WhenAll(
+                            cars.Select(async c =>
+                                await Response.FromEntity(
+                                    c,
+                                    encryptionSettings.Key,
+                                    aesEncryptionService,
+                                    keyManagementService
+                                )
+                            )
+                        )
+                    ).AsEnumerable(),
+                    count,
+                    request.PageNumber,
+                    request.PageSize
+                )
+            );
         }
     }
 }

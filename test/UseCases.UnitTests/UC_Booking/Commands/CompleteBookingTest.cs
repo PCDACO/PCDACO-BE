@@ -82,6 +82,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Setup car and booking
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
             _dbContext,
             "Automatic"
@@ -92,7 +93,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var car = await TestDataCreateCar.CreateTestCar(
             _dbContext,
             owner.Id,
-            manufacturer.Id,
+            model.Id,
             transmissionType,
             fuelType,
             carStatus
@@ -135,6 +136,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Setup car and booking
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
             _dbContext,
             "Automatic"
@@ -145,7 +147,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var car = await TestDataCreateCar.CreateTestCar(
             _dbContext,
             owner.Id,
-            manufacturer.Id,
+            model.Id,
             transmissionType,
             fuelType,
             carStatus
@@ -196,6 +198,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.SaveChangesAsync();
 
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
             _dbContext,
             "Automatic"
@@ -210,7 +213,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var car = await TestDataCreateCar.CreateTestCar(
             _dbContext,
             owner.Id,
-            manufacturer.Id,
+            model.Id,
             transmissionType,
             fuelType,
             carStatus

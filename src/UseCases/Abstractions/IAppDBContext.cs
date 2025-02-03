@@ -1,6 +1,5 @@
 using Domain.Entities;
 using Domain.Enums;
-
 using Microsoft.EntityFrameworkCore;
 
 namespace UseCases.Abstractions;
@@ -41,4 +40,5 @@ public interface IAppDBContext : IDisposable
     DbSet<UserStatistic> UserStatistics { get; }
     DbSet<WithdrawalRequest> WithdrawalRequests { get; }
     DbSet<WithdrawalRequestStatus> WithdrawalRequestStatuses { get; }
+    DbSet<Model> Models { get; }
 }

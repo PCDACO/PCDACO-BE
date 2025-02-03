@@ -35,10 +35,11 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
         var user = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(user);
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testModel = await TestDataCreateModel.CreateTestModel(_dbContext, testManufacturer.Id);
         var testCar = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
             ownerId: user.Id,
-            manufacturerId: testManufacturer.Id,
+            modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
             carStatus: carStatus
@@ -91,10 +92,11 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
         _currentUser.SetUser(requester);
 
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testModel = await TestDataCreateModel.CreateTestModel(_dbContext, testManufacturer.Id);
         var testCar = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
             ownerId: owner.Id,
-            manufacturerId: testManufacturer.Id,
+            modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
             carStatus: carStatus
@@ -124,10 +126,11 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
         var user = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(user);
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testModel = await TestDataCreateModel.CreateTestModel(_dbContext, testManufacturer.Id);
         var testCar = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
             ownerId: user.Id,
-            manufacturerId: testManufacturer.Id,
+            modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
             carStatus: status
@@ -176,10 +179,11 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Create and immediately delete a car
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testModel = await TestDataCreateModel.CreateTestModel(_dbContext, testManufacturer.Id);
         var testCar = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
             ownerId: user.Id,
-            manufacturerId: testManufacturer.Id,
+            modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
             carStatus: status,

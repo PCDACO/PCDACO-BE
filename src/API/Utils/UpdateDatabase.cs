@@ -1,11 +1,9 @@
 using System.Threading.Tasks;
-
 using Domain.Entities;
-
 using Microsoft.EntityFrameworkCore;
-
 using Persistance.Bogus;
 using Persistance.Data;
+
 namespace API.Utils;
 
 public class UpdateDatabase
@@ -13,9 +11,9 @@ public class UpdateDatabase
     public static async Task Execute(IApplicationBuilder app)
     {
         // Update database
-        using var scope = app.ApplicationServices
-        .GetRequiredService<IServiceScopeFactory>()
-        .CreateScope();
+        using var scope = app
+            .ApplicationServices.GetRequiredService<IServiceScopeFactory>()
+            .CreateScope();
         using var context = scope.ServiceProvider.GetService<AppDBContext>();
         if (context is null)
             throw new ArgumentNullException(nameof(context));
@@ -34,7 +32,9 @@ public class UpdateDatabase
         TransmissionType[] transmissionTypes = TransmissionTypeGenerator.Execute();
         ContractStatus[] contractStatuses = ContractStatusGenerator.Execute();
         UserRole[] userRoles = UserRoleGenerator.Execute();
-        WithdrawalRequestStatus[] withdrawalRequestStatuses = WithdrawalRequestStatusGenerator.Execute();
+        WithdrawalRequestStatus[] withdrawalRequestStatuses =
+            WithdrawalRequestStatusGenerator.Execute();
+        Model[] models = ModelGenerator.Execute(manufacturers);
 
         List<Task> tasks = [];
 
@@ -51,8 +51,8 @@ public class UpdateDatabase
         tasks.Add(context.AddRangeAsync(transactionTypes));
         tasks.Add(context.AddRangeAsync(transmissionTypes));
         tasks.Add(context.AddRangeAsync(manufacturers));
+        tasks.Add(context.AddRangeAsync(models));
         await Task.WhenAll(tasks);
         await context.SaveChangesAsync();
-
     }
 }

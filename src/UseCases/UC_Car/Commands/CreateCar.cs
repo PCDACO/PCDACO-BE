@@ -22,7 +22,7 @@ public sealed class CreateCar
 {
     public sealed record Query(
         Guid[] AmenityIds,
-        Guid ManufacturerId,
+        Guid ModelId,
         Guid TransmissionTypeId,
         Guid FuelTypeId,
         string LicensePlate,
@@ -99,11 +99,11 @@ public sealed class CreateCar
             if (checkingStatus is null)
                 return Result.Error("Trạng thái không tồn tại !");
             // Check if manufacturer is exist
-            Manufacturer? checkingManufacturer = await context
-                .Manufacturers.AsNoTracking()
-                .FirstOrDefaultAsync(m => m.Id == request.ManufacturerId, cancellationToken);
-            if (checkingManufacturer is null)
-                return Result.Error("Hãng xe không tồn tại !");
+            Model? checkingModel = await context
+                .Models.AsNoTracking()
+                .FirstOrDefaultAsync(m => m.Id == request.ModelId, cancellationToken);
+            if (checkingModel is null)
+                return Result.Error("Mô hình xe không tồn tại !");
             (string key, string iv) = await keyManagementService.GenerateKeyAsync();
             string encryptedLicensePlate = await aesEncryptionService.Encrypt(
                 request.LicensePlate,
@@ -118,7 +118,7 @@ public sealed class CreateCar
                 new()
                 {
                     Id = carId,
-                    ManufacturerId = request.ManufacturerId,
+                    ModelId = request.ModelId,
                     OwnerId = currentUser.User!.Id,
                     EncryptedLicensePlate = encryptedLicensePlate,
                     EncryptionKeyId = newEncryptionKey.Id,
@@ -158,7 +158,7 @@ public sealed class CreateCar
     {
         public Validator()
         {
-            RuleFor(x => x.ManufacturerId).NotEmpty().WithMessage("Phải chọn 1 hãng xe !");
+            RuleFor(x => x.ModelId).NotEmpty().WithMessage("Phải chọn 1 mô hình xe !");
             RuleFor(x => x.LicensePlate)
                 .NotEmpty()
                 .WithMessage("Biển số xe không được để trống !")
