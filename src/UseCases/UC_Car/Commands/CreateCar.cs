@@ -98,7 +98,7 @@ public sealed class CreateCar
                 );
             if (checkingStatus is null)
                 return Result.Error("Trạng thái không tồn tại !");
-            // Check if manufacturer is exist
+            // Check if model is exist
             Model? checkingModel = await context
                 .Models.AsNoTracking()
                 .FirstOrDefaultAsync(m => m.Id == request.ModelId, cancellationToken);

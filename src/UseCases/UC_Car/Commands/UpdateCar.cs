@@ -72,7 +72,7 @@ public sealed class UpdateCar
             FuelType? checkingFuelType = await context.FuelTypes
                 .FirstOrDefaultAsync(ft => ft.Id == request.FuelTypeId && !ft.IsDeleted, cancellationToken);
             if (checkingFuelType is null) return Result.Error("Kiểu nhiên liệu không tồn tại !");
-            // Check if manufacturer is exist
+            // Check if model is exist
             Model? checkingModel = await context.Models.FirstOrDefaultAsync(m =>
                 m.Id == request.ModelId,
                 cancellationToken);
