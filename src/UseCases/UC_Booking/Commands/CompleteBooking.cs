@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Domain.Entities;
 using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -21,6 +22,7 @@ public sealed class CompleteBooking
 
             var booking = await context
                 .Bookings.Include(x => x.Status)
+                .Include(x => x.Car)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
@@ -51,12 +53,48 @@ public sealed class CompleteBooking
             if (status == null)
                 return Result.NotFound("Không tìm thấy trạng thái phù hợp");
 
+            // Set actual return time and calculate excess fees
+            booking.ActualReturnTime = DateTimeOffset.UtcNow;
+            var (excessDays, excessFee) = CalculateExcessFee(booking);
+
             booking.StatusId = status.Id;
-            booking.ActualReturnTime = DateTime.UtcNow;
+            booking.ExcessDay = excessDays;
+            booking.ExcessDayFee = excessFee;
+            booking.TotalAmount = booking.BasePrice + booking.PlatformFee + excessFee;
 
             await context.SaveChangesAsync(cancellationToken);
 
-            return Result.SuccessWithMessage("Đã hoàn thành chuyến đi");
+            return Result.SuccessWithMessage(
+                $"""
+                Đã hoàn thành chuyến đi
+                Số ngày trễ: {excessDays}
+                Phí phát sinh: {excessFee:N0} VND
+                Tổng cộng: {booking.TotalAmount:N0} VND
+                """
+            );
+        }
+
+        private static (decimal ExcessDays, decimal ExcessFee) CalculateExcessFee(Booking booking)
+        {
+            // If returned before or on time
+            if (booking.ActualReturnTime <= booking.EndTime)
+            {
+                return (0, 0);
+            }
+
+            // Calculate excess days (round up to full days)
+            var excessTimeSpan = booking.ActualReturnTime - booking.EndTime;
+            var excessDays = Math.Ceiling(excessTimeSpan.TotalDays);
+
+            // Calculate daily rate from the original booking
+            var plannedDays = (booking.EndTime - booking.StartTime).TotalDays;
+            var dailyRate = booking.BasePrice / (decimal)plannedDays;
+
+            // Apply penalty multiplier (e.g., 1.5x the daily rate for excess days)
+            const decimal penaltyMultiplier = 1.5m;
+            var excessFee = dailyRate * (decimal)excessDays * penaltyMultiplier;
+
+            return ((decimal)excessDays, excessFee);
         }
     }
 }
