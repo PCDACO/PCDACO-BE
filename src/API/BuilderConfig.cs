@@ -72,6 +72,16 @@ public static class BuilderConfig
                         ValidateIssuer = false,
                         ValidateAudience = true,
                         ValidateLifetime = true,
+                        LifetimeValidator = (notBefore, expires, securityToken, validationParameters) =>
+                        {
+                            // Custom expiration logic
+                            if (expires.HasValue && expires.Value < DateTime.UtcNow)
+                            {
+                                // Token is expired
+                                return false;
+                            }
+                            return true; // Token is valid
+                        },
                         ValidateIssuerSigningKey = true,
                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["SECRET_KEY"] ?? throw new Exception("Secret Key is missing"))),
                     };
