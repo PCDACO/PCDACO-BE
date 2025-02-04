@@ -21,10 +21,14 @@ public sealed class ConfirmCarReturn
 
             var booking = await context
                 .Bookings.Include(x => x.Status)
+                .Include(x => x.Car)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
                 return Result.NotFound("Không tìm thấy booking");
+
+            if (booking.Car.OwnerId != currentUser.User.Id)
+                return Result.Forbidden("Bạn không có quyền phê duyệt booking cho xe này!");
 
             if (booking.Status.Name != BookingStatusEnum.Completed.ToString())
                 return Result.Conflict("Chỉ có thể xác nhận trả xe khi chuyến đi đã hoàn thành");
