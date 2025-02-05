@@ -11,15 +11,15 @@ public class ConfirmCarReturnEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPut("/api/bookings/{bookingId}/return", Handle)
+        app.MapPut("/api/bookings/{id:guid}/return", Handle)
             .WithSummary("Owner confirm car return belong to a booking")
             .WithTags("Bookings")
             .RequireAuthorization();
     }
 
-    private static async Task<IResult> Handle(ISender sender, Guid bookingId)
+    private static async Task<IResult> Handle(ISender sender, Guid id)
     {
-        Result result = await sender.Send(new ConfirmCarReturn.Command(bookingId));
+        Result result = await sender.Send(new ConfirmCarReturn.Command(id));
         return result.MapResult();
     }
 }

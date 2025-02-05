@@ -67,10 +67,12 @@ public sealed class CreateBooking
                 );
             }
 
+            const decimal platformFeeRate = 0.1m;
+
             Guid bookingId = Uuid.NewDatabaseFriendly(Database.PostgreSql);
-            var totalBookingDay = (request.EndTime - request.StartTime).Days;
-            var basePrice = car.PricePerDay * totalBookingDay;
-            var platformFee = basePrice * 0.1m;
+            var totalBookingDay = Math.Ceiling((request.EndTime - request.StartTime).TotalDays);
+            var basePrice = car.PricePerDay * (decimal)totalBookingDay;
+            var platformFee = basePrice * platformFeeRate;
             var totalAmount = basePrice + platformFee;
 
             var booking = new Booking
