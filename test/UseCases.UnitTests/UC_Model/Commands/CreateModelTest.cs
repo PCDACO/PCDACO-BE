@@ -122,7 +122,7 @@ public class CreateModelTest(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Validator_InvalidRequest_ReturnsValidationErrors()
+    public void Validator_InvalidRequest_ReturnsValidationErrors()
     {
         // Arrange
         var validator = new CreateModel.Validator();
