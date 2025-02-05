@@ -65,7 +65,7 @@ public class GetCarById
                 car.RequiresCollateral,
                 new PriceDetail(car.PricePerHour, car.PricePerDay),
                 new LocationDetail(car.Location.X, car.Location.Y),
-                new ManufacturerDetail(car.Model.Id, car.Model.Name),
+                new ManufacturerDetail(car.Model.Manufacturer.Id, car.Model.Manufacturer.Name),
                 [.. car.ImageCars.Select(i => new ImageDetail(i.Id, i.Url))],
                 [
                     .. car.CarAmenities.Select(a => new AmenityDetail(
