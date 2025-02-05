@@ -26,6 +26,11 @@ public sealed class StartBookingTrip
             if (booking == null)
                 return Result.NotFound("Không tìm thấy booking");
 
+            if (booking.UserId != currentUser.User.Id)
+                return Result.Forbidden(
+                    "Bạn không có quyền thực hiện chức năng này với booking này!"
+                );
+
             // Validate current status
             var invalidStatuses = new[]
             {
