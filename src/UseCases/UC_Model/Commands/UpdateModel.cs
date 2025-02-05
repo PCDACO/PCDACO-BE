@@ -8,17 +8,27 @@ using UseCases.DTOs;
 
 namespace UseCases.UC_Model.Commands;
 
-public sealed class CreateModel
+public sealed class UpdateModel
 {
-    public sealed record Command(string Name, DateTimeOffset ReleaseDate, Guid ManufacturerId)
-        : IRequest<Result<Response>>;
+    public sealed record Command(
+        Guid ModelId,
+        string Name,
+        DateTimeOffset ReleaseDate,
+        Guid ManufacturerId
+    ) : IRequest<Result<Response>>;
 
-    public sealed record Response(Guid Id)
+    public sealed record Response(
+        Guid ModelId,
+        string Name,
+        DateTimeOffset ReleaseDate,
+        Guid ManufacturerId
+    )
     {
-        public static Response FromEntity(Model model) => new(model.Id);
+        public static Response FromEntity(Model model) =>
+            new(model.Id, model.Name, model.ReleaseDate, model.ManufacturerId);
     };
 
-    internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
+    public sealed class Handler(IAppDBContext context, CurrentUser currentUser)
         : IRequestHandler<Command, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
@@ -26,9 +36,19 @@ public sealed class CreateModel
             CancellationToken cancellationToken
         )
         {
+            // check if the user is not admin
             if (!currentUser.User!.IsAdmin())
                 return Result.Error("Bạn không có quyền thực hiện chức năng này !");
 
+            // check if the model exists
+            var updatingModel = await context.Models.FirstOrDefaultAsync(
+                m => m.Id == request.ModelId && !m.IsDeleted,
+                cancellationToken
+            );
+            if (updatingModel is null)
+                return Result.Error("Mô hình xe không tồn tại");
+
+            // check if the manufacturer exists
             var checkingManufacturer = await context
                 .Manufacturers.AsNoTracking()
                 .FirstOrDefaultAsync(
@@ -38,29 +58,16 @@ public sealed class CreateModel
             if (checkingManufacturer is null)
                 return Result.Error("Hãng xe không tồn tại");
 
-            var checkingExistedModel = await context
-                .Models.AsNoTracking()
-                .FirstOrDefaultAsync(
-                    m =>
-                        m.Name == request.Name
-                        && m.ManufacturerId == request.ManufacturerId
-                        && !m.IsDeleted,
-                    cancellationToken
-                );
-            if (checkingExistedModel is not null)
-                return Result.Error(
-                    "Mô hình xe đã tồn tại trong hãng xe " + checkingManufacturer.Name
-                );
+            updatingModel.ManufacturerId = request.ManufacturerId;
+            updatingModel.Name = request.Name;
+            updatingModel.ReleaseDate = request.ReleaseDate;
+            updatingModel.UpdatedAt = DateTimeOffset.UtcNow;
 
-            Model model = new()
-            {
-                ManufacturerId = request.ManufacturerId,
-                Name = request.Name,
-                ReleaseDate = request.ReleaseDate,
-            };
-            await context.Models.AddAsync(model, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
-            return Result.Success(Response.FromEntity(model), "Tạo mô hình xe thành công");
+            return Result.Success(
+                Response.FromEntity(updatingModel),
+                "Cập nhật mô hình xe thành công"
+            );
         }
     }
 
@@ -76,9 +83,7 @@ public sealed class CreateModel
 
             RuleFor(x => x.ReleaseDate)
                 .NotEmpty()
-                .WithMessage("Ngày phát hành không được để trống")
-                .GreaterThanOrEqualTo(DateTimeOffset.UtcNow.Date)
-                .WithMessage("Ngày phát hành phải lớn hơn hoặc bằng ngày hiện tại");
+                .WithMessage("Ngày phát hành không được để trống");
 
             RuleFor(x => x.ManufacturerId).NotEmpty().WithMessage("hãng xe không được để trống");
         }

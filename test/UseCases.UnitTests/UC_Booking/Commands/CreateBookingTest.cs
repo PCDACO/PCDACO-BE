@@ -119,7 +119,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Validator_EndTimeBeforeStartTime_ReturnsValidationError()
+    public void Validator_EndTimeBeforeStartTime_ReturnsValidationError()
     {
         // Arrange
         var validator = new CreateBooking.Validator();

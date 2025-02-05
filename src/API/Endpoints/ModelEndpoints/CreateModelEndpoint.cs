@@ -27,5 +27,5 @@ public class CreateModelEndpoint : ICarterModule
         return result.MapResult();
     }
 
-    private record CreateModelRequest(string Name, DateTime ReleaseDate, Guid ManufacturerId);
+    private record CreateModelRequest(string Name, DateTimeOffset ReleaseDate, Guid ManufacturerId);
 }

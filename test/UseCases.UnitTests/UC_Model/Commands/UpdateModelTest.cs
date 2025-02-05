@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
 using UseCases.DTOs;
@@ -9,7 +10,7 @@ using UseCases.UnitTests.TestBases.TestData;
 namespace UseCases.UnitTests.UC_Model.Commands;
 
 [Collection("Test Collection")]
-public class CreateModelTest(DatabaseTestBase fixture) : IAsyncLifetime
+public class UpdateModelTest(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
@@ -27,10 +28,11 @@ public class CreateModelTest(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new CreateModel.Handler(_dbContext, _currentUser);
-        var command = new CreateModel.Command(
-            "Test Model",
-            DateTime.UtcNow.AddDays(1),
+        var handler = new UpdateModel.Handler(_dbContext, _currentUser);
+        var command = new UpdateModel.Command(
+            Guid.NewGuid(),
+            "Updated Model",
+            DateTimeOffset.UtcNow,
             Guid.NewGuid()
         );
 
@@ -43,6 +45,30 @@ public class CreateModelTest(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Handle_ModelNotFound_ReturnsError()
+    {
+        // Arrange
+        var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
+        _currentUser.SetUser(testUser);
+
+        var handler = new UpdateModel.Handler(_dbContext, _currentUser);
+        var command = new UpdateModel.Command(
+            Guid.NewGuid(),
+            "Updated Model",
+            DateTimeOffset.UtcNow,
+            Guid.NewGuid()
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains("Mô hình xe không tồn tại", result.Errors);
+    }
+
+    [Fact]
     public async Task Handle_ManufacturerNotFound_ReturnsError()
     {
         // Arrange
@@ -50,11 +76,15 @@ public class CreateModelTest(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new CreateModel.Handler(_dbContext, _currentUser);
-        var command = new CreateModel.Command(
-            "Test Model",
-            DateTime.UtcNow.AddDays(1),
-            Guid.NewGuid()
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+
+        var handler = new UpdateModel.Handler(_dbContext, _currentUser);
+        var command = new UpdateModel.Command(
+            model.Id,
+            "Updated Model",
+            DateTimeOffset.UtcNow,
+            Guid.NewGuid() // Non-existent manufacturer ID
         );
 
         // Act
@@ -66,7 +96,7 @@ public class CreateModelTest(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Handle_ModelAlreadyExists_ReturnsError()
+    public async Task Handle_ValidRequest_UpdatesModelSuccessfully()
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
@@ -74,38 +104,16 @@ public class CreateModelTest(DatabaseTestBase fixture) : IAsyncLifetime
         _currentUser.SetUser(testUser);
 
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
-        var existingModel = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+        var newManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
 
-        var handler = new CreateModel.Handler(_dbContext, _currentUser);
-        var command = new CreateModel.Command(
-            existingModel.Name,
-            DateTime.UtcNow.AddDays(1),
-            manufacturer.Id
-        );
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains($"Mô hình xe đã tồn tại trong hãng xe {manufacturer.Name}", result.Errors);
-    }
-
-    [Fact]
-    public async Task Handle_ValidRequest_CreatesModelSuccessfully()
-    {
-        // Arrange
-        var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
-        _currentUser.SetUser(testUser);
-
-        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
-
-        var handler = new CreateModel.Handler(_dbContext, _currentUser);
-        var command = new CreateModel.Command(
-            "New Model",
-            DateTime.UtcNow.AddDays(1),
-            manufacturer.Id
+        var updateTime = DateTimeOffset.UtcNow;
+        var handler = new UpdateModel.Handler(_dbContext, _currentUser);
+        var command = new UpdateModel.Command(
+            model.Id,
+            "Updated Model",
+            updateTime,
+            newManufacturer.Id
         );
 
         // Act
@@ -113,22 +121,25 @@ public class CreateModelTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
-        Assert.Equal("Tạo mô hình xe thành công", result.SuccessMessage);
+        Assert.Equal("Cập nhật mô hình xe thành công", result.SuccessMessage);
 
-        // Verify database state
-        var createdModel = await _dbContext.Models.FirstOrDefaultAsync(m => m.Name == "New Model");
-        Assert.NotNull(createdModel);
-        Assert.Equal(manufacturer.Id, createdModel.ManufacturerId);
+        // Verify database updates
+        var updatedModel = await _dbContext.Models.FirstAsync(m => m.Id == model.Id);
+        Assert.Equal("Updated Model", updatedModel.Name);
+        Assert.Equal(updateTime, updatedModel.ReleaseDate);
+        Assert.Equal(newManufacturer.Id, updatedModel.ManufacturerId);
+        Assert.True(DateTimeOffset.UtcNow >= updatedModel.UpdatedAt);
     }
 
     [Fact]
     public void Validator_InvalidRequest_ReturnsValidationErrors()
     {
         // Arrange
-        var validator = new CreateModel.Validator();
-        var command = new CreateModel.Command(
+        var validator = new UpdateModel.Validator();
+        var command = new UpdateModel.Command(
+            Guid.Empty,
             "", // Empty name
-            DateTime.UtcNow.AddDays(-1), // Past date
+            default, // Empty release date
             Guid.Empty // Empty manufacturer ID
         );
 
