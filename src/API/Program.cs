@@ -17,7 +17,7 @@ builder.Services.AddSwaggerGen();
 
 DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
 builder.Configuration.AddEnvironmentVariables();
-Cloudinary cloudinary = new(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
+Cloudinary cloudinary = new Cloudinary(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
 cloudinary.Api.Secure = true;
 builder.Services.AddSingleton(cloudinary);
 builder.Services.AddServices(builder.Configuration);
