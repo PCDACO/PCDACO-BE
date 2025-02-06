@@ -17,13 +17,14 @@ public sealed class GetAmenities
     public record Query(int PageNumber = 1, int PageSize = 10, string keyword = "")
         : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
-    public record Response(Guid Id, string Name, string Description, DateTimeOffset CreatedAt)
+    public record Response(Guid Id, string Name, string Description, string IconUrl, DateTimeOffset CreatedAt)
     {
         public static Response FromEntity(Amenity amenity) =>
             new(
                 amenity.Id,
                 amenity.Name,
                 amenity.Description,
+                amenity.IconUrl,
                 GetTimestampFromUuid.Execute(amenity.Id)
             );
     };

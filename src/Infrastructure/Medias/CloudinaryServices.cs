@@ -123,4 +123,25 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             throw new Exception($"Error uploading driver license image: {ex.Message}");
         }
     }
+
+    public async Task<string> UploadAmenityIconAsync(
+        string name,
+        Stream image,
+        CancellationToken cancellationToken = default
+    )
+    {
+        ImageUploadParams uploadParams = new()
+        {
+            File = new FileDescription(name, image),
+            Folder = "amenity-icon",
+            UseFilename = true,
+            UniqueFilename = false,
+            Overwrite = true,
+        };
+        ImageUploadResult uploadResult = await cloudinary.UploadAsync(
+            uploadParams,
+            cancellationToken
+        );
+        return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
+    }
 }

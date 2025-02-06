@@ -1,11 +1,7 @@
 using Ardalis.Result;
-
 using Domain.Entities;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.Utils;
 
@@ -19,31 +15,37 @@ public sealed class GetAmenityById
         Guid Id,
         string Name,
         string Description,
+        string IconUrl,
         DateTimeOffset CreatedAt
     )
     {
-        public static Response FromEntity(Amenity amenity)
-            => new(
+        public static Response FromEntity(Amenity amenity) =>
+            new(
                 amenity.Id,
                 amenity.Name,
                 amenity.Description,
+                amenity.IconUrl,
                 GetTimestampFromUuid.Execute(amenity.Id)
             );
     };
 
-    public class Handler(
-        IAppDBContext contet
-    ) : IRequestHandler<Query, Result<Response>>
+    public class Handler(IAppDBContext contet) : IRequestHandler<Query, Result<Response>>
     {
-        public async Task<Result<Response>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<Response>> Handle(
+            Query request,
+            CancellationToken cancellationToken
+        )
         {
-            Amenity? gettingAmenity = await contet.Amenities
-                .AsNoTracking()
+            Amenity? gettingAmenity = await contet
+                .Amenities.AsNoTracking()
                 .FirstOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
 
             if (gettingAmenity is null)
                 return Result.NotFound("Không tìm thấy tiện nghi");
-            return Result.Success(Response.FromEntity(gettingAmenity), "Lấy thông tin tiện ích thành công");
+            return Result.Success(
+                Response.FromEntity(gettingAmenity),
+                "Lấy thông tin tiện ích thành công"
+            );
         }
     }
 }

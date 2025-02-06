@@ -7,6 +7,8 @@ public class Amenity : BaseEntity
     // Properties
     public required string Name { get; set; }
     public required string Description { get; set; }
+    public required string IconUrl { get; set; }
+
     // Navigation Properties
     public ICollection<CarAmenity> CarAmenities { get; set; } = [];
 }

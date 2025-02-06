@@ -11,11 +11,10 @@ namespace UseCases.UC_Model.Queries;
 public sealed class GetAllModels
 {
     public sealed record Query(
+        Guid ManufacturerId,
         int PageNumber = 1,
         int PageSize = 10,
-        string Name = "",
-        string ManufacturerName = "",
-        DateTimeOffset? ReleaseDate = null
+        string Name = ""
     ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public sealed record Response(
@@ -56,14 +55,8 @@ public sealed class GetAllModels
             IQueryable<Model> query = context
                 .Models.AsNoTracking()
                 .Include(m => m.Manufacturer)
-                .Where(m => EF.Functions.ILike(m.Name, $"%{request.Name}%"))
-                .Where(m =>
-                    EF.Functions.ILike(m.Manufacturer.Name, $"%{request.ManufacturerName}%")
-                )
-                .Where(m =>
-                    request.ReleaseDate == null
-                    || m.ReleaseDate.Date == request.ReleaseDate.Value.Date
-                );
+                .Where(m => m.ManufacturerId == request.ManufacturerId && !m.IsDeleted)
+                .Where(m => EF.Functions.ILike(m.Name, $"%{request.Name}%"));
             // Get total result count
             int count = await query.CountAsync(cancellationToken);
             // Get models
