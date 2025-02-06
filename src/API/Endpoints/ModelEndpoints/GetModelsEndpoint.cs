@@ -13,28 +13,26 @@ public class GetModelsEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/models", Handle)
-            .WithSummary("Get all models")
+        app.MapGet("/api/manufacturers/{id:guid}/models", Handle)
+            .WithSummary("Get all models of a manufacturer")
             .WithTags("Models")
             .RequireAuthorization();
     }
 
     private async Task<IResult> Handle(
         ISender sender,
+        [FromRoute] Guid id,
         [FromQuery(Name = "index")] int? pageNumber = 1,
         [FromQuery(Name = "size")] int? pageSize = 10,
-        [FromQuery(Name = "name")] string? name = "",
-        [FromQuery(Name = "manufacturerName")] string? manufacturerName = "",
-        [FromQuery(Name = "releaseDate")] DateTimeOffset? releaseDate = null
+        [FromQuery(Name = "keyword")] string? name = ""
     )
     {
         Result<OffsetPaginatedResponse<GetAllModels.Response>> result = await sender.Send(
             new GetAllModels.Query(
-                pageNumber!.Value,
-                pageSize!.Value,
-                name!,
-                manufacturerName!,
-                releaseDate
+                ManufacturerId: id!,
+                PageNumber: pageNumber!.Value,
+                PageSize: pageSize!.Value,
+                Name: name!
             )
         );
         return result.MapResult();
