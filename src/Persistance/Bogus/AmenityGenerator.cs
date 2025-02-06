@@ -1,3 +1,5 @@
+using Bogus;
+
 using Domain.Entities;
 
 using UUIDNext;
@@ -6,6 +8,8 @@ namespace Persistance.Bogus;
 
 public class AmenityGenerator
 {
+    private static readonly Faker Faker = new();
+    
     public static Amenity[] Execute()
     {
         return [.. CarFeatures.Select(feature =>
@@ -16,6 +20,7 @@ public class AmenityGenerator
             {
                 Name = feature.Key,
                 Description = feature.Value,
+                IconUrl = Faker.Image.PicsumUrl(),
                 UpdatedAt = isRandomUpdate ? DateTime.UtcNow : null,
                 IsDeleted = isRandom,
                 DeletedAt = isRandom ? DateTime.UtcNow : null

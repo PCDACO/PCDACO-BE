@@ -27,4 +27,9 @@ public interface ICloudinaryServices
         Stream image,
         CancellationToken cancellationToken = default
     );
+    Task<string> UploadAmenityIconAsync(
+        string name,
+        Stream image,
+        CancellationToken cancellationToken = default
+    );
 }
