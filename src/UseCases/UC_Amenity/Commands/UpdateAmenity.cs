@@ -65,14 +65,14 @@ public sealed class UpdateAmenity
         {
             RuleFor(x => x.Name)
                 .NotEmpty()
-                .WithMessage("Name must not be empty")
+                .WithMessage("tên không được để trống")
                 .MaximumLength(50)
-                .WithMessage("Name must not exceed 50 characters");
+                .WithMessage("tên không được quá 50 ký tự");
             RuleFor(x => x.Description)
                 .NotEmpty()
-                .WithMessage("Description must not be empty")
+                .WithMessage("mô tả không được để trống")
                 .MaximumLength(500)
-                .WithMessage("Description must not exceed 500 characters");
+                .WithMessage("mô tả không được quá 500 ký tự");
             RuleFor(x => x.Icon)
                 .Must((icon) => icon == null || (ValidateFileSize(icon) && ValidateFileType(icon)))
                 .WithMessage(

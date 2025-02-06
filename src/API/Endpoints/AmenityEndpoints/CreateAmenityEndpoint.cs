@@ -17,6 +17,7 @@ public class CreateAmenityEndpoint : ICarterModule
             .WithSummary("Create an amenity")
             .WithTags("Amenities")
             .AddEndpointFilter<IdempotencyFilter>()
+            .DisableAntiforgery()
             .RequireAuthorization();
     }
 

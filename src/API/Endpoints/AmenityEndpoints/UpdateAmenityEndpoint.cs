@@ -15,6 +15,7 @@ public class UpdateAmenityEndpoint : ICarterModule
         app.MapPut("/api/amenities/{id:guid}", Handle)
             .WithSummary("Update an amenity")
             .WithTags("Amenities")
+            .DisableAntiforgery()
             .RequireAuthorization();
     }
 

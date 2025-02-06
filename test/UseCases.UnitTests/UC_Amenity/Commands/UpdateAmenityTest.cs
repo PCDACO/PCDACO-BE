@@ -156,8 +156,8 @@ public class UpdateAmenityTests : IAsyncLifetime
         // Arrange
         var expectedErrors = new[]
         {
-            "Name must not be empty",
-            "Description must not be empty",
+            "tên không được để trống",
+            "mô tả không được để trống",
             "Biểu tượng không được vượt quá 10MB",
         };
 
