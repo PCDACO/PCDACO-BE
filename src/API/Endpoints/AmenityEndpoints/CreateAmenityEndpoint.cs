@@ -34,7 +34,7 @@ public class CreateAmenityEndpoint : ICarterModule
             new CreateAmenity.Command(
                 request.Name,
                 request.Description,
-                request.Icon[0].OpenReadStream()
+                [.. request.Icon.Select(i => i.OpenReadStream())]
             )
         );
         return result.MapResult();
