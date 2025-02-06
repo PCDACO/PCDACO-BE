@@ -58,6 +58,13 @@ public sealed class CompleteBooking
             if (status == null)
                 return Result.NotFound("Không tìm thấy trạng thái phù hợp");
 
+            var lastTracking = await context
+                .TripTrackings.Where(t => t.BookingId == request.BookingId)
+                .OrderByDescending(t => t.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            decimal totalDistance = lastTracking?.CumulativeDistance ?? 0;
+
             // Set actual return time and calculate excess fees
             booking.ActualReturnTime = DateTimeOffset.UtcNow;
             var (excessDays, excessFee) = CalculateExcessFee(booking);
@@ -72,6 +79,7 @@ public sealed class CompleteBooking
             return Result.SuccessWithMessage(
                 $"""
                 Đã hoàn thành chuyến đi
+                Tổng quãng đường: {totalDistance / 1000:N2} km
                 Số ngày trễ: {excessDays}
                 Phí phát sinh: {excessFee:N0} VND
                 Tổng cộng: {booking.TotalAmount:N0} VND
