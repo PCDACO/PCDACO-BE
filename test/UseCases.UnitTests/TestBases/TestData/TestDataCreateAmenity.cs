@@ -12,6 +12,7 @@ public static class TestDataCreateAmenity
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             Name = "WiFi",
             Description = "High-speed internet",
+            IconUrl = "http://test.com/test.jpg",
             IsDeleted = isDeleted,
         };
 
@@ -32,9 +33,24 @@ public static class TestDataCreateAmenity
     {
         List<Amenity> amenityList =
         [
-            new() { Name = "WiFi", Description = "High-speed internet" },
-            new() { Name = "Air Conditioning", Description = "Cooling system" },
-            new() { Name = "Parking", Description = "Car parking space" },
+            new()
+            {
+                Name = "WiFi",
+                Description = "High-speed internet",
+                IconUrl = "http://test.com/test.jpg",
+            },
+            new()
+            {
+                Name = "Air Conditioning",
+                Description = "Cooling system",
+                IconUrl = "http://test.com/test2.jpg",
+            },
+            new()
+            {
+                Name = "Parking",
+                Description = "Car parking space",
+                IconUrl = "http://test.com/test3.jpg",
+            },
         ];
 
         var amenities = new List<Amenity>();

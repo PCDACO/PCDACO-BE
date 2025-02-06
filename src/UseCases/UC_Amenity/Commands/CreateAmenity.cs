@@ -71,14 +71,14 @@ public sealed class CreateAmenity
         {
             RuleFor(x => x.Name)
                 .NotEmpty()
-                .WithMessage("Name must not be empty")
+                .WithMessage("tên không được để trống")
                 .MaximumLength(50)
-                .WithMessage("Name must not exceed 50 characters");
+                .WithMessage("tên không vượt quá 50 kí tự");
             RuleFor(x => x.Description)
                 .NotEmpty()
-                .WithMessage("Description must not be empty")
+                .WithMessage("mô tả không được để trống")
                 .MaximumLength(500)
-                .WithMessage("Description must not exceed 500 characters");
+                .WithMessage("mô tả không vượt quá 500 kí tự");
             RuleFor(x => x.Icon)
                 .NotNull()
                 .WithMessage("Biểu tượng không được để trống")
