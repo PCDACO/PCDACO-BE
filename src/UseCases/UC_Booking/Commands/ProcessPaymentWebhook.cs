@@ -15,8 +15,6 @@ public sealed class ProcessPaymentWebhook
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
-            return Result.Success();
-
             // Verify webhook data
             var webhookData = payOS.verifyPaymentWebhookData(request.Data);
 
