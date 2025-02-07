@@ -34,11 +34,11 @@ public class CreateAmenityEndpoint : ICarterModule
             new CreateAmenity.Command(
                 request.Name,
                 request.Description,
-                [.. request.Icon.Select(i => i.OpenReadStream())]
+                request.Icon.OpenReadStream()
             )
         );
         return result.MapResult();
     }
 
-    private record CreateAmenityRequest(string Name, string Description, IFormFileCollection Icon);
+    private record CreateAmenityRequest(string Name, string Description, IFormFile Icon);
 }
