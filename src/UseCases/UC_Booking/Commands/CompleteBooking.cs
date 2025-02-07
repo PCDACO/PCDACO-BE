@@ -18,7 +18,7 @@ public sealed class CompleteBooking
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
             if (!currentUser.User!.IsDriver())
-                return Result.Error("Bạn không có quyền thực hiện chức năng này !");
+                return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
             var booking = await context
                 .Bookings.Include(x => x.Status)

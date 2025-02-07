@@ -1,12 +1,12 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using UseCases.Abstractions;
 using UseCases.DTOs;
-
 using UUIDNext;
 
 namespace UseCases.UC_Booking.Commands;
@@ -25,7 +25,7 @@ public sealed class TrackTripLocation
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
             if (!currentUser.User!.IsDriver())
-                return Result.Error("Bạn không có quyền thực hiện chức năng này!");
+                return Result.Forbidden("Bạn không có quyền thực hiện chức năng này!");
 
             var booking = await context
                 .Bookings.Include(b => b.Status)
@@ -77,6 +77,18 @@ public sealed class TrackTripLocation
             await context.SaveChangesAsync(cancellationToken);
 
             return Result.Success();
+        }
+    }
+
+    public sealed class Validator : AbstractValidator<Command>
+    {
+        public Validator()
+        {
+            RuleFor(x => x.Latitude).InclusiveBetween(-90, 90).WithMessage("Vĩ độ không hợp lệ");
+
+            RuleFor(x => x.Longitude)
+                .InclusiveBetween(-180, 180)
+                .WithMessage("Kinh độ không hợp lệ");
         }
     }
 }
