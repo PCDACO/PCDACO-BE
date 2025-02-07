@@ -15,6 +15,8 @@ public sealed class ProcessPaymentWebhook
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
+            return Result.Success();
+
             // Verify webhook data
             var webhookData = payOS.verifyPaymentWebhookData(request.Data);
 
@@ -30,9 +32,7 @@ public sealed class ProcessPaymentWebhook
                 .Where(o => o.Id == bookingId)
                 .ExecuteUpdateAsync(s => s.SetProperty(o => o.IsPaid, true), cancellationToken);
 
-            return result == 0
-                ? Result.NotFound("Không tìm thấy booking")
-                : (Result)Result.Success(null!);
+            return result == 0 ? Result.NotFound("Không tìm thấy booking") : Result.Success();
         }
     }
 }
