@@ -1,10 +1,17 @@
 using System.IO;
+using System.Xml;
+
 using Ardalis.Result;
+
 using Domain.Entities;
+
 using FluentValidation;
+
 using MediatR;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
+
 using UUIDNext;
 
 namespace UseCases.UC_Amenity.Commands;
@@ -97,37 +104,40 @@ public sealed class CreateAmenity
         }
 
         private bool ValidateFileType(Stream file)
-        {
-            if (file == null)
-                return false;
+            => IsSvgFile(file);
 
-            byte[] fileBytes;
-            using (var memoryStream = new MemoryStream())
+        // private bool IsValidImageFile(byte[] fileBytes)
+        // {
+        //     // if (fileBytes.Length < 4)
+        //     //     return false;
+
+        //     // // Check file signatures
+        //     // if (fileBytes[0] == 0xFF && fileBytes[1] == 0xD8)
+        //     //     return true; // JPEG
+        //     // if (fileBytes[0] == 0x89 && fileBytes[1] == 0x50)
+        //     //     return true; // PNG
+        //     // if (fileBytes[0] == 0x47 && fileBytes[1] == 0x49)
+        //     //     return true; // GIF
+        //     // if (fileBytes[0] == 0x42 && fileBytes[1] == 0x4D)
+        //     //     return true; // BMP
+
+        //     if
+
+        //     return false;
+        // }
+        private static bool IsSvgFile(Stream fileStream)
+        {
+            try
             {
-                file.CopyTo(memoryStream);
-                fileBytes = memoryStream.ToArray();
-                file.Position = 0; // Reset stream position
+                using (var xmlReader = XmlReader.Create(fileStream))
+                {
+                    return xmlReader.MoveToContent() == XmlNodeType.Element && "svg".Equals(xmlReader.Name, StringComparison.OrdinalIgnoreCase);
+                }
             }
-
-            return IsValidImageFile(fileBytes);
-        }
-
-        private bool IsValidImageFile(byte[] fileBytes)
-        {
-            if (fileBytes.Length < 4)
+            catch
+            {
                 return false;
-
-            // Check file signatures
-            if (fileBytes[0] == 0xFF && fileBytes[1] == 0xD8)
-                return true; // JPEG
-            if (fileBytes[0] == 0x89 && fileBytes[1] == 0x50)
-                return true; // PNG
-            if (fileBytes[0] == 0x47 && fileBytes[1] == 0x49)
-                return true; // GIF
-            if (fileBytes[0] == 0x42 && fileBytes[1] == 0x4D)
-                return true; // BMP
-
-            return false;
+            }
         }
     }
 }
