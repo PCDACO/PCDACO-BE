@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Options;
 using Net.payOS;
 using Net.payOS.Types;
 using UseCases.DTOs;
@@ -28,6 +27,7 @@ public class PayOSService(PayOS payOS, UrlSettings urlSettings) : IPaymentServic
             items: items,
             cancelUrl: urlSettings.CancelUrl,
             returnUrl: urlSettings.ReturnUrl,
+            expiredAt: (int?)DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds(),
             buyerName: buyerName
         );
 
