@@ -1,10 +1,17 @@
 using API.Utils;
+
 using Ardalis.Result;
+
 using Carter;
+
 using Infrastructure.Idempotency;
+
 using MediatR;
+
 using Microsoft.AspNetCore.Mvc;
+
 using UseCases.UC_Amenity.Commands;
+
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.AmenityEndpoints;
@@ -27,11 +34,11 @@ public class CreateAmenityEndpoint : ICarterModule
             new CreateAmenity.Command(
                 request.Name,
                 request.Description,
-                request.Icon.OpenReadStream()
+                [.. request.Icon.Select(i => i.OpenReadStream())]
             )
         );
         return result.MapResult();
     }
 
-    private record CreateAmenityRequest(string Name, string Description, IFormFile Icon);
+    private record CreateAmenityRequest(string Name, string Description, IFormFileCollection Icon);
 }

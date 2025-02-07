@@ -1,17 +1,23 @@
 using System.IO;
+
 using Ardalis.Result;
+
 using Domain.Entities;
+
 using FluentValidation;
+
 using MediatR;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
+
 using UUIDNext;
 
 namespace UseCases.UC_Amenity.Commands;
 
 public sealed class CreateAmenity
 {
-    public record Command(string Name, string Description, Stream Icon)
+    public record Command(string Name, string Description, Stream[] Icon)
         : IRequest<Result<Response>>;
 
     public record Response(Guid Id)
@@ -42,12 +48,22 @@ public sealed class CreateAmenity
                 Description = request.Description,
                 IconUrl = "",
             };
-            var iconUrl = await cloudinaryServices.UploadAmenityIconAsync(
+            List<Task<string>> tasks = [];
+            string[] iconUrl = [];
+            if (request.Icon.Length > 0)
+            {
+                foreach (var icon in request.Icon)
+                {
+                    tasks.Add(cloudinaryServices.UploadAmenityIconAsync(
                 $"Amenity-{amenity.Id}-IconImage-{Uuid.NewRandom()}",
-                request.Icon,
-                cancellationToken
-            );
-            amenity.IconUrl = iconUrl;
+                icon,
+                cancellationToken));
+                }
+                iconUrl = await Task.WhenAll(tasks);
+            }
+            if (iconUrl.Length > 0)
+                amenity.IconUrl = iconUrl[0];
+
             await context.Amenities.AddAsync(amenity, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
             return Result.Created(Response.FromEntity(amenity));
@@ -91,26 +107,52 @@ public sealed class CreateAmenity
             ;
         }
 
-        private bool ValidateFileSize(Stream file)
+        private bool ValidateFileSize(Stream[] file)
         {
             return file?.Length <= 10 * 1024 * 1024; // 10MB
         }
 
-        private bool ValidateFileType(Stream file)
+        // private bool ValidateFileType(Stream file)
+        // {
+        //     if (file == null)
+        //         return false;
+
+        //     byte[] fileBytes;
+        //     using (var memoryStream = new MemoryStream())
+        //     {
+        //         file.CopyTo(memoryStream);
+        //         fileBytes = memoryStream.ToArray();
+        //         file.Position = 0; // Reset stream position
+        //     }
+
+        //     return IsValidImageFile(fileBytes);
+        // }
+
+        private bool ValidateFileType(Stream[] files)
         {
-            if (file == null)
+            if (files == null || files.Length == 0)
                 return false;
 
-            byte[] fileBytes;
-            using (var memoryStream = new MemoryStream())
+            foreach (var file in files)
             {
-                file.CopyTo(memoryStream);
-                fileBytes = memoryStream.ToArray();
-                file.Position = 0; // Reset stream position
+                if (file == null)
+                    return false;
+
+                byte[] fileBytes;
+                using (var memoryStream = new MemoryStream())
+                {
+                    file.CopyTo(memoryStream);
+                    fileBytes = memoryStream.ToArray();
+                    file.Position = 0; // Reset stream position
+                }
+
+                if (!IsValidImageFile(fileBytes))
+                    return false; // If any file is invalid, return false
             }
 
-            return IsValidImageFile(fileBytes);
+            return true; // All files are valid
         }
+
 
         private bool IsValidImageFile(byte[] fileBytes)
         {

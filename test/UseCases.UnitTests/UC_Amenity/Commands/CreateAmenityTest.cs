@@ -1,8 +1,13 @@
 using Ardalis.Result;
+
 using Domain.Entities;
+
 using Microsoft.EntityFrameworkCore;
+
 using Moq;
+
 using Persistance.Data;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.UC_Amenity.Commands;
@@ -55,7 +60,7 @@ public class CreateAmenityTest : IAsyncLifetime
             _currentUser,
             _cloudinaryServices.Object
         );
-        var command = new CreateAmenity.Command("WiFi", "High-speed internet", new MemoryStream());
+        var command = new CreateAmenity.Command("WiFi", "High-speed internet", []);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -78,7 +83,7 @@ public class CreateAmenityTest : IAsyncLifetime
             _currentUser,
             _cloudinaryServices.Object
         );
-        var command = new CreateAmenity.Command("Pool", "Swimming pool access", new MemoryStream());
+        var command = new CreateAmenity.Command("Pool", "Swimming pool access", []);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -117,11 +122,11 @@ public class CreateAmenityTest : IAsyncLifetime
             $"Chỉ chấp nhận các định dạng: .jpg, .jpeg, .png, .gif, .bmp, .tiff, .webp",
         };
         var validator = new CreateAmenity.Validator();
-        var invalidStream = new MemoryStream(new byte[11 * 1024 * 1024]);
+        Stream[] invalidStream = new Stream[] { new MemoryStream(new byte[11 * 1024 * 1024]), new MemoryStream(new byte[11 * 1024 * 1024]) };
         var command = new CreateAmenity.Command(
             Name: "", // Empty name
             Description: "", // Empty description
-            Icon: invalidStream // Invalid size stream
+            Icon: [] // Invalid size stream
         );
 
         // Act
@@ -130,6 +135,10 @@ public class CreateAmenityTest : IAsyncLifetime
         // Assert
         Assert.False(result.IsValid);
         Assert.All(result.Errors, error => Assert.Contains(error.ErrorMessage, expectedErrors));
-        invalidStream.Dispose();
+        foreach (var stream in invalidStream)
+        {
+            stream.Dispose();
+        }
+        ;
     }
 }
