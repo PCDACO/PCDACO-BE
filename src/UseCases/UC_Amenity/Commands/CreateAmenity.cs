@@ -1,5 +1,4 @@
-using System.IO;
-using System.Xml;
+using System.Text;
 
 using Ardalis.Result;
 
@@ -63,16 +62,8 @@ public sealed class CreateAmenity
 
     public sealed class Validator : AbstractValidator<Command>
     {
-        private readonly string[] allowedExtensions =
-        {
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".gif",
-            ".bmp",
-            ".tiff",
-            ".webp",
-        };
+        private readonly string[] _allowedExtensions =
+        ["svg"];
 
         public Validator()
         {
@@ -93,7 +84,7 @@ public sealed class CreateAmenity
                 .WithMessage("Biểu tượng không được vượt quá 10MB")
                 .Must(ValidateFileType)
                 .WithMessage(
-                    $"Chỉ chấp nhận các định dạng: {string.Join(", ", allowedExtensions)}"
+                    $"Chỉ chấp nhận các định dạng: {string.Join(", ", _allowedExtensions)}"
                 );
             ;
         }
@@ -104,40 +95,35 @@ public sealed class CreateAmenity
         }
 
         private bool ValidateFileType(Stream file)
-            => IsSvgFile(file);
+            => IsSvg(file);
 
-        // private bool IsValidImageFile(byte[] fileBytes)
-        // {
-        //     // if (fileBytes.Length < 4)
-        //     //     return false;
-
-        //     // // Check file signatures
-        //     // if (fileBytes[0] == 0xFF && fileBytes[1] == 0xD8)
-        //     //     return true; // JPEG
-        //     // if (fileBytes[0] == 0x89 && fileBytes[1] == 0x50)
-        //     //     return true; // PNG
-        //     // if (fileBytes[0] == 0x47 && fileBytes[1] == 0x49)
-        //     //     return true; // GIF
-        //     // if (fileBytes[0] == 0x42 && fileBytes[1] == 0x4D)
-        //     //     return true; // BMP
-
-        //     if
-
-        //     return false;
-        // }
-        private static bool IsSvgFile(Stream fileStream)
+        private static bool IsSvg(Stream fileStream)
         {
-            try
-            {
-                using (var xmlReader = XmlReader.Create(fileStream))
-                {
-                    return xmlReader.MoveToContent() == XmlNodeType.Element && "svg".Equals(xmlReader.Name, StringComparison.OrdinalIgnoreCase);
-                }
-            }
-            catch
-            {
+            if (fileStream == null)
                 return false;
+
+            // Preserve the original position if the stream supports seeking
+            long originalPosition = 0;
+            if (fileStream.CanSeek)
+            {
+                originalPosition = fileStream.Position;
+                fileStream.Seek(0, SeekOrigin.Begin);
             }
+
+            string content;
+            using (var reader = new StreamReader(fileStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, bufferSize: 1024, leaveOpen: true))
+            {
+                content = reader.ReadToEnd();
+            }
+
+            // Reset the stream position if possible
+            if (fileStream.CanSeek)
+            {
+                fileStream.Seek(originalPosition, SeekOrigin.Begin);
+            }
+
+            // Check if the content contains the <svg tag (case-insensitive)
+            return content.IndexOf("<svg", StringComparison.OrdinalIgnoreCase) >= 0;
         }
     }
 }
