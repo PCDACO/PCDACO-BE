@@ -21,6 +21,7 @@ Cloudinary cloudinary = new Cloudinary(Environment.GetEnvironmentVariable("CLOUD
 cloudinary.Api.Secure = true;
 builder.Services.AddSingleton(cloudinary);
 builder.Services.AddServices(builder.Configuration);
+builder.Services.AddPayOSService(builder.Configuration);
 var app = builder.Build();
 
 app.UseStaticFiles();
