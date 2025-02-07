@@ -13,7 +13,16 @@ public sealed class CompleteBooking
 {
     public sealed record Command(Guid BookingId) : IRequest<Result<Response>>;
 
-    public sealed record Response(string Message, string PaymentUrl, string QrCode);
+    public sealed record Response(
+        decimal TotalDistance,
+        decimal ExcessDays,
+        decimal ExcessFee,
+        decimal BasePrice,
+        decimal PlatformFee,
+        decimal TotalAmount,
+        string PaymentUrl,
+        string QrCode
+    );
 
     internal sealed class Handler(
         IAppDBContext context,
@@ -93,16 +102,17 @@ public sealed class CompleteBooking
 
             await context.SaveChangesAsync(cancellationToken);
 
-            var message = $"""
-                Đã hoàn thành chuyến đi
-                Tổng quãng đường: {totalDistance / 1000:N2} km
-                Số ngày trễ: {excessDays}
-                Phí phát sinh: {excessFee:N0} VND
-                Tổng cộng:" {booking.TotalAmount:N0}" VND
-                """;
-
             return Result.Success(
-                new Response(message, paymentResult.CheckoutUrl, paymentResult.QrCode)
+                new Response(
+                    TotalDistance: totalDistance / 1000, // Convert to kilometers
+                    ExcessDays: excessDays,
+                    ExcessFee: excessFee,
+                    BasePrice: booking.BasePrice,
+                    PlatformFee: booking.PlatformFee,
+                    TotalAmount: booking.TotalAmount,
+                    PaymentUrl: paymentResult.CheckoutUrl,
+                    QrCode: paymentResult.QrCode
+                )
             );
         }
 

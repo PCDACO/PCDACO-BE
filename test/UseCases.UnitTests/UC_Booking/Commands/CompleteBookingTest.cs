@@ -173,7 +173,15 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
-        Assert.Contains("Đã hoàn thành chuyến đi", result.Value.Message);
+
+        // Verify response structure
+        Assert.NotNull(result.Value);
+        Assert.Equal(0, result.Value.TotalDistance); // No tracking in test
+        Assert.Equal(0, result.Value.ExcessDays);
+        Assert.Equal(0, result.Value.ExcessFee);
+        Assert.Equal(100m, result.Value.BasePrice);
+        Assert.Equal(10m, result.Value.PlatformFee);
+        Assert.Equal(110m, result.Value.TotalAmount);
         Assert.Equal("http://mock-checkout-url", result.Value.PaymentUrl);
         Assert.Equal("mock-qr-code", result.Value.QrCode);
 
