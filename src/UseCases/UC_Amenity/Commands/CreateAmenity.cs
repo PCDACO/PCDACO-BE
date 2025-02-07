@@ -17,7 +17,7 @@ namespace UseCases.UC_Amenity.Commands;
 
 public sealed class CreateAmenity
 {
-    public record Command(string Name, string Description, Stream[] Icon)
+    public record Command(string Name, string Description, Stream Icon)
         : IRequest<Result<Response>>;
 
     public record Response(Guid Id)
@@ -48,21 +48,11 @@ public sealed class CreateAmenity
                 Description = request.Description,
                 IconUrl = "",
             };
-            List<Task<string>> tasks = [];
-            string[] iconUrl = [];
-            if (request.Icon.Length > 0)
-            {
-                foreach (var icon in request.Icon)
-                {
-                    tasks.Add(cloudinaryServices.UploadAmenityIconAsync(
+            string iconUrl = await cloudinaryServices.UploadAmenityIconAsync(
                 $"Amenity-{amenity.Id}-IconImage-{Uuid.NewRandom()}",
-                icon,
-                cancellationToken));
-                }
-                iconUrl = await Task.WhenAll(tasks);
-            }
-            if (iconUrl.Length > 0)
-                amenity.IconUrl = iconUrl[0];
+                request.Icon,
+                cancellationToken);
+            amenity.IconUrl = iconUrl;
 
             await context.Amenities.AddAsync(amenity, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
@@ -99,7 +89,7 @@ public sealed class CreateAmenity
             ;
         }
 
-        private bool ValidateFileSize(Stream[] file)
+        private bool ValidateFileSize(Stream file)
         {
             return file?.Length <= 10 * 1024 * 1024; // 10MB
         }

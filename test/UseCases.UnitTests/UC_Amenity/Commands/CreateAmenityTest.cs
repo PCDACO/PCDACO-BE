@@ -60,7 +60,7 @@ public class CreateAmenityTest : IAsyncLifetime
             _currentUser,
             _cloudinaryServices.Object
         );
-        var command = new CreateAmenity.Command("WiFi", "High-speed internet", []);
+        var command = new CreateAmenity.Command("WiFi", "High-speed internet", new MemoryStream());
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -83,7 +83,7 @@ public class CreateAmenityTest : IAsyncLifetime
             _currentUser,
             _cloudinaryServices.Object
         );
-        var command = new CreateAmenity.Command("Pool", "Swimming pool access", []);
+        var command = new CreateAmenity.Command("Pool", "Swimming pool access", new MemoryStream());
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -122,11 +122,11 @@ public class CreateAmenityTest : IAsyncLifetime
             $"Chỉ chấp nhận các định dạng: .jpg, .jpeg, .png, .gif, .bmp, .tiff, .webp",
         };
         var validator = new CreateAmenity.Validator();
-        Stream[] invalidStream = new Stream[] { new MemoryStream(new byte[11 * 1024 * 1024]), new MemoryStream(new byte[11 * 1024 * 1024]) };
+        Stream invalidStream = new MemoryStream(new byte[11 * 1024 * 1024]);
         var command = new CreateAmenity.Command(
             Name: "", // Empty name
             Description: "", // Empty description
-            Icon: [] // Invalid size stream
+            Icon: new MemoryStream() // Invalid size stream
         );
 
         // Act
@@ -135,10 +135,6 @@ public class CreateAmenityTest : IAsyncLifetime
         // Assert
         Assert.False(result.IsValid);
         Assert.All(result.Errors, error => Assert.Contains(error.ErrorMessage, expectedErrors));
-        foreach (var stream in invalidStream)
-        {
-            stream.Dispose();
-        }
-        ;
+        invalidStream.Dispose();
     }
 }
