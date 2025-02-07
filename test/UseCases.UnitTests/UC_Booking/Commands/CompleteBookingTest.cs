@@ -4,8 +4,10 @@ using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
 using UseCases.DTOs;
+using UseCases.Services.PayOSService;
 using UseCases.UC_Booking.Commands;
 using UseCases.UnitTests.TestBases;
+using UseCases.UnitTests.TestBases.Mocks;
 using UseCases.UnitTests.TestBases.TestData;
 
 namespace UseCases.UnitTests.UC_Booking.Commands;
@@ -15,6 +17,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
+    private readonly IPaymentService _paymentService = new TestDataPaymentService();
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
 
     public Task InitializeAsync() => Task.CompletedTask;
@@ -29,7 +32,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new CompleteBooking.Handler(_dbContext, _currentUser);
+        var handler = new CompleteBooking.Handler(_dbContext, _currentUser, _paymentService);
         var command = new CompleteBooking.Command(Guid.NewGuid());
 
         // Act
@@ -48,7 +51,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new CompleteBooking.Handler(_dbContext, _currentUser);
+        var handler = new CompleteBooking.Handler(_dbContext, _currentUser, _paymentService);
         var command = new CompleteBooking.Command(Guid.NewGuid());
 
         // Act
@@ -107,7 +110,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             statusId
         );
 
-        var handler = new CompleteBooking.Handler(_dbContext, _currentUser);
+        var handler = new CompleteBooking.Handler(_dbContext, _currentUser, _paymentService);
         var command = new CompleteBooking.Command(booking.Id);
 
         // Act
@@ -163,7 +166,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             ongoingStatusId
         );
 
-        var handler = new CompleteBooking.Handler(_dbContext, _currentUser);
+        var handler = new CompleteBooking.Handler(_dbContext, _currentUser, _paymentService);
         var command = new CompleteBooking.Command(booking.Id);
 
         // Act
@@ -171,7 +174,9 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
-        Assert.Contains("Đã hoàn thành chuyến đi", result.SuccessMessage);
+        Assert.Contains("Đã hoàn thành chuyến đi", result.Value.Message);
+        Assert.Equal("http://mock-checkout-url", result.Value.PaymentUrl);
+        Assert.Equal("mock-qr-code", result.Value.QrCode);
 
         var updatedBooking = await _dbContext
             .Bookings.Include(b => b.Status)
@@ -229,7 +234,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             ongoingStatusId
         );
 
-        var handler = new CompleteBooking.Handler(_dbContext, _currentUser);
+        var handler = new CompleteBooking.Handler(_dbContext, _currentUser, _paymentService);
         var command = new CompleteBooking.Command(booking.Id);
 
         // Act
