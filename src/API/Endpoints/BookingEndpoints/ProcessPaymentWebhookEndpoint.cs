@@ -15,8 +15,7 @@ public class ProcessPaymentWebhookEndpoint : ICarterModule
     {
         app.MapPost("/api/webhook", Handle)
             .WithSummary("Handle payment webhook, called by PayOS to notify payment status")
-            .WithTags("Bookings")
-            .RequireAuthorization();
+            .WithTags("Bookings");
     }
 
     private static async Task<IResult> Handle(
