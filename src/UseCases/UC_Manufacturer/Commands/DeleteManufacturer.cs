@@ -27,6 +27,14 @@ namespace UseCases.UC_Manufacturer.Commands
                 if (deletingManufacturer is null)
                     return Result.NotFound("Không tìm thấy hãng xe");
 
+                var hasRelatedModels = await context.Models.AnyAsync(
+                    m => m.ManufacturerId == deletingManufacturer.Id && !m.IsDeleted,
+                    cancellationToken
+                );
+
+                if (hasRelatedModels)
+                    return Result.Error("Không thể xóa hãng xe đang có mô hình xe liên quan");
+
                 deletingManufacturer.Delete();
                 await context.SaveChangesAsync(cancellationToken);
                 return Result.SuccessWithMessage("Xóa hãng xe thành công");
