@@ -119,7 +119,7 @@ public class CreateAmenityTest : IAsyncLifetime
             "mô tả không được để trống",
             "Biểu tượng không được để trống",
             "Biểu tượng không được vượt quá 10MB",
-            $"Chỉ chấp nhận các định dạng: .jpg, .jpeg, .png, .gif, .bmp, .tiff, .webp",
+            "Chỉ chấp nhận các định dạng: svg",
         };
         var validator = new CreateAmenity.Validator();
         Stream invalidStream = new MemoryStream(new byte[11 * 1024 * 1024]);
