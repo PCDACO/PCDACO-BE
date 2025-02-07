@@ -30,7 +30,7 @@ public sealed class CreateBooking
         {
             // Add Owner role later
             if (!currentUser.User!.IsDriver())
-                return Result.Error("Bạn không có quyền thực hiện chức năng này !");
+                return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
             var car = await appDBContext.Cars.FirstOrDefaultAsync(
                 x => x.Id == request.CarId,
