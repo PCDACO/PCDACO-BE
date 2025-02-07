@@ -5,17 +5,35 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
 using UseCases.DTOs;
+using UseCases.Services.PayOSService;
 
 namespace UseCases.UC_Booking.Commands;
 
 public sealed class CompleteBooking
 {
-    public sealed record Command(Guid BookingId) : IRequest<Result>;
+    public sealed record Command(Guid BookingId) : IRequest<Result<Response>>;
 
-    internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
-        : IRequestHandler<Command, Result>
+    public sealed record Response(
+        decimal TotalDistance,
+        decimal ExcessDays,
+        decimal ExcessFee,
+        decimal BasePrice,
+        decimal PlatformFee,
+        decimal TotalAmount,
+        string PaymentUrl,
+        string QrCode
+    );
+
+    internal sealed class Handler(
+        IAppDBContext context,
+        CurrentUser currentUser,
+        IPaymentService paymentService
+    ) : IRequestHandler<Command, Result<Response>>
     {
-        public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
+        public async Task<Result<Response>> Handle(
+            Command request,
+            CancellationToken cancellationToken
+        )
         {
             if (!currentUser.User!.IsDriver())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
@@ -74,16 +92,27 @@ public sealed class CompleteBooking
             booking.ExcessDayFee = excessFee;
             booking.TotalAmount = booking.BasePrice + booking.PlatformFee + excessFee;
 
+            // Create payment link
+            var paymentResult = await paymentService.CreatePaymentLinkAsync(
+                booking.Id,
+                booking.TotalAmount,
+                $"Thanh toan don hang",
+                currentUser.User.Name
+            );
+
             await context.SaveChangesAsync(cancellationToken);
 
-            return Result.SuccessWithMessage(
-                $"""
-                Đã hoàn thành chuyến đi
-                Tổng quãng đường: {totalDistance / 1000:N2} km
-                Số ngày trễ: {excessDays}
-                Phí phát sinh: {excessFee:N0} VND
-                Tổng cộng: {booking.TotalAmount:N0} VND
-                """
+            return Result.Success(
+                new Response(
+                    TotalDistance: totalDistance / 1000, // Convert to kilometers
+                    ExcessDays: excessDays,
+                    ExcessFee: excessFee,
+                    BasePrice: booking.BasePrice,
+                    PlatformFee: booking.PlatformFee,
+                    TotalAmount: booking.TotalAmount,
+                    PaymentUrl: paymentResult.CheckoutUrl,
+                    QrCode: paymentResult.QrCode
+                )
             );
         }
 

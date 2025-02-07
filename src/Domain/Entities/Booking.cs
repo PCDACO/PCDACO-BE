@@ -19,6 +19,7 @@ public class Booking : BaseEntity
     public required decimal TotalAmount { get; set; }
     public required string Note { get; set; }
     public bool IsCarReturned { get; set; } = true;
+    public bool IsPaid { get; set; } = false;
     // Navigation properties
     [ForeignKey(nameof(UserId))]
     public User User { get; set; } = null!;
