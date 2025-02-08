@@ -2,7 +2,6 @@ using API.Utils;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.OpenApi.Models;
 using UseCases.UC_Booking.Queries;
 
 namespace API.Endpoints.BookingEndpoints;
@@ -27,7 +26,7 @@ public class GetAllBookingsEndpoint : ICarterModule
     private static async Task<IResult> Handle(
         ISender sender,
         [FromQuery(Name = "limit")] int? limit,
-        [FromQuery(Name = "lastBookingId")] Guid? lastBookingId,
+        [FromQuery(Name = "lastId")] Guid? lastId,
         [FromQuery(Name = "search")] string? searchTerm,
         [FromQuery(Name = "status")] Guid? statusId,
         [FromQuery(Name = "isPaid")] bool? isPaid,
@@ -35,7 +34,7 @@ public class GetAllBookingsEndpoint : ICarterModule
     )
     {
         var result = await sender.Send(
-            new GetAllBookings.Query(limit ?? 10, lastBookingId, searchTerm, statusId, isPaid),
+            new GetAllBookings.Query(limit ?? 10, lastId, searchTerm, statusId, isPaid),
             cancellationToken
         );
 
