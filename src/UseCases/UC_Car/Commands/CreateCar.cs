@@ -101,7 +101,7 @@ public sealed class CreateCar
             // Check if model is exist
             Model? checkingModel = await context
                 .Models.AsNoTracking()
-                .FirstOrDefaultAsync(m => m.Id == request.ModelId, cancellationToken);
+                .FirstOrDefaultAsync(m => m.Id == request.ModelId && !m.IsDeleted, cancellationToken);
             if (checkingModel is null)
                 return Result.Error("Mô hình xe không tồn tại !");
             (string key, string iv) = await keyManagementService.GenerateKeyAsync();

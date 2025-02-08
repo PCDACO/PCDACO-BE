@@ -20,63 +20,56 @@ public class GetAllModelsTest(DatabaseTestBase fixture) : IAsyncLifetime
 
     private async Task SeedTestData()
     {
-        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
-        await TestDataCreateModel.CreateTestModels(_dbContext, manufacturer.Id, 3);
-    }
-
-    [Fact]
-    public async Task Handle_ManufacturerIdFilter_ReturnsFilteredResults()
-    {
-        // Arrange
-        var manufacturer1 = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
-        var manufacturer2 = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
-
-        await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer1.Id);
-        await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer2.Id);
-
-        var handler = new GetAllModels.Handler(_dbContext);
-        var query = new GetAllModels.Query(
-            ManufacturerId: manufacturer1.Id,
-            PageNumber: 1,
-            PageSize: 10
+        var manufacturer1 = await TestDataCreateManufacturer.CreateTestManufacturer(
+            _dbContext,
+            "Toyota"
+        );
+        var manufacturer2 = await TestDataCreateManufacturer.CreateTestManufacturer(
+            _dbContext,
+            "Honda"
         );
 
-        // Act
-        var result = await handler.Handle(query, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Ok, result.Status);
-        Assert.Equal("Lấy danh sách mô hình xe thành công", result.SuccessMessage);
-        Assert.Single(result.Value.Items);
-        Assert.Equal(manufacturer1.Id, result.Value.Items.First().ManufacturerDetail?.Id);
-    }
-
-    [Fact]
-    public async Task Handle_CombinedFilters_ReturnsFilteredResults()
-    {
-        // Arrange
-        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
-
-        // Create multiple models with different names
-        var model1 = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
-        var model2 = new Model
+        // Create test models for Toyota
+        await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer1.Id);
+        var specialModel = new Model
         {
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            ManufacturerId = manufacturer.Id,
-            Name = "Special Test Model",
+            ManufacturerId = manufacturer1.Id,
+            Name = "Special Camry",
             ReleaseDate = DateTimeOffset.UtcNow,
             IsDeleted = false,
         };
-        await _dbContext.Models.AddAsync(model2);
-        await _dbContext.SaveChangesAsync();
+        await _dbContext.Models.AddAsync(specialModel);
 
-        var handler = new GetAllModels.Handler(_dbContext);
-        var query = new GetAllModels.Query(
-            ManufacturerId: manufacturer.Id,
-            Name: "Special",
-            PageNumber: 1,
-            PageSize: 10
-        );
+        // Create test models for Honda
+        await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer2.Id);
+        await _dbContext.SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task Handle_NoKeyword_ReturnsAllModels()
+    {
+        // Arrange
+        await SeedTestData();
+        var handler = new GetModels.Handler(_dbContext);
+        var query = new GetModels.Query(PageNumber: 1, PageSize: 10);
+
+        // Act
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Equal(3, result.Value.TotalItems);
+        Assert.Equal("Lấy danh sách mô hình xe thành công", result.SuccessMessage);
+    }
+
+    [Fact]
+    public async Task Handle_ModelNameKeyword_ReturnsFilteredResults()
+    {
+        // Arrange
+        await SeedTestData();
+        var handler = new GetModels.Handler(_dbContext);
+        var query = new GetModels.Query(PageNumber: 1, PageSize: 10, Keyword: "Special");
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -84,23 +77,57 @@ public class GetAllModelsTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Single(result.Value.Items);
-        var returnedModel = result.Value.Items.First();
-        Assert.Equal("Special Test Model", returnedModel.Name);
-        Assert.Equal(manufacturer.Id, returnedModel.ManufacturerDetail?.Id);
+        Assert.Contains(result.Value.Items, m => m.Name.Contains("Special"));
     }
 
     [Fact]
-    public async Task Handle_NoElementsFound_ReturnsEmptyList()
+    public async Task Handle_ManufacturerNameKeyword_ReturnsFilteredResults()
     {
         // Arrange
-        await SeedTestData(); // Creates 3 test models
-        var handler = new GetAllModels.Handler(_dbContext);
-        var query = new GetAllModels.Query(
-            ManufacturerId: Guid.Empty,
-            Name: "Non Existent Model",
-            PageNumber: 1,
-            PageSize: 10
+        await SeedTestData();
+        var handler = new GetModels.Handler(_dbContext);
+        var query = new GetModels.Query(PageNumber: 1, PageSize: 10, Keyword: "Toyota");
+
+        // Act
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Equal(2, result.Value.Items.Count());
+        Assert.All(result.Value.Items, m => Assert.Equal("Toyota", m.Manufacturer.Name));
+    }
+
+    [Fact]
+    public async Task Handle_Pagination_ReturnsCorrectItems()
+    {
+        // Arrange
+        await SeedTestData();
+        var handler = new GetModels.Handler(_dbContext);
+        var query = new GetModels.Query(PageNumber: 1, PageSize: 2);
+
+        // Act
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Equal(3, result.Value.TotalItems);
+        Assert.Equal(2, result.Value.Items.Count());
+        Assert.True(result.Value.HasNext);
+    }
+
+    [Fact]
+    public async Task Handle_DeletedModels_AreNotReturned()
+    {
+        // Arrange
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(
+            _dbContext,
+            manufacturer.Id,
+            isDeleted: true
         );
+
+        var handler = new GetModels.Handler(_dbContext);
+        var query = new GetModels.Query();
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -109,6 +136,22 @@ public class GetAllModelsTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Equal(0, result.Value.TotalItems);
         Assert.Empty(result.Value.Items);
-        Assert.Equal("Lấy danh sách mô hình xe thành công", result.SuccessMessage);
+    }
+
+    [Fact]
+    public async Task Handle_NoResults_ReturnsEmptyList()
+    {
+        // Arrange
+        var handler = new GetModels.Handler(_dbContext);
+        var query = new GetModels.Query(Keyword: "NonExistentModel");
+
+        // Act
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Equal(0, result.Value.TotalItems);
+        Assert.Empty(result.Value.Items);
+        Assert.False(result.Value.HasNext);
     }
 }

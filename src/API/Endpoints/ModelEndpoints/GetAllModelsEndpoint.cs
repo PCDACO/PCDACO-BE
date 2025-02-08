@@ -9,30 +9,28 @@ using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.ModelEndpoints;
 
-public class GetModelsEndpoint : ICarterModule
+public class GetAllModelsEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/manufacturers/{id:guid}/models", Handle)
-            .WithSummary("Get all models of a manufacturer")
+        app.MapGet("/api/models", Handle)
+            .WithSummary("Get all models with filtering")
             .WithTags("Models")
             .RequireAuthorization();
     }
 
     private async Task<IResult> Handle(
         ISender sender,
-        [FromRoute] Guid id,
         [FromQuery(Name = "index")] int? pageNumber = 1,
         [FromQuery(Name = "size")] int? pageSize = 10,
-        [FromQuery(Name = "keyword")] string? name = ""
+        [FromQuery(Name = "keyword")] string? keyword = ""
     )
     {
-        Result<OffsetPaginatedResponse<GetAllModels.Response>> result = await sender.Send(
-            new GetAllModels.Query(
-                ManufacturerId: id!,
+        Result<OffsetPaginatedResponse<GetModels.Response>> result = await sender.Send(
+            new GetModels.Query(
                 PageNumber: pageNumber!.Value,
                 PageSize: pageSize!.Value,
-                Name: name!
+                Keyword: keyword!
             )
         );
         return result.MapResult();
