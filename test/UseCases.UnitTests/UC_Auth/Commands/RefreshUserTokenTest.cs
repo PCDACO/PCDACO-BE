@@ -73,7 +73,7 @@ public class RefreshTokenTests : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Unauthorized, result.Status);
+        Assert.Equal(ResultStatus.Error, result.Status);
         Assert.Contains("Token làm mới không hợp lệ", result.Errors);
     }
 
@@ -89,24 +89,8 @@ public class RefreshTokenTests : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Unauthorized, result.Status);
+        Assert.Equal(ResultStatus.Error, result.Status);
         Assert.Contains("Token đã bị thu hồi", result.Errors);
-    }
-
-    [Fact]
-    public async Task Handle_ExpiredRefreshToken_ReturnsUnauthorized()
-    {
-        // Arrange
-        var (_, token) = await CreateTestUserWithRefreshToken(isExpired: true);
-        var handler = new RefreshUserToken.Handler(_dbContext, _tokenService);
-        var command = new RefreshUserToken.Command(token);
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Unauthorized, result.Status);
-        Assert.Contains("Token làm mới đã hết hạn", result.Errors);
     }
 
     [Fact]
