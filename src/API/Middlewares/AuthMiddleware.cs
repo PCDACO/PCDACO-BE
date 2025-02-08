@@ -51,11 +51,7 @@ public class AuthMiddleware(IConfiguration configuration) : IMiddleware
             .Include(u => u.Role)
             .Include(u => u.Driver)
             .Include(u => u.EncryptionKey)
-            .FirstOrDefaultAsync(u => u.Id == userId);
-        if (user is null)
-        {
-            return;
-        }
+            .FirstOrDefaultAsync(u => u.Id == userId) ?? throw new Exception("User not found");
         CurrentUser currentUser = context.RequestServices.GetRequiredService<CurrentUser>();
         currentUser.SetUser(user);
         await next.Invoke(context);

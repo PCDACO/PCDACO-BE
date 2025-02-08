@@ -1,8 +1,12 @@
 using Ardalis.Result;
+
 using Domain.Entities;
 using Domain.Shared;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -55,7 +59,7 @@ public class GetCarsForAdmin
                 car.Model.Id,
                 car.Model.Name,
                 car.Owner.Id,
-                car.Owner.Name,
+                car.Owner.Name, 
                 decryptedLicensePlate,
                 car.Color,
                 car.Seat,
@@ -112,8 +116,7 @@ public class GetCarsForAdmin
                 .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars)
                 .Include(c => c.CarStatus)
-                .Include(c => c.CarAmenities)
-                .ThenInclude(ca => ca.Amenity)
+                .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .OrderByDescending(c => c.Id);
             int count = await query.CountAsync(cancellationToken);
             List<Car> cars = await query
