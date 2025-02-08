@@ -28,17 +28,12 @@ public static class RefreshUserToken
 
             if (refreshToken == null)
             {
-                return Result.Unauthorized("Token làm mới không hợp lệ");
+                return Result.Error("Token làm mới không hợp lệ");
             }
 
             if (refreshToken.RevokedAt != null)
             {
-                return Result.Unauthorized("Token đã bị thu hồi");
-            }
-
-            if (refreshToken.ExpiryDate < DateTimeOffset.UtcNow)
-            {
-                return Result.Unauthorized("Token làm mới đã hết hạn");
+                return Result.Error("Token đã bị thu hồi");
             }
 
             var user = refreshToken.User;
