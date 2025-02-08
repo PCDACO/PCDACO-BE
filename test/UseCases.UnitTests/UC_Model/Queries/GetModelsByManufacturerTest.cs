@@ -34,8 +34,8 @@ public class GetAllModelsTest(DatabaseTestBase fixture) : IAsyncLifetime
         await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer1.Id);
         await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer2.Id);
 
-        var handler = new GetAllModels.Handler(_dbContext);
-        var query = new GetAllModels.Query(
+        var handler = new GetModelsByManufacturer.Handler(_dbContext);
+        var query = new GetModelsByManufacturer.Query(
             ManufacturerId: manufacturer1.Id,
             PageNumber: 1,
             PageSize: 10
@@ -70,8 +70,8 @@ public class GetAllModelsTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.Models.AddAsync(model2);
         await _dbContext.SaveChangesAsync();
 
-        var handler = new GetAllModels.Handler(_dbContext);
-        var query = new GetAllModels.Query(
+        var handler = new GetModelsByManufacturer.Handler(_dbContext);
+        var query = new GetModelsByManufacturer.Query(
             ManufacturerId: manufacturer.Id,
             Name: "Special",
             PageNumber: 1,
@@ -94,8 +94,8 @@ public class GetAllModelsTest(DatabaseTestBase fixture) : IAsyncLifetime
     {
         // Arrange
         await SeedTestData(); // Creates 3 test models
-        var handler = new GetAllModels.Handler(_dbContext);
-        var query = new GetAllModels.Query(
+        var handler = new GetModelsByManufacturer.Handler(_dbContext);
+        var query = new GetModelsByManufacturer.Query(
             ManufacturerId: Guid.Empty,
             Name: "Non Existent Model",
             PageNumber: 1,

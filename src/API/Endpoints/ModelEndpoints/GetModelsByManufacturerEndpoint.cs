@@ -27,14 +27,15 @@ public class GetModelsEndpoint : ICarterModule
         [FromQuery(Name = "keyword")] string? name = ""
     )
     {
-        Result<OffsetPaginatedResponse<GetAllModels.Response>> result = await sender.Send(
-            new GetAllModels.Query(
-                ManufacturerId: id!,
-                PageNumber: pageNumber!.Value,
-                PageSize: pageSize!.Value,
-                Name: name!
-            )
-        );
+        Result<OffsetPaginatedResponse<GetModelsByManufacturer.Response>> result =
+            await sender.Send(
+                new GetModelsByManufacturer.Query(
+                    ManufacturerId: id!,
+                    PageNumber: pageNumber!.Value,
+                    PageSize: pageSize!.Value,
+                    Name: name!
+                )
+            );
         return result.MapResult();
     }
 }

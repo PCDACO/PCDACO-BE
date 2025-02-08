@@ -8,7 +8,7 @@ using UseCases.Utils;
 
 namespace UseCases.UC_Model.Queries;
 
-public sealed class GetAllModels
+public sealed class GetModelsByManufacturer
 {
     public sealed record Query(
         Guid ManufacturerId,
