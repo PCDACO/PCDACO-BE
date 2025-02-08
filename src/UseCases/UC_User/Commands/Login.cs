@@ -1,5 +1,7 @@
 using Ardalis.Result;
 using Domain.Entities;
+using Domain.Shared;
+
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -9,25 +11,57 @@ namespace UseCases.UC_User.Commands;
 
 public class Login
 {
-    public sealed record Command(string Email, string Password) : IRequest<Result<Response>>;
+    public sealed record Command(string Phone, string Password) : IRequest<Result<Response>>;
 
     public sealed record Response(string AccessToken, string RefreshToken);
 
-    public sealed class Handler(IAppDBContext context, TokenService tokenService)
-        : IRequestHandler<Command, Result<Response>>
+    public sealed class Handler(
+        IAppDBContext context,
+        TokenService tokenService,
+        IAesEncryptionService aesEncryptionService,
+        IKeyManagementService keyManagementService,
+        EncryptionSettings encryptionSettings
+    ) : IRequestHandler<Command, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
             Command request,
             CancellationToken cancellationToken
         )
         {
-            string hashedPassword = request.Password.HashString();
-            User? user = await context
+            // string hashedPassword = request.Password.HashString();
+            // User? user = await context
+            //     .Users.AsNoTracking()
+            //     .FirstOrDefaultAsync(
+            //         u => u.Phone == request.Phone && u.Password == hashedPassword,
+            //         cancellationToken
+            //     );
+            // Get all users with their encryption keys
+            var users = await context
                 .Users.AsNoTracking()
-                .FirstOrDefaultAsync(
-                    u => u.Email == request.Email && u.Password == hashedPassword,
-                    cancellationToken
+                .Include(u => u.EncryptionKey)
+                .Where(u => !u.IsDeleted)
+                .ToListAsync(cancellationToken);
+
+            // Find user by decrypting and comparing phone numbers
+            User? user = null;
+            foreach (var u in users)
+            {
+                string decryptedKey = keyManagementService.DecryptKey(
+                    u.EncryptionKey.EncryptedKey,
+                    encryptionSettings.Key
                 );
+                string decryptedPhone = await aesEncryptionService.Decrypt(
+                    u.Phone,
+                    decryptedKey,
+                    u.EncryptionKey.IV
+                );
+
+                if (decryptedPhone == request.Phone && u.Password == request.Password.HashString())
+                {
+                    user = u;
+                    break;
+                }
+            }
             if (user is null)
                 return Result.NotFound("Không tìm thấy thông tin người dùng");
             string newRefreshToken = tokenService.GenerateRefreshToken();
