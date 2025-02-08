@@ -1,7 +1,6 @@
 using Ardalis.Result;
 
 using Domain.Entities;
-using Domain.Enums;
 using Domain.Shared;
 
 using FluentValidation;
@@ -25,7 +24,6 @@ public sealed class UpdateCar
         Guid ModelId,
         Guid TransmissionTypeId,
         Guid FuelTypeId,
-        Guid StatusId,
         string LicensePlate,
         string Color,
         int Seat,
@@ -59,12 +57,6 @@ public sealed class UpdateCar
                 .Where(a => request.AmenityIds.Contains(a.Id))
                 .ToListAsync(cancellationToken);
             if (amenities.Count != request.AmenityIds.Length) return Result.Error("Một số tiện nghi không tồn tại !");
-            // Check if status is exist
-            CarStatus? checkingStatus = await context.CarStatuses.FirstOrDefaultAsync(cs =>
-                cs.Id == request.StatusId && !cs.IsDeleted,
-                cancellationToken);
-            if (checkingStatus is null) return Result.Error("Trạng thái xe không tồn tại !");
-            // Check if transmission type is exist
             TransmissionType? checkingTransmissionType = await context.TransmissionTypes
                 .FirstOrDefaultAsync(tt => tt.Id == request.TransmissionTypeId && !tt.IsDeleted, cancellationToken);
             if (checkingTransmissionType is null) return Result.Error("Kiểu hộp số không tồn tại !");
@@ -98,7 +90,6 @@ public sealed class UpdateCar
             checkingCar.Description = request.Description;
             checkingCar.TransmissionTypeId = request.TransmissionTypeId;
             checkingCar.FuelTypeId = request.FuelTypeId;
-            checkingCar.StatusId = request.StatusId;
             checkingCar.FuelConsumption = request.FuelConsumption;
             checkingCar.RequiresCollateral = request.RequiresCollateral;
             checkingCar.PricePerHour = request.PricePerHour;

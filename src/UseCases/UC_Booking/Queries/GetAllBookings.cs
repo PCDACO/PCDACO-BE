@@ -11,7 +11,7 @@ public sealed class GetAllBookings
 {
     public sealed record Query(
         int Limit,
-        Guid? LastBookingId,
+        Guid? LastId,
         string? SearchTerm = null,
         Guid? BookingStatusId = null,
         bool? IsPaid = null
@@ -84,8 +84,8 @@ public sealed class GetAllBookings
                 );
 
             // Apply cursor pagination
-            if (request.LastBookingId.HasValue)
-                query = query.Where(b => b.Id.CompareTo(request.LastBookingId.Value) < 0);
+            if (request.LastId.HasValue)
+                query = query.Where(b => b.Id.CompareTo(request.LastId.Value) < 0);
 
             // Order by Id descending (newest first)
             query = query.OrderByDescending(b => b.Id);
