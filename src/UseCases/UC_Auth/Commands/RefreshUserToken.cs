@@ -36,11 +36,6 @@ public static class RefreshUserToken
                 return Result.Error("Token đã bị thu hồi");
             }
 
-            if (refreshToken.ExpiryDate < DateTimeOffset.UtcNow)
-            {
-                return Result.Error("Token làm mới đã hết hạn");
-            }
-
             var user = refreshToken.User;
             var newAccessToken = tokenService.GenerateAccessToken(user);
             var newRefreshToken = tokenService.GenerateRefreshToken();
