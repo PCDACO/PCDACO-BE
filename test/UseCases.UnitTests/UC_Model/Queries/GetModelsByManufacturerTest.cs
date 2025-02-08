@@ -9,7 +9,7 @@ using UUIDNext;
 namespace UseCases.UnitTests.UC_Model.Queries;
 
 [Collection("Test Collection")]
-public class GetAllModelsTest(DatabaseTestBase fixture) : IAsyncLifetime
+public class GetModelsByManufacturerTest(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;

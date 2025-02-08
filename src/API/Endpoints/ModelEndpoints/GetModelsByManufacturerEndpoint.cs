@@ -9,7 +9,7 @@ using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.ModelEndpoints;
 
-public class GetModelsEndpoint : ICarterModule
+public class GetModelsByManufacturerEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
