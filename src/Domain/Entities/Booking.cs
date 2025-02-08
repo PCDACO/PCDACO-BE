@@ -17,6 +17,7 @@ public class Booking : BaseEntity
     public required decimal ExcessDay { get; set; }
     public required decimal ExcessDayFee { get; set; }
     public required decimal TotalAmount { get; set; }
+    public decimal TotalDistance { get; set; } = 0;
     public required string Note { get; set; }
     public bool IsCarReturned { get; set; } = true;
     public bool IsPaid { get; set; } = false;

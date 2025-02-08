@@ -23,6 +23,7 @@ public sealed class GetAllBookings
         string DriverName,
         string OwnerName,
         decimal TotalAmount,
+        decimal TotalDistance,
         bool IsPaid,
         string Status,
         DateTimeOffset StartTime,
@@ -37,6 +38,7 @@ public sealed class GetAllBookings
                 booking.User.Name, // Driver
                 booking.Car.Owner.Name, // Owner
                 booking.TotalAmount,
+                booking.TotalDistance,
                 booking.IsPaid,
                 booking.Status.Name,
                 booking.StartTime,

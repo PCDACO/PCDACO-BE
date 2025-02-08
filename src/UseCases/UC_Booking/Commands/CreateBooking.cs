@@ -32,10 +32,6 @@ public sealed class CreateBooking
             if (!currentUser.User!.IsDriver())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
-            var car = await appDBContext.Cars.FirstOrDefaultAsync(
-                x => x.Id == request.CarId,
-                cancellationToken: cancellationToken
-            );
             // Check if car exists
             var car = await context
                 .Cars.Include(x => x.CarStatistic)
@@ -76,6 +72,13 @@ public sealed class CreateBooking
                 );
             }
 
+            var userStatistic = await context.UserStatistics.FirstOrDefaultAsync(
+                x => x.UserId == currentUser.User.Id,
+                cancellationToken
+            );
+
+            if (userStatistic == null)
+                return Result.NotFound("Không tìm thấy thông tin thống kê của user");
             const decimal platformFeeRate = 0.1m;
 
             Guid bookingId = Uuid.NewDatabaseFriendly(Database.PostgreSql);
@@ -101,6 +104,9 @@ public sealed class CreateBooking
                 Note = string.Empty,
             };
 
+            // Update car statistic
+            car.CarStatistic.TotalRented += 1;
+            userStatistic.TotalBooking += 1;
             context.Bookings.Add(booking);
             await context.SaveChangesAsync(cancellationToken);
 

@@ -10,7 +10,7 @@ public class UserStatistic : BaseEntity
     public int TotalBooking { get; set; } = 0;
     public int TotalCancel { get; set; } = 0;
     public decimal TotalEarning { get; set; } = 0;
-    public decimal AverageRating { get; set; } = 5;
+    public decimal AverageRating { get; set; } = 0;
     // Navigation properties
     [ForeignKey(nameof(UserId))]
     public User User { get; set; } = null!;

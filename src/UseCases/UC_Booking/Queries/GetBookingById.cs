@@ -69,6 +69,7 @@ public sealed class GetBookingById
                     booking.StartTime,
                     booking.EndTime,
                     booking.ActualReturnTime,
+                    booking.TotalDistance,
                     booking.Status.Name,
                     booking.Note
                 ),
@@ -116,6 +117,7 @@ public sealed class GetBookingById
         DateTimeOffset StartTime,
         DateTimeOffset EndTime,
         DateTimeOffset ActualReturnTime,
+        decimal TotalDistance,
         string Status,
         string Note
     );

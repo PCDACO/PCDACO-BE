@@ -82,7 +82,11 @@ public class SignUp
                     ExpiryDate = DateTimeOffset.UtcNow,
                 }
             );
+
+            UserStatistic userStatistic = new() { UserId = user.Id };
+
             await context.Users.AddAsync(user, cancellationToken);
+            await context.UserStatistics.AddAsync(userStatistic, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
             string accessToken = tokenService.GenerateAccessToken(user);
             return Result.Success(new Response(accessToken, refreshToken), "Đăng ký thành công");
