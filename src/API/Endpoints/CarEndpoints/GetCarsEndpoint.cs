@@ -32,7 +32,7 @@ public class GetCarsEndpoint : ICarterModule
         [FromQuery(Name = "longtitude")] decimal? longtitude,
         [FromQuery(Name = "radius")] decimal? radius,
         [FromQuery(Name = "model")] Guid? model,
-        [FromQuery(Name = "lastCarId")] Guid? lastCarId,
+        [FromQuery(Name = "lastId")] Guid? lastCarId,
         [FromQuery(Name = "amenities")] Guid[]? amenities,
         [FromQuery(Name = "fuel")] Guid? fuel,
         [FromQuery(Name = "transmission")] Guid? transmission,
