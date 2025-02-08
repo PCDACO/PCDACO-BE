@@ -11,13 +11,13 @@ using UUIDNext;
 namespace UseCases.UnitTests.UC_User.Commands;
 
 [Collection("Test Collection")]
-public class LoginTest : IAsyncLifetime
+public class AdminLoginTest : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext;
     private readonly Func<Task> _resetDatabase;
     private readonly TokenService _tokenService;
 
-    public LoginTest(DatabaseTestBase fixture)
+    public AdminLoginTest(DatabaseTestBase fixture)
     {
         var jwtSettings = new JwtSettings
         {
@@ -66,8 +66,8 @@ public class LoginTest : IAsyncLifetime
     {
         // Arrange
         var testUser = await CreateTestUser();
-        var handler = new Login.Handler(_dbContext, _tokenService);
-        var command = new Login.Command(testUser.Email, "wrongpassword");
+        var handler = new AdminLogin.Handler(_dbContext, _tokenService);
+        var command = new AdminLogin.Command(testUser.Email, "wrongpassword");
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -80,8 +80,8 @@ public class LoginTest : IAsyncLifetime
     public async Task Handle_UserNotFound_ReturnsNotFound()
     {
         // Arrange
-        var handler = new Login.Handler(_dbContext, _tokenService);
-        var command = new Login.Command("nonexistent@example.com", "password");
+        var handler = new AdminLogin.Handler(_dbContext, _tokenService);
+        var command = new AdminLogin.Command("nonexistent@example.com", "password");
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -95,8 +95,8 @@ public class LoginTest : IAsyncLifetime
     {
         // Arrange
         var testUser = await CreateTestUser();
-        var handler = new Login.Handler(_dbContext, _tokenService);
-        var command = new Login.Command(testUser.Email, "password");
+        var handler = new AdminLogin.Handler(_dbContext, _tokenService);
+        var command = new AdminLogin.Command(testUser.Email, "password");
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
