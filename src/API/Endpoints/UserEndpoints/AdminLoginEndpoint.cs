@@ -16,7 +16,7 @@ public class AdminLoginEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/admin/login", Handle)
+        app.MapPost("/api/auth/admin/login", Handle)
             .WithSummary("Admin login")
             .WithTags("Auth");
     }
