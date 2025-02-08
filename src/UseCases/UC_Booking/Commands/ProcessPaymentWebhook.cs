@@ -1,7 +1,6 @@
 using Ardalis.Result;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using Net.payOS;
 using Net.payOS.Types;
 using UseCases.Abstractions;
 
@@ -9,20 +8,20 @@ namespace UseCases.UC_Booking.Commands;
 
 public sealed class ProcessPaymentWebhook
 {
-    public sealed record Command(WebhookType Data) : IRequest<Result>;
+    public sealed record Command(WebhookType WebhookType) : IRequest<Result>;
 
-    public class Handler(IAppDBContext context, PayOS payOS) : IRequestHandler<Command, Result>
+    public class Handler(IAppDBContext context) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
             // Verify webhook data
-            var webhookData = payOS.verifyPaymentWebhookData(request.Data);
+            WebhookData webhookData = request.WebhookType.data;
 
             if (webhookData == null)
                 return Result.Error("Dữ liệu webhook không hợp lệ");
 
             // Extract bookingId from signature
-            if (!Guid.TryParse(request.Data.signature, out Guid bookingId))
+            if (!Guid.TryParse(request.WebhookType.signature, out Guid bookingId))
                 return Result.Error("BookingId không hợp lệ");
 
             int result = await context
