@@ -56,7 +56,10 @@ public static class TestDataCreateCar
             isDeleted: isDeleted
         );
 
+        var carStatistic = new CarStatistic { CarId = car.Id };
+
         await dBContext.Cars.AddAsync(car);
+        await dBContext.CarStatistics.AddAsync(carStatistic);
         await dBContext.SaveChangesAsync();
 
         return car;
