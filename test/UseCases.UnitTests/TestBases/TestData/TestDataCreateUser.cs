@@ -50,7 +50,10 @@ public static class TestDataCreateUser
 
         var user = CreateUser(role, encryptionKey.Id, email);
 
+        var userStatistic = new UserStatistic { UserId = user.Id };
+
         await dBContext.Users.AddAsync(user);
+        await dBContext.UserStatistics.AddAsync(userStatistic);
         await dBContext.SaveChangesAsync();
 
         return user;

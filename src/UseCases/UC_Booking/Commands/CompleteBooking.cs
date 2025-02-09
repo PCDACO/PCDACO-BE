@@ -41,6 +41,7 @@ public sealed class CompleteBooking
             var booking = await context
                 .Bookings.Include(x => x.Status)
                 .Include(x => x.Car)
+                .ThenInclude(x => x.CarStatistic)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
@@ -91,6 +92,7 @@ public sealed class CompleteBooking
             booking.ExcessDay = excessDays;
             booking.ExcessDayFee = excessFee;
             booking.TotalAmount = booking.BasePrice + booking.PlatformFee + excessFee;
+            booking.TotalDistance = totalDistance;
 
             // Create payment link
             var paymentResult = await paymentService.CreatePaymentLinkAsync(
@@ -99,6 +101,10 @@ public sealed class CompleteBooking
                 $"Thanh toan don hang",
                 currentUser.User.Name
             );
+
+            // Update car statistics
+            booking.Car.CarStatistic.TotalDistance += totalDistance;
+            booking.Car.CarStatistic.LastRented = DateTimeOffset.UtcNow;
 
             await context.SaveChangesAsync(cancellationToken);
 

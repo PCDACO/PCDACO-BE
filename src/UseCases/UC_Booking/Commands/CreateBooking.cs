@@ -20,7 +20,7 @@ public sealed class CreateBooking
         public static Response FromEntity(Booking booking) => new(booking.Id);
     }
 
-    internal sealed class Handler(IAppDBContext appDBContext, CurrentUser currentUser)
+    internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
         : IRequestHandler<CreateBookingCommand, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
@@ -32,15 +32,20 @@ public sealed class CreateBooking
             if (!currentUser.User!.IsDriver())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
-            var car = await appDBContext.Cars.FirstOrDefaultAsync(
-                x => x.Id == request.CarId,
-                cancellationToken: cancellationToken
-            );
+            // Check if car exists
+            var car = await context
+                .Cars.Include(x => x.CarStatistic)
+                .FirstOrDefaultAsync(
+                    x =>
+                        x.Id == request.CarId
+                        && EF.Functions.ILike(x.CarStatus.Name, $"%available%"),
+                    cancellationToken: cancellationToken
+                );
 
             if (car == null)
                 return Result<Response>.NotFound();
 
-            var bookingStatus = await appDBContext.BookingStatuses.FirstOrDefaultAsync(
+            var bookingStatus = await context.BookingStatuses.FirstOrDefaultAsync(
                 x => EF.Functions.Like(x.Name, BookingStatusEnum.Pending.ToString()),
                 cancellationToken: cancellationToken
             );
@@ -49,7 +54,7 @@ public sealed class CreateBooking
                 return Result<Response>.NotFound("Không tìm thấy trạng thái phù hợp");
 
             // Check for overlapping bookings (same user + same car)
-            bool hasOverlap = await appDBContext.Bookings.AnyAsync(
+            bool hasOverlap = await context.Bookings.AnyAsync(
                 b =>
                     b.UserId == currentUser.User.Id
                     && b.CarId == request.CarId
@@ -67,6 +72,13 @@ public sealed class CreateBooking
                 );
             }
 
+            var userStatistic = await context.UserStatistics.FirstOrDefaultAsync(
+                x => x.UserId == currentUser.User.Id,
+                cancellationToken
+            );
+
+            if (userStatistic == null)
+                return Result.NotFound("Không tìm thấy thông tin thống kê của user");
             const decimal platformFeeRate = 0.1m;
 
             Guid bookingId = Uuid.NewDatabaseFriendly(Database.PostgreSql);
@@ -92,8 +104,11 @@ public sealed class CreateBooking
                 Note = string.Empty,
             };
 
-            appDBContext.Bookings.Add(booking);
-            await appDBContext.SaveChangesAsync(cancellationToken);
+            // Update car statistic
+            car.CarStatistic.TotalRented += 1;
+            userStatistic.TotalBooking += 1;
+            context.Bookings.Add(booking);
+            await context.SaveChangesAsync(cancellationToken);
 
             return Result<Response>.Success(new Response(bookingId));
         }

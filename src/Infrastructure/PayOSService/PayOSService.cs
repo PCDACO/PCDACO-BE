@@ -28,7 +28,8 @@ public class PayOSService(PayOS payOS, UrlSettings urlSettings) : IPaymentServic
             cancelUrl: urlSettings.CancelUrl,
             returnUrl: urlSettings.ReturnUrl,
             expiredAt: (int?)DateTimeOffset.UtcNow.AddMinutes(15).ToUnixTimeSeconds(),
-            buyerName: buyerName
+            buyerName: buyerName,
+            signature: bookingId.ToString()
         );
 
         var result = await payOS.createPaymentLink(paymentData);

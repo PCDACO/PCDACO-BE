@@ -145,7 +145,11 @@ public sealed class CreateCar
                         })
                     ]
                 };
+
+            CarStatistic newCarStatistic = new() { CarId = carId };
+
             await context.Cars.AddAsync(newCar, cancellationToken);
+            await context.CarStatistics.AddAsync(newCarStatistic, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
             return Result.Created(
                 await Task.FromResult(Response.FromEntity(newCar)),
