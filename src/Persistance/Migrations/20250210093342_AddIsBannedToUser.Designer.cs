@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Persistance.Data;
 namespace Persistance.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250210093342_AddIsBannedToUser")]
+    partial class AddIsBannedToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -256,10 +259,6 @@ namespace Persistance.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
-
-                    b.Property<string>("Address")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("Color")
                         .IsRequired()
@@ -596,6 +595,61 @@ namespace Persistance.Migrations
                     b.ToTable("ContractStatuses");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Driver", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EncryptedLicenseNumber")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("EncryptionKeyId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ExpiryDate")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Fullname")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool?>("IsApprove")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LicenseImageBackUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("LicenseImageFrontUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EncryptionKeyId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("Drivers");
+                });
+
             modelBuilder.Entity("Domain.Entities.EncryptionKey", b =>
                 {
                     b.Property<Guid>("Id")
@@ -802,57 +856,6 @@ namespace Persistance.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("ImageTypes");
-                });
-
-            modelBuilder.Entity("Domain.Entities.License", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<DateTimeOffset?>("DeletedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("EncryptedLicenseNumber")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Guid>("EncryptionKeyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("ExpiryDate")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<bool?>("IsApprove")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsDeleted")
-                        .HasColumnType("boolean");
-
-                    b.Property<string>("LicenseImageBackUrl")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("LicenseImageFrontUrl")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<DateTimeOffset?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EncryptionKeyId")
-                        .IsUnique();
-
-                    b.HasIndex("UserId")
-                        .IsUnique();
-
-                    b.ToTable("Licenses");
                 });
 
             modelBuilder.Entity("Domain.Entities.Manufacturer", b =>
@@ -1477,6 +1480,25 @@ namespace Persistance.Migrations
                     b.Navigation("Status");
                 });
 
+            modelBuilder.Entity("Domain.Entities.Driver", b =>
+                {
+                    b.HasOne("Domain.Entities.EncryptionKey", "EncryptionKey")
+                        .WithOne("Driver")
+                        .HasForeignKey("Domain.Entities.Driver", "EncryptionKeyId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.User", "User")
+                        .WithOne("Driver")
+                        .HasForeignKey("Domain.Entities.Driver", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("EncryptionKey");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Domain.Entities.Feedback", b =>
                 {
                     b.HasOne("Domain.Entities.Booking", "Booking")
@@ -1535,25 +1557,6 @@ namespace Persistance.Migrations
                         .IsRequired();
 
                     b.Navigation("CarReport");
-                });
-
-            modelBuilder.Entity("Domain.Entities.License", b =>
-                {
-                    b.HasOne("Domain.Entities.EncryptionKey", "EncryptionKey")
-                        .WithOne("License")
-                        .HasForeignKey("Domain.Entities.License", "EncryptionKeyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Domain.Entities.User", "User")
-                        .WithOne("License")
-                        .HasForeignKey("Domain.Entities.License", "UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("EncryptionKey");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Domain.Entities.Model", b =>
@@ -1766,7 +1769,7 @@ namespace Persistance.Migrations
                     b.Navigation("Car")
                         .IsRequired();
 
-                    b.Navigation("License")
+                    b.Navigation("Driver")
                         .IsRequired();
 
                     b.Navigation("User")
@@ -1821,10 +1824,10 @@ namespace Persistance.Migrations
 
                     b.Navigation("Cars");
 
-                    b.Navigation("Feedbacks");
-
-                    b.Navigation("License")
+                    b.Navigation("Driver")
                         .IsRequired();
+
+                    b.Navigation("Feedbacks");
 
                     b.Navigation("ReceivedTransactions");
 

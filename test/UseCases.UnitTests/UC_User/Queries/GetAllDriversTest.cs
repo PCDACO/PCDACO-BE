@@ -7,12 +7,11 @@ using UseCases.DTOs;
 using UseCases.UC_User.Queries;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
-using Xunit;
 
 namespace UseCases.UnitTests.UC_User.Queries;
 
 [Collection("Test Collection")]
-public class GetAllUsersTests : IAsyncLifetime
+public class GetAllDriversTests : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext;
     private readonly CurrentUser _currentUser;
@@ -21,7 +20,7 @@ public class GetAllUsersTests : IAsyncLifetime
     private readonly Mock<IKeyManagementService> _mockKeyManagementService;
     private readonly EncryptionSettings _encryptionSettings;
 
-    public GetAllUsersTests(DatabaseTestBase fixture)
+    public GetAllDriversTests(DatabaseTestBase fixture)
     {
         _dbContext = fixture.DbContext;
         _currentUser = fixture.CurrentUser;
@@ -42,14 +41,14 @@ public class GetAllUsersTests : IAsyncLifetime
         var userRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
         var user = await TestDataCreateUser.CreateTestUser(_dbContext, userRole);
         _currentUser.SetUser(user);
-        var handler = new GetAllUsers.Handler(
+        var handler = new GetAllDrivers.Handler(
             _dbContext,
             _currentUser,
             _mockAesEncryptionService.Object,
             _mockKeyManagementService.Object,
             _encryptionSettings
         );
-        var query = new GetAllUsers.Query();
+        var query = new GetAllDrivers.Query();
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -59,14 +58,15 @@ public class GetAllUsersTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Handle_ValidRequest_ReturnsPaginatedUsers()
+    public async Task Handle_ValidRequest_ReturnsPaginatedDrivers()
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
         var adminUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(adminUser);
 
-        var users = await TestDataCreateUser.CreateTestUserList(_dbContext, adminRole);
+        var users = await TestDataCreateUser.CreateTestUserList(_dbContext, driverRole);
 
         _mockKeyManagementService
             .Setup(kms => kms.DecryptKey(It.IsAny<string>(), It.IsAny<string>()))
@@ -75,21 +75,25 @@ public class GetAllUsersTests : IAsyncLifetime
             .Setup(aes => aes.Decrypt(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync("1234567890");
 
-        var handler = new GetAllUsers.Handler(
+        var handler = new GetAllDrivers.Handler(
             _dbContext,
             _currentUser,
             _mockAesEncryptionService.Object,
             _mockKeyManagementService.Object,
             _encryptionSettings
         );
-        var query = new GetAllUsers.Query();
+        var query = new GetAllDrivers.Query();
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
 
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
-        Assert.Equal(4, result.Value.Items.Count());
+        Assert.Equal(3, result.Value.Items.Count());
+
+        // Ensure the users are sorted by CreateAt
+        var sortedUsers = result.Value.Items.OrderByDescending(u => u.Id).ToList();
+        Assert.Equal(sortedUsers, result.Value.Items);
     }
 
     [Fact]
@@ -97,10 +101,11 @@ public class GetAllUsersTests : IAsyncLifetime
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
         var adminUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(adminUser);
 
-        var users = await TestDataCreateUser.CreateTestUserList(_dbContext, adminRole);
+        var users = await TestDataCreateUser.CreateTestUserList(_dbContext, driverRole);
 
         _mockKeyManagementService
             .Setup(kms => kms.DecryptKey(It.IsAny<string>(), It.IsAny<string>()))
@@ -109,14 +114,14 @@ public class GetAllUsersTests : IAsyncLifetime
             .Setup(aes => aes.Decrypt(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync("1234567890");
 
-        var handler = new GetAllUsers.Handler(
+        var handler = new GetAllDrivers.Handler(
             _dbContext,
             _currentUser,
             _mockAesEncryptionService.Object,
             _mockKeyManagementService.Object,
             _encryptionSettings
         );
-        var query = new GetAllUsers.Query(Keyword: "User One");
+        var query = new GetAllDrivers.Query(Keyword: "User One");
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -132,10 +137,11 @@ public class GetAllUsersTests : IAsyncLifetime
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
         var adminUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(adminUser);
 
-        var users = await TestDataCreateUser.CreateTestUserList(_dbContext, adminRole);
+        var users = await TestDataCreateUser.CreateTestUserList(_dbContext, driverRole);
 
         _mockKeyManagementService
             .Setup(kms => kms.DecryptKey(It.IsAny<string>(), It.IsAny<string>()))
@@ -144,7 +150,7 @@ public class GetAllUsersTests : IAsyncLifetime
             .Setup(aes => aes.Decrypt(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
             .ReturnsAsync("1234567890");
 
-        var handler = new GetAllUsers.Handler(
+        var handler = new GetAllDrivers.Handler(
             _dbContext,
             _currentUser,
             _mockAesEncryptionService.Object,
@@ -153,19 +159,15 @@ public class GetAllUsersTests : IAsyncLifetime
         );
 
         // Act
-        var query = new GetAllUsers.Query(PageNumber: 2, PageSize: 2);
+        var query = new GetAllDrivers.Query(PageNumber: 2, PageSize: 2);
         var result = await handler.Handle(query, CancellationToken.None);
 
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
-        Assert.Equal(2, result.Value.Items.Count());
-
-        // Ensure the users are sorted by CreateAt
-        var sortedUsers = result.Value.Items.OrderByDescending(u => u.Id).ToList();
-        Assert.Equal(sortedUsers, result.Value.Items);
+        Assert.Single(result.Value.Items);
 
         // Ensure the correct users are returned for the second page
         Assert.Equal("User One", result.Value.Items.FirstOrDefault()?.Name);
-        Assert.Equal("Test User", result.Value.Items.LastOrDefault()?.Name);
+        Assert.Equal("User One", result.Value.Items.LastOrDefault()?.Name);
     }
 }

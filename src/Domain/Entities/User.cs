@@ -17,6 +17,7 @@ public class User : BaseEntity
     public required DateTimeOffset DateOfBirth { get; set; }
     public required string Phone { get; set; }
     public decimal Balance { get; set; } = 0;
+    public bool IsBanned { get; set; } = false;
 
     [Range(1, 5)]
     // Navigation Properties
@@ -24,7 +25,7 @@ public class User : BaseEntity
     public EncryptionKey EncryptionKey { get; set; } = null!;
     [ForeignKey(nameof(RoleId))]
     public UserRole Role { get; set; } = null!;
-    public Driver Driver { get; set; } = null!;
+    public License License { get; set; } = null!;
     public UserStatistic UserStatistic { get; set; } = null!;
     public WithdrawalRequest WithdrawalRequest { get; set; } = null!;
     public ICollection<Booking> Bookings { get; set; } = [];

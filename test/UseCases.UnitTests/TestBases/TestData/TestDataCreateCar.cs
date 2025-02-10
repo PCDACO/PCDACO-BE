@@ -25,6 +25,7 @@ public static class TestDataCreateCar
             FuelTypeId = fuelType.Id,
             TransmissionTypeId = transmissionType.Id,
             StatusId = carStatus.Id,
+            Address = "Test Address",
             EncryptedLicensePlate = "ABC-12345",
             Color = "Red",
             Seat = 4,

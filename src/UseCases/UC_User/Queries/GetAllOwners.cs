@@ -9,7 +9,7 @@ using UseCases.Utils;
 
 namespace UseCases.UC_User.Queries;
 
-public class GetAllUsers
+public class GetAllOwners
 {
     public sealed record Query(int PageNumber = 1, int PageSize = 10, string Keyword = "")
         : IRequest<Result<OffsetPaginatedResponse<Response>>>;
@@ -77,7 +77,9 @@ public class GetAllUsers
                 .Users.AsNoTracking()
                 .Include(u => u.Role)
                 .Include(u => u.EncryptionKey)
-                .Where(u => !u.IsDeleted)
+                .Where(u =>
+                    u.Role != null && EF.Functions.ILike(u.Role.Name, "%Owner%") && !u.IsDeleted
+                )
                 .Where(u =>
                     EF.Functions.ILike(u.Name, $"%{request.Keyword}%")
                     || EF.Functions.ILike(u.Email, $"%{request.Keyword}%")
@@ -104,7 +106,6 @@ public class GetAllUsers
                 )
             );
 
-            // Check if there are more items
             bool hasNext = query.Skip(request.PageSize * request.PageNumber).Any();
 
             return Result.Success(
@@ -115,7 +116,7 @@ public class GetAllUsers
                     request.PageSize,
                     hasNext
                 ),
-                "Lấy danh sách người dùng thành công"
+                "Lấy danh sách chủ xe thành công"
             );
         }
     }

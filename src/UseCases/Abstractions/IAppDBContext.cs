@@ -21,7 +21,7 @@ public interface IAppDBContext : IDisposable
     DbSet<CompensationStatus> CompensationStatuses { get; }
     DbSet<Contract> Contracts { get; }
     DbSet<ContractStatus> ContractStatuses { get; }
-    DbSet<Driver> Drivers { get; }
+    DbSet<License> Licenses { get; }
     DbSet<EncryptionKey> EncryptionKeys { get; }
     DbSet<Feedback> Feedbacks { get; }
     DbSet<FuelType> FuelTypes { get; }

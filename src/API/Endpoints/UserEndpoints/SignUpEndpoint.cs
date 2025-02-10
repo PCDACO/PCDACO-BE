@@ -11,9 +11,9 @@ public class SignUpEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/users/signup", Handle)
+        app.MapPost("/api/auth/signup", Handle)
             .WithSummary("Sign up a new user")
-            .WithTags("Users");
+            .WithTags("Auth");
     }
 
     private async Task<IResult> Handle(ISender sender, SignUpRequest request)
