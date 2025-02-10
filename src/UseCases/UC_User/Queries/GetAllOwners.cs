@@ -77,7 +77,9 @@ public class GetAllOwners
                 .Users.AsNoTracking()
                 .Include(u => u.Role)
                 .Include(u => u.EncryptionKey)
-                .Where(u => EF.Functions.ILike(u.Role.Name, "%Owner%") && !u.IsDeleted)
+                .Where(u =>
+                    u.Role != null && EF.Functions.ILike(u.Role.Name, "%Owner%") && !u.IsDeleted
+                )
                 .Where(u =>
                     EF.Functions.ILike(u.Name, $"%{request.Keyword}%")
                     || EF.Functions.ILike(u.Email, $"%{request.Keyword}%")

@@ -23,7 +23,7 @@ public class GetAllDrivers
         string Phone,
         string Role,
         DateTimeOffset CreatedAt,
-        bool? IsApproved
+        bool? IsApprovedLicense
     )
     {
         public static async Task<Response> FromEntity(
@@ -52,7 +52,7 @@ public class GetAllDrivers
                 decryptedPhone,
                 user.Role.Name,
                 GetTimestampFromUuid.Execute(user.Id),
-                user.Driver?.IsApprove
+                user.License?.IsApprove
             );
         }
     }
@@ -78,9 +78,11 @@ public class GetAllDrivers
             IQueryable<User> query = context
                 .Users.AsNoTracking()
                 .Include(u => u.Role)
-                .Include(u => u.Driver)
+                .Include(u => u.License)
                 .Include(u => u.EncryptionKey)
-                .Where(u => EF.Functions.ILike(u.Role.Name, "%Driver%") && !u.IsDeleted)
+                .Where(u =>
+                    u.Role != null && EF.Functions.ILike(u.Role.Name, "%Driver%") && !u.IsDeleted
+                )
                 .Where(u =>
                     EF.Functions.ILike(u.Name, $"%{request.Keyword}%")
                     || EF.Functions.ILike(u.Email, $"%{request.Keyword}%")
