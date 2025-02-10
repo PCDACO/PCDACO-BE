@@ -52,7 +52,7 @@ public class GetAllDrivers
                 decryptedPhone,
                 user.Role.Name,
                 GetTimestampFromUuid.Execute(user.Id),
-                user.Driver.IsApprove
+                user.Driver?.IsApprove
             );
         }
     }
