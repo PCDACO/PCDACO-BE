@@ -35,8 +35,8 @@ public class BankInfoGenerator
                     Code = "ABB",
                     Bin = 970425,
                     ShortName = "ABBANK",
-                    LogoUrl = "https=//api.vietqr.io/img/ABB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/ABB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/ABB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/ABB.svg",
                     SwiftCode = "ABBKVNVX",
                     LookupSupported = 1
                 }
@@ -50,8 +50,8 @@ public class BankInfoGenerator
                     Code = "ACB",
                     Bin = 970416,
                     ShortName = "ACB",
-                    LogoUrl = "https=//api.vietqr.io/img/ACB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/ACB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/ACB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/ACB.svg",
                     SwiftCode = "ASCBVNVX",
                     LookupSupported = 1
                 }
@@ -65,8 +65,8 @@ public class BankInfoGenerator
                     Code = "BAB",
                     Bin = 970409,
                     ShortName = "BacABank",
-                    LogoUrl = "https=//api.vietqr.io/img/BAB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/BAB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/BAB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/BAB.svg",
                     SwiftCode = "NASCVNVX",
                     LookupSupported = 1
                 }
@@ -80,8 +80,8 @@ public class BankInfoGenerator
                     Code = "BIDV",
                     Bin = 970418,
                     ShortName = "BIDV",
-                    LogoUrl = "https=//api.vietqr.io/img/BIDV.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/BIDV.svg",
+                    LogoUrl = "https://api.vietqr.io/img/BIDV.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/BIDV.svg",
                     SwiftCode = "BIDVVNVX",
                     LookupSupported = 1
                 }
@@ -95,8 +95,8 @@ public class BankInfoGenerator
                     Code = "BVB",
                     Bin = 970438,
                     ShortName = "BaoVietBank",
-                    LogoUrl = "https=//api.vietqr.io/img/BVB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/BVB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/BVB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/BVB.svg",
                     SwiftCode = "BVBVVNVX",
                     LookupSupported = 1
                 }
@@ -110,8 +110,8 @@ public class BankInfoGenerator
                     Code = "CAKE",
                     Bin = 546034,
                     ShortName = "CAKE",
-                    LogoUrl = "https=//api.vietqr.io/img/CAKE.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/CAKE.svg",
+                    LogoUrl = "https://api.vietqr.io/img/CAKE.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/CAKE.svg",
                     SwiftCode = "",
                     LookupSupported = 1
                 }
@@ -125,8 +125,8 @@ public class BankInfoGenerator
                     Code = "CBB",
                     Bin = 970444,
                     ShortName = "CBBank",
-                    LogoUrl = "https=//api.vietqr.io/img/CBB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/CBB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/CBB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/CBB.svg",
                     SwiftCode = "GTBAVNVX",
                     LookupSupported = 1
                 }
@@ -140,8 +140,8 @@ public class BankInfoGenerator
                     Code = "CIMB",
                     Bin = 422589,
                     ShortName = "CIMB",
-                    LogoUrl = "https=//api.vietqr.io/img/CIMB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/CIMB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/CIMB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/CIMB.svg",
                     SwiftCode = "CIBBVNVN",
                     LookupSupported = 1
                 }
@@ -155,8 +155,8 @@ public class BankInfoGenerator
                     Code = "COOPB",
                     Bin = 970446,
                     ShortName = "Co-op Bank",
-                    LogoUrl = "https=//api.vietqr.io/img/COOPBANK.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/COOPBANK.svg",
+                    LogoUrl = "https://api.vietqr.io/img/COOPBANK.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/COOPBANK.svg",
                     SwiftCode = "",
                     LookupSupported = 1
                 }
@@ -170,8 +170,8 @@ public class BankInfoGenerator
                     Code = "DAB",
                     Bin = 970406,
                     ShortName = "DongABank",
-                    LogoUrl = "https=//api.vietqr.io/img/DOB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/DOB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/DOB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/DOB.svg",
                     SwiftCode = "EACBVNVX",
                     LookupSupported = 1
                 }
@@ -185,8 +185,8 @@ public class BankInfoGenerator
                     Code = "DBS",
                     Bin = 796500,
                     ShortName = "DBSBank",
-                    LogoUrl = "https=//api.vietqr.io/img/DBS.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/DBS.svg",
+                    LogoUrl = "https://api.vietqr.io/img/DBS.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/DBS.svg",
                     SwiftCode = "DBSSVNVX",
                     LookupSupported = 1
                 }
@@ -200,8 +200,8 @@ public class BankInfoGenerator
                     Code = "EIB",
                     Bin = 970431,
                     ShortName = "Eximbank",
-                    LogoUrl = "https=//api.vietqr.io/img/EIB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/EIB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/EIB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/EIB.svg",
                     SwiftCode = "EBVIVNVX",
                     LookupSupported = 1
                 }
@@ -215,8 +215,8 @@ public class BankInfoGenerator
                     Code = "GPB",
                     Bin = 970408,
                     ShortName = "GPBank",
-                    LogoUrl = "https=//api.vietqr.io/img/GPB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/GPB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/GPB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/GPB.svg",
                     SwiftCode = "GBNKVNVX",
                     LookupSupported = 1
                 }
@@ -230,8 +230,8 @@ public class BankInfoGenerator
                     Code = "HDB",
                     Bin = 970437,
                     ShortName = "HDBank",
-                    LogoUrl = "https=//api.vietqr.io/img/HDB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/HDB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/HDB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/HDB.svg",
                     SwiftCode = "HDBCVNVX",
                     LookupSupported = 1
                 }
@@ -245,8 +245,8 @@ public class BankInfoGenerator
                     Code = "HLB",
                     Bin = 970442,
                     ShortName = "Hong Leong Bank",
-                    LogoUrl = "https=//api.vietqr.io/img/HLBVN.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/HLBVN.svg",
+                    LogoUrl = "https://api.vietqr.io/img/HLBVN.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/HLBVN.svg",
                     SwiftCode = "HLBBVNVX",
                     LookupSupported = 1
                 }
@@ -260,8 +260,8 @@ public class BankInfoGenerator
                     Code = "HSBC",
                     Bin = 458761,
                     ShortName = "HSBC",
-                    LogoUrl = "https=//api.vietqr.io/img/HSBC.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/HSBC.svg",
+                    LogoUrl = "https://api.vietqr.io/img/HSBC.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/HSBC.svg",
                     SwiftCode = "HSBCVNVX",
                     LookupSupported = 1
                 }
@@ -275,8 +275,8 @@ public class BankInfoGenerator
                     Code = "IBKHCM",
                     Bin = 970456,
                     ShortName = "IBKHCM",
-                    LogoUrl = "https=//api.vietqr.io/img/IBK.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/IBK - HCM.svg",
+                    LogoUrl = "https://api.vietqr.io/img/IBK.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/IBK - HCM.svg",
                     SwiftCode = "",
                     LookupSupported = 1
                 }
@@ -290,8 +290,8 @@ public class BankInfoGenerator
                     Code = "IBKHN",
                     Bin = 970455,
                     ShortName = "IBKHN",
-                    LogoUrl = "https=//api.vietqr.io/img/IBK.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/IBK - HN.svg",
+                    LogoUrl = "https://api.vietqr.io/img/IBK.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/IBK - HN.svg",
                     SwiftCode = "",
                     LookupSupported = 1
                 }
@@ -305,8 +305,8 @@ public class BankInfoGenerator
                     Code = "IVB",
                     Bin = 970434,
                     ShortName = "Indovina Bank",
-                    LogoUrl = "https=//api.vietqr.io/img/IVB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/IVB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/IVB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/IVB.svg",
                     SwiftCode = "",
                     LookupSupported = 1
                 }
@@ -320,8 +320,8 @@ public class BankInfoGenerator
                     Code = "KB",
                     Bin = 668888,
                     ShortName = "Kasikornbank",
-                    LogoUrl = "https=//api.vietqr.io/img/KBANK.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/KBank.svg",
+                    LogoUrl = "https://api.vietqr.io/img/KBANK.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/KBank.svg",
                     SwiftCode = "KASIVNVX",
                     LookupSupported = 1
                 }
@@ -335,8 +335,8 @@ public class BankInfoGenerator
                     Code = "KBKHCM",
                     Bin = 970463,
                     ShortName = "KookminHCM",
-                    LogoUrl = "https=//api.vietqr.io/img/KBHCM.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/KBHCM.svg",
+                    LogoUrl = "https://api.vietqr.io/img/KBHCM.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/KBHCM.svg",
                     SwiftCode = "",
                     LookupSupported = 1
                 }
@@ -350,8 +350,8 @@ public class BankInfoGenerator
                     Code = "KBKHN",
                     Bin = 970462,
                     ShortName = "KookminHN",
-                    LogoUrl = "https=//api.vietqr.io/img/KBHN.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/KBHN.svg",
+                    LogoUrl = "https://api.vietqr.io/img/KBHN.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/KBHN.svg",
                     SwiftCode = "",
                     LookupSupported = 1
                 }
@@ -365,8 +365,8 @@ public class BankInfoGenerator
                     Code = "KLB",
                     Bin = 970452,
                     ShortName = "KienLongBank",
-                    LogoUrl = "https=//api.vietqr.io/img/KLB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/KLB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/KLB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/KLB.svg",
                     SwiftCode = "KLBKVNVX",
                     LookupSupported = 1
                 }
@@ -380,8 +380,8 @@ public class BankInfoGenerator
                     Code = "LPB",
                     Bin = 970449,
                     ShortName = "LPBank",
-                    LogoUrl = "https=//api.vietqr.io/img/LPB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/LPB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/LPB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/LPB.svg",
                     SwiftCode = "LVBKVNVX",
                     LookupSupported = 1
                 }
@@ -395,8 +395,8 @@ public class BankInfoGenerator
                     Code = "MB",
                     Bin = 970422,
                     ShortName = "MBBank",
-                    LogoUrl = "https=//api.vietqr.io/img/MB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/MB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/MB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/MB.svg",
                     SwiftCode = "MSCBVNVX",
                     LookupSupported = 1
                 }
@@ -410,8 +410,8 @@ public class BankInfoGenerator
                     Code = "MSB",
                     Bin = 970426,
                     ShortName = "MSB",
-                    LogoUrl = "https=//api.vietqr.io/img/MSB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/MSB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/MSB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/MSB.svg",
                     SwiftCode = "MCOBVNVX",
                     LookupSupported = 1
                 }
@@ -425,8 +425,8 @@ public class BankInfoGenerator
                     Code = "NAB",
                     Bin = 970428,
                     ShortName = "NamABank",
-                    LogoUrl = "https=//api.vietqr.io/img/NAB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/NAB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/NAB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/NAB.svg",
                     SwiftCode = "NAMAVNVX",
                     LookupSupported = 1
                 }
@@ -440,8 +440,8 @@ public class BankInfoGenerator
                     Code = "NCB",
                     Bin = 970419,
                     ShortName = "NCB",
-                    LogoUrl = "https=//api.vietqr.io/img/NCB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/NCB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/NCB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/NCB.svg",
                     SwiftCode = "NVBAVNVX",
                     LookupSupported = 1
                 }
@@ -455,8 +455,8 @@ public class BankInfoGenerator
                     Code = "NHB",
                     Bin = 801011,
                     ShortName = "Nonghyup",
-                    LogoUrl = "https=//api.vietqr.io/img/NHB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/NHB HN.svg",
+                    LogoUrl = "https://api.vietqr.io/img/NHB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/NHB HN.svg",
                     SwiftCode = "",
                     LookupSupported = 1
                 }
@@ -470,8 +470,8 @@ public class BankInfoGenerator
                     Code = "OCB",
                     Bin = 970448,
                     ShortName = "OCB",
-                    LogoUrl = "https=//api.vietqr.io/img/OCB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/OCB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/OCB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/OCB.svg",
                     SwiftCode = "ORCOVNVX",
                     LookupSupported = 1
                 }
@@ -485,8 +485,8 @@ public class BankInfoGenerator
                     Code = "OJB",
                     Bin = 970414,
                     ShortName = "Oceanbank",
-                    LogoUrl = "https=//api.vietqr.io/img/OCEANBANK.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/Oceanbank.svg",
+                    LogoUrl = "https://api.vietqr.io/img/OCEANBANK.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/Oceanbank.svg",
                     SwiftCode = "OCBKUS3M",
                     LookupSupported = 1
                 }
@@ -500,8 +500,8 @@ public class BankInfoGenerator
                     Code = "PBVN",
                     Bin = 970439,
                     ShortName = "PublicBank",
-                    LogoUrl = "https=//api.vietqr.io/img/PBVN.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/PBVN.svg",
+                    LogoUrl = "https://api.vietqr.io/img/PBVN.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/PBVN.svg",
                     SwiftCode = "VIDPVNVX",
                     LookupSupported = 1
                 }
@@ -515,8 +515,8 @@ public class BankInfoGenerator
                     Code = "PGB",
                     Bin = 970430,
                     ShortName = "PGBank",
-                    LogoUrl = "https=//api.vietqr.io/img/PGB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/PGB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/PGB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/PGB.svg",
                     SwiftCode = "PGBLVNVX",
                     LookupSupported = 1
                 }
@@ -530,8 +530,8 @@ public class BankInfoGenerator
                     Code = "PVCB",
                     Bin = 970412,
                     ShortName = "PVcomBank",
-                    LogoUrl = "https=//api.vietqr.io/img/PVCB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/PVCB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/PVCB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/PVCB.svg",
                     SwiftCode = "WBVNVNVX",
                     LookupSupported = 1
                 }
@@ -545,8 +545,8 @@ public class BankInfoGenerator
                     Code = "SCB",
                     Bin = 970403,
                     ShortName = "Sacombank",
-                    LogoUrl = "https=//api.vietqr.io/img/STB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/STB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/STB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/STB.svg",
                     SwiftCode = "SGTTVNVX",
                     LookupSupported = 1
                 }
@@ -560,8 +560,8 @@ public class BankInfoGenerator
                     Code = "SCBVN",
                     Bin = 970410,
                     ShortName = "Standard Chartered VN",
-                    LogoUrl = "https=//api.vietqr.io/img/SCVN.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/SCVN.svg",
+                    LogoUrl = "https://api.vietqr.io/img/SCVN.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/SCVN.svg",
                     SwiftCode = "SCBLVNVX",
                     LookupSupported = 1
                 }
@@ -575,8 +575,8 @@ public class BankInfoGenerator
                     Code = "SEAB",
                     Bin = 970440,
                     ShortName = "SeABank",
-                    LogoUrl = "https=//api.vietqr.io/img/SEAB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/SEAB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/SEAB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/SEAB.svg",
                     SwiftCode = "SEAVVNVX",
                     LookupSupported = 1
                 }
@@ -590,8 +590,8 @@ public class BankInfoGenerator
                     Code = "SGB",
                     Bin = 970400,
                     ShortName = "SaigonBank",
-                    LogoUrl = "https=//api.vietqr.io/img/SGICB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/SGICB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/SGICB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/SGICB.svg",
                     SwiftCode = "SBITVNVX",
                     LookupSupported = 1
                 }
@@ -605,8 +605,8 @@ public class BankInfoGenerator
                     Code = "SGCB",
                     Bin = 970429,
                     ShortName = "SCB",
-                    LogoUrl = "https=//api.vietqr.io/img/SCB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/SCB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/SCB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/SCB.svg",
                     SwiftCode = "SACLVNVX",
                     LookupSupported = 1
                 }
@@ -620,8 +620,8 @@ public class BankInfoGenerator
                     Code = "SHB",
                     Bin = 970443,
                     ShortName = "SHB",
-                    LogoUrl = "https=//api.vietqr.io/img/SHB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/SHB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/SHB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/SHB.svg",
                     SwiftCode = "SHBAVNVX",
                     LookupSupported = 1
                 }
@@ -635,8 +635,8 @@ public class BankInfoGenerator
                     Code = "SHBVN",
                     Bin = 970424,
                     ShortName = "ShinhanBank",
-                    LogoUrl = "https=//api.vietqr.io/img/SHBVN.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/SHBVN.svg",
+                    LogoUrl = "https://api.vietqr.io/img/SHBVN.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/SHBVN.svg",
                     SwiftCode = "SHBKVNVX",
                     LookupSupported = 1
                 }
@@ -650,8 +650,8 @@ public class BankInfoGenerator
                     Code = "TCB",
                     Bin = 970407,
                     ShortName = "Techcombank",
-                    LogoUrl = "https=//api.vietqr.io/img/TCB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/TCB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/TCB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/TCB.svg",
                     SwiftCode = "VTCBVNVX",
                     LookupSupported = 1
                 }
@@ -665,8 +665,8 @@ public class BankInfoGenerator
                     Code = "TIMO",
                     Bin = 963388,
                     ShortName = "Timo",
-                    LogoUrl = "https=//vietqr.net/portal-service/resources/icons/TIMO.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/TIMO.svg",
+                    LogoUrl = "https://vietqr.net/portal-service/resources/icons/TIMO.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/TIMO.svg",
                     SwiftCode = "",
                     LookupSupported = 1
                 }
@@ -680,8 +680,8 @@ public class BankInfoGenerator
                     Code = "TPB",
                     Bin = 970423,
                     ShortName = "TPBank",
-                    LogoUrl = "https=//api.vietqr.io/img/TPB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/TPB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/TPB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/TPB.svg",
                     SwiftCode = "TPBVVNVX",
                     LookupSupported = 1
                 }
@@ -695,8 +695,8 @@ public class BankInfoGenerator
                     Code = "UB",
                     Bin = 546035,
                     ShortName = "Ubank",
-                    LogoUrl = "https=//api.vietqr.io/img/UBANK.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/Ubank.svg",
+                    LogoUrl = "https://api.vietqr.io/img/UBANK.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/Ubank.svg",
                     SwiftCode = "",
                     LookupSupported = 1
                 }
@@ -710,8 +710,8 @@ public class BankInfoGenerator
                     Code = "UOB",
                     Bin = 970458,
                     ShortName = "United Overseas Bank",
-                    LogoUrl = "https=//api.vietqr.io/img/UOB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/UOB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/UOB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/UOB.svg",
                     SwiftCode = "",
                     LookupSupported = 1
                 }
@@ -725,8 +725,8 @@ public class BankInfoGenerator
                     Code = "VAB",
                     Bin = 970427,
                     ShortName = "VietABank",
-                    LogoUrl = "https=//api.vietqr.io/img/VAB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/VAB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/VAB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/VAB.svg",
                     SwiftCode = "VNACVNVX",
                     LookupSupported = 1
                 }
@@ -740,8 +740,8 @@ public class BankInfoGenerator
                     Code = "VARB",
                     Bin = 970405,
                     ShortName = "Agribank",
-                    LogoUrl = "https=//api.vietqr.io/img/VBA.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/VBA.svg",
+                    LogoUrl = "https://api.vietqr.io/img/VBA.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/VBA.svg",
                     SwiftCode = "VBAAVNVX",
                     LookupSupported = 1
                 }
@@ -755,8 +755,8 @@ public class BankInfoGenerator
                     Code = "VB",
                     Bin = 970433,
                     ShortName = "VietBank",
-                    LogoUrl = "https=//api.vietqr.io/img/VIETBANK.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/VIETBANK.svg",
+                    LogoUrl = "https://api.vietqr.io/img/VIETBANK.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/VIETBANK.svg",
                     SwiftCode = "VNTTVNVX",
                     LookupSupported = 1
                 }
@@ -770,8 +770,8 @@ public class BankInfoGenerator
                     Code = "VCB",
                     Bin = 970436,
                     ShortName = "Vietcombank",
-                    LogoUrl = "https=//api.vietqr.io/img/VCB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/VCB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/VCB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/VCB.svg",
                     SwiftCode = "BFTVVNVX",
                     LookupSupported = 1
                 }
@@ -785,8 +785,8 @@ public class BankInfoGenerator
                     Code = "VCCB",
                     Bin = 970454,
                     ShortName = "Ngân hàng Bản Việt",
-                    LogoUrl = "https=//api.vietqr.io/img/VCCB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/VCCB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/VCCB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/VCCB.svg",
                     SwiftCode = "VCBCVNVX",
                     LookupSupported = 1
                 }
@@ -800,8 +800,8 @@ public class BankInfoGenerator
                     Code = "VIB",
                     Bin = 970441,
                     ShortName = "VIB",
-                    LogoUrl = "https=//api.vietqr.io/img/VIB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/VIB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/VIB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/VIB.svg",
                     SwiftCode = "VNIBVNVX",
                     LookupSupported = 1
                 }
@@ -815,8 +815,8 @@ public class BankInfoGenerator
                     Code = "VNPTMONEY",
                     Bin = 971011,
                     ShortName = "VNPTMoney",
-                    LogoUrl = "https=//api.vietqr.io/img/VNPTMONEY.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/VNPTMONEY.svg",
+                    LogoUrl = "https://api.vietqr.io/img/VNPTMONEY.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/VNPTMONEY.svg",
                     SwiftCode = "",
                     LookupSupported = 0
                 }
@@ -830,8 +830,8 @@ public class BankInfoGenerator
                     Code = "VPB",
                     Bin = 970432,
                     ShortName = "VPBank",
-                    LogoUrl = "https=//api.vietqr.io/img/VPB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/VPB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/VPB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/VPB.svg",
                     SwiftCode = "VPBKVNVX",
                     LookupSupported = 1
                 }
@@ -845,8 +845,8 @@ public class BankInfoGenerator
                     Code = "VRB",
                     Bin = 970421,
                     ShortName = "VRB",
-                    LogoUrl = "https=//api.vietqr.io/img/VRB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/VRB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/VRB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/VRB.svg",
                     SwiftCode = "",
                     LookupSupported = 1
                 }
@@ -860,8 +860,8 @@ public class BankInfoGenerator
                     Code = "VTB",
                     Bin = 970415,
                     ShortName = "VietinBank",
-                    LogoUrl = "https=//api.vietqr.io/img/ICB.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/ICB.svg",
+                    LogoUrl = "https://api.vietqr.io/img/ICB.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/ICB.svg",
                     SwiftCode = "ICBVVNVX",
                     LookupSupported = 1
                 }
@@ -875,8 +875,8 @@ public class BankInfoGenerator
                     Code = "VTLMONEY",
                     Bin = 971005,
                     ShortName = "ViettelMoney",
-                    LogoUrl = "https=//api.vietqr.io/img/VIETTELMONEY.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/VTLMONEY.svg",
+                    LogoUrl = "https://api.vietqr.io/img/VIETTELMONEY.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/VTLMONEY.svg",
                     SwiftCode = "",
                     LookupSupported = 1
                 }
@@ -890,8 +890,8 @@ public class BankInfoGenerator
                     Code = "WOO",
                     Bin = 970457,
                     ShortName = "Woori",
-                    LogoUrl = "https=//api.vietqr.io/img/WVN.png",
-                    IconUrl = "https=//cdn.banklookup.net/assets/images/bank-icons/WVN.svg",
+                    LogoUrl = "https://api.vietqr.io/img/WVN.png",
+                    IconUrl = "https://cdn.banklookup.net/assets/images/bank-icons/WVN.svg",
                     SwiftCode = "",
                     LookupSupported = 1
                 }
