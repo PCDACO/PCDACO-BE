@@ -39,32 +39,29 @@ public sealed class GetModelsByManufacturer
                 model.Manufacturer.Id,
                 model.Manufacturer.Name
             );
-        public static Response FromEntity(Model model) =>
-            new(
-                model.Id,
-                model.Name,
-                model.ReleaseDate,
-                GetTimestampFromUuid.Execute(model.Id),
-                model.Manufacturer.Id,
-                model.Manufacturer.Name
-            );    
-        {
-            // Query models
+    }
+
+    public class Handler(
+        IAppDBContext context
+    ) : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
+    {
+        public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(Query request, CancellationToken cancellationToken)
+        {         // Query models
             IQueryable<Model> query = context
                 .Models.AsNoTracking()
                 .Include(m => m.Manufacturer)
                 .Where(m => m.ManufacturerId == request.ManufacturerId && !m.IsDeleted)
                 .Where(m => EF.Functions.ILike(m.Name, $"%{request.Name}%"));
-        // Get total result count
-        int count = await query.CountAsync(cancellationToken);
-        // Get models
-        IEnumerable<Response> models = await query
-            .OrderByDescending(m => m.Id)
-            .Skip((request.PageNumber - 1) * request.PageSize)
-            .Take(request.PageSize)
-            .Select(m => Response.FromEntity(m))
-            .ToListAsync(cancellationToken);
-        bool hasNext = query.Skip(request.PageSize * request.PageNumber).Any();
+            // Get total result count
+            int count = await query.CountAsync(cancellationToken);
+            // Get models
+            IEnumerable<Response> models = await query
+                .OrderByDescending(m => m.Id)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .Select(m => Response.FromEntity(m))
+                .ToListAsync(cancellationToken);
+            bool hasNext = query.Skip(request.PageSize * request.PageNumber).Any();
             // Return result
             return Result.Success(
                 OffsetPaginatedResponse<Response>.Map(
@@ -77,5 +74,5 @@ public sealed class GetModelsByManufacturer
                 "Lấy danh sách mô hình xe thành công"
             );
         }
-}
+    }
 }
