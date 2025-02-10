@@ -1,9 +1,16 @@
 using Ardalis.Result;
+
 using Domain.Entities;
+
+using MediatR;
+
+
 using Persistance.Data;
+
 using UseCases.UC_Model.Queries;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
+
 using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Model.Queries;
@@ -48,7 +55,7 @@ public class GetModelsByManufacturerTest(DatabaseTestBase fixture) : IAsyncLifet
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Equal("Lấy danh sách mô hình xe thành công", result.SuccessMessage);
         Assert.Single(result.Value.Items);
-        Assert.Equal(manufacturer1.Id, result.Value.Items.First().ManufacturerDetail?.Id);
+        Assert.Equal(manufacturer1.Id, result.Value.Items.First().ManufacturerId);
     }
 
     [Fact]
@@ -86,7 +93,7 @@ public class GetModelsByManufacturerTest(DatabaseTestBase fixture) : IAsyncLifet
         Assert.Single(result.Value.Items);
         var returnedModel = result.Value.Items.First();
         Assert.Equal("Special Test Model", returnedModel.Name);
-        Assert.Equal(manufacturer.Id, returnedModel.ManufacturerDetail?.Id);
+        Assert.Equal(manufacturer.Id, result.Value.Items.First().ManufacturerId);
     }
 
     [Fact]

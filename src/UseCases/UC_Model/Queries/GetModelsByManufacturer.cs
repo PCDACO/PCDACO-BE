@@ -1,7 +1,11 @@
 using Ardalis.Result;
+
 using Domain.Entities;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Utils;
@@ -22,7 +26,8 @@ public sealed class GetModelsByManufacturer
         string Name,
         DateTimeOffset ReleaseDate,
         DateTimeOffset CreatedAt,
-        ManufacturerDetail? ManufacturerDetail
+        Guid ManufacturerId,
+        string ManufacturerName
     )
     {
         public static Response FromEntity(Model model) =>
@@ -31,27 +36,17 @@ public sealed class GetModelsByManufacturer
                 model.Name,
                 model.ReleaseDate,
                 GetTimestampFromUuid.Execute(model.Id),
-                model.Manufacturer != null
-                    ? ManufacturerDetail.FromEntity(model.Manufacturer)
-                    : null
+                model.Manufacturer.Id,
+                model.Manufacturer.Name
             );
     }
 
-    public sealed record ManufacturerDetail(Guid Id, string Name)
+    public class Handler(
+        IAppDBContext context
+    ) : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
     {
-        public static ManufacturerDetail FromEntity(Manufacturer manufacturer) =>
-            new(manufacturer.Id, manufacturer.Name);
-    };
-
-    public sealed class Handler(IAppDBContext context)
-        : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
-    {
-        public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(
-            Query request,
-            CancellationToken cancellationToken
-        )
-        {
-            // Query models
+        public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(Query request, CancellationToken cancellationToken)
+        {         // Query models
             IQueryable<Model> query = context
                 .Models.AsNoTracking()
                 .Include(m => m.Manufacturer)
