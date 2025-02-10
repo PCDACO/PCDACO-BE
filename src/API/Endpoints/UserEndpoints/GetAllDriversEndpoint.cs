@@ -9,12 +9,12 @@ using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.UserEndpoints;
 
-public sealed class GetAllUsersEndpoint : ICarterModule
+public sealed class GetAllDriversEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/users", Handle)
-            .WithSummary("Get all users with pagination and filtering")
+        app.MapGet("/api/users/drivers", Handle)
+            .WithSummary("Get all drivers")
             .WithTags("Users")
             .RequireAuthorization();
     }
@@ -26,8 +26,8 @@ public sealed class GetAllUsersEndpoint : ICarterModule
         [FromQuery(Name = "keyword")] string? keyword = ""
     )
     {
-        Result<OffsetPaginatedResponse<GetAllUsers.Response>> result = await sender.Send(
-            new GetAllUsers.Query(
+        Result<OffsetPaginatedResponse<GetAllDrivers.Response>> result = await sender.Send(
+            new GetAllDrivers.Query(
                 PageNumber: pageNumber!.Value,
                 PageSize: pageSize!.Value,
                 Keyword: keyword!

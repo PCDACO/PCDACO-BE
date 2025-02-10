@@ -9,7 +9,7 @@ using UseCases.Utils;
 
 namespace UseCases.UC_User.Queries;
 
-public class GetAllUsers
+public class GetAllDrivers
 {
     public sealed record Query(int PageNumber = 1, int PageSize = 10, string Keyword = "")
         : IRequest<Result<OffsetPaginatedResponse<Response>>>;
@@ -22,7 +22,8 @@ public class GetAllUsers
         DateTimeOffset DateOfBirth,
         string Phone,
         string Role,
-        DateTimeOffset CreatedAt
+        DateTimeOffset CreatedAt,
+        bool? IsApproved
     )
     {
         public static async Task<Response> FromEntity(
@@ -50,7 +51,8 @@ public class GetAllUsers
                 user.DateOfBirth,
                 decryptedPhone,
                 user.Role.Name,
-                GetTimestampFromUuid.Execute(user.Id)
+                GetTimestampFromUuid.Execute(user.Id),
+                user.Driver.IsApprove
             );
         }
     }
@@ -76,8 +78,9 @@ public class GetAllUsers
             IQueryable<User> query = context
                 .Users.AsNoTracking()
                 .Include(u => u.Role)
+                .Include(u => u.Driver)
                 .Include(u => u.EncryptionKey)
-                .Where(u => !u.IsDeleted)
+                .Where(u => EF.Functions.ILike(u.Role.Name, "%Driver%") && !u.IsDeleted)
                 .Where(u =>
                     EF.Functions.ILike(u.Name, $"%{request.Keyword}%")
                     || EF.Functions.ILike(u.Email, $"%{request.Keyword}%")
