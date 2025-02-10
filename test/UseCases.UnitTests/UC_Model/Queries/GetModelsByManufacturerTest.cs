@@ -1,9 +1,15 @@
 using Ardalis.Result;
+
 using Domain.Entities;
+
+
+
 using Persistance.Data;
+
 using UseCases.UC_Model.Queries;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
+
 using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Model.Queries;
@@ -94,7 +100,7 @@ public class GetModelsByManufacturerTest(DatabaseTestBase fixture) : IAsyncLifet
     {
         // Arrange
         await SeedTestData(); // Creates 3 test models
-        var handler = new GetModelsByManufacturer.Handler(_dbContext);
+        // var handler = new GetModelsByManufacturer.Handler(_dbContext);
         var query = new GetModelsByManufacturer.Query(
             ManufacturerId: Guid.Empty,
             Name: "Non Existent Model",

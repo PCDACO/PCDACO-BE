@@ -1,7 +1,11 @@
 using Ardalis.Result;
+
 using Domain.Entities;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Utils;
@@ -37,7 +41,7 @@ public sealed class GetModelsByManufacturer
             );
     }
 
-    private class Handler(
+    public class Handler(
         IAppDBContext context
     ) : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
     {
