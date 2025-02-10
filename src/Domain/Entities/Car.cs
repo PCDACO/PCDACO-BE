@@ -14,6 +14,7 @@ public class Car : BaseEntity
     public required Guid TransmissionTypeId { get; set; }
     public required Guid StatusId { get; set; }
     public required string EncryptedLicensePlate { get; set; }
+    public required string Address { get; set; }
     public required string Color { get; set; }
     public required int Seat { get; set; }
     public string Description { get; set; } = string.Empty;
