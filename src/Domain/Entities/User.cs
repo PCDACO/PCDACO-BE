@@ -17,6 +17,7 @@ public class User : BaseEntity
     public required DateTimeOffset DateOfBirth { get; set; }
     public required string Phone { get; set; }
     public decimal Balance { get; set; } = 0;
+    public bool IsBanned { get; set; } = false;
 
     [Range(1, 5)]
     // Navigation Properties
