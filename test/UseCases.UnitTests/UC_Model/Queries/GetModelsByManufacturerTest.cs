@@ -2,6 +2,7 @@ using Ardalis.Result;
 
 using Domain.Entities;
 
+using MediatR;
 
 
 using Persistance.Data;
@@ -54,7 +55,7 @@ public class GetModelsByManufacturerTest(DatabaseTestBase fixture) : IAsyncLifet
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Equal("Lấy danh sách mô hình xe thành công", result.SuccessMessage);
         Assert.Single(result.Value.Items);
-        Assert.Equal(manufacturer1.Id, result.Value.Items.First().ManufacturerDetail?.Id);
+        Assert.Equal(manufacturer1.Id, result.Value.Items.First().ManufacturerId);
     }
 
     [Fact]
@@ -92,7 +93,7 @@ public class GetModelsByManufacturerTest(DatabaseTestBase fixture) : IAsyncLifet
         Assert.Single(result.Value.Items);
         var returnedModel = result.Value.Items.First();
         Assert.Equal("Special Test Model", returnedModel.Name);
-        Assert.Equal(manufacturer.Id, returnedModel.ManufacturerDetail?.Id);
+        Assert.Equal(manufacturer.Id, result.Value.Items.First().ManufacturerId);
     }
 
     [Fact]
@@ -100,7 +101,7 @@ public class GetModelsByManufacturerTest(DatabaseTestBase fixture) : IAsyncLifet
     {
         // Arrange
         await SeedTestData(); // Creates 3 test models
-        // var handler = new GetModelsByManufacturer.Handler(_dbContext);
+        var handler = new GetModelsByManufacturer.Handler(_dbContext);
         var query = new GetModelsByManufacturer.Query(
             ManufacturerId: Guid.Empty,
             Name: "Non Existent Model",
