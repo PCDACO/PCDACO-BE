@@ -9,6 +9,7 @@ public interface IAppDBContext : IDisposable
     Task SaveChangesAsync(CancellationToken cancellationToken);
     DbSet<Amenity> Amenities { get; }
     DbSet<BankAccount> BankAccounts { get; }
+    DbSet<BankInfo> BankInfos { get; }
     DbSet<Booking> Bookings { get; }
     DbSet<BookingStatus> BookingStatuses { get; }
     DbSet<Car> Cars { get; }

@@ -21,6 +21,7 @@ public class UpdateDatabase
         context.Database.Migrate();
         // Seed data
         Amenity[] amenities = AmenityGenerator.Execute();
+        BankInfo[] bankInfos = BankInfoGenerator.Execute();
         BookingStatus[] bookingStatuses = BookingStatusGenerator.Execute();
         CarStatus[] carStatuses = CarStatusGenerator.Execute();
         CompensationStatus[] compensationStatuses = CompensationStatusGenerator.Execute();
@@ -42,6 +43,7 @@ public class UpdateDatabase
         tasks.Add(context.AddRangeAsync(userRoles));
         tasks.Add(context.AddRangeAsync(contractStatuses));
         tasks.Add(context.AddRangeAsync(amenities));
+        tasks.Add(context.AddRangeAsync(bankInfos));
         tasks.Add(context.AddRangeAsync(bookingStatuses));
         tasks.Add(context.AddRangeAsync(carStatuses));
         tasks.Add(context.AddRangeAsync(compensationStatuses));
