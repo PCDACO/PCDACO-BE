@@ -1,10 +1,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-
 using Domain.Entities;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -15,7 +12,8 @@ public class AuthMiddleware(IConfiguration configuration) : IMiddleware
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         // configure issuer
-        string issuer = configuration["ISSUER"] ?? throw new ArgumentNullException("Issuer is not configured");
+        string issuer =
+            configuration["ISSUER"] ?? throw new ArgumentNullException("Issuer is not configured");
         Console.WriteLine(issuer);
         string? authHeader = context.Request.Headers.Authorization.ToString();
         if (string.IsNullOrEmpty(authHeader) || !authHeader.Contains("Bearer "))
@@ -46,12 +44,13 @@ public class AuthMiddleware(IConfiguration configuration) : IMiddleware
             return;
         }
         IAppDBContext dbContext = context.RequestServices.GetRequiredService<IAppDBContext>();
-        User? user = await dbContext.Users
-            .AsNoTracking()
-            .Include(u => u.Role)
-            .Include(u => u.Driver)
-            .Include(u => u.EncryptionKey)
-            .FirstOrDefaultAsync(u => u.Id == userId) ?? throw new Exception("User not found");
+        User? user =
+            await dbContext
+                .Users.AsNoTracking()
+                .Include(u => u.Role)
+                .Include(u => u.License)
+                .Include(u => u.EncryptionKey)
+                .FirstOrDefaultAsync(u => u.Id == userId) ?? throw new Exception("User not found");
         CurrentUser currentUser = context.RequestServices.GetRequiredService<CurrentUser>();
         currentUser.SetUser(user);
         await next.Invoke(context);
