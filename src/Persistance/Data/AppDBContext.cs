@@ -10,6 +10,7 @@ public class AppDBContext(DbContextOptions context) : DbContext(context), IAppDB
 {
     public DbSet<Amenity> Amenities => Set<Amenity>();
     public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
+    public DbSet<BankInfo> BankInfos => Set<BankInfo>();
     public DbSet<Booking> Bookings => Set<Booking>();
     public DbSet<Car> Cars => Set<Car>();
     public DbSet<CarAmenity> CarAmenities => Set<CarAmenity>();
