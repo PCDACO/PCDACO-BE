@@ -1,19 +1,12 @@
 using Ardalis.Result;
-
 using Domain.Entities;
 using Domain.Shared;
-
 using FluentValidation;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using NetTopologySuite.Geometries;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
-
 using UUIDNext;
 
 namespace UseCases.UC_Car.Commands;
@@ -29,6 +22,7 @@ public sealed class CreateCar
         string Color,
         int Seat,
         string Description,
+        string Address,
         decimal FuelConsumption,
         bool RequiresCollateral,
         decimal PricePerHour,
@@ -62,8 +56,7 @@ public sealed class CreateCar
             if (request.AmenityIds.Length > 0)
             {
                 List<Amenity> amenities = await context
-                    .Amenities
-                    .AsNoTracking()
+                    .Amenities.AsNoTracking()
                     .Where(a => request.AmenityIds.Contains(a.Id))
                     .ToListAsync(cancellationToken);
                 if (amenities.Count != request.AmenityIds.Length)
@@ -71,8 +64,7 @@ public sealed class CreateCar
             }
             // Check if transmission type is exist
             TransmissionType? checkingTransmissionType = await context
-                .TransmissionTypes
-                .AsNoTracking()
+                .TransmissionTypes.AsNoTracking()
                 .FirstOrDefaultAsync(
                     t => t.Id == request.TransmissionTypeId && !t.IsDeleted,
                     cancellationToken
@@ -90,8 +82,7 @@ public sealed class CreateCar
                 return Result.Error("Kiểu nhiên liệu không tồn tại !");
             // Check if status is exist
             CarStatus? checkingStatus = await context
-                .CarStatuses
-                .AsNoTracking()
+                .CarStatuses.AsNoTracking()
                 .FirstOrDefaultAsync(
                     s => EF.Functions.ILike(s.Name, $"%available%") && !s.IsDeleted,
                     cancellationToken
@@ -101,7 +92,10 @@ public sealed class CreateCar
             // Check if model is exist
             Model? checkingModel = await context
                 .Models.AsNoTracking()
-                .FirstOrDefaultAsync(m => m.Id == request.ModelId && !m.IsDeleted, cancellationToken);
+                .FirstOrDefaultAsync(
+                    m => m.Id == request.ModelId && !m.IsDeleted,
+                    cancellationToken
+                );
             if (checkingModel is null)
                 return Result.Error("Mô hình xe không tồn tại !");
             (string key, string iv) = await keyManagementService.GenerateKeyAsync();
@@ -114,37 +108,37 @@ public sealed class CreateCar
             EncryptionKey newEncryptionKey = new() { EncryptedKey = encryptedKey, IV = iv };
             context.EncryptionKeys.Add(newEncryptionKey);
             Guid carId = Uuid.NewDatabaseFriendly(Database.PostgreSql);
-            Car newCar =
-                new()
-                {
-                    Id = carId,
-                    ModelId = request.ModelId,
-                    OwnerId = currentUser.User!.Id,
-                    EncryptedLicensePlate = encryptedLicensePlate,
-                    EncryptionKeyId = newEncryptionKey.Id,
-                    Color = request.Color,
-                    Seat = request.Seat,
-                    TransmissionTypeId = request.TransmissionTypeId,
-                    Description = request.Description,
-                    FuelTypeId = request.FuelTypeId,
-                    FuelConsumption = request.FuelConsumption,
-                    RequiresCollateral = request.RequiresCollateral,
-                    PricePerHour = request.PricePerHour,
-                    PricePerDay = request.PricePerDay,
-                    StatusId = checkingStatus.Id,
-                    Location = geometryFactory.CreatePoint(
-                        new Coordinate((double)request.Longtitude!, (double)request.Latitude!)
-                    ),
-                    CarStatistic = new() { CarId = carId },
-                    CarAmenities =
-                    [
-                        .. request.AmenityIds.Select(a => new CarAmenity
-                        {
-                            CarId = carId,
-                            AmenityId = a
-                        })
-                    ]
-                };
+            Car newCar = new()
+            {
+                Id = carId,
+                ModelId = request.ModelId,
+                OwnerId = currentUser.User!.Id,
+                EncryptedLicensePlate = encryptedLicensePlate,
+                EncryptionKeyId = newEncryptionKey.Id,
+                Color = request.Color,
+                Seat = request.Seat,
+                TransmissionTypeId = request.TransmissionTypeId,
+                Description = request.Description,
+                Address = request.Address,
+                FuelTypeId = request.FuelTypeId,
+                FuelConsumption = request.FuelConsumption,
+                RequiresCollateral = request.RequiresCollateral,
+                PricePerHour = request.PricePerHour,
+                PricePerDay = request.PricePerDay,
+                StatusId = checkingStatus.Id,
+                Location = geometryFactory.CreatePoint(
+                    new Coordinate((double)request.Longtitude!, (double)request.Latitude!)
+                ),
+                CarStatistic = new() { CarId = carId },
+                CarAmenities =
+                [
+                    .. request.AmenityIds.Select(a => new CarAmenity
+                    {
+                        CarId = carId,
+                        AmenityId = a,
+                    }),
+                ],
+            };
 
             CarStatistic newCarStatistic = new() { CarId = carId };
 
@@ -181,6 +175,7 @@ public sealed class CreateCar
             RuleFor(x => x.Description)
                 .MaximumLength(500)
                 .WithMessage("Mô tả không được quá 500 ký tự !");
+            RuleFor(x => x.Address).NotEmpty().WithMessage("Địa chỉ không được để trống !");
             RuleFor(x => x.FuelConsumption)
                 .NotEmpty()
                 .WithMessage("Mức tiêu hao nhiên liệu không được để trống !")
