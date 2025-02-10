@@ -7,7 +7,6 @@ using UseCases.DTOs;
 using UseCases.UC_User.Queries;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
-using Xunit;
 
 namespace UseCases.UnitTests.UC_User.Queries;
 
@@ -91,6 +90,10 @@ public class GetAllDriversTests : IAsyncLifetime
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Equal(3, result.Value.Items.Count());
+
+        // Ensure the users are sorted by CreateAt
+        var sortedUsers = result.Value.Items.OrderByDescending(u => u.Id).ToList();
+        Assert.Equal(sortedUsers, result.Value.Items);
     }
 
     [Fact]
@@ -161,11 +164,7 @@ public class GetAllDriversTests : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
-        Assert.Equal(1, result.Value.Items.Count());
-
-        // Ensure the users are sorted by CreateAt
-        var sortedUsers = result.Value.Items.OrderByDescending(u => u.Id).ToList();
-        Assert.Equal(sortedUsers, result.Value.Items);
+        Assert.Single(result.Value.Items);
 
         // Ensure the correct users are returned for the second page
         Assert.Equal("User One", result.Value.Items.FirstOrDefault()?.Name);

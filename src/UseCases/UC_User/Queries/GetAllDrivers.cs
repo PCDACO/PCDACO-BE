@@ -118,7 +118,7 @@ public class GetAllDrivers
                     request.PageSize,
                     hasNext
                 ),
-                "Lấy danh sách người dùng thành công"
+                "Lấy danh sách người lái xe thành công"
             );
         }
     }
