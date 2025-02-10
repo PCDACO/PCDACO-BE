@@ -25,7 +25,7 @@ public class User : BaseEntity
     public EncryptionKey EncryptionKey { get; set; } = null!;
     [ForeignKey(nameof(RoleId))]
     public UserRole Role { get; set; } = null!;
-    public Driver Driver { get; set; } = null!;
+    public License License { get; set; } = null!;
     public UserStatistic UserStatistic { get; set; } = null!;
     public WithdrawalRequest WithdrawalRequest { get; set; } = null!;
     public ICollection<Booking> Bookings { get; set; } = [];
