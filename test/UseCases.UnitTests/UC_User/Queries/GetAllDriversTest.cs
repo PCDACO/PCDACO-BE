@@ -63,10 +63,11 @@ public class GetAllDriversTests : IAsyncLifetime
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
         var adminUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(adminUser);
 
-        var users = await TestDataCreateUser.CreateTestUserList(_dbContext, adminRole);
+        var users = await TestDataCreateUser.CreateTestUserList(_dbContext, driverRole);
 
         _mockKeyManagementService
             .Setup(kms => kms.DecryptKey(It.IsAny<string>(), It.IsAny<string>()))
@@ -89,7 +90,7 @@ public class GetAllDriversTests : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
-        Assert.Equal(4, result.Value.Items.Count());
+        Assert.Equal(3, result.Value.Items.Count());
     }
 
     [Fact]
@@ -97,10 +98,11 @@ public class GetAllDriversTests : IAsyncLifetime
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
         var adminUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(adminUser);
 
-        var users = await TestDataCreateUser.CreateTestUserList(_dbContext, adminRole);
+        var users = await TestDataCreateUser.CreateTestUserList(_dbContext, driverRole);
 
         _mockKeyManagementService
             .Setup(kms => kms.DecryptKey(It.IsAny<string>(), It.IsAny<string>()))
@@ -132,10 +134,11 @@ public class GetAllDriversTests : IAsyncLifetime
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
         var adminUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(adminUser);
 
-        var users = await TestDataCreateUser.CreateTestUserList(_dbContext, adminRole);
+        var users = await TestDataCreateUser.CreateTestUserList(_dbContext, driverRole);
 
         _mockKeyManagementService
             .Setup(kms => kms.DecryptKey(It.IsAny<string>(), It.IsAny<string>()))
@@ -158,7 +161,7 @@ public class GetAllDriversTests : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
-        Assert.Equal(2, result.Value.Items.Count());
+        Assert.Equal(1, result.Value.Items.Count());
 
         // Ensure the users are sorted by CreateAt
         var sortedUsers = result.Value.Items.OrderByDescending(u => u.Id).ToList();
@@ -166,6 +169,6 @@ public class GetAllDriversTests : IAsyncLifetime
 
         // Ensure the correct users are returned for the second page
         Assert.Equal("User One", result.Value.Items.FirstOrDefault()?.Name);
-        Assert.Equal("Test User", result.Value.Items.LastOrDefault()?.Name);
+        Assert.Equal("User One", result.Value.Items.LastOrDefault()?.Name);
     }
 }
