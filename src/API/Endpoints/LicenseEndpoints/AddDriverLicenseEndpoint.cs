@@ -3,11 +3,10 @@ using Ardalis.Result;
 using Carter;
 using Infrastructure.Idempotency;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
 using UseCases.UC_Driver.Commands;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
-namespace API.Endpoints.DriverEndpoints;
+namespace API.Endpoints.LicenseEndpoints;
 
 public class AddDriverLicenseEndpoint : ICarterModule
 {
@@ -25,7 +24,7 @@ public class AddDriverLicenseEndpoint : ICarterModule
     private async Task<IResult> Handle(
         ISender sender,
         Guid id,
-        UpdateDriverLicenseRequest request,
+        AddDriverLicenseRequest request,
         CancellationToken cancellationToken
     )
     {
@@ -41,4 +40,4 @@ public class AddDriverLicenseEndpoint : ICarterModule
     }
 }
 
-public record UpdateDriverLicenseRequest(string LicenseNumber, DateTime ExpirationDate);
+public record AddDriverLicenseRequest(string LicenseNumber, DateTime ExpirationDate);

@@ -1,13 +1,11 @@
 using API.Utils;
 using Ardalis.Result;
 using Carter;
-using Infrastructure.Idempotency;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
 using UseCases.UC_Driver.Commands;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
-namespace API.Endpoints.DriverEndpoints;
+namespace API.Endpoints.LicenseEndpoints;
 
 public class UploadDriverLicenseImageEndpoint : ICarterModule
 {
