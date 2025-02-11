@@ -13,7 +13,7 @@ public class UploadDriverLicenseImageEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch("/api/license/{id:guid}/images", Handle)
+        app.MapPatch("/api/licenses/{id:guid}/images", Handle)
             .WithName("UploadDriverLicenseImage")
             .WithTags("Licenses")
             .RequireAuthorization()

@@ -13,7 +13,7 @@ public class AddDriverLicenseEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/users/{id:guid}/license", Handle)
+        app.MapPost("/api/users/{id:guid}/licenses", Handle)
             .WithName("AddDriverLicense")
             .WithSummary("Add driver license information")
             .WithTags("Licenses")
