@@ -115,7 +115,7 @@ public sealed class AddDriverLicense
             RuleFor(x => x.ExpirationDate)
                 .NotEmpty()
                 .WithMessage("Ngày hết hạn không được để trống")
-                .GreaterThan(DateTime.UtcNow)
+                .GreaterThanOrEqualTo(DateTime.UtcNow.Date)
                 .WithMessage("Ngày hết hạn phải lớn hơn ngày hiện tại");
         }
     }
