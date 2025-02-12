@@ -11,7 +11,7 @@ public sealed class LoginEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/users/login", Handle).WithSummary("Login a user").WithTags("Users");
+        app.MapPost("/api/auth/login", Handle).WithSummary("Login a user").WithTags("Auth");
     }
 
     private async Task<IResult> Handle(ISender sender, LoginRequest request)

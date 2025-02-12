@@ -16,7 +16,8 @@ public class AuthMiddleware(IConfiguration configuration) : IMiddleware
     public async Task InvokeAsync(HttpContext context, RequestDelegate next)
     {
         // configure issuer
-        string issuer = configuration["ISSUER"] ?? throw new ArgumentNullException("Issuer is not configured");
+        string issuer =
+            configuration["ISSUER"] ?? throw new ArgumentNullException("Issuer is not configured");
         Console.WriteLine(issuer);
         string? authHeader = context.Request.Headers.Authorization.ToString();
         if (string.IsNullOrEmpty(authHeader) || !authHeader.Contains("Bearer "))
@@ -51,17 +52,18 @@ public class AuthMiddleware(IConfiguration configuration) : IMiddleware
             {
                 IsSuccess = false,
                 Value = null!,
-                Message = "Invalid Id",
+                Message = "Id sai",
             };
             await context.Response.WriteAsJsonAsync(response, default);
         }
         IAppDBContext dbContext = context.RequestServices.GetRequiredService<IAppDBContext>();
-        User? user = await dbContext.Users
-            .AsNoTracking()
-            .Include(u => u.Role)
-            .Include(u => u.Driver)
-            .Include(u => u.EncryptionKey)
-            .FirstOrDefaultAsync(u => u.Id == userId);
+        User? user =
+            await dbContext
+                .Users.AsNoTracking()
+                .Include(u => u.Role)
+                .Include(u => u.License)
+                .Include(u => u.EncryptionKey)
+                .FirstOrDefaultAsync(u => u.Id == userId);
         if (user is null)
         {
             context.Response.ContentType = "application/json";
@@ -76,7 +78,7 @@ public class AuthMiddleware(IConfiguration configuration) : IMiddleware
             await context.Response.WriteAsJsonAsync(response, default);
         }
         CurrentUser currentUser = context.RequestServices.GetRequiredService<CurrentUser>();
-        currentUser.SetUser(user);
+        currentUser.SetUser(user!);
         await next.Invoke(context);
     }
 }
