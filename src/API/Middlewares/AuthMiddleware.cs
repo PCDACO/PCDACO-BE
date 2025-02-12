@@ -1,4 +1,5 @@
 using System.IdentityModel.Tokens.Jwt;
+using System.Net;
 using System.Security.Claims;
 
 using Domain.Entities;
@@ -43,7 +44,16 @@ public class AuthMiddleware(IConfiguration configuration) : IMiddleware
                 ?.Value ?? string.Empty;
         if (!Guid.TryParse(id, out Guid userId))
         {
-            return;
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+
+            var response = new ResponseResult<string>
+            {
+                IsSuccess = false,
+                Value = null!,
+                Message = "Không có tìm thấy người dùng hiện tại",
+            };
+            await context.Response.WriteAsJsonAsync(response, default);
         }
         IAppDBContext dbContext = context.RequestServices.GetRequiredService<IAppDBContext>();
         User? user = await dbContext.Users
