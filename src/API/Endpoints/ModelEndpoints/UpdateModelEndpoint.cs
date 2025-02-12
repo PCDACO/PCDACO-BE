@@ -25,5 +25,5 @@ public class UpdateModelEndpoint : ICarterModule
         return result.MapResult();
     }
 
-    private record UpdateModelRequest(string Name, DateTime ReleaseDate, Guid ManufacturerId);
+    private record UpdateModelRequest(string Name, DateTimeOffset ReleaseDate, Guid ManufacturerId);
 }
