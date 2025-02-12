@@ -51,7 +51,7 @@ public class AuthMiddleware(IConfiguration configuration) : IMiddleware
             {
                 IsSuccess = false,
                 Value = null!,
-                Message = "Không có tìm thấy người dùng hiện tại",
+                Message = "Invalid Id",
             };
             await context.Response.WriteAsJsonAsync(response, default);
         }
@@ -61,7 +61,20 @@ public class AuthMiddleware(IConfiguration configuration) : IMiddleware
             .Include(u => u.Role)
             .Include(u => u.Driver)
             .Include(u => u.EncryptionKey)
-            .FirstOrDefaultAsync(u => u.Id == userId) ?? throw new Exception("User not found");
+            .FirstOrDefaultAsync(u => u.Id == userId);
+        if (user is null)
+        {
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+
+            var response = new ResponseResult<string>
+            {
+                IsSuccess = false,
+                Value = null!,
+                Message = "Không có tìm thấy người dùng hiện tại",
+            };
+            await context.Response.WriteAsJsonAsync(response, default);
+        }
         CurrentUser currentUser = context.RequestServices.GetRequiredService<CurrentUser>();
         currentUser.SetUser(user);
         await next.Invoke(context);
