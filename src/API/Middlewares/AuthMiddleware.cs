@@ -55,6 +55,7 @@ public class AuthMiddleware(IConfiguration configuration) : IMiddleware
                 Message = "ID sai",
             };
             await context.Response.WriteAsJsonAsync(response, default);
+            return;
         }
         IAppDBContext dbContext = context.RequestServices.GetRequiredService<IAppDBContext>();
         User? user =
@@ -76,6 +77,7 @@ public class AuthMiddleware(IConfiguration configuration) : IMiddleware
                 Message = "Không có tìm thấy người dùng hiện tại",
             };
             await context.Response.WriteAsJsonAsync(response, default);
+            return;
         }
         CurrentUser currentUser = context.RequestServices.GetRequiredService<CurrentUser>();
         currentUser.SetUser(user!);
