@@ -1,8 +1,13 @@
 using Ardalis.Result;
+
 using Domain.Entities;
+
 using FluentValidation;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 using UseCases.Utils;
 
@@ -25,24 +30,15 @@ public static class RefreshUserToken
             var refreshToken = await context
                 .RefreshTokens.Include(rt => rt.User)
                 .FirstOrDefaultAsync(rt => rt.Token == request.RefreshToken, cancellationToken);
-
             if (refreshToken == null)
-            {
-                return Result.Error("Token làm mới không hợp lệ");
-            }
-
+                return Result.Unauthorized("Token làm mới không hợp lệ");
             if (refreshToken.RevokedAt != null)
-            {
-                return Result.Error("Token đã bị thu hồi");
-            }
-
+                return Result.Unauthorized("Token đã bị thu hồi");
             var user = refreshToken.User;
             var newAccessToken = tokenService.GenerateAccessToken(user);
             var newRefreshToken = tokenService.GenerateRefreshToken();
-
             // Revoke the old refresh token
             refreshToken.RevokedAt = DateTimeOffset.UtcNow;
-
             // Create new refresh token
             var newRefreshTokenEntity = new RefreshToken
             {
@@ -50,10 +46,8 @@ public static class RefreshUserToken
                 UserId = user.Id,
                 ExpiryDate = DateTimeOffset.UtcNow.AddMinutes(60),
             };
-
             await context.RefreshTokens.AddAsync(newRefreshTokenEntity, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
-
             return Result.Success(
                 new TokenResponse(newAccessToken, newRefreshToken),
                 "Làm mới token thành công"
