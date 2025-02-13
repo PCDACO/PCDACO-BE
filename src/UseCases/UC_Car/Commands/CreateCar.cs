@@ -22,7 +22,6 @@ public sealed class CreateCar
         string Color,
         int Seat,
         string Description,
-        string Address,
         decimal FuelConsumption,
         bool RequiresCollateral,
         decimal PricePerHour,
@@ -119,7 +118,6 @@ public sealed class CreateCar
                 Seat = request.Seat,
                 TransmissionTypeId = request.TransmissionTypeId,
                 Description = request.Description,
-                Address = request.Address,
                 FuelTypeId = request.FuelTypeId,
                 FuelConsumption = request.FuelConsumption,
                 RequiresCollateral = request.RequiresCollateral,
@@ -175,7 +173,6 @@ public sealed class CreateCar
             RuleFor(x => x.Description)
                 .MaximumLength(500)
                 .WithMessage("Mô tả không được quá 500 ký tự !");
-            RuleFor(x => x.Address).NotEmpty().WithMessage("Địa chỉ không được để trống !");
             RuleFor(x => x.FuelConsumption)
                 .NotEmpty()
                 .WithMessage("Mức tiêu hao nhiên liệu không được để trống !")
