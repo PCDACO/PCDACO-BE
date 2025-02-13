@@ -22,7 +22,6 @@ public sealed class UpdateCar
         string Color,
         int Seat,
         string Description,
-        string Address,
         decimal FuelConsumption,
         bool RequiresCollateral,
         decimal PricePerHour,
@@ -104,7 +103,6 @@ public sealed class UpdateCar
             checkingCar.Color = request.Color;
             checkingCar.Seat = request.Seat;
             checkingCar.Description = request.Description;
-            checkingCar.Address = request.Address;
             checkingCar.TransmissionTypeId = request.TransmissionTypeId;
             checkingCar.FuelTypeId = request.FuelTypeId;
             checkingCar.FuelConsumption = request.FuelConsumption;
@@ -144,7 +142,6 @@ public sealed class UpdateCar
             RuleFor(x => x.Description)
                 .MaximumLength(500)
                 .WithMessage("Mô tả không được quá 500 ký tự !");
-            RuleFor(x => x.Address).NotEmpty().WithMessage("Địa chỉ không được để trống !");
             RuleFor(x => x.FuelConsumption)
                 .NotEmpty()
                 .WithMessage("Mức tiêu hao nhiên liệu không được để trống !")

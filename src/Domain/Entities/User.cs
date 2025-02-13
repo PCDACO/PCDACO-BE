@@ -1,6 +1,5 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-
 using Domain.Shared;
 
 namespace Domain.Entities;
@@ -23,6 +22,7 @@ public class User : BaseEntity
     // Navigation Properties
     [ForeignKey(nameof(EncryptionKeyId))]
     public EncryptionKey EncryptionKey { get; set; } = null!;
+
     [ForeignKey(nameof(RoleId))]
     public UserRole Role { get; set; } = null!;
     public License License { get; set; } = null!;
@@ -39,6 +39,7 @@ public class User : BaseEntity
     [InverseProperty(nameof(Transaction.ToUser))]
     public ICollection<Transaction> ReceivedTransactions { get; set; } = [];
     public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
+    public ICollection<InspectionSchedule> InspectionSchedules { get; set; } = [];
 
     public bool IsAdmin() => Role.Name == "Admin";
 

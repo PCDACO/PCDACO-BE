@@ -14,7 +14,6 @@ public class Car : BaseEntity
     public required Guid TransmissionTypeId { get; set; }
     public required Guid StatusId { get; set; }
     public required string EncryptedLicensePlate { get; set; }
-    public required string Address { get; set; }
     public required string Color { get; set; }
     public required int Seat { get; set; }
     public string Description { get; set; } = string.Empty;
@@ -49,4 +48,5 @@ public class Car : BaseEntity
     public ICollection<ImageCar> ImageCars { get; set; } = [];
     public ICollection<CarReport> CarReports { get; set; } = [];
     public ICollection<Booking> Bookings { get; set; } = [];
+    public ICollection<InspectionSchedule> InspectionSchedules { get; set; } = [];
 }
