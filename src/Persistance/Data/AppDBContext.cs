@@ -45,6 +45,8 @@ public class AppDBContext(DbContextOptions context) : DbContext(context), IAppDB
 
     public DbSet<UserRole> UserRoles => Set<UserRole>();
     public DbSet<Model> Models => Set<Model>();
+    public DbSet<InspectionSchedule> InspectionSchedules => Set<InspectionSchedule>();
+    public DbSet<InspectionStatus> InspectionStatuses => Set<InspectionStatus>();
 
     async Task IAppDBContext.SaveChangesAsync(CancellationToken cancellationToken) =>
         await SaveChangesAsync(cancellationToken);

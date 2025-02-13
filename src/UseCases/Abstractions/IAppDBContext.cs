@@ -42,4 +42,6 @@ public interface IAppDBContext : IDisposable
     DbSet<WithdrawalRequest> WithdrawalRequests { get; }
     DbSet<WithdrawalRequestStatus> WithdrawalRequestStatuses { get; }
     DbSet<Model> Models { get; }
+    DbSet<InspectionSchedule> InspectionSchedules { get; }
+    DbSet<InspectionStatus> InspectionStatuses { get; }
 }
