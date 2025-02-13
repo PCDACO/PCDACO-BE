@@ -20,15 +20,22 @@ namespace UseCases.UC_Amenity.Commands;
 public sealed class UpdateAmenity
 {
     public record Command(Guid Id, string Name, string Description, Stream? Icon = null)
-        : IRequest<Result>;
+        : IRequest<Result<Response>>;
 
+    public record Response(
+        Guid Id
+    )
+    {
+        public static Response FromEntity(Amenity amenity)
+        => new(amenity.Id);
+    }
     internal class Handler(
         IAppDBContext context,
         CurrentUser currentUser,
         ICloudinaryServices cloudinaryServices
-    ) : IRequestHandler<Command, Result>
+    ) : IRequestHandler<Command, Result<Response>>
     {
-        public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
+        public async Task<Result<Response>> Handle(Command request, CancellationToken cancellationToken)
         {
             if (!currentUser.User!.IsAdmin())
                 return Result.Forbidden("Bạn không có quyền thực hiện thao tác này");
@@ -52,7 +59,7 @@ public sealed class UpdateAmenity
                 updatingAmenity.IconUrl = iconUrl;
             }
             await context.SaveChangesAsync(cancellationToken);
-            return Result.SuccessWithMessage("Cập nhật tiện nghi thành công");
+            return Result.Success(Response.FromEntity(updatingAmenity), "Cập nhật tiện nghi thành công");
         }
     }
 
