@@ -36,6 +36,7 @@ public class UpdateDatabase
         WithdrawalRequestStatus[] withdrawalRequestStatuses =
             WithdrawalRequestStatusGenerator.Execute();
         Model[] models = ModelGenerator.Execute(manufacturers);
+        InspectionStatus[] inspectionStatuses = InspectionStatusGenerator.Execute();
 
         List<Task> tasks = [];
 
@@ -54,6 +55,7 @@ public class UpdateDatabase
         tasks.Add(context.AddRangeAsync(transmissionTypes));
         tasks.Add(context.AddRangeAsync(manufacturers));
         tasks.Add(context.AddRangeAsync(models));
+        tasks.Add(context.AddRangeAsync(inspectionStatuses));
         await Task.WhenAll(tasks);
         await context.SaveChangesAsync();
     }
