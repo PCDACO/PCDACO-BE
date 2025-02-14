@@ -24,12 +24,25 @@ public sealed class ProcessPaymentWebhook
             if (!Guid.TryParse(request.WebhookType.signature, out Guid bookingId))
                 return Result.Error("BookingId không hợp lệ");
 
+            // TODO: test this method
             int result = await context
                 .Bookings.AsSplitQuery()
                 .Where(o => o.Id == bookingId)
-                .ExecuteUpdateAsync(s => s.SetProperty(o => o.IsPaid, true), cancellationToken);
+                .ExecuteUpdateAsync(
+                    s =>
+                        s.SetProperty(o => o.IsPaid, true)
+                            .SetProperty(
+                                o => o.Car.Owner.UserStatistic.TotalEarning,
+                                +webhookData.amount
+                            )
+                            .SetProperty(o => o.Car.CarStatistic.TotalEarning, +webhookData.amount),
+                    cancellationToken
+                );
 
-            return result == 0 ? Result.NotFound("Không tìm thấy booking") : Result.Success();
+            if (result == 0)
+                return Result.NotFound("Không tìm thấy booking");
+
+            return Result.Success();
         }
     }
 }
