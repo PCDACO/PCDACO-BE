@@ -30,7 +30,7 @@ public class BankInfoGenerator
                 "ABB",
                 new BankInfo
                 {
-                    BankLookUpId = "2d71f051-72fa-48bd-a362-27a08e8df3b9",
+                    BankLookUpId = Guid.Parse("2d71f051-72fa-48bd-a362-27a08e8df3b9"),
                     Name = "Ngân hàng TMCP An Bình",
                     Code = "ABB",
                     Bin = 970425,
@@ -45,7 +45,7 @@ public class BankInfoGenerator
                 "ACB",
                 new BankInfo
                 {
-                    BankLookUpId = "5b8bb807-6d1c-485b-986e-ad0fb2a6d4d2",
+                    BankLookUpId = Guid.Parse("5b8bb807-6d1c-485b-986e-ad0fb2a6d4d2"),
                     Name = "Ngân hàng TMCP Á Châu",
                     Code = "ACB",
                     Bin = 970416,
@@ -60,7 +60,7 @@ public class BankInfoGenerator
                 "BAB",
                 new BankInfo
                 {
-                    BankLookUpId = "f599edf9-40c8-4bbf-87e8-230c1787a439",
+                    BankLookUpId = Guid.Parse("f599edf9-40c8-4bbf-87e8-230c1787a439"),
                     Name = "Ngân hàng TMCP Bắc Á",
                     Code = "BAB",
                     Bin = 970409,
@@ -75,7 +75,7 @@ public class BankInfoGenerator
                 "BIDV",
                 new BankInfo
                 {
-                    BankLookUpId = "f956e517-d4c1-43b1-bbbb-277bdc5f9037",
+                    BankLookUpId = Guid.Parse("f956e517-d4c1-43b1-bbbb-277bdc5f9037"),
                     Name = "Ngân hàng TMCP Đầu tư và Phát triển Việt Nam",
                     Code = "BIDV",
                     Bin = 970418,
@@ -90,7 +90,7 @@ public class BankInfoGenerator
                 "BVB",
                 new BankInfo
                 {
-                    BankLookUpId = "a4f2d7b2-7b85-4420-8273-3c5d0a69e8f1",
+                    BankLookUpId = Guid.Parse("a4f2d7b2-7b85-4420-8273-3c5d0a69e8f1"),
                     Name = "Ngân hàng TMCP Bảo Việt",
                     Code = "BVB",
                     Bin = 970438,
@@ -105,7 +105,7 @@ public class BankInfoGenerator
                 "CAKE",
                 new BankInfo
                 {
-                    BankLookUpId = "66fa0378-a568-4ca0-b958-deb03de55ab4",
+                    BankLookUpId = Guid.Parse("66fa0378-a568-4ca0-b958-deb03de55ab4"),
                     Name = "TMCP Việt Nam Thịnh Vượng - Ngân hàng số CAKE by VPBank",
                     Code = "CAKE",
                     Bin = 546034,
@@ -120,7 +120,7 @@ public class BankInfoGenerator
                 "CBB",
                 new BankInfo
                 {
-                    BankLookUpId = "78d48899-8cf5-48d7-8572-645f43b0880d",
+                    BankLookUpId = Guid.Parse("78d48899-8cf5-48d7-8572-645f43b0880d"),
                     Name = "Ngân hàng Thương mại TNHH MTV Xây dựng Việt Nam",
                     Code = "CBB",
                     Bin = 970444,
@@ -135,7 +135,7 @@ public class BankInfoGenerator
                 "CIMB",
                 new BankInfo
                 {
-                    BankLookUpId = "d4e933a0-e11e-470b-9634-30638e4dfa66",
+                    BankLookUpId = Guid.Parse("d4e933a0-e11e-470b-9634-30638e4dfa66"),
                     Name = "Ngân hàng TNHH MTV CIMB Việt Nam",
                     Code = "CIMB",
                     Bin = 422589,
@@ -150,7 +150,7 @@ public class BankInfoGenerator
                 "COOPB",
                 new BankInfo
                 {
-                    BankLookUpId = "1fe21f42-9b91-418c-a364-6e3190365009",
+                    BankLookUpId = Guid.Parse("1fe21f42-9b91-418c-a364-6e3190365009"),
                     Name = "Ngân hàng Hợp tác xã Việt Nam",
                     Code = "COOPB",
                     Bin = 970446,
@@ -165,7 +165,7 @@ public class BankInfoGenerator
                 "DAB",
                 new BankInfo
                 {
-                    BankLookUpId = "dc6920cb-8d1f-4393-a01d-db53d4b0e289",
+                    BankLookUpId = Guid.Parse("dc6920cb-8d1f-4393-a01d-db53d4b0e289"),
                     Name = "Ngân hàng TMCP Đông Á",
                     Code = "DAB",
                     Bin = 970406,
@@ -180,7 +180,7 @@ public class BankInfoGenerator
                 "DBS",
                 new BankInfo
                 {
-                    BankLookUpId = "74664d52-e0fb-4c56-b157-7b7506bdaeba",
+                    BankLookUpId = Guid.Parse("74664d52-e0fb-4c56-b157-7b7506bdaeba"),
                     Name = "DBS Bank Ltd - Chi nhánh Thành phố Hồ Chí Minh",
                     Code = "DBS",
                     Bin = 796500,
@@ -195,7 +195,7 @@ public class BankInfoGenerator
                 "EIB",
                 new BankInfo
                 {
-                    BankLookUpId = "017e81d5-2cb8-4cc6-8444-30e9479aeb9b",
+                    BankLookUpId = Guid.Parse("017e81d5-2cb8-4cc6-8444-30e9479aeb9b"),
                     Name = "Ngân hàng TMCP Xuất Nhập khẩu Việt Nam",
                     Code = "EIB",
                     Bin = 970431,
@@ -210,7 +210,7 @@ public class BankInfoGenerator
                 "GPB",
                 new BankInfo
                 {
-                    BankLookUpId = "d935586a-92d0-423d-9623-a8567d668879",
+                    BankLookUpId = Guid.Parse("d935586a-92d0-423d-9623-a8567d668879"),
                     Name = "Ngân hàng Thương mại TNHH MTV Dầu Khí Toàn Cầu",
                     Code = "GPB",
                     Bin = 970408,
@@ -225,7 +225,7 @@ public class BankInfoGenerator
                 "HDB",
                 new BankInfo
                 {
-                    BankLookUpId = "c8068add-c733-4f5e-a34b-c598669d9aee",
+                    BankLookUpId = Guid.Parse("c8068add-c733-4f5e-a34b-c598669d9aee"),
                     Name = "Ngân hàng TMCP Phát triển Thành phố Hồ Chí Minh",
                     Code = "HDB",
                     Bin = 970437,
@@ -240,7 +240,7 @@ public class BankInfoGenerator
                 "HLB",
                 new BankInfo
                 {
-                    BankLookUpId = "6e0b0ed8-82b3-47fd-982a-fdae96b327a9",
+                    BankLookUpId = Guid.Parse("6e0b0ed8-82b3-47fd-982a-fdae96b327a9"),
                     Name = "Ngân hàng TNHH MTV Hong Leong Việt Nam",
                     Code = "HLB",
                     Bin = 970442,
@@ -255,7 +255,7 @@ public class BankInfoGenerator
                 "HSBC",
                 new BankInfo
                 {
-                    BankLookUpId = "e23cdeab-344b-4e2a-bc22-7cb2d4075166",
+                    BankLookUpId = Guid.Parse("e23cdeab-344b-4e2a-bc22-7cb2d4075166"),
                     Name = "Ngân hàng TNHH MTV HSBC (Việt Nam)",
                     Code = "HSBC",
                     Bin = 458761,
@@ -270,7 +270,7 @@ public class BankInfoGenerator
                 "IBKHCM",
                 new BankInfo
                 {
-                    BankLookUpId = "47f8f83f-a86d-4d8f-aeab-213417b2f904",
+                    BankLookUpId = Guid.Parse("47f8f83f-a86d-4d8f-aeab-213417b2f904"),
                     Name = "Ngân hàng Công nghiệp Hàn Quốc - Chi nhánh TP. Hồ Chí Minh",
                     Code = "IBKHCM",
                     Bin = 970456,
@@ -285,7 +285,7 @@ public class BankInfoGenerator
                 "IBKHN",
                 new BankInfo
                 {
-                    BankLookUpId = "58f9e003-036e-4bbb-b476-8f513d5153d6",
+                    BankLookUpId = Guid.Parse("58f9e003-036e-4bbb-b476-8f513d5153d6"),
                     Name = "Ngân hàng Công nghiệp Hàn Quốc - Chi nhánh Hà Nội",
                     Code = "IBKHN",
                     Bin = 970455,
@@ -300,7 +300,7 @@ public class BankInfoGenerator
                 "IVB",
                 new BankInfo
                 {
-                    BankLookUpId = "3fbc766d-9a2e-4d80-80cf-3e62ca32abbc",
+                    BankLookUpId = Guid.Parse("3fbc766d-9a2e-4d80-80cf-3e62ca32abbc"),
                     Name = "Ngân hàng TNHH Indovina",
                     Code = "IVB",
                     Bin = 970434,
@@ -315,7 +315,7 @@ public class BankInfoGenerator
                 "KB",
                 new BankInfo
                 {
-                    BankLookUpId = "712627bb-9ab3-4d9c-b300-b58bf0bb5d14",
+                    BankLookUpId = Guid.Parse("712627bb-9ab3-4d9c-b300-b58bf0bb5d14"),
                     Name = "Ngân hàng Đại chúng TNHH Kasikornbank",
                     Code = "KB",
                     Bin = 668888,
@@ -330,7 +330,7 @@ public class BankInfoGenerator
                 "KBKHCM",
                 new BankInfo
                 {
-                    BankLookUpId = "6ecbd4f5-6c85-4c07-ada4-5fa9eec49431",
+                    BankLookUpId = Guid.Parse("6ecbd4f5-6c85-4c07-ada4-5fa9eec49431"),
                     Name = "Ngân hàng Kookmin - Chi nhánh Thành phố Hồ Chí Minh",
                     Code = "KBKHCM",
                     Bin = 970463,
@@ -345,7 +345,7 @@ public class BankInfoGenerator
                 "KBKHN",
                 new BankInfo
                 {
-                    BankLookUpId = "6ff67324-2611-4941-861b-abcf7b88bdee",
+                    BankLookUpId = Guid.Parse("6ff67324-2611-4941-861b-abcf7b88bdee"),
                     Name = "Ngân hàng Kookmin - Chi nhánh Hà Nội",
                     Code = "KBKHN",
                     Bin = 970462,
@@ -360,7 +360,7 @@ public class BankInfoGenerator
                 "KLB",
                 new BankInfo
                 {
-                    BankLookUpId = "8892bfab-b050-40a4-b32b-73d11089578f",
+                    BankLookUpId = Guid.Parse("8892bfab-b050-40a4-b32b-73d11089578f"),
                     Name = "Ngân hàng TMCP Kiên Long",
                     Code = "KLB",
                     Bin = 970452,
@@ -375,7 +375,7 @@ public class BankInfoGenerator
                 "LPB",
                 new BankInfo
                 {
-                    BankLookUpId = "7d721f6b-504a-42b4-8405-41ca6830971d",
+                    BankLookUpId = Guid.Parse("7d721f6b-504a-42b4-8405-41ca6830971d"),
                     Name = "Ngân hàng TMCP Lộc Phát Việt Nam",
                     Code = "LPB",
                     Bin = 970449,
@@ -390,7 +390,7 @@ public class BankInfoGenerator
                 "MB",
                 new BankInfo
                 {
-                    BankLookUpId = "fe05a74d-0b50-4569-8a78-d44648fc944c",
+                    BankLookUpId = Guid.Parse("fe05a74d-0b50-4569-8a78-d44648fc944c"),
                     Name = "Ngân hàng TMCP Quân đội",
                     Code = "MB",
                     Bin = 970422,
@@ -405,7 +405,7 @@ public class BankInfoGenerator
                 "MSB",
                 new BankInfo
                 {
-                    BankLookUpId = "bf9303e0-4048-4545-92e6-0702f212d1a0",
+                    BankLookUpId = Guid.Parse("bf9303e0-4048-4545-92e6-0702f212d1a0"),
                     Name = "Ngân hàng TMCP Hàng Hải",
                     Code = "MSB",
                     Bin = 970426,
@@ -420,7 +420,7 @@ public class BankInfoGenerator
                 "NAB",
                 new BankInfo
                 {
-                    BankLookUpId = "2a3b45ca-38bc-49cb-97c3-e1fdd8f389e9",
+                    BankLookUpId = Guid.Parse("2a3b45ca-38bc-49cb-97c3-e1fdd8f389e9"),
                     Name = "Ngân hàng TMCP Nam Á",
                     Code = "NAB",
                     Bin = 970428,
@@ -435,7 +435,7 @@ public class BankInfoGenerator
                 "NCB",
                 new BankInfo
                 {
-                    BankLookUpId = "428d3f77-7b99-40c5-bb07-80d34eb2d6a9",
+                    BankLookUpId = Guid.Parse("428d3f77-7b99-40c5-bb07-80d34eb2d6a9"),
                     Name = "Ngân hàng TMCP Quốc Dân",
                     Code = "NCB",
                     Bin = 970419,
@@ -450,7 +450,7 @@ public class BankInfoGenerator
                 "NHB",
                 new BankInfo
                 {
-                    BankLookUpId = "33777996-3ce0-4b6e-9b70-71004e97e4b8",
+                    BankLookUpId = Guid.Parse("33777996-3ce0-4b6e-9b70-71004e97e4b8"),
                     Name = "Ngân hàng Nonghyup - Chi nhánh Hà Nội",
                     Code = "NHB",
                     Bin = 801011,
@@ -465,7 +465,7 @@ public class BankInfoGenerator
                 "OCB",
                 new BankInfo
                 {
-                    BankLookUpId = "f7195395-0634-4ead-8773-88139abc8275",
+                    BankLookUpId = Guid.Parse("f7195395-0634-4ead-8773-88139abc8275"),
                     Name = "Ngân hàng TMCP Phương Đông",
                     Code = "OCB",
                     Bin = 970448,
@@ -480,7 +480,7 @@ public class BankInfoGenerator
                 "OJB",
                 new BankInfo
                 {
-                    BankLookUpId = "d764fad1-d25a-40fa-8008-f7ce7ef2c029",
+                    BankLookUpId = Guid.Parse("d764fad1-d25a-40fa-8008-f7ce7ef2c029"),
                     Name = "Ngân hàng Thương mại TNHH MTV Đại Dương",
                     Code = "OJB",
                     Bin = 970414,
@@ -495,7 +495,7 @@ public class BankInfoGenerator
                 "PBVN",
                 new BankInfo
                 {
-                    BankLookUpId = "60d111bf-c742-4a46-9990-5442c9ac44d8",
+                    BankLookUpId = Guid.Parse("60d111bf-c742-4a46-9990-5442c9ac44d8"),
                     Name = "Ngân hàng TNHH MTV Public Việt Nam",
                     Code = "PBVN",
                     Bin = 970439,
@@ -510,7 +510,7 @@ public class BankInfoGenerator
                 "PGB",
                 new BankInfo
                 {
-                    BankLookUpId = "06d27ed6-d640-4201-8f2e-ee5ff37f4580",
+                    BankLookUpId = Guid.Parse("06d27ed6-d640-4201-8f2e-ee5ff37f4580"),
                     Name = "Ngân hàng TMCP Xăng dầu Petrolimex",
                     Code = "PGB",
                     Bin = 970430,
@@ -525,7 +525,7 @@ public class BankInfoGenerator
                 "PVCB",
                 new BankInfo
                 {
-                    BankLookUpId = "df183cfc-c104-4ff7-9ab7-c164229376c1",
+                    BankLookUpId = Guid.Parse("df183cfc-c104-4ff7-9ab7-c164229376c1"),
                     Name = "Ngân hàng TMCP Đại Chúng Việt Nam",
                     Code = "PVCB",
                     Bin = 970412,
@@ -540,7 +540,7 @@ public class BankInfoGenerator
                 "SCB",
                 new BankInfo
                 {
-                    BankLookUpId = "85954e77-0754-479b-aac1-15bd283ebc3e",
+                    BankLookUpId = Guid.Parse("85954e77-0754-479b-aac1-15bd283ebc3e"),
                     Name = "Ngân hàng TMCP Sài Gòn Thương Tín",
                     Code = "SCB",
                     Bin = 970403,
@@ -555,7 +555,7 @@ public class BankInfoGenerator
                 "SCBVN",
                 new BankInfo
                 {
-                    BankLookUpId = "793b6bfc-54c9-4012-83a4-ec5d0a4582c2",
+                    BankLookUpId = Guid.Parse("793b6bfc-54c9-4012-83a4-ec5d0a4582c2"),
                     Name = "Ngân hàng TNHH MTV Standard Chartered Bank Việt Nam",
                     Code = "SCBVN",
                     Bin = 970410,
@@ -570,7 +570,7 @@ public class BankInfoGenerator
                 "SEAB",
                 new BankInfo
                 {
-                    BankLookUpId = "b7af5470-9304-4878-80b4-f687c678f83b",
+                    BankLookUpId = Guid.Parse("b7af5470-9304-4878-80b4-f687c678f83b"),
                     Name = "Ngân hàng TMCP Đông Nam Á",
                     Code = "SEAB",
                     Bin = 970440,
@@ -585,7 +585,7 @@ public class BankInfoGenerator
                 "SGB",
                 new BankInfo
                 {
-                    BankLookUpId = "c970732d-c1ed-4703-9f6c-b46fc84239b2",
+                    BankLookUpId = Guid.Parse("c970732d-c1ed-4703-9f6c-b46fc84239b2"),
                     Name = "Ngân hàng TMCP Sài Gòn Công Thương",
                     Code = "SGB",
                     Bin = 970400,
@@ -600,7 +600,7 @@ public class BankInfoGenerator
                 "SGCB",
                 new BankInfo
                 {
-                    BankLookUpId = "01ca8729-2519-46f2-8c4a-b109e7a45292",
+                    BankLookUpId = Guid.Parse("01ca8729-2519-46f2-8c4a-b109e7a45292"),
                     Name = "Ngân hàng TMCP Sài Gòn",
                     Code = "SGCB",
                     Bin = 970429,
@@ -615,7 +615,7 @@ public class BankInfoGenerator
                 "SHB",
                 new BankInfo
                 {
-                    BankLookUpId = "2fb52185-a3d3-4ed1-8c45-5f71a2842de1",
+                    BankLookUpId = Guid.Parse("2fb52185-a3d3-4ed1-8c45-5f71a2842de1"),
                     Name = "Ngân hàng TMCP Sài Gòn - Hà Nội",
                     Code = "SHB",
                     Bin = 970443,
@@ -630,7 +630,7 @@ public class BankInfoGenerator
                 "SHBVN",
                 new BankInfo
                 {
-                    BankLookUpId = "0540840b-7f2b-46c0-93d3-5040c042b737",
+                    BankLookUpId = Guid.Parse("0540840b-7f2b-46c0-93d3-5040c042b737"),
                     Name = "Ngân hàng TNHH MTV Shinhan Việt Nam",
                     Code = "SHBVN",
                     Bin = 970424,
@@ -645,7 +645,7 @@ public class BankInfoGenerator
                 "TCB",
                 new BankInfo
                 {
-                    BankLookUpId = "d9b10c0e-e96d-4550-ac4d-1117d03c8afc",
+                    BankLookUpId = Guid.Parse("d9b10c0e-e96d-4550-ac4d-1117d03c8afc"),
                     Name = "Ngân hàng TMCP Kỹ thương Việt Nam",
                     Code = "TCB",
                     Bin = 970407,
@@ -660,7 +660,7 @@ public class BankInfoGenerator
                 "TIMO",
                 new BankInfo
                 {
-                    BankLookUpId = "fa941344-6a64-4438-9bd5-11b57077da18",
+                    BankLookUpId = Guid.Parse("fa941344-6a64-4438-9bd5-11b57077da18"),
                     Name = "Ngân hàng số Timo",
                     Code = "TIMO",
                     Bin = 963388,
@@ -675,7 +675,7 @@ public class BankInfoGenerator
                 "TPB",
                 new BankInfo
                 {
-                    BankLookUpId = "b468746c-1843-4c73-a0d9-70241c7cd8f6",
+                    BankLookUpId = Guid.Parse("b468746c-1843-4c73-a0d9-70241c7cd8f6"),
                     Name = "Ngân hàng TMCP Tiên Phong",
                     Code = "TPB",
                     Bin = 970423,
@@ -690,7 +690,7 @@ public class BankInfoGenerator
                 "UB",
                 new BankInfo
                 {
-                    BankLookUpId = "7b2a7fe7-5477-4b62-a9dc-93e2ba899fe0",
+                    BankLookUpId = Guid.Parse("7b2a7fe7-5477-4b62-a9dc-93e2ba899fe0"),
                     Name = "TMCP Việt Nam Thịnh Vượng - Ngân hàng số Ubank by VPBank",
                     Code = "UB",
                     Bin = 546035,
@@ -705,7 +705,7 @@ public class BankInfoGenerator
                 "UOB",
                 new BankInfo
                 {
-                    BankLookUpId = "913a0253-2a29-4918-8ed3-755162a73c23",
+                    BankLookUpId = Guid.Parse("913a0253-2a29-4918-8ed3-755162a73c23"),
                     Name = "Ngân hàng United Overseas",
                     Code = "UOB",
                     Bin = 970458,
@@ -720,7 +720,7 @@ public class BankInfoGenerator
                 "VAB",
                 new BankInfo
                 {
-                    BankLookUpId = "dd586b22-8367-4439-95c8-98423a762ced",
+                    BankLookUpId = Guid.Parse("dd586b22-8367-4439-95c8-98423a762ced"),
                     Name = "Ngân hàng TMCP Việt Á",
                     Code = "VAB",
                     Bin = 970427,
@@ -735,7 +735,7 @@ public class BankInfoGenerator
                 "VARB",
                 new BankInfo
                 {
-                    BankLookUpId = "3cdde0d0-44f0-4cd4-9953-391fee3ec04e",
+                    BankLookUpId = Guid.Parse("3cdde0d0-44f0-4cd4-9953-391fee3ec04e"),
                     Name = "Ngân hàng Nông nghiệp và Phát triển Nông thôn Việt Nam",
                     Code = "VARB",
                     Bin = 970405,
@@ -750,7 +750,7 @@ public class BankInfoGenerator
                 "VB",
                 new BankInfo
                 {
-                    BankLookUpId = "bf313f9e-c658-46e3-8d0b-530e013bd76d",
+                    BankLookUpId = Guid.Parse("bf313f9e-c658-46e3-8d0b-530e013bd76d"),
                     Name = "Ngân hàng TMCP Việt Nam Thương Tín",
                     Code = "VB",
                     Bin = 970433,
@@ -765,7 +765,7 @@ public class BankInfoGenerator
                 "VCB",
                 new BankInfo
                 {
-                    BankLookUpId = "cc2fa1a9-6ad5-4cc8-aee7-84a8cde9f62e",
+                    BankLookUpId = Guid.Parse("cc2fa1a9-6ad5-4cc8-aee7-84a8cde9f62e"),
                     Name = "Ngân hàng TMCP Ngoại Thương Việt Nam",
                     Code = "VCB",
                     Bin = 970436,
@@ -780,7 +780,7 @@ public class BankInfoGenerator
                 "VCCB",
                 new BankInfo
                 {
-                    BankLookUpId = "ec514a5b-1cd7-4d7c-bf97-c6c412bed60c",
+                    BankLookUpId = Guid.Parse("ec514a5b-1cd7-4d7c-bf97-c6c412bed60c"),
                     Name = "Ngân hàng TMCP Bản Việt",
                     Code = "VCCB",
                     Bin = 970454,
@@ -795,7 +795,7 @@ public class BankInfoGenerator
                 "VIB",
                 new BankInfo
                 {
-                    BankLookUpId = "5e1b6cfa-d5a7-4aae-9e59-dccc008c4eef",
+                    BankLookUpId = Guid.Parse("5e1b6cfa-d5a7-4aae-9e59-dccc008c4eef"),
                     Name = "Ngân hàng TMCP Quốc tế Việt Nam",
                     Code = "VIB",
                     Bin = 970441,
@@ -810,7 +810,7 @@ public class BankInfoGenerator
                 "VNPTMONEY",
                 new BankInfo
                 {
-                    BankLookUpId = "69256b98-d6a2-46ea-a62e-90b02c8eac00",
+                    BankLookUpId = Guid.Parse("69256b98-d6a2-46ea-a62e-90b02c8eac00"),
                     Name = "VNPT Money",
                     Code = "VNPTMONEY",
                     Bin = 971011,
@@ -825,7 +825,7 @@ public class BankInfoGenerator
                 "VPB",
                 new BankInfo
                 {
-                    BankLookUpId = "20351d8b-65ab-4cc4-90c2-b177d9c871b2",
+                    BankLookUpId = Guid.Parse("20351d8b-65ab-4cc4-90c2-b177d9c871b2"),
                     Name = "Ngân hàng TMCP Việt Nam Thịnh Vượng",
                     Code = "VPB",
                     Bin = 970432,
@@ -840,7 +840,7 @@ public class BankInfoGenerator
                 "VRB",
                 new BankInfo
                 {
-                    BankLookUpId = "e01d061b-f468-4480-9078-0524083d3f09",
+                    BankLookUpId = Guid.Parse("e01d061b-f468-4480-9078-0524083d3f09"),
                     Name = "Ngân hàng Liên doanh Việt - Nga",
                     Code = "VRB",
                     Bin = 970421,
@@ -855,7 +855,7 @@ public class BankInfoGenerator
                 "VTB",
                 new BankInfo
                 {
-                    BankLookUpId = "6fd6330a-2044-4254-9619-2e012c560b92",
+                    BankLookUpId = Guid.Parse("6fd6330a-2044-4254-9619-2e012c560b92"),
                     Name = "Ngân hàng TMCP Công thương Việt Nam",
                     Code = "VTB",
                     Bin = 970415,
@@ -870,7 +870,7 @@ public class BankInfoGenerator
                 "VTLMONEY",
                 new BankInfo
                 {
-                    BankLookUpId = "c0da3fe8-c530-410b-97f9-4af1d0d5c1c5",
+                    BankLookUpId = Guid.Parse("c0da3fe8-c530-410b-97f9-4af1d0d5c1c5"),
                     Name = "Viettel Money",
                     Code = "VTLMONEY",
                     Bin = 971005,
@@ -885,7 +885,7 @@ public class BankInfoGenerator
                 "WOO",
                 new BankInfo
                 {
-                    BankLookUpId = "bc286db1-9f40-417b-a3d7-494153fbeb2d",
+                    BankLookUpId = Guid.Parse("bc286db1-9f40-417b-a3d7-494153fbeb2d"),
                     Name = "Ngân hàng TNHH MTV Woori Việt Nam",
                     Code = "WOO",
                     Bin = 970457,
