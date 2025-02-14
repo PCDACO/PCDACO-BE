@@ -57,7 +57,7 @@ public class UpdateDriverLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Equal(ResultStatus.Forbidden, result.Status);
         Assert.Contains("Bạn không có quyền thực hiện chức năng này", result.Errors);
     }
 
@@ -136,7 +136,9 @@ public class UpdateDriverLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         var driver = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(driver);
 
-        var oldEncryptionKey = await TestDataCreateEncryptionKey.CreateTestEncryptionKey(_dbContext);
+        var oldEncryptionKey = await TestDataCreateEncryptionKey.CreateTestEncryptionKey(
+            _dbContext
+        );
         var oldEncryptedLicenseNumber = "NTjmhIE3YJtqsqXCZYbjzA==";
         var license = new License
         {
