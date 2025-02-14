@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using Domain.Enums;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -52,10 +53,12 @@ public sealed class ApproveBooking
                 : BookingStatusEnum.Rejected.ToString();
             string message = request.IsApproved ? "phê duyệt" : "từ chối";
 
-            var status = await context.BookingStatuses.FirstOrDefaultAsync(
-                x => EF.Functions.Like(x.Name, statusName),
-                cancellationToken
-            );
+            var status = await context
+                .BookingStatuses.AsNoTracking()
+                .FirstOrDefaultAsync(
+                    x => EF.Functions.ILike(x.Name, statusName),
+                    cancellationToken
+                );
 
             if (status == null)
                 return Result.NotFound("Không tìm thấy trạng thái phù hợp");

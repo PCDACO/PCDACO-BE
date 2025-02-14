@@ -45,25 +45,29 @@ public sealed class CreateBooking
             if (car == null)
                 return Result<Response>.NotFound();
 
-            var bookingStatus = await context.BookingStatuses.FirstOrDefaultAsync(
-                x => EF.Functions.Like(x.Name, BookingStatusEnum.Pending.ToString()),
-                cancellationToken: cancellationToken
-            );
+            var bookingStatus = await context
+                .BookingStatuses.AsNoTracking()
+                .FirstOrDefaultAsync(
+                    x => EF.Functions.ILike(x.Name, BookingStatusEnum.Pending.ToString()),
+                    cancellationToken: cancellationToken
+                );
 
             if (bookingStatus == null)
                 return Result<Response>.NotFound("Không tìm thấy trạng thái phù hợp");
 
             // Check for overlapping bookings (same user + same car)
-            bool hasOverlap = await context.Bookings.AnyAsync(
-                b =>
-                    b.UserId == currentUser.User.Id
-                    && b.CarId == request.CarId
-                    && b.StartTime < request.EndTime
-                    && b.EndTime > request.StartTime
-                    && b.Status.Name != BookingStatusEnum.Rejected.ToString() // Exclude rejected bookings
-                    && b.Status.Name != BookingStatusEnum.Cancelled.ToString(), // Exclude cancelled bookings
-                cancellationToken
-            );
+            bool hasOverlap = await context
+                .Bookings.AsNoTracking()
+                .AnyAsync(
+                    b =>
+                        b.UserId == currentUser.User.Id
+                        && b.CarId == request.CarId
+                        && b.StartTime < request.EndTime
+                        && b.EndTime > request.StartTime
+                        && b.Status.Name != BookingStatusEnum.Rejected.ToString() // Exclude rejected bookings
+                        && b.Status.Name != BookingStatusEnum.Cancelled.ToString(), // Exclude cancelled bookings
+                    cancellationToken
+                );
 
             if (hasOverlap)
             {
@@ -107,6 +111,7 @@ public sealed class CreateBooking
             // Update car statistic
             car.CarStatistic.TotalRented += 1;
             userStatistic.TotalBooking += 1;
+
             context.Bookings.Add(booking);
             await context.SaveChangesAsync(cancellationToken);
 

@@ -55,7 +55,8 @@ public sealed class BatchTrackTrip
             var orderedPoints = request.LocationPoints.OrderBy(p => p.CreatedAt).ToList();
 
             var lastTracking = await context
-                .TripTrackings.Where(t => t.BookingId == request.BookingId)
+                .TripTrackings.AsNoTracking()
+                .Where(t => t.BookingId == request.BookingId)
                 .OrderByDescending(t => t.Id)
                 .FirstOrDefaultAsync(cancellationToken);
 
