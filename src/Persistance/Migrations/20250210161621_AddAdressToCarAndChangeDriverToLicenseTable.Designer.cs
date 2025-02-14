@@ -110,9 +110,9 @@ namespace Persistance.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("BankLookUpId")
+                    b.Property<Guid>("BankLookUpId")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Bin")
                         .HasColumnType("integer");

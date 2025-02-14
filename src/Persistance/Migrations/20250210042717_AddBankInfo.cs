@@ -16,7 +16,7 @@ namespace Persistance.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    BankLookUpId = table.Column<string>(type: "text", nullable: false),
+                    BankLookUpId = table.Column<Guid>(type: "uuid", nullable: false),
                     Name = table.Column<string>(type: "text", nullable: false),
                     Code = table.Column<string>(type: "text", nullable: false),
                     Bin = table.Column<int>(type: "integer", nullable: false),

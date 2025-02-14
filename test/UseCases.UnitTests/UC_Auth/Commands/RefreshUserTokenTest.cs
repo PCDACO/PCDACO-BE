@@ -1,8 +1,12 @@
 using Ardalis.Result;
+
 using Domain.Entities;
 using Domain.Shared;
+
 using Microsoft.EntityFrameworkCore;
+
 using Persistance.Data;
+
 using UseCases.UC_Auth.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;

@@ -69,10 +69,12 @@ public sealed class CompleteBooking
                 );
             }
 
-            var status = await context.BookingStatuses.FirstOrDefaultAsync(
-                x => EF.Functions.Like(x.Name, BookingStatusEnum.Completed.ToString()),
-                cancellationToken
-            );
+            var status = await context
+                .BookingStatuses.AsNoTracking()
+                .FirstOrDefaultAsync(
+                    x => EF.Functions.ILike(x.Name, BookingStatusEnum.Completed.ToString()),
+                    cancellationToken
+                );
 
             if (status == null)
                 return Result.NotFound("Không tìm thấy trạng thái phù hợp");

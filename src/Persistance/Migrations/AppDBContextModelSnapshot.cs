@@ -66,9 +66,8 @@ namespace Persistance.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<string>("BankName")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("BankInfoId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
@@ -94,6 +93,8 @@ namespace Persistance.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BankInfoId");
+
                     b.HasIndex("EncryptionKeyId");
 
                     b.HasIndex("UserId");
@@ -107,9 +108,8 @@ namespace Persistance.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("BankLookUpId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<Guid>("BankLookUpId")
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Bin")
                         .HasColumnType("integer");
@@ -1358,6 +1358,12 @@ namespace Persistance.Migrations
 
             modelBuilder.Entity("Domain.Entities.BankAccount", b =>
                 {
+                    b.HasOne("Domain.Entities.BankInfo", "BankInfo")
+                        .WithMany("BankAccounts")
+                        .HasForeignKey("BankInfoId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Domain.Entities.EncryptionKey", "EncryptionKey")
                         .WithMany()
                         .HasForeignKey("EncryptionKeyId")
@@ -1369,6 +1375,8 @@ namespace Persistance.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("BankInfo");
 
                     b.Navigation("EncryptionKey");
 
@@ -1795,6 +1803,11 @@ namespace Persistance.Migrations
                     b.Navigation("Transactions");
 
                     b.Navigation("WithdrawalRequests");
+                });
+
+            modelBuilder.Entity("Domain.Entities.BankInfo", b =>
+                {
+                    b.Navigation("BankAccounts");
                 });
 
             modelBuilder.Entity("Domain.Entities.Booking", b =>

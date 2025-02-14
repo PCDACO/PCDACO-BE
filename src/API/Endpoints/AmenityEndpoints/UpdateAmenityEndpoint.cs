@@ -1,9 +1,15 @@
 using API.Utils;
+
 using Ardalis.Result;
+
 using Carter;
+
 using MediatR;
+
 using Microsoft.AspNetCore.Mvc;
+
 using UseCases.UC_Amenity.Commands;
+
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.AmenityEndpoints;
@@ -22,19 +28,19 @@ public class UpdateAmenityEndpoint : ICarterModule
     private async Task<IResult> Handle(
         ISender sender,
         Guid id,
-        [FromForm] UpdateAmenityRequest request
+        [FromForm] string name,
+        [FromForm] string description,
+        IFormFile? icon
     )
     {
-        Result result = await sender.Send(
+        Result<UpdateAmenity.Response> result = await sender.Send(
             new UpdateAmenity.Command(
                 id,
-                request.Name,
-                request.Description,
-                request.Icon?.OpenReadStream()
+                name,
+                description,
+                icon != null ? icon.OpenReadStream() : null!
             )
         );
         return result.MapResult();
     }
-
-    private record UpdateAmenityRequest(string Name, string Description, IFormFile? Icon);
 }

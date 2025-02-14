@@ -49,10 +49,12 @@ public sealed class CancelBooking
                 );
             }
 
-            var status = await context.BookingStatuses.FirstOrDefaultAsync(
-                x => EF.Functions.Like(x.Name, BookingStatusEnum.Cancelled.ToString()),
-                cancellationToken
-            );
+            var status = await context
+                .BookingStatuses.AsNoTracking()
+                .FirstOrDefaultAsync(
+                    x => EF.Functions.ILike(x.Name, BookingStatusEnum.Cancelled.ToString()),
+                    cancellationToken
+                );
 
             if (status == null)
                 return Result.NotFound("Không tìm thấy trạng thái phù hợp");
