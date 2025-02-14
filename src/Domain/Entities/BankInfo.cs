@@ -13,4 +13,6 @@ public class BankInfo : BaseEntity
     public required string IconUrl { get; set; }
     public required string SwiftCode { get; set; }
     public int LookupSupported { get; set; }
+
+    public ICollection<BankAccount> BankAccounts { get; set; } = [];
 }
