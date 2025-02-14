@@ -112,7 +112,7 @@ namespace Persistance.Migrations
 
                     b.Property<string>("BankLookUpId")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("uuid");
 
                     b.Property<int>("Bin")
                         .HasColumnType("integer");
