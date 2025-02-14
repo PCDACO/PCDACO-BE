@@ -1,8 +1,12 @@
 using Ardalis.Result;
+
 using Domain.Entities;
 using Domain.Shared;
+
 using Microsoft.EntityFrameworkCore;
+
 using Persistance.Data;
+
 using UseCases.UC_Auth.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
@@ -73,7 +77,7 @@ public class RefreshTokenTests : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Equal(ResultStatus.Unauthorized, result.Status);
         Assert.Contains("Token làm mới không hợp lệ", result.Errors);
     }
 
@@ -89,7 +93,7 @@ public class RefreshTokenTests : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Equal(ResultStatus.Unauthorized, result.Status);
         Assert.Contains("Token đã bị thu hồi", result.Errors);
     }
 
