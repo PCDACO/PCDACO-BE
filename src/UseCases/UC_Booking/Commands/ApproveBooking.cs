@@ -66,4 +66,16 @@ public sealed class ApproveBooking
             return Result.SuccessWithMessage($"Đã {message} booking thành công");
         }
     }
+
+    public sealed class Validator : AbstractValidator<Command>
+    {
+        public Validator()
+        {
+            RuleFor(x => x.BookingId).NotEmpty().WithMessage("Booking id không được để trống");
+
+            RuleFor(x => x.IsApproved)
+                .NotNull()
+                .WithMessage("Trạng thái phê duyệt không được để trống");
+        }
+    }
 }
