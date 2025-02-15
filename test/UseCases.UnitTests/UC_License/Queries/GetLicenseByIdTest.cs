@@ -17,12 +17,9 @@ public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
-    private readonly EncryptionSettings _encryptionSettings = new()
-    {
-        Key = TestConstants.MasterKey,
-    };
-    private readonly IAesEncryptionService _aesService = new AesEncryptionService();
-    private readonly IKeyManagementService _keyService = new KeyManagementService();
+    private readonly EncryptionSettings _encryptionSettings = fixture.EncryptionSettings;
+    private readonly IAesEncryptionService _aesService = fixture.AesEncryptionService;
+    private readonly IKeyManagementService _keyService = fixture.KeyManagementService;
 
     public Task InitializeAsync() => Task.CompletedTask;
 
@@ -94,7 +91,13 @@ public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         _currentUser.SetUser(otherDriver);
 
         // Create license for owner
-        var license = await TestDataCreateLicense.CreateTestLicense(_dbContext, licenseOwner.Id);
+        var license = await TestDataCreateLicense.CreateTestLicense(
+            _dbContext,
+            licenseOwner.Id,
+            _aesService,
+            _keyService,
+            _encryptionSettings
+        );
 
         var handler = new GetLicenseById.Handler(
             _dbContext,
