@@ -11,7 +11,7 @@ namespace UseCases.UC_Driver.Commands;
 
 public sealed class AddDriverLicense
 {
-    public sealed record Command(Guid DriverId, string LicenseNumber, DateTime ExpirationDate)
+    public sealed record Command(Guid DriverId, string LicenseNumber, DateTimeOffset ExpirationDate)
         : IRequest<Result<Response>>;
 
     public sealed record Response(Guid Id)
@@ -34,7 +34,7 @@ public sealed class AddDriverLicense
         {
             //check if user is not driver
             if (!currentUser.User!.IsDriver())
-                return Result.Error("Bạn không có quyền thực hiện chức năng này");
+                return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
 
             //check if driver is exist
             var driver = await context
@@ -115,7 +115,7 @@ public sealed class AddDriverLicense
             RuleFor(x => x.ExpirationDate)
                 .NotEmpty()
                 .WithMessage("Ngày hết hạn không được để trống")
-                .GreaterThanOrEqualTo(DateTime.UtcNow.Date)
+                .GreaterThanOrEqualTo(DateTimeOffset.UtcNow.Date)
                 .WithMessage("Ngày hết hạn phải lớn hơn hoặc bằng ngày hiện tại");
         }
     }
