@@ -2,11 +2,12 @@ using Ardalis.Result;
 using Domain.Shared;
 using Infrastructure.Encryption;
 using Persistance.Data;
-using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.UC_License.Queries;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
+
+namespace UseCases.UnitTests.UC_License.Queries;
 
 [Collection("Test Collection")]
 public class GetAllLicensesForApproveTest(DatabaseTestBase fixture) : IAsyncLifetime

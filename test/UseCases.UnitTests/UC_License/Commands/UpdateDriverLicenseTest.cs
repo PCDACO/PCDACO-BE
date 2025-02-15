@@ -9,7 +9,7 @@ using UseCases.UC_Driver.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
 
-namespace UseCases.UnitTests.UC_Driver.Commands;
+namespace UseCases.UnitTests.UC_License.Commands;
 
 [Collection("Test Collection")]
 public class UpdateDriverLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
