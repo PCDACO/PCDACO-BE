@@ -120,8 +120,6 @@ public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
     public async Task Handle_ValidRequest_ReturnsLicenseSuccessfully(string role)
     {
         // Arrange
-        await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
         var userRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, role);
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, userRole);
         var differentUser = await TestDataCreateUser.CreateTestUser(_dbContext, userRole);
