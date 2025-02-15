@@ -70,6 +70,9 @@ public sealed class UpdateDriverLicense
             license.EncryptionKeyId = newEncryptionKey.Id;
             license.ExpiryDate = request.ExpirationDate.ToString("yyyy-MM-dd");
             license.UpdatedAt = DateTimeOffset.UtcNow;
+            license.IsApprove = null; // Reset approval status
+            license.RejectReason = null; // Clear reject reason
+            license.ApprovedAt = null; // Clear accepted date
 
             await context.SaveChangesAsync(cancellationToken);
 
