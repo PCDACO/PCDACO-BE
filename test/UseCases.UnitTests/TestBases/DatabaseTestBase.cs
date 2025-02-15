@@ -1,5 +1,7 @@
 using System.Data.Common;
+using Domain.Shared;
 using DotNet.Testcontainers.Builders;
+using Infrastructure.Encryption;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using Persistance.Data;
@@ -13,6 +15,9 @@ public class DatabaseTestBase : IAsyncLifetime
 {
     public AppDBContext DbContext { get; private set; } = null!;
     public CurrentUser CurrentUser { get; private set; } = null!;
+    public AesEncryptionService AesEncryptionService { get; private set; } = null!;
+    public KeyManagementService KeyManagementService { get; private set; } = null!;
+    public EncryptionSettings EncryptionSettings { get; private set; } = null!;
     private readonly PostgreSqlContainer _postgresContainer;
     private DbConnection _dbConnection = default!;
     private Respawner _respawner = default!;
@@ -20,6 +25,9 @@ public class DatabaseTestBase : IAsyncLifetime
     public DatabaseTestBase()
     {
         CurrentUser = new CurrentUser();
+        AesEncryptionService = new AesEncryptionService();
+        KeyManagementService = new KeyManagementService();
+        EncryptionSettings = new EncryptionSettings { Key = TestConstants.MasterKey };
 
         _postgresContainer = new PostgreSqlBuilder()
             .WithImage("postgis/postgis:13-3.1")
