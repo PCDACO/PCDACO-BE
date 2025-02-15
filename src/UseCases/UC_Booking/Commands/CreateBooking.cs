@@ -1,11 +1,13 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
+using Domain.Shared.EmailTemplates.EmailBookings;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
 using UseCases.DTOs;
+using UseCases.Services.EmailService;
 using UUIDNext;
 
 namespace UseCases.UC_Booking.Commands;
@@ -20,8 +22,11 @@ public sealed class CreateBooking
         public static Response FromEntity(Booking booking) => new(booking.Id);
     }
 
-    internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
-        : IRequestHandler<CreateBookingCommand, Result<Response>>
+    internal sealed class Handler(
+        IAppDBContext context,
+        IEmailService emailService,
+        CurrentUser currentUser
+    ) : IRequestHandler<CreateBookingCommand, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
             CreateBookingCommand request,
@@ -35,6 +40,8 @@ public sealed class CreateBooking
             // Check if car exists
             var car = await context
                 .Cars.Include(x => x.CarStatistic)
+                .Include(x => x.Owner)
+                .Include(x => x.Model)
                 .FirstOrDefaultAsync(
                     x =>
                         x.Id == request.CarId
@@ -114,6 +121,24 @@ public sealed class CreateBooking
 
             context.Bookings.Add(booking);
             await context.SaveChangesAsync(cancellationToken);
+
+            // Create email template
+            var emailTemplate = GetBookingCreatedTemplate.Template(
+                currentUser.User.Name,
+                car.Model.Name,
+                request.StartTime,
+                request.EndTime,
+                totalAmount
+            );
+
+            // Send email to driver
+            await emailService.SendEmailAsync(
+                currentUser.User.Email,
+                "Xác nhận đặt xe",
+                emailTemplate
+            );
+
+            // TODO: Create template and Send email to car owner
 
             return Result<Response>.Success(new Response(bookingId));
         }
