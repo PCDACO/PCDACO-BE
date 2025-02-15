@@ -5,6 +5,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
 using UseCases.DTOs;
+using UseCases.Utils;
 
 namespace UseCases.UC_Driver.Queries;
 
@@ -17,7 +18,11 @@ public static class GetLicenseByUserId
         string LicenseNumber,
         DateTimeOffset ExpirationDate,
         string? ImageFrontUrl,
-        string? ImageBackUrl
+        string? ImageBackUrl,
+        bool? IsApproved,
+        string? RejectReason,
+        DateTimeOffset? ApprovedAt,
+        DateTimeOffset CreatedAt
     )
     {
         public static async Task<Response> FromEntityAsync(
@@ -41,7 +46,11 @@ public static class GetLicenseByUserId
                 LicenseNumber: decryptedLicenseNumber,
                 ExpirationDate: DateTimeOffset.Parse(license.ExpiryDate),
                 ImageFrontUrl: license.LicenseImageFrontUrl,
-                ImageBackUrl: license.LicenseImageBackUrl
+                ImageBackUrl: license.LicenseImageBackUrl,
+                IsApproved: license.IsApprove,
+                RejectReason: license.RejectReason,
+                ApprovedAt: license.ApprovedAt,
+                CreatedAt: GetTimestampFromUuid.Execute(license.Id)
             );
         }
     };

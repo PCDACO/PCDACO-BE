@@ -16,11 +16,11 @@ public sealed class UploadDriverLicenseImage
         Stream LicenseImageBackUrl
     ) : IRequest<Result<Response>>;
 
-    public sealed record Response(string LicenseImageFrontUrl, string LicenseImageBackUrl)
+    public sealed record Response(Guid Id, string LicenseImageFrontUrl, string LicenseImageBackUrl)
     {
         public static Response FromEntity(License license)
         {
-            return new(license.LicenseImageFrontUrl, license.LicenseImageBackUrl);
+            return new(license.Id, license.LicenseImageFrontUrl, license.LicenseImageBackUrl);
         }
     };
 
