@@ -1,16 +1,12 @@
 using Infrastructure.PayOSService;
-
 using Net.payOS;
 using UseCases.DTOs;
 using UseCases.Services.PayOSService;
 
 namespace API.Utils;
 
-public class ConfigurationMissingException : InvalidOperationException
-{
-    public ConfigurationMissingException(string configKey)
-        : base($"Required configuration key '{configKey}' is missing") { }
-}
+public class ConfigurationMissingException(string configKey)
+    : InvalidOperationException($"Required configuration key '{configKey}' is missing") { }
 
 public static class PayOSConfig
 {
@@ -43,9 +39,8 @@ public static class PayOSConfig
     {
         var value = configuration[key];
 
-        if (string.IsNullOrWhiteSpace(value))
-            throw new ConfigurationMissingException(key);
-
-        return value;
+        return string.IsNullOrWhiteSpace(value)
+            ? throw new ConfigurationMissingException(key)
+            : value;
     }
 }
