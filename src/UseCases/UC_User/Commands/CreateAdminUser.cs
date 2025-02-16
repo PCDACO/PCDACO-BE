@@ -38,7 +38,9 @@ public sealed class CreateAdminUser
             );
             if (checkingAdminRole is null)
                 return Result.Error("Không thể tạo tài khoản admin");
-            //
+            // Add admin Database
+            bool isSuccess = Guid.TryParse("01950d41-d234-7b63-a360-72b27605b4a4", out Guid adminId);
+            if (!isSuccess) throw new Exception("can not parse admin id");
             string adminName = "Admin";
             string adminPhoneNumber = "0123456789";
             string adminPassword = "admin";
@@ -55,6 +57,7 @@ public sealed class CreateAdminUser
             User admin =
                 new()
                 {
+                    Id = adminId,
                     Name = adminName,
                     Password = adminPassword.HashString(),
                     Email = adminEmail,
