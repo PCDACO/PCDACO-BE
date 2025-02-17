@@ -1,9 +1,14 @@
 using Ardalis.Result;
+
 using Domain.Entities;
 using Domain.Shared;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using NetTopologySuite.Geometries;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -37,7 +42,7 @@ public class GetCars
         string FuelType,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        PriceDetail Price,
+        decimal Price,
         LocationDetail Location,
         ManufacturerDetail Manufacturer,
         ImageDetail[] Images,
@@ -74,8 +79,8 @@ public class GetCars
                 car.FuelType.ToString() ?? string.Empty,
                 car.FuelConsumption,
                 car.RequiresCollateral,
-                new PriceDetail(car.PricePerHour, car.PricePerDay),
-                new LocationDetail(car.Location.X, car.Location.Y),
+                car.Price,
+                new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
                 new ManufacturerDetail(car.Model.Manufacturer.Id, car.Model.Manufacturer.Name),
                 [.. car.ImageCars.Select(i => new ImageDetail(i.Id, i.Url))],
                 [
@@ -125,6 +130,7 @@ public class GetCars
                 .Include(c => c.CarStatus)
                 .Include(c => c.TransmissionType)
                 .Include(c => c.FuelType)
+                .Include(c => c.GPS)
                 .Include(c => c.CarAmenities)
                 .ThenInclude(ca => ca.Amenity)
                 .Where(c => EF.Functions.ILike(c.CarStatus.Name, $"%available%"))
@@ -141,7 +147,7 @@ public class GetCars
                     || c.TransmissionTypeId == request.TransmissionTypes
                 )
                 .Where(c =>
-                    ((decimal)c.Location.Distance(userLocation) * 111320) <= (request.Radius ?? 0)
+                    ((decimal)c.GPS.Location.Distance(userLocation) * 111320) <= (request.Radius ?? 0)
                 )
                 .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point))
                 .ThenByDescending(c => c.Id)

@@ -4,7 +4,7 @@ namespace Persistance.Bogus;
 
 public class UserRoleGenerator
 {
-    private static readonly string[] _userRoles = ["Owner", "Driver", "Admin"];
+    private static readonly string[] _userRoles = ["Owner", "Driver", "Admin", "Consultant"];
     public static UserRole[] Execute()
     {
         return [.. _userRoles.Select(status => {

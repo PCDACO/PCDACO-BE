@@ -1,19 +1,25 @@
 using Ardalis.Result;
+
 using Domain.Entities;
 using Domain.Shared;
+
 using FluentValidation;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
-using NetTopologySuite.Geometries;
+
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
+
 using UUIDNext;
 
 namespace UseCases.UC_Car.Commands;
 
 public sealed class CreateCar
 {
-    public sealed record Query(
+    public sealed record Command(
         Guid[] AmenityIds,
         Guid ModelId,
         Guid TransmissionTypeId,
@@ -24,8 +30,7 @@ public sealed class CreateCar
         string Description,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        decimal PricePerHour,
-        decimal PricePerDay,
+        decimal Price,
         decimal? Latitude,
         decimal? Longtitude
     ) : IRequest<Result<Response>>;
@@ -38,14 +43,13 @@ public sealed class CreateCar
     internal sealed class Handler(
         IAppDBContext context,
         CurrentUser currentUser,
-        GeometryFactory geometryFactory,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings
-    ) : IRequestHandler<Query, Result<Response>>
+    ) : IRequestHandler<Command, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
-            Query request,
+            Command request,
             CancellationToken cancellationToken
         )
         {
@@ -121,12 +125,8 @@ public sealed class CreateCar
                 FuelTypeId = request.FuelTypeId,
                 FuelConsumption = request.FuelConsumption,
                 RequiresCollateral = request.RequiresCollateral,
-                PricePerHour = request.PricePerHour,
-                PricePerDay = request.PricePerDay,
+                Price = request.Price,
                 StatusId = checkingStatus.Id,
-                Location = geometryFactory.CreatePoint(
-                    new Coordinate((double)request.Longtitude!, (double)request.Latitude!)
-                ),
                 CarStatistic = new() { CarId = carId },
                 CarAmenities =
                 [
@@ -150,7 +150,7 @@ public sealed class CreateCar
         }
     }
 
-    public sealed class Validator : AbstractValidator<Query>
+    public sealed class Validator : AbstractValidator<Command>
     {
         public Validator()
         {
@@ -178,12 +178,7 @@ public sealed class CreateCar
                 .WithMessage("Mức tiêu hao nhiên liệu không được để trống !")
                 .GreaterThan(0)
                 .WithMessage("Mức tiêu hao nhiên liệu phải lớn hơn 0 !");
-            RuleFor(x => x.PricePerHour)
-                .NotEmpty()
-                .WithMessage("Giá thuê theo giờ không được để trống !")
-                .GreaterThan(0)
-                .WithMessage("Giá thuê theo giờ phải lớn hơn 0 !");
-            RuleFor(x => x.PricePerDay)
+            RuleFor(x => x.Price)
                 .NotEmpty()
                 .WithMessage("Giá thuê theo ngày không được để trống !")
                 .GreaterThan(0)

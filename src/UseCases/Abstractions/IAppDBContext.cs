@@ -1,5 +1,6 @@
 using Domain.Entities;
 using Domain.Enums;
+
 using Microsoft.EntityFrameworkCore;
 
 namespace UseCases.Abstractions;
@@ -44,4 +45,8 @@ public interface IAppDBContext : IDisposable
     DbSet<Model> Models { get; }
     DbSet<InspectionSchedule> InspectionSchedules { get; }
     DbSet<InspectionStatus> InspectionStatuses { get; }
+    DbSet<CarContract> CarContracts { get; }
+    DbSet<CarGPS> CarGPSes { get; }
+    DbSet<DeviceStatus> DeviceStatuses { get; }
+    DbSet<GPSDevice> GPSDevices { get; }
 }

@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
+
 using Domain.Shared;
-using NetTopologySuite.Geometries;
+
 
 namespace Domain.Entities;
 
@@ -19,9 +20,7 @@ public class Car : BaseEntity
     public string Description { get; set; } = string.Empty;
     public required decimal FuelConsumption { get; set; }
     public bool RequiresCollateral { get; set; } = false;
-    public required decimal PricePerHour { get; set; }
-    public required decimal PricePerDay { get; set; }
-    public Point Location { get; set; } = null!;
+    public required decimal Price { get; set; }
     public int TotalRented { get; set; } = 0;
     public decimal TotalEarning { get; set; } = 0;
 
@@ -44,6 +43,8 @@ public class Car : BaseEntity
     [ForeignKey(nameof(StatusId))]
     public CarStatus CarStatus { get; set; } = null!;
     public CarStatistic CarStatistic { get; set; } = null!;
+    public CarGPS GPS { get; set; } = null!;
+    public CarContract Contract { get; set; } = null!;
     public ICollection<CarAmenity> CarAmenities { get; set; } = [];
     public ICollection<ImageCar> ImageCars { get; set; } = [];
     public ICollection<CarReport> CarReports { get; set; } = [];
