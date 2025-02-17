@@ -1,10 +1,16 @@
 using Ardalis.Result;
+
 using Domain.Entities;
 using Domain.Shared;
+
 using Infrastructure.Encryption;
+
 using Microsoft.EntityFrameworkCore;
+
 using NetTopologySuite.Geometries;
+
 using Persistance.Data;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.UC_Car.Commands;
@@ -20,7 +26,6 @@ public class CreateCarTests : IAsyncLifetime
     private readonly CurrentUser _currentUser;
     private readonly Func<Task> _resetDatabase;
 
-    private readonly GeometryFactory _geometryFactory;
     private readonly EncryptionSettings _encryptionSettings;
     private readonly IAesEncryptionService _aesService;
     private readonly IKeyManagementService _keyService;
@@ -31,7 +36,6 @@ public class CreateCarTests : IAsyncLifetime
         _currentUser = fixture.CurrentUser;
         _resetDatabase = fixture.ResetDatabaseAsync;
 
-        _geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
         _encryptionSettings = new EncryptionSettings { Key = TestConstants.MasterKey };
         _aesService = new AesEncryptionService();
         _keyService = new KeyManagementService();
@@ -41,7 +45,7 @@ public class CreateCarTests : IAsyncLifetime
 
     public async Task DisposeAsync() => await _resetDatabase();
 
-    private CreateCar.Query CreateValidCommand(
+    private CreateCar.Command CreateValidCommand(
         TransmissionType transmissionType,
         FuelType fuelType,
         Guid? modelId = null,
@@ -58,8 +62,7 @@ public class CreateCarTests : IAsyncLifetime
             FuelTypeId: fuelType.Id,
             FuelConsumption: 7.5m,
             RequiresCollateral: true,
-            PricePerHour: 50m,
-            PricePerDay: 500m,
+            Price: 500m,
             Latitude: 10.5m,
             Longtitude: 106.5m
         );
@@ -78,7 +81,6 @@ public class CreateCarTests : IAsyncLifetime
         var handler = new CreateCar.Handler(
             _dbContext,
             _currentUser,
-            _geometryFactory,
             _aesService,
             _keyService,
             _encryptionSettings
@@ -113,7 +115,6 @@ public class CreateCarTests : IAsyncLifetime
         var handler = new CreateCar.Handler(
             _dbContext,
             _currentUser,
-            _geometryFactory,
             _aesService,
             _keyService,
             _encryptionSettings
@@ -151,7 +152,6 @@ public class CreateCarTests : IAsyncLifetime
         var handler = new CreateCar.Handler(
             _dbContext,
             _currentUser,
-            _geometryFactory,
             _aesService,
             _keyService,
             _encryptionSettings
@@ -188,7 +188,7 @@ public class CreateCarTests : IAsyncLifetime
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
         var validator = new CreateCar.Validator();
 
-        var invalidCommand = new CreateCar.Query(
+        var invalidCommand = new CreateCar.Command(
             AmenityIds: [],
             ModelId: Guid.Empty,
             LicensePlate: "SHORT",
@@ -199,8 +199,7 @@ public class CreateCarTests : IAsyncLifetime
             FuelTypeId: fuelType.Id,
             FuelConsumption: 0,
             RequiresCollateral: true,
-            PricePerHour: 0,
-            PricePerDay: 0,
+            Price: 0,
             Latitude: null,
             Longtitude: null
         );
@@ -236,7 +235,6 @@ public class CreateCarTests : IAsyncLifetime
         var handler = new CreateCar.Handler(
             _dbContext,
             _currentUser,
-            _geometryFactory,
             _aesService,
             _keyService,
             _encryptionSettings
