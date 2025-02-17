@@ -1,26 +1,28 @@
-using Bogus;
 
 using Domain.Entities;
-
-using UUIDNext;
 
 namespace Persistance.Bogus;
 
 public class AmenityGenerator
 {
-    private static readonly Faker Faker = new();
-    
+    private record AmenityDummy
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string IconUrl { get; set; } = string.Empty;
+    }
+
     public static Amenity[] Execute()
     {
-        return [.. CarFeatures.Select(feature =>
+        return [.. arrays.Select(feature =>
         {
             bool isRandom = new Random().Next(0, 2) == 1;
             bool isRandomUpdate = new Random().Next(0, 2) == 1;
             return new Amenity
             {
-                Name = feature.Key,
-                Description = feature.Value,
-                IconUrl = Faker.Image.PicsumUrl(),
+                Name = feature.Name,
+                Description = feature.Description,
+                IconUrl =feature.IconUrl,
                 UpdatedAt = isRandomUpdate ? DateTime.UtcNow : null,
                 IsDeleted = isRandom,
                 DeletedAt = isRandom ? DateTime.UtcNow : null
@@ -28,45 +30,87 @@ public class AmenityGenerator
         })];
     }
 
-    private readonly static Dictionary<string, string> CarFeatures = new()
+    private static readonly AmenityDummy[] arrays = new AmenityDummy[]
     {
-            { "Cruise Control", "Hệ thống kiểm soát hành trình, giúp xe duy trì tốc độ ổn định mà không cần giữ chân ga." },
-            { "Heated Seats", "Ghế có chức năng sưởi, giữ ấm cơ thể trong thời tiết lạnh." },
-            { "Sunroof", "Cửa sổ trời, mang lại ánh sáng tự nhiên và không khí thoáng đãng vào trong xe." },
-            { "Bluetooth Connectivity", "Kết nối không dây với thiết bị di động để thực hiện cuộc gọi hoặc nghe nhạc." },
-            { "Parking Sensors", "Cảm biến hỗ trợ đỗ xe, giúp phát hiện chướng ngại vật xung quanh xe." },
-            { "Rearview Camera", "Camera hỗ trợ quan sát phía sau xe khi lùi." },
-            { "Blind Spot Monitor", "Hệ thống cảnh báo điểm mù, giúp lái xe an toàn hơn khi chuyển làn." },
-            { "Automatic Climate Control", "Hệ thống điều hòa tự động, điều chỉnh nhiệt độ phù hợp theo cài đặt." },
-            { "Keyless Entry", "Hệ thống mở khóa không cần chìa, cho phép mở cửa xe bằng cảm biến." },
-            { "Adaptive Headlights", "Đèn pha tự động điều chỉnh hướng sáng theo góc lái để cải thiện tầm nhìn." },
-            { "Lane Keeping Assist", "Hệ thống hỗ trợ giữ làn đường, cảnh báo hoặc điều chỉnh khi xe lệch khỏi làn." },
-            { "Wireless Charging", "Tính năng sạc không dây dành cho các thiết bị di động tương thích." },
-            { "Ventilated Seats", "Ghế thông gió, giữ mát cơ thể khi ngồi lâu trong xe." },
-            { "360-Degree Camera", "Camera toàn cảnh, cung cấp hình ảnh 360 độ xung quanh xe." },
-            { "Head-Up Display (HUD)", "Màn hình hiển thị thông tin trên kính chắn gió, giúp người lái dễ quan sát mà không rời mắt khỏi đường." },
-            { "Automatic Emergency Braking", "Phanh khẩn cấp tự động, hỗ trợ giảm thiểu va chạm." },
-            { "Remote Start", "Khởi động từ xa, giúp làm mát hoặc sưởi ấm xe trước khi vào." },
-            { "Apple CarPlay/Android Auto", "Tích hợp điện thoại thông minh vào màn hình xe để sử dụng các ứng dụng như bản đồ và nhạc." },
-            { "Massage Seats", "Ghế có chức năng massage, giúp giảm mệt mỏi trong các chuyến đi dài." },
-            { "Premium Sound System", "Hệ thống âm thanh cao cấp, mang lại trải nghiệm nghe nhạc sống động." },
-            { "Electric Tailgate", "Cửa hậu điện, có thể mở hoặc đóng tự động." },
-            { "Ambient Lighting", "Hệ thống đèn nội thất, tạo không gian thoải mái và sang trọng trong xe." },
-            { "Driver Attention Monitoring", "Hệ thống giám sát sự tập trung của tài xế, cảnh báo khi phát hiện dấu hiệu mất tập trung." },
-            { "Cross-Traffic Alert", "Cảnh báo phương tiện cắt ngang, hỗ trợ khi lùi xe." },
-            { "Rain-Sensing Wipers", "Gạt mưa tự động kích hoạt khi phát hiện nước trên kính chắn gió." },
-            { "All-Wheel Drive (AWD)", "Hệ thống dẫn động bốn bánh, cải thiện độ bám đường trong điều kiện khó khăn." },
-            { "Hill Start Assist", "Hỗ trợ khởi hành ngang dốc, ngăn xe bị trôi khi khởi động trên dốc." },
-            { "Adaptive Cruise Control", "Kiểm soát hành trình thích ứng, tự động điều chỉnh tốc độ để giữ khoảng cách an toàn với xe phía trước." },
-            { "Heated Steering Wheel", "Vô lăng có chức năng sưởi, giữ ấm tay trong thời tiết lạnh." },
-            { "Power Adjustable Seats", "Ghế chỉnh điện, dễ dàng điều chỉnh vị trí ngồi phù hợp." },
-            { "Split-Folding Rear Seats", "Ghế sau gập linh hoạt, tăng không gian chứa đồ." },
-            { "Traffic Sign Recognition", "Hệ thống nhận diện biển báo giao thông và hiển thị cho người lái." },
-            { "Night Vision", "Hệ thống quan sát ban đêm, hỗ trợ lái xe trong điều kiện ánh sáng yếu." },
-            { "Digital Key", "Chìa khóa kỹ thuật số, sử dụng điện thoại để mở và khởi động xe." },
-            { "Over-The-Air Updates", "Cập nhật phần mềm xe từ xa thông qua internet." },
-            { "Rear Entertainment System", "Hệ thống giải trí phía sau, bao gồm màn hình và thiết bị phát nhạc/video." },
-            { "Power Sliding Doors", "Cửa trượt điện, thuận tiện cho việc lên xuống xe." },
-            { "Hands-Free Tailgate", "Cửa hậu rảnh tay, có thể mở bằng cách đá chân dưới cản sau." }
-        };
+        new(){
+        Name = "Bản Đồ",
+        Description = "Hệ thống bản đồ giúp tài xế định hướng và tìm đường dễ dàng hơn khi di chuyển.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764800/amenity-icon/evc9i1k2drng1a7lm7bt.svg"
+    },
+    new() {
+        Name = "Camera Hành Trình",
+        Description = "Camera ghi lại hành trình di chuyển, giúp lưu lại bằng chứng khi xảy ra va chạm.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764802/amenity-icon/xyyiipesinpmlr2al9ah.svg"
+},
+    new() {
+        Name = "Cảnh Báo Tốc Độ",
+        Description = "Cảnh báo khi xe vượt quá tốc độ giới hạn, giúp tài xế lái xe an toàn hơn.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764803/amenity-icon/s6cqhwmvarvjpopaj8ts.svg"
+    },
+    new() {
+        Name = "Lốp Dự Phòng",
+        Description = "Lốp dự phòng thay thế khi xe bị thủng lốp hoặc hư hỏng lốp trên đường.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764800/amenity-icon/wxd8wdeihezfb44u2rza.svg"
+    },
+    new() {
+        Name = "Camera 360",
+        Description = "Hệ thống camera toàn cảnh giúp tài xế quan sát xung quanh xe một cách trực quan.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764800/amenity-icon/qrl8hs1lnw8s9im24iza.svg"
+    },
+    new() {
+        Name = "Cảm Biến Lốp",
+        Description = "Cảm biến theo dõi áp suất lốp, cảnh báo khi lốp bị non hơi hoặc quá căng.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764800/amenity-icon/fw8zia6c92zdlmt4gwxu.svg"
+    },
+    new() {
+        Name = "Định Vị GPS",
+        Description = "Hệ thống định vị giúp xác định vị trí xe theo thời gian thực.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764804/amenity-icon/sj8tklczqfnn2tfskekq.svg"
+    },
+    new() {
+        Name = "ETC",
+        Description = "Hệ thống thu phí không dừng, giúp xe di chuyển qua trạm thu phí mà không cần dừng lại.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764804/amenity-icon/lxuziipunkd0ejk7m1mq.svg"
+    },
+    new() {
+        Name = "Bluetooth",
+        Description = "Kết nối không dây giữa điện thoại và xe để nghe nhạc, nhận cuộc gọi rảnh tay.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764800/amenity-icon/pmt7a8hlbny2yy1ydkof.svg"
+    },
+    new() {
+        Name = "Camera Lùi",
+        Description = "Hỗ trợ quan sát phía sau khi lùi xe, giúp tránh va chạm.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764802/amenity-icon/ti6manevdxmvybb8yrcs.svg"
+    },
+    new() {
+        Name = "Cửa Sổ Trời",
+        Description = "Cửa sổ trên nóc xe, giúp không gian xe thoáng đãng hơn.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764803/amenity-icon/vwqodbsvuauaj9ghz1ok.svg"
+    },
+    new() {
+        Name = "Màn Hình DVD",
+        Description = "Màn hình giải trí hiển thị video, bản đồ hoặc thông tin xe.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764802/amenity-icon/n9swnzsyen6gwscs84gm.svg"
+    },
+    new() {
+        Name = "Camera Cập Lề",
+        Description = "Camera hỗ trợ đỗ xe, giúp tài xế quan sát khi cập lề đường.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764802/amenity-icon/ixmpvqruaxw66popspzd.svg"
+    },
+    new() {
+        Name = "Cảm Biến Va Chạm",
+        Description = "Cảm biến cảnh báo khi xe sắp va chạm với vật cản phía trước hoặc phía sau.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764802/amenity-icon/guxyshbopwmoktxzbgz0.svg"
+    },
+    new() {
+        Name = "Khe Cắm USB",
+        Description = "Cổng USB để sạc thiết bị hoặc kết nối với hệ thống giải trí trên xe.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764800/amenity-icon/civrmsfcb0kenvllo6hh.svg"
+    },
+    new() {
+        Name = "Túi Khí An Toàn",
+        Description = "Túi khí giúp giảm chấn thương khi xảy ra va chạm.",
+        IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764802/amenity-icon/fzkmgpy7ztsw5ptnyzlf.svg"
+    }
+    };
 }
