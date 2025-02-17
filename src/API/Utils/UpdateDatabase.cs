@@ -1,6 +1,9 @@
 using System.Threading.Tasks;
+
 using Domain.Entities;
+
 using Microsoft.EntityFrameworkCore;
+
 using Persistance.Bogus;
 using Persistance.Data;
 
@@ -37,6 +40,7 @@ public class UpdateDatabase
             WithdrawalRequestStatusGenerator.Execute();
         Model[] models = ModelGenerator.Execute(manufacturers);
         InspectionStatus[] inspectionStatuses = InspectionStatusGenerator.Execute();
+        DeviceStatus[] deviceStatuses = DeviceStatusGenerator.Execute();
 
         List<Task> tasks = [];
 
@@ -56,6 +60,7 @@ public class UpdateDatabase
         tasks.Add(context.AddRangeAsync(manufacturers));
         tasks.Add(context.AddRangeAsync(models));
         tasks.Add(context.AddRangeAsync(inspectionStatuses));
+        tasks.Add(context.AddRangeAsync());
         await Task.WhenAll(tasks);
         await context.SaveChangesAsync();
     }
