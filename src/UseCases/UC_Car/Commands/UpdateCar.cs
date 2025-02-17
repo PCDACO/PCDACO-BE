@@ -1,10 +1,15 @@
 using Ardalis.Result;
+
 using Domain.Entities;
 using Domain.Shared;
+
 using FluentValidation;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
-using NetTopologySuite.Geometries;
+
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -24,16 +29,12 @@ public sealed class UpdateCar
         string Description,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        decimal PricePerHour,
-        decimal PricePerDay,
-        decimal? Latitude,
-        decimal? Longtitude
+        decimal Price
     ) : IRequest<Result>;
 
     private class Handler(
         IAppDBContext context,
         CurrentUser currentUser,
-        GeometryFactory geometryFactory,
         IAesEncryptionService aesEncryptionService,
         EncryptionSettings encryptionSettings,
         IKeyManagementService keyManagementService
@@ -107,11 +108,7 @@ public sealed class UpdateCar
             checkingCar.FuelTypeId = request.FuelTypeId;
             checkingCar.FuelConsumption = request.FuelConsumption;
             checkingCar.RequiresCollateral = request.RequiresCollateral;
-            checkingCar.PricePerHour = request.PricePerHour;
-            checkingCar.PricePerDay = request.PricePerDay;
-            checkingCar.Location = geometryFactory.CreatePoint(
-                new Coordinate((double)request.Longtitude!, (double)request.Latitude!)
-            );
+            checkingCar.Price = request.Price;
             checkingCar.UpdatedAt = DateTimeOffset.UtcNow;
             // Save changes
             await context.SaveChangesAsync(cancellationToken);
@@ -147,18 +144,11 @@ public sealed class UpdateCar
                 .WithMessage("Mức tiêu hao nhiên liệu không được để trống !")
                 .GreaterThan(0)
                 .WithMessage("Mức tiêu hao nhiên liệu phải lớn hơn 0 !");
-            RuleFor(x => x.PricePerHour)
-                .NotEmpty()
-                .WithMessage("Giá thuê theo giờ không được để trống !")
-                .GreaterThan(0)
-                .WithMessage("Giá thuê theo giờ phải lớn hơn 0 !");
-            RuleFor(x => x.PricePerDay)
+            RuleFor(x => x.Price)
                 .NotEmpty()
                 .WithMessage("Giá thuê theo ngày không được để trống !")
                 .GreaterThan(0)
                 .WithMessage("Giá thuê theo ngày phải lớn hơn 0 !");
-            RuleFor(x => x.Latitude).NotEmpty().WithMessage("Vĩ độ không được để trống !");
-            RuleFor(x => x.Longtitude).NotEmpty().WithMessage("Kinh độ không được để trống !");
         }
     }
 }

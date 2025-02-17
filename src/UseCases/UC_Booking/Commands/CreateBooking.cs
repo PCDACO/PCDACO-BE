@@ -1,11 +1,17 @@
 using Ardalis.Result;
+
 using Domain.Entities;
 using Domain.Enums;
+
 using FluentValidation;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
+
 using UUIDNext;
 
 namespace UseCases.UC_Booking.Commands;
@@ -87,7 +93,7 @@ public sealed class CreateBooking
 
             Guid bookingId = Uuid.NewDatabaseFriendly(Database.PostgreSql);
             var totalBookingDay = Math.Ceiling((request.EndTime - request.StartTime).TotalDays);
-            var basePrice = car.PricePerDay * (decimal)totalBookingDay;
+            var basePrice = car.Price * (decimal)totalBookingDay;
             var platformFee = basePrice * platformFeeRate;
             var totalAmount = basePrice + platformFee;
 

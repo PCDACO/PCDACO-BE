@@ -1,9 +1,15 @@
 using API.Utils;
+
 using Ardalis.Result;
+
 using Carter;
+
 using Infrastructure.Idempotency;
+
 using MediatR;
+
 using UseCases.UC_Car.Commands;
+
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.CarEndpoints;
@@ -22,7 +28,7 @@ public class CreateCarEndpoint : ICarterModule
     private async Task<IResult> Handle(ISender sender, CreateCarRequest request)
     {
         Result<CreateCar.Response> result = await sender.Send(
-            new CreateCar.Query(
+            new CreateCar.Command(
                 AmenityIds: request.AmenityIds,
                 ModelId: request.ModelId,
                 TransmissionTypeId: request.TransmissionTypeId,
@@ -33,8 +39,7 @@ public class CreateCarEndpoint : ICarterModule
                 Description: request.Description,
                 FuelConsumption: request.FuelConsumption,
                 RequiresCollateral: request.RequiresCollateral,
-                PricePerHour: request.PricePerHour,
-                PricePerDay: request.PricePerDay,
+                Price: request.Price,
                 Latitude: request.Latitude,
                 Longtitude: request.Longtitude
             )
@@ -53,8 +58,7 @@ public class CreateCarEndpoint : ICarterModule
         string Description,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        decimal PricePerHour,
-        decimal PricePerDay,
+        decimal Price,
         decimal? Latitude,
         decimal? Longtitude
     );

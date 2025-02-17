@@ -1,9 +1,14 @@
 using System.Threading.Tasks;
+
 using Ardalis.Result;
+
 using Domain.Entities;
 using Domain.Shared;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 
 namespace UseCases.UC_Car.Queries;
@@ -26,7 +31,7 @@ public class GetCarById
         string FuelType,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        PriceDetail Price,
+        decimal Price,
         LocationDetail Location,
         ManufacturerDetail Manufacturer,
         ImageDetail[] Images,
@@ -59,12 +64,12 @@ public class GetCarById
                 car.Color,
                 car.Seat,
                 car.Description,
-                car.TransmissionType.ToString(),
-                car.FuelType.ToString(),
+                car.TransmissionType?.ToString() ?? "",
+                car.FuelType?.ToString() ?? "",
                 car.FuelConsumption,
                 car.RequiresCollateral,
-                new PriceDetail(car.PricePerHour, car.PricePerDay),
-                new LocationDetail(car.Location.X, car.Location.Y),
+                car.Price,
+                new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
                 new ManufacturerDetail(car.Model.Manufacturer.Id, car.Model.Manufacturer.Name),
                 [.. car.ImageCars.Select(i => new ImageDetail(i.Id, i.Url))],
                 [
@@ -78,7 +83,6 @@ public class GetCarById
         }
     };
 
-    public record PriceDetail(decimal PerHour, decimal PerDay);
 
     public record LocationDetail(double Longtitude, double Latitude);
 

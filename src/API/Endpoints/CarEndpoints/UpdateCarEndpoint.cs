@@ -1,11 +1,13 @@
 using API.Utils;
+
 using Ardalis.Result;
-using Bogus;
+
 using Carter;
-using Domain.Entities;
-using Domain.Enums;
+
 using MediatR;
+
 using UseCases.UC_Car.Commands;
+
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.CarEndpoints;
@@ -33,12 +35,9 @@ public class UpdateCarEndpoint : ICarterModule
                 Color: request.Color,
                 Seat: request.Seat,
                 Description: request.Description,
+                Price: request.Price,
                 FuelConsumption: request.FuelConsumption,
-                RequiresCollateral: request.RequiresCollateral,
-                PricePerHour: request.PricePerHour,
-                PricePerDay: request.PricePerDay,
-                Latitude: request.Latitude,
-                Longtitude: request.Longtitude
+                RequiresCollateral: request.RequiresCollateral
             )
         );
         return result.MapResult();
@@ -55,9 +54,6 @@ public class UpdateCarEndpoint : ICarterModule
         string Description,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        decimal PricePerHour,
-        decimal PricePerDay,
-        decimal? Latitude,
-        decimal? Longtitude
+        decimal Price
     );
 }

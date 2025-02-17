@@ -11,7 +11,6 @@ public class AmenityGenerator
         public string Description { get; set; } = string.Empty;
         public string IconUrl { get; set; } = string.Empty;
     }
-
     public static Amenity[] Execute()
     {
         return [.. arrays.Select(feature =>
@@ -30,8 +29,8 @@ public class AmenityGenerator
         })];
     }
 
-    private static readonly AmenityDummy[] arrays = new AmenityDummy[]
-    {
+    private static readonly AmenityDummy[] arrays =
+    [
         new(){
         Name = "Bản Đồ",
         Description = "Hệ thống bản đồ giúp tài xế định hướng và tìm đường dễ dàng hơn khi di chuyển.",
@@ -112,5 +111,5 @@ public class AmenityGenerator
         Description = "Túi khí giúp giảm chấn thương khi xảy ra va chạm.",
         IconUrl = "https://res.cloudinary.com/ds2bfbfyd/image/upload/v1739764802/amenity-icon/fzkmgpy7ztsw5ptnyzlf.svg"
     }
-    };
+    ];
 }
