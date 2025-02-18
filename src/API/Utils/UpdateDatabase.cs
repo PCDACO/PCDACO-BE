@@ -70,5 +70,7 @@ public class UpdateDatabase
         transactionStatusesData.Set(transactionStatuses);
         BookingStatusesData bookingStatusesData = app.ApplicationServices.GetRequiredService<BookingStatusesData>();
         bookingStatusesData.Set(bookingStatuses);
+        UserRolesData userRolesData = app.ApplicationServices.GetRequiredService<UserRolesData>();
+        userRolesData.Set(userRoles);
     }
 }

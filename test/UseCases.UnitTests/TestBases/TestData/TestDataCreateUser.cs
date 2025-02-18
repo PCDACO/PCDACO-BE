@@ -1,5 +1,6 @@
 using Domain.Entities;
 using Persistance.Data;
+using UseCases.Utils;
 using UUIDNext;
 
 namespace UseCases.UnitTests.TestBases.TestData;
@@ -13,7 +14,7 @@ public static class TestDataCreateUser
             EncryptionKeyId = encryptionKeyId,
             Name = "Test User",
             Email = email,
-            Password = "password",
+            Password = "password".HashString(),
             RoleId = userRole.Id,
             Address = "Test Address",
             DateOfBirth = DateTime.UtcNow.AddYears(-30),
@@ -33,7 +34,7 @@ public static class TestDataCreateUser
             EncryptionKeyId = encryptionKeyId,
             Name = name,
             Email = email,
-            Password = "password",
+            Password = "password".HashString(),
             RoleId = userRole.Id,
             Address = "Test Address",
             DateOfBirth = DateTime.UtcNow.AddYears(-30),

@@ -124,6 +124,7 @@ public static class BuilderConfig
         services.AddSingleton<DeviceStatusesData>();
         services.AddSingleton<TransactionStatusesData>();
         services.AddSingleton<BookingStatusesData>();
+        services.AddSingleton<UserRolesData>();
         // add channels
         services.AddSingleton(_ =>
             Channel.CreateUnbounded<CreateInspectionScheduleChannel>());
