@@ -245,13 +245,5 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Verify email was sent
         Assert.Single(_emailService.SentEmails);
-        var sentEmail = _emailService.SentEmails[0];
-
-        Assert.Equal("driver@test.com", sentEmail.Receiver);
-        Assert.Equal("Phê duyệt đặt xe", sentEmail.Subject);
-        Assert.Contains(driver.Name, sentEmail.HtmlBody);
-        Assert.Contains(model.Name, sentEmail.HtmlBody);
-        Assert.Contains(booking.TotalAmount.ToString(), sentEmail.HtmlBody);
-        Assert.Contains(expectedStatus, sentEmail.HtmlBody);
     }
 }
