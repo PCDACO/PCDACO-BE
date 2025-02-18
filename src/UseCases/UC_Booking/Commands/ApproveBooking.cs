@@ -1,10 +1,12 @@
 using Ardalis.Result;
 using Domain.Enums;
+using Domain.Shared.EmailTemplates.EmailBookings;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
 using UseCases.DTOs;
+using UseCases.Services.EmailService;
 
 namespace UseCases.UC_Booking.Commands;
 
@@ -12,8 +14,11 @@ public sealed class ApproveBooking
 {
     public sealed record Command(Guid BookingId, bool IsApproved) : IRequest<Result>;
 
-    internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
-        : IRequestHandler<Command, Result>
+    internal sealed class Handler(
+        IAppDBContext context,
+        IEmailService emailService,
+        CurrentUser currentUser
+    ) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -23,6 +28,8 @@ public sealed class ApproveBooking
             var booking = await context
                 .Bookings.Include(x => x.Status)
                 .Include(x => x.Car)
+                .ThenInclude(x => x.Model)
+                .Include(x => x.User)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
@@ -66,7 +73,28 @@ public sealed class ApproveBooking
             booking.StatusId = status.Id;
             await context.SaveChangesAsync(cancellationToken);
 
+            await SendEmail(request, booking);
+
             return Result.SuccessWithMessage($"Đã {message} booking thành công");
+        }
+
+        private async Task SendEmail(Command request, Domain.Entities.Booking booking)
+        {
+            // Send email to driver
+            var emailTemplate = DriverApproveBookingTemplate.Template(
+                booking.User.Name,
+                booking.Car.Model.Name,
+                booking.StartTime,
+                booking.EndTime,
+                booking.TotalAmount,
+                request.IsApproved
+            );
+
+            await emailService.SendEmailAsync(
+                booking.User.Email,
+                "Phê duyệt đặt xe",
+                emailTemplate
+            );
         }
     }
 
