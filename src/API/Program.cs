@@ -22,6 +22,7 @@ cloudinary.Api.Secure = true;
 builder.Services.AddSingleton(cloudinary);
 builder.Services.AddServices(builder.Configuration);
 builder.Services.AddPayOSService(builder.Configuration);
+builder.Services.AddEmailService(builder.Configuration);
 var app = builder.Build();
 
 app.UseStaticFiles();
