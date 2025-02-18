@@ -15,9 +15,9 @@ public static class ChangePassword
     public record Command(Guid UserId, string OldPassword, string NewPassword)
         : IRequest<Result<Response>>;
 
-    public sealed record Response(Guid UserId, string NewPassword)
+    public sealed record Response(Guid UserId)
     {
-        public static Response FromEntity(User user) => new(user.Id, user.Password);
+        public static Response FromEntity(User user) => new(user.Id);
     }
 
     internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
@@ -60,11 +60,7 @@ public static class ChangePassword
     {
         public Validator()
         {
-            RuleFor(x => x.OldPassword)
-                .NotEmpty()
-                .WithMessage("Mật khẩu cũ không được để trống")
-                .MinimumLength(6)
-                .WithMessage("Mật khẩu cũ phải có ít nhất 6 ký tự");
+            RuleFor(x => x.OldPassword).NotEmpty().WithMessage("Mật khẩu cũ không được để trống");
             RuleFor(x => x.NewPassword)
                 .NotEmpty()
                 .WithMessage("Mật khẩu mới không được để trống")

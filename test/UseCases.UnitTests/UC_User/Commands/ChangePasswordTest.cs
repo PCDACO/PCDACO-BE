@@ -10,21 +10,33 @@ using UseCases.Utils;
 namespace UseCases.UnitTests.UC_User.Commands;
 
 [Collection("Test Collection")]
-public class ChangePasswordTest(DatabaseTestBase fixture) : IAsyncLifetime
+public class ChangePasswordTest : IAsyncLifetime
 {
-    private readonly AppDBContext _dbContext = fixture.DbContext;
-    private readonly CurrentUser _currentUser = fixture.CurrentUser;
-    private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
+    private readonly AppDBContext _dbContext;
+    private readonly CurrentUser _currentUser;
+    private readonly Func<Task> _resetDatabase;
+
+    public ChangePasswordTest(DatabaseTestBase fixture)
+    {
+        _dbContext = fixture.DbContext;
+        _currentUser = fixture.CurrentUser;
+        _resetDatabase = fixture.ResetDatabaseAsync;
+    }
 
     public Task InitializeAsync() => Task.CompletedTask;
 
     public async Task DisposeAsync() => await _resetDatabase();
 
-    [Fact]
-    public async Task Handle_ValidRequest_ChangesPasswordSuccessfully()
+    [Theory]
+    [InlineData("Owner")]
+    [InlineData("Admin")]
+    [InlineData("Driver")]
+    [InlineData("Consultant")]
+    [InlineData("Technician")]
+    public async Task Handle_ValidRequest_ChangesPasswordSuccessfully(string roleName)
     {
         // Arrange
-        var userRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var userRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, roleName);
         var user = await TestDataCreateUser.CreateTestUser(_dbContext, userRole);
         _currentUser.SetUser(user);
 
@@ -43,7 +55,9 @@ public class ChangePasswordTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(ResponseMessages.Updated, result.SuccessMessage);
 
         var updatedUser = await _dbContext.Users.FindAsync(user.Id);
-        Assert.Equal("newpassword123".HashString(), updatedUser!.Password);
+        Assert.NotNull(updatedUser);
+        Assert.Equal("newpassword123".HashString(), updatedUser.Password);
+        Assert.Equal(roleName, updatedUser.Role.Name);
     }
 
     [Fact]
