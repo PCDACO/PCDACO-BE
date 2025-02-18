@@ -1,5 +1,6 @@
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 using Domain.Shared;
 
@@ -54,7 +55,7 @@ public sealed class CreateCar
         )
         {
             if (currentUser.User!.IsAdmin())
-                return Result.Error("Bạn không có quyền thực hiện chức năng này !");
+                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
             // Check if amenities are exist
             if (request.AmenityIds.Length > 0)
             {
@@ -63,7 +64,7 @@ public sealed class CreateCar
                     .Where(a => request.AmenityIds.Contains(a.Id))
                     .ToListAsync(cancellationToken);
                 if (amenities.Count != request.AmenityIds.Length)
-                    return Result.Error("Một số tiện nghi không tồn tại !");
+                    return Result.Error(ResponseMessages.AmenitiesNotFound);
             }
             // Check if transmission type is exist
             TransmissionType? checkingTransmissionType = await context
@@ -73,7 +74,7 @@ public sealed class CreateCar
                     cancellationToken
                 );
             if (checkingTransmissionType is null)
-                return Result.Error("Kiểu truyền động không tồn tại !");
+                return Result.Error(ResponseMessages.TransmissionTypeNotFound);
             // Check if fuel type is exist
             FuelType? checkingFuelType = await context
                 .FuelTypes.AsNoTracking()
@@ -82,7 +83,7 @@ public sealed class CreateCar
                     cancellationToken
                 );
             if (checkingFuelType is null)
-                return Result.Error("Kiểu nhiên liệu không tồn tại !");
+                return Result.Error(ResponseMessages.FuelTypeNotFound);
             // Check if status is exist
             CarStatus? checkingStatus = await context
                 .CarStatuses.AsNoTracking()
@@ -91,7 +92,7 @@ public sealed class CreateCar
                     cancellationToken
                 );
             if (checkingStatus is null)
-                return Result.Error("Trạng thái không tồn tại !");
+                return Result.Error(ResponseMessages.CarStatusNotFound);
             // Check if model is exist
             Model? checkingModel = await context
                 .Models.AsNoTracking()
@@ -100,7 +101,7 @@ public sealed class CreateCar
                     cancellationToken
                 );
             if (checkingModel is null)
-                return Result.Error("Mô hình xe không tồn tại !");
+                return Result.Error(ResponseMessages.ModelNotFound);
             (string key, string iv) = await keyManagementService.GenerateKeyAsync();
             string encryptedLicensePlate = await aesEncryptionService.Encrypt(
                 request.LicensePlate,

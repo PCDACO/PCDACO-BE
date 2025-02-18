@@ -1,5 +1,6 @@
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 
 using MediatR;
@@ -25,12 +26,12 @@ public sealed class DeleteCar
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
             if (currentUser.User!.IsAdmin())
-                return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
+                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
             Car? deletingCar = await context.Cars.Where(c => c.Id == request.Id).FirstOrDefaultAsync(cancellationToken);
             if (deletingCar is null)
-                return Result.NotFound("Không tìm thấy xe cần xóa");
+                return Result.NotFound(ResponseMessages.CarNotFound);
             if (deletingCar.OwnerId != currentUser.User.Id)
-                return Result.Forbidden("Bạn không có quyền xóa xe này");
+                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
             // Soft delete image car
             await context.ImageCars.Where(ic => ic.CarId == deletingCar.Id)
                 .ExecuteUpdateAsync(ic =>
@@ -68,7 +69,7 @@ public sealed class DeleteCar
                 ), cancellationToken);
             deletingCar.Delete();
             await context.SaveChangesAsync(cancellationToken);
-            return Result.SuccessWithMessage("Xóa xe thành công");
+            return Result.SuccessWithMessage(ResponseMessages.Deleted);
         }
     }
 }

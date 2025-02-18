@@ -1,11 +1,19 @@
 using Ardalis.Result;
+
+using Azure;
+
+using Domain.Constants;
 using Domain.Entities;
+
 using Microsoft.EntityFrameworkCore;
+
 using Persistance.Data;
+
 using UseCases.DTOs;
 using UseCases.UC_Car.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
+
 using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Car.Commands;
@@ -53,7 +61,7 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Forbidden, result.Status);
-        Assert.Contains("Bạn không có quyền thực hiện chức năng này", result.Errors);
+        Assert.Contains(ResponseMessages.ForbiddenAudit, result.Errors);
     }
 
     [Fact]
@@ -72,7 +80,7 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.NotFound, result.Status);
-        Assert.Contains("Không tìm thấy xe cần xóa", result.Errors);
+        Assert.Contains(ResponseMessages.CarNotFound, result.Errors);
     }
 
     [Fact]
@@ -110,7 +118,7 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Forbidden, result.Status);
-        Assert.Contains("Bạn không có quyền xóa xe này", result.Errors);
+        Assert.Contains(ResponseMessages.ForbiddenAudit, result.Errors);
     }
 
     [Fact]
@@ -201,6 +209,6 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.NotFound, result.Status);
-        Assert.Contains("Không tìm thấy xe cần xóa", result.Errors);
+        Assert.Contains(ResponseMessages.CarNotFound, result.Errors);
     }
 }

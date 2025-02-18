@@ -1,4 +1,5 @@
 using System.Text;
+using System.Threading.Channels;
 
 using API.Middlewares;
 
@@ -12,16 +13,14 @@ using Infrastructure.Encryption;
 using Infrastructure.Medias;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-
-using NetTopologySuite.Geometries;
 
 using Persistance;
 
 using UseCases;
 using UseCases.Abstractions;
+using UseCases.BackgroundServices.InspectionSchedule;
 using UseCases.Utils;
 
 namespace API;
@@ -101,6 +100,12 @@ public static class BuilderConfig
         });
 
         // Add services to the container.
+        services.AddScoped<IAesEncryptionService, AesEncryptionService>();
+        services.AddScoped<IKeyManagementService, KeyManagementService>();
+        services.AddScoped<ICloudinaryServices, CloudinaryServices>();
+        services.AddScoped<TokenService>();
+        services.AddScoped<AuthMiddleware>();
+        // Add singletons
         services.AddSingleton(new JwtSettings()
         {
             Issuer = configuration["ISSUER"] ?? throw new Exception("Issuer is missing"),
@@ -110,18 +115,17 @@ public static class BuilderConfig
                 configuration["TOKEN_EXPIRATION_IN_MINUTES"] ?? throw new Exception("TokenExpirationInMinutes is missing")
             )
         });
-        services.AddScoped<IAesEncryptionService, AesEncryptionService>();
-        services.AddScoped<IKeyManagementService, KeyManagementService>();
-        services.AddScoped<ICloudinaryServices, CloudinaryServices>();
-        services.AddScoped<TokenService>();
-        services.AddScoped<AuthMiddleware>();
-        // Add singletons
         services.AddSingleton(new EncryptionSettings()
         {
             Key = configuration["MASTER_KEY"] ?? throw new Exception("Encryption Key is missing")
         });
         services.AddSingleton(NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
         services.AddSingleton<DeviceStatusesData>();
+        services.AddSingleton<TransactionStatusesData>();
+        // add channels
+        services.AddSingleton(_ =>
+            Channel.CreateUnbounded<CreateInspectionScheduleChannel>());
+        // add problem details
         services.AddProblemDetails();
         // Add exception handlers
         services.AddExceptionHandler<ValidationAppExceptionHandler>();

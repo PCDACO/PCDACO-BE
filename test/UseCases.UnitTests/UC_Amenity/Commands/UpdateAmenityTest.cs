@@ -1,4 +1,8 @@
 using Ardalis.Result;
+
+using Azure;
+
+using Domain.Constants;
 using Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Moq;
@@ -68,7 +72,7 @@ public class UpdateAmenityTests : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Forbidden, result.Status);
-        Assert.Contains("Bạn không có quyền thực hiện thao tác này", result.Errors);
+        Assert.Contains(ResponseMessages.ForbiddenAudit, result.Errors);
     }
 
     [Fact]
@@ -95,7 +99,7 @@ public class UpdateAmenityTests : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.NotFound, result.Status);
-        Assert.Contains("Không tìm thấy tiện nghi", result.Errors);
+        Assert.Contains(ResponseMessages.AmenitiesNotFound, result.Errors);
     }
 
     [Fact]
@@ -127,7 +131,7 @@ public class UpdateAmenityTests : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Contains("Cập nhật tiện nghi thành công", result.SuccessMessage);
+        Assert.Contains(ResponseMessages.Updated, result.SuccessMessage);
 
         var updatedAmenity = await _dbContext
             .Amenities.AsNoTracking()
