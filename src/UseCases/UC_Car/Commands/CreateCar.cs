@@ -1,19 +1,26 @@
 using Ardalis.Result;
+
+using Domain.Constants;
 using Domain.Entities;
 using Domain.Shared;
+
 using FluentValidation;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
-using NetTopologySuite.Geometries;
+
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
+
 using UUIDNext;
 
 namespace UseCases.UC_Car.Commands;
 
 public sealed class CreateCar
 {
-    public sealed record Query(
+    public sealed record Command(
         Guid[] AmenityIds,
         Guid ModelId,
         Guid TransmissionTypeId,
@@ -24,8 +31,7 @@ public sealed class CreateCar
         string Description,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        decimal PricePerHour,
-        decimal PricePerDay,
+        decimal Price,
         decimal? Latitude,
         decimal? Longtitude
     ) : IRequest<Result<Response>>;
@@ -38,19 +44,18 @@ public sealed class CreateCar
     internal sealed class Handler(
         IAppDBContext context,
         CurrentUser currentUser,
-        GeometryFactory geometryFactory,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings
-    ) : IRequestHandler<Query, Result<Response>>
+    ) : IRequestHandler<Command, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
-            Query request,
+            Command request,
             CancellationToken cancellationToken
         )
         {
             if (currentUser.User!.IsAdmin())
-                return Result.Error("Bạn không có quyền thực hiện chức năng này !");
+                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
             // Check if amenities are exist
             if (request.AmenityIds.Length > 0)
             {
@@ -59,7 +64,7 @@ public sealed class CreateCar
                     .Where(a => request.AmenityIds.Contains(a.Id))
                     .ToListAsync(cancellationToken);
                 if (amenities.Count != request.AmenityIds.Length)
-                    return Result.Error("Một số tiện nghi không tồn tại !");
+                    return Result.Error(ResponseMessages.AmenitiesNotFound);
             }
             // Check if transmission type is exist
             TransmissionType? checkingTransmissionType = await context
@@ -69,7 +74,7 @@ public sealed class CreateCar
                     cancellationToken
                 );
             if (checkingTransmissionType is null)
-                return Result.Error("Kiểu truyền động không tồn tại !");
+                return Result.Error(ResponseMessages.TransmissionTypeNotFound);
             // Check if fuel type is exist
             FuelType? checkingFuelType = await context
                 .FuelTypes.AsNoTracking()
@@ -78,7 +83,7 @@ public sealed class CreateCar
                     cancellationToken
                 );
             if (checkingFuelType is null)
-                return Result.Error("Kiểu nhiên liệu không tồn tại !");
+                return Result.Error(ResponseMessages.FuelTypeNotFound);
             // Check if status is exist
             CarStatus? checkingStatus = await context
                 .CarStatuses.AsNoTracking()
@@ -87,7 +92,7 @@ public sealed class CreateCar
                     cancellationToken
                 );
             if (checkingStatus is null)
-                return Result.Error("Trạng thái không tồn tại !");
+                return Result.Error(ResponseMessages.CarStatusNotFound);
             // Check if model is exist
             Model? checkingModel = await context
                 .Models.AsNoTracking()
@@ -96,7 +101,7 @@ public sealed class CreateCar
                     cancellationToken
                 );
             if (checkingModel is null)
-                return Result.Error("Mô hình xe không tồn tại !");
+                return Result.Error(ResponseMessages.ModelNotFound);
             (string key, string iv) = await keyManagementService.GenerateKeyAsync();
             string encryptedLicensePlate = await aesEncryptionService.Encrypt(
                 request.LicensePlate,
@@ -121,12 +126,8 @@ public sealed class CreateCar
                 FuelTypeId = request.FuelTypeId,
                 FuelConsumption = request.FuelConsumption,
                 RequiresCollateral = request.RequiresCollateral,
-                PricePerHour = request.PricePerHour,
-                PricePerDay = request.PricePerDay,
+                Price = request.Price,
                 StatusId = checkingStatus.Id,
-                Location = geometryFactory.CreatePoint(
-                    new Coordinate((double)request.Longtitude!, (double)request.Latitude!)
-                ),
                 CarStatistic = new() { CarId = carId },
                 CarAmenities =
                 [
@@ -150,7 +151,7 @@ public sealed class CreateCar
         }
     }
 
-    public sealed class Validator : AbstractValidator<Query>
+    public sealed class Validator : AbstractValidator<Command>
     {
         public Validator()
         {
@@ -178,12 +179,7 @@ public sealed class CreateCar
                 .WithMessage("Mức tiêu hao nhiên liệu không được để trống !")
                 .GreaterThan(0)
                 .WithMessage("Mức tiêu hao nhiên liệu phải lớn hơn 0 !");
-            RuleFor(x => x.PricePerHour)
-                .NotEmpty()
-                .WithMessage("Giá thuê theo giờ không được để trống !")
-                .GreaterThan(0)
-                .WithMessage("Giá thuê theo giờ phải lớn hơn 0 !");
-            RuleFor(x => x.PricePerDay)
+            RuleFor(x => x.Price)
                 .NotEmpty()
                 .WithMessage("Giá thuê theo ngày không được để trống !")
                 .GreaterThan(0)

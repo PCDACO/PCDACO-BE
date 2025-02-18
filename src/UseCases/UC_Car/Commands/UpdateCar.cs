@@ -1,10 +1,16 @@
 using Ardalis.Result;
+
+using Domain.Constants;
 using Domain.Entities;
 using Domain.Shared;
+
 using FluentValidation;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
-using NetTopologySuite.Geometries;
+
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -24,57 +30,55 @@ public sealed class UpdateCar
         string Description,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        decimal PricePerHour,
-        decimal PricePerDay,
-        decimal? Latitude,
-        decimal? Longtitude
-    ) : IRequest<Result>;
+        decimal Price
+    ) : IRequest<Result<Response>>;
+
+    public record Response(Guid Id);
 
     private class Handler(
         IAppDBContext context,
         CurrentUser currentUser,
-        GeometryFactory geometryFactory,
         IAesEncryptionService aesEncryptionService,
         EncryptionSettings encryptionSettings,
         IKeyManagementService keyManagementService
-    ) : IRequestHandler<Commamnd, Result>
+    ) : IRequestHandler<Commamnd, Result<Response>>
     {
-        public async Task<Result> Handle(Commamnd request, CancellationToken cancellationToken)
+        public async Task<Result<Response>> Handle(Commamnd request, CancellationToken cancellationToken)
         {
             if (currentUser.User!.IsAdmin())
-                return Result.Error("Bạn không có quyền thực hiện chức năng này !");
+                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
             Car? checkingCar = await context
                 .Cars.Include(c => c.EncryptionKey)
                 .FirstOrDefaultAsync(c => c.Id == request.CarId, cancellationToken);
             if (checkingCar is null)
-                return Result.Error("Xe không tồn tại");
+                return Result.Error(ResponseMessages.CarNotFound);
             List<Amenity> amenities = await context
                 .Amenities.AsNoTracking()
                 .Where(a => request.AmenityIds.Contains(a.Id))
                 .ToListAsync(cancellationToken);
             if (amenities.Count != request.AmenityIds.Length)
-                return Result.Error("Một số tiện nghi không tồn tại !");
+                return Result.Error(ResponseMessages.AmenitiesNotFound);
             TransmissionType? checkingTransmissionType =
                 await context.TransmissionTypes.FirstOrDefaultAsync(
                     tt => tt.Id == request.TransmissionTypeId && !tt.IsDeleted,
                     cancellationToken
                 );
             if (checkingTransmissionType is null)
-                return Result.Error("Kiểu hộp số không tồn tại !");
+                return Result.Error(ResponseMessages.TransmissionTypeNotFound);
             // Check if fuel type is exist
             FuelType? checkingFuelType = await context.FuelTypes.FirstOrDefaultAsync(
                 ft => ft.Id == request.FuelTypeId && !ft.IsDeleted,
                 cancellationToken
             );
             if (checkingFuelType is null)
-                return Result.Error("Kiểu nhiên liệu không tồn tại !");
+                return Result.Error(ResponseMessages.FuelTypeNotFound);
             // Check if model is exist
             Model? checkingModel = await context.Models.FirstOrDefaultAsync(
                 m => m.Id == request.ModelId,
                 cancellationToken
             );
             if (checkingModel is null)
-                return Result.Error("Mô hình xe không tồn tại !");
+                return Result.Error(ResponseMessages.ModelNotFound);
             // Update car amenities
             await context
                 .CarAmenities.Where(ca => ca.CarId == checkingCar.Id)
@@ -107,15 +111,11 @@ public sealed class UpdateCar
             checkingCar.FuelTypeId = request.FuelTypeId;
             checkingCar.FuelConsumption = request.FuelConsumption;
             checkingCar.RequiresCollateral = request.RequiresCollateral;
-            checkingCar.PricePerHour = request.PricePerHour;
-            checkingCar.PricePerDay = request.PricePerDay;
-            checkingCar.Location = geometryFactory.CreatePoint(
-                new Coordinate((double)request.Longtitude!, (double)request.Latitude!)
-            );
+            checkingCar.Price = request.Price;
             checkingCar.UpdatedAt = DateTimeOffset.UtcNow;
             // Save changes
             await context.SaveChangesAsync(cancellationToken);
-            return Result.SuccessWithMessage("Cập nhật xe thành công");
+            return Result.Success(new Response(checkingCar.Id), ResponseMessages.Updated);
         }
     }
 
@@ -147,18 +147,11 @@ public sealed class UpdateCar
                 .WithMessage("Mức tiêu hao nhiên liệu không được để trống !")
                 .GreaterThan(0)
                 .WithMessage("Mức tiêu hao nhiên liệu phải lớn hơn 0 !");
-            RuleFor(x => x.PricePerHour)
-                .NotEmpty()
-                .WithMessage("Giá thuê theo giờ không được để trống !")
-                .GreaterThan(0)
-                .WithMessage("Giá thuê theo giờ phải lớn hơn 0 !");
-            RuleFor(x => x.PricePerDay)
+            RuleFor(x => x.Price)
                 .NotEmpty()
                 .WithMessage("Giá thuê theo ngày không được để trống !")
                 .GreaterThan(0)
                 .WithMessage("Giá thuê theo ngày phải lớn hơn 0 !");
-            RuleFor(x => x.Latitude).NotEmpty().WithMessage("Vĩ độ không được để trống !");
-            RuleFor(x => x.Longtitude).NotEmpty().WithMessage("Kinh độ không được để trống !");
         }
     }
 }

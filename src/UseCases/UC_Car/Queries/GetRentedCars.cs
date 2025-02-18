@@ -1,8 +1,13 @@
 using Ardalis.Result;
+
+using Domain.Constants;
 using Domain.Entities;
 using Domain.Shared;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -27,7 +32,7 @@ public class GetRentedCars
         string FuelType,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        PriceDetail Price,
+        decimal Price,
         LocationDetail Location,
         ManufacturerDetail Manufacturer,
         ImageDetail[] Images,
@@ -64,8 +69,8 @@ public class GetRentedCars
                 car.FuelType.ToString() ?? string.Empty,
                 car.FuelConsumption,
                 car.RequiresCollateral,
-                new PriceDetail(car.PricePerHour, car.PricePerDay),
-                new LocationDetail(car.Location.X, car.Location.Y),
+                car.Price,
+                new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
                 new ManufacturerDetail(car.Model.Manufacturer.Id, car.Model.Manufacturer.Name),
                 [.. car.ImageCars.Select(i => new ImageDetail(i.Id, i.Url))],
                 [
@@ -78,8 +83,6 @@ public class GetRentedCars
             );
         }
     };
-
-    public record PriceDetail(decimal PerHour, decimal PerDay);
 
     public record LocationDetail(double Longtitude, double Latitude);
 
@@ -103,7 +106,7 @@ public class GetRentedCars
         )
         {
             if (!currentUser.User!.IsAdmin())
-                return Result.Forbidden("Bạn không có quyền thực hiện thao tác này");
+                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
             IQueryable<Car> query = context
                 .Cars.Include(c => c.Owner)
                 .ThenInclude(o => o.Feedbacks)
@@ -139,7 +142,8 @@ public class GetRentedCars
                     count,
                     request.PageNumber,
                     request.PageSize
-                )
+                ),
+                ResponseMessages.Fetched
             );
         }
     }

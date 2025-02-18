@@ -8,7 +8,7 @@ using UseCases.UC_Driver.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
 
-namespace UseCases.UnitTests.UC_Driver.Commands;
+namespace UseCases.UnitTests.UC_License.Commands;
 
 [Collection("Test Collection")]
 public class AddDriverLicenseTests : IAsyncLifetime
@@ -63,7 +63,7 @@ public class AddDriverLicenseTests : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Equal(ResultStatus.Forbidden, result.Status);
         Assert.Contains("Bạn không có quyền thực hiện chức năng này", result.Errors);
     }
 

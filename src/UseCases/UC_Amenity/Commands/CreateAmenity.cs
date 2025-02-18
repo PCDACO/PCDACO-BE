@@ -2,6 +2,7 @@ using System.Text;
 
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 
 using FluentValidation;
@@ -40,7 +41,7 @@ public sealed class CreateAmenity
         )
         {
             if (!currentUser.User!.IsAdmin())
-                return Result.Forbidden("Bạn không có quyền thực hiện thao tác này");
+                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             Amenity amenity = new()
             {
@@ -56,7 +57,7 @@ public sealed class CreateAmenity
 
             await context.Amenities.AddAsync(amenity, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
-            return Result.Created(Response.FromEntity(amenity));
+            return Result.Success(Response.FromEntity(amenity), ResponseMessages.Created);
         }
     }
 

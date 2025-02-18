@@ -1,11 +1,17 @@
 using Ardalis.Result;
+
+using Domain.Constants;
 using Domain.Entities;
+
 using Microsoft.EntityFrameworkCore;
+
 using Persistance.Data;
+
 using UseCases.DTOs;
 using UseCases.UC_Amenity.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
+
 using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Amenity.Commands;
@@ -37,7 +43,7 @@ public class DeleteAmenityTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Forbidden, result.Status);
-        Assert.Contains("Bạn không có quyền xóa tiện nghi", result.Errors);
+        Assert.Contains(ResponseMessages.ForbiddenAudit, result.Errors);
     }
 
     [Fact]
@@ -56,7 +62,7 @@ public class DeleteAmenityTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains("Không tìm thấy tiện nghi", result.Errors);
+        Assert.Contains(ResponseMessages.AmenitiesNotFound, result.Errors);
     }
 
     [Fact]
@@ -78,7 +84,7 @@ public class DeleteAmenityTests(DatabaseTestBase fixture) : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Contains("Xóa tiện nghi thành công", result.SuccessMessage);
+        Assert.Contains(ResponseMessages.Deleted, result.SuccessMessage);
 
         // Verify soft delete
         var deletedAmenity = await _dbContext
@@ -108,6 +114,6 @@ public class DeleteAmenityTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains("Không tìm thấy tiện nghi", result.Errors);
+        Assert.Contains(ResponseMessages.AmenitiesNotFound, result.Errors);
     }
 }

@@ -11,8 +11,11 @@ namespace UseCases.UC_Driver.Commands;
 
 public sealed class UpdateDriverLicense
 {
-    public sealed record Command(Guid LicenseId, string LicenseNumber, DateTime ExpirationDate)
-        : IRequest<Result<Response>>;
+    public sealed record Command(
+        Guid LicenseId,
+        string LicenseNumber,
+        DateTimeOffset ExpirationDate
+    ) : IRequest<Result<Response>>;
 
     public sealed record Response(Guid Id)
     {
@@ -34,7 +37,7 @@ public sealed class UpdateDriverLicense
         {
             // Check if user is driver
             if (!currentUser.User!.IsDriver())
-                return Result.Error("Bạn không có quyền thực hiện chức năng này");
+                return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
 
             // Get license
             var license = await context.Licenses.FirstOrDefaultAsync(
@@ -67,6 +70,9 @@ public sealed class UpdateDriverLicense
             license.EncryptionKeyId = newEncryptionKey.Id;
             license.ExpiryDate = request.ExpirationDate.ToString("yyyy-MM-dd");
             license.UpdatedAt = DateTimeOffset.UtcNow;
+            license.IsApprove = null; // Reset approval status
+            license.RejectReason = null; // Clear reject reason
+            license.ApprovedAt = null; // Clear accepted date
 
             await context.SaveChangesAsync(cancellationToken);
 
@@ -92,7 +98,7 @@ public sealed class UpdateDriverLicense
             RuleFor(x => x.ExpirationDate)
                 .NotEmpty()
                 .WithMessage("Ngày hết hạn không được để trống")
-                .GreaterThanOrEqualTo(DateTime.UtcNow.Date)
+                .GreaterThanOrEqualTo(DateTimeOffset.UtcNow.Date)
                 .WithMessage("Ngày hết hạn phải lớn hơn hoặc bằng ngày hiện tại");
         }
     }

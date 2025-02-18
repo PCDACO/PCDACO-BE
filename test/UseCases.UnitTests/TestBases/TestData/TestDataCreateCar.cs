@@ -1,6 +1,7 @@
 using Domain.Entities;
-using NetTopologySuite.Geometries;
+
 using Persistance.Data;
+
 using UUIDNext;
 
 namespace UseCases.UnitTests.TestBases.TestData;
@@ -29,9 +30,7 @@ public static class TestDataCreateCar
             Color = "Red",
             Seat = 4,
             FuelConsumption = 7.5m,
-            PricePerDay = 100m,
-            PricePerHour = 10m,
-            Location = new Point(0, 0),
+            Price = 100m,
             IsDeleted = isDeleted,
         };
 

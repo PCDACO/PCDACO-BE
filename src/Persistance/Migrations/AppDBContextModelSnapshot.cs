@@ -284,20 +284,13 @@ namespace Persistance.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<Point>("Location")
-                        .IsRequired()
-                        .HasColumnType("geometry");
-
                     b.Property<Guid>("ModelId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid");
 
-                    b.Property<decimal>("PricePerDay")
-                        .HasColumnType("numeric");
-
-                    b.Property<decimal>("PricePerHour")
+                    b.Property<decimal>("Price")
                         .HasColumnType("numeric");
 
                     b.Property<bool>("RequiresCollateral")
@@ -367,6 +360,72 @@ namespace Persistance.Migrations
                     b.HasIndex("CarId");
 
                     b.ToTable("CarAmenities");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CarContract", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CarId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Terms")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CarId")
+                        .IsUnique();
+
+                    b.ToTable("CarContracts");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CarGPS", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CarId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DeviceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<Point>("Location")
+                        .IsRequired()
+                        .HasColumnType("geometry");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CarId")
+                        .IsUnique();
+
+                    b.HasIndex("DeviceId")
+                        .IsUnique();
+
+                    b.ToTable("CarGPSes");
                 });
 
             modelBuilder.Entity("Domain.Entities.CarReport", b =>
@@ -593,6 +652,30 @@ namespace Persistance.Migrations
                     b.ToTable("ContractStatuses");
                 });
 
+            modelBuilder.Entity("Domain.Entities.DeviceStatus", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DeviceStatuses");
+                });
+
             modelBuilder.Entity("Domain.Entities.EncryptionKey", b =>
                 {
                     b.Property<Guid>("Id")
@@ -683,6 +766,35 @@ namespace Persistance.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("FuelTypes");
+                });
+
+            modelBuilder.Entity("Domain.Entities.GPSDevice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("StatusId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("StatusId");
+
+                    b.ToTable("GPSDevices");
                 });
 
             modelBuilder.Entity("Domain.Entities.ImageCar", b =>
@@ -873,6 +985,9 @@ namespace Persistance.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<DateTimeOffset?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -899,6 +1014,9 @@ namespace Persistance.Migrations
 
                     b.Property<string>("LicenseImageFrontUrl")
                         .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RejectReason")
                         .HasColumnType("text");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
@@ -1480,6 +1598,36 @@ namespace Persistance.Migrations
                     b.Navigation("Car");
                 });
 
+            modelBuilder.Entity("Domain.Entities.CarContract", b =>
+                {
+                    b.HasOne("Domain.Entities.Car", "Car")
+                        .WithOne("Contract")
+                        .HasForeignKey("Domain.Entities.CarContract", "CarId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Car");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CarGPS", b =>
+                {
+                    b.HasOne("Domain.Entities.Car", "Car")
+                        .WithOne("GPS")
+                        .HasForeignKey("Domain.Entities.CarGPS", "CarId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.GPSDevice", "Device")
+                        .WithOne("GPS")
+                        .HasForeignKey("Domain.Entities.CarGPS", "DeviceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Car");
+
+                    b.Navigation("Device");
+                });
+
             modelBuilder.Entity("Domain.Entities.CarReport", b =>
                 {
                     b.HasOne("Domain.Entities.Booking", "Booking")
@@ -1565,6 +1713,17 @@ namespace Persistance.Migrations
                     b.Navigation("Booking");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.GPSDevice", b =>
+                {
+                    b.HasOne("Domain.Entities.DeviceStatus", "Status")
+                        .WithMany("Devices")
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Status");
                 });
 
             modelBuilder.Entity("Domain.Entities.ImageCar", b =>
@@ -1842,6 +2001,12 @@ namespace Persistance.Migrations
                     b.Navigation("CarStatistic")
                         .IsRequired();
 
+                    b.Navigation("Contract")
+                        .IsRequired();
+
+                    b.Navigation("GPS")
+                        .IsRequired();
+
                     b.Navigation("ImageCars");
 
                     b.Navigation("InspectionSchedules");
@@ -1867,6 +2032,11 @@ namespace Persistance.Migrations
                     b.Navigation("Contracts");
                 });
 
+            modelBuilder.Entity("Domain.Entities.DeviceStatus", b =>
+                {
+                    b.Navigation("Devices");
+                });
+
             modelBuilder.Entity("Domain.Entities.EncryptionKey", b =>
                 {
                     b.Navigation("Car")
@@ -1887,6 +2057,12 @@ namespace Persistance.Migrations
             modelBuilder.Entity("Domain.Entities.FuelType", b =>
                 {
                     b.Navigation("Cars");
+                });
+
+            modelBuilder.Entity("Domain.Entities.GPSDevice", b =>
+                {
+                    b.Navigation("GPS")
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Domain.Entities.ImageType", b =>

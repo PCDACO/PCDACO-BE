@@ -18,7 +18,6 @@ public class AuthMiddleware(IConfiguration configuration) : IMiddleware
         // configure issuer
         string issuer =
             configuration["ISSUER"] ?? throw new ArgumentNullException("Issuer is not configured");
-        Console.WriteLine(issuer);
         string? authHeader = context.Request.Headers.Authorization.ToString();
         if (string.IsNullOrEmpty(authHeader) || !authHeader.Contains("Bearer "))
         {

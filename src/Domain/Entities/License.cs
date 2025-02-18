@@ -12,6 +12,8 @@ public class License : BaseEntity
     public string LicenseImageBackUrl { get; set; } = string.Empty;
     public required string ExpiryDate { get; set; }
     public bool? IsApprove { get; set; } = null!;
+    public string? RejectReason { get; set; }
+    public DateTimeOffset? ApprovedAt { get; set; }
 
     // Navigation properties
     [ForeignKey(nameof(UserId))]
