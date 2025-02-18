@@ -12,4 +12,10 @@ public class GPSDevice : BaseEntity
     public CarGPS GPS { get; set; } = null!;
     [ForeignKey(nameof(StatusId))]
     public DeviceStatus Status { get; set; } = null!;
+
+    public void Update(string name)
+    {
+        Name = name.Trim();
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }

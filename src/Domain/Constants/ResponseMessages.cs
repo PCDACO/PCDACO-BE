@@ -4,6 +4,7 @@ public class ResponseMessages
 {
     // Shared
     public const string Created = "Tạo thành công";
+    public const string Updated = "Cập nhật thành công";
     // PERMISSION
     public const string UnauthourizeAccess = "Bạn không có quyền truy cập";
     public const string ForbiddenAudit = "Bạn không có quyền thực hiện thao tác này";
