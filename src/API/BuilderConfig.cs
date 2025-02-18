@@ -122,6 +122,7 @@ public static class BuilderConfig
         });
         services.AddSingleton(NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
         services.AddSingleton<DeviceStatusesData>();
+        services.AddSingleton<TransactionStatusesData>();
         services.AddProblemDetails();
         // Add exception handlers
         services.AddExceptionHandler<ValidationAppExceptionHandler>();

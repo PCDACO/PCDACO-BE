@@ -62,9 +62,11 @@ public class UpdateDatabase
         tasks.Add(context.AddRangeAsync(deviceStatuses));
         tasks.Add(context.AddRangeAsync());
         await Task.WhenAll(tasks);
+        await context.SaveChangesAsync();
         // Load init data to initial objects.
         DeviceStatusesData gpsData = app.ApplicationServices.GetRequiredService<DeviceStatusesData>();
         gpsData.SetStatuses(deviceStatuses);
-        await context.SaveChangesAsync();
+        TransactionStatusesData transactionStatusesData = app.ApplicationServices.GetRequiredService<TransactionStatusesData>();
+        transactionStatusesData.Set(transactionStatuses);
     }
 }
