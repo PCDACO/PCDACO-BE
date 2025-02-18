@@ -12,27 +12,22 @@ using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.GPSDeviceEndpoints;
 
-public class UpdateGPSDeviceEndpoint : ICarterModule
+public class DeleteGPSDeviceEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPut("/api/gps-devices/{id:guid}", Handle)
-            .WithSummary("Update GPS Device")
+        app.MapDelete("/api/gps-devices/{id:guid}", Handle)
+            .WithSummary("Delete GPS Device")
             .WithTags("GPS Devices")
             .RequireAuthorization();
     }
 
     private async Task<IResult> Handle(
         ISender sender,
-        Guid id,
-        UpdateGPSDeviceRequest request
+        Guid id
     )
     {
-        Result<UpdateGPSDevice.Response> result = await sender.Send(new UpdateGPSDevice.Command(id, request.Name), default);
+        Result result = await sender.Send(new DeleteGPSDevice.Command(id), default);
         return result.MapResult();
     }
-
-    private record UpdateGPSDeviceRequest(
-        string Name
-    );
 }
