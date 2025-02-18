@@ -1,5 +1,6 @@
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 using Domain.Shared;
 
@@ -171,7 +172,8 @@ public class GetCars
                     count,
                     request.Limit,
                     0
-                )
+                ),
+                ResponseMessages.Fetched
             );
         }
     }
