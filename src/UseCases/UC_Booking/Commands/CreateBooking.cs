@@ -122,8 +122,20 @@ public sealed class CreateBooking
             context.Bookings.Add(booking);
             await context.SaveChangesAsync(cancellationToken);
 
-            // Create email template
-            var emailTemplate = GetBookingCreatedTemplate.Template(
+            await SendEmail(request, car, totalAmount, booking);
+
+            return Result<Response>.Success(new Response(bookingId));
+        }
+
+        private async Task SendEmail(
+            CreateBookingCommand request,
+            Car car,
+            decimal totalAmount,
+            Booking booking
+        )
+        {
+            // Send email to driver
+            var emailTemplate = DriverCreateBookingTemplate.Template(
                 currentUser.User.Name,
                 car.Model.Name,
                 request.StartTime,
@@ -131,16 +143,27 @@ public sealed class CreateBooking
                 totalAmount
             );
 
-            // Send email to driver
             await emailService.SendEmailAsync(
                 currentUser.User.Email,
                 "Xác nhận đặt xe",
                 emailTemplate
             );
 
-            // TODO: Create template and Send email to car owner
+            // Send email to owner
+            var emailTemplateOwner = OwnerCreateBookingTemplate.Template(
+                car.Owner.Name,
+                car.Model.Name,
+                booking.User.Name,
+                request.StartTime,
+                request.EndTime,
+                totalAmount
+            );
 
-            return Result<Response>.Success(new Response(bookingId));
+            await emailService.SendEmailAsync(
+                car.Owner.Email,
+                "Yêu Cầu Đặt Xe Mới",
+                emailTemplateOwner
+            );
         }
     }
 
