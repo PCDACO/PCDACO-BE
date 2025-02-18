@@ -24,7 +24,7 @@ public class UpdateCarEndpoint : ICarterModule
 
     private async Task<IResult> Handle(ISender sender, Guid id, UpdateCarRequest request)
     {
-        Result result = await sender.Send(
+        Result<UpdateCar.Response> result = await sender.Send(
             new UpdateCar.Commamnd(
                 CarId: id,
                 AmenityIds: request.AmenityIds,

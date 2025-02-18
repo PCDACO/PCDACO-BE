@@ -1,5 +1,6 @@
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 using Domain.Shared;
 
@@ -104,7 +105,7 @@ public class GetAvailableCars
         )
         {
             if (!currentUser.User!.IsAdmin())
-                return Result.Forbidden("Bạn không có quyền thực hiện thao tác này");
+                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
             IQueryable<Car> query = context
                 .Cars.Include(c => c.Owner)
                 .ThenInclude(o => o.Feedbacks)
@@ -140,7 +141,8 @@ public class GetAvailableCars
                     count,
                     request.PageNumber,
                     request.PageSize
-                )
+                ),
+                ResponseMessages.Fetched
             );
         }
     }

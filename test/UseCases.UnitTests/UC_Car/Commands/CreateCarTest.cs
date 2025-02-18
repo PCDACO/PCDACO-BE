@@ -1,13 +1,12 @@
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 using Domain.Shared;
 
 using Infrastructure.Encryption;
 
 using Microsoft.EntityFrameworkCore;
-
-using NetTopologySuite.Geometries;
 
 using Persistance.Data;
 
@@ -45,7 +44,7 @@ public class CreateCarTests : IAsyncLifetime
 
     public async Task DisposeAsync() => await _resetDatabase();
 
-    private CreateCar.Command CreateValidCommand(
+    private static CreateCar.Command CreateValidCommand(
         TransmissionType transmissionType,
         FuelType fuelType,
         Guid? modelId = null,
@@ -92,8 +91,8 @@ public class CreateCarTests : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains("Bạn không có quyền thực hiện chức năng này !", result.Errors);
+        Assert.Equal(ResultStatus.Forbidden, result.Status);
+        Assert.Contains(ResponseMessages.ForbiddenAudit, result.Errors);
     }
 
     [Fact]
@@ -168,7 +167,7 @@ public class CreateCarTests : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains("Mô hình xe không tồn tại !", result.Errors);
+        Assert.Contains(ResponseMessages.ModelNotFound, result.Errors);
 
         // Verify no car was created
         var carsCount = await _dbContext.Cars.CountAsync();

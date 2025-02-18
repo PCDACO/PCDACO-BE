@@ -2,6 +2,7 @@ using System.Threading.Tasks;
 
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 using Domain.Shared;
 
@@ -121,7 +122,7 @@ public class GetCarById
                         aesEncryptionService,
                         keyManagementService
                     ),
-                    "Lấy thông tin xe thành công"
+                    ResponseMessages.Fetched
                 ),
             };
     }

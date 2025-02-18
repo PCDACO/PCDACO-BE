@@ -1,5 +1,6 @@
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 using Domain.Shared;
 
@@ -30,7 +31,9 @@ public sealed class UpdateCar
         decimal FuelConsumption,
         bool RequiresCollateral,
         decimal Price
-    ) : IRequest<Result>;
+    ) : IRequest<Result<Response>>;
+
+    public record Response(Guid Id);
 
     private class Handler(
         IAppDBContext context,
@@ -38,44 +41,44 @@ public sealed class UpdateCar
         IAesEncryptionService aesEncryptionService,
         EncryptionSettings encryptionSettings,
         IKeyManagementService keyManagementService
-    ) : IRequestHandler<Commamnd, Result>
+    ) : IRequestHandler<Commamnd, Result<Response>>
     {
-        public async Task<Result> Handle(Commamnd request, CancellationToken cancellationToken)
+        public async Task<Result<Response>> Handle(Commamnd request, CancellationToken cancellationToken)
         {
             if (currentUser.User!.IsAdmin())
-                return Result.Error("Bạn không có quyền thực hiện chức năng này !");
+                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
             Car? checkingCar = await context
                 .Cars.Include(c => c.EncryptionKey)
                 .FirstOrDefaultAsync(c => c.Id == request.CarId, cancellationToken);
             if (checkingCar is null)
-                return Result.Error("Xe không tồn tại");
+                return Result.Error(ResponseMessages.CarNotFound);
             List<Amenity> amenities = await context
                 .Amenities.AsNoTracking()
                 .Where(a => request.AmenityIds.Contains(a.Id))
                 .ToListAsync(cancellationToken);
             if (amenities.Count != request.AmenityIds.Length)
-                return Result.Error("Một số tiện nghi không tồn tại !");
+                return Result.Error(ResponseMessages.AmenitiesNotFound);
             TransmissionType? checkingTransmissionType =
                 await context.TransmissionTypes.FirstOrDefaultAsync(
                     tt => tt.Id == request.TransmissionTypeId && !tt.IsDeleted,
                     cancellationToken
                 );
             if (checkingTransmissionType is null)
-                return Result.Error("Kiểu hộp số không tồn tại !");
+                return Result.Error(ResponseMessages.TransmissionTypeNotFound);
             // Check if fuel type is exist
             FuelType? checkingFuelType = await context.FuelTypes.FirstOrDefaultAsync(
                 ft => ft.Id == request.FuelTypeId && !ft.IsDeleted,
                 cancellationToken
             );
             if (checkingFuelType is null)
-                return Result.Error("Kiểu nhiên liệu không tồn tại !");
+                return Result.Error(ResponseMessages.FuelTypeNotFound);
             // Check if model is exist
             Model? checkingModel = await context.Models.FirstOrDefaultAsync(
                 m => m.Id == request.ModelId,
                 cancellationToken
             );
             if (checkingModel is null)
-                return Result.Error("Mô hình xe không tồn tại !");
+                return Result.Error(ResponseMessages.ModelNotFound);
             // Update car amenities
             await context
                 .CarAmenities.Where(ca => ca.CarId == checkingCar.Id)
@@ -112,7 +115,7 @@ public sealed class UpdateCar
             checkingCar.UpdatedAt = DateTimeOffset.UtcNow;
             // Save changes
             await context.SaveChangesAsync(cancellationToken);
-            return Result.SuccessWithMessage("Cập nhật xe thành công");
+            return Result.Success(new Response(checkingCar.Id), ResponseMessages.Updated);
         }
     }
 
