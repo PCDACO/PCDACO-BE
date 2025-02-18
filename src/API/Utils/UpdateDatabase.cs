@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 
+using Domain.Data;
 using Domain.Entities;
 
 using Microsoft.EntityFrameworkCore;
@@ -41,9 +42,7 @@ public class UpdateDatabase
         Model[] models = ModelGenerator.Execute(manufacturers);
         InspectionStatus[] inspectionStatuses = InspectionStatusGenerator.Execute();
         DeviceStatus[] deviceStatuses = DeviceStatusGenerator.Execute();
-
         List<Task> tasks = [];
-
         tasks.Add(context.AddRangeAsync(withdrawalRequestStatuses));
         tasks.Add(context.AddRangeAsync(userRoles));
         tasks.Add(context.AddRangeAsync(contractStatuses));
@@ -60,8 +59,12 @@ public class UpdateDatabase
         tasks.Add(context.AddRangeAsync(manufacturers));
         tasks.Add(context.AddRangeAsync(models));
         tasks.Add(context.AddRangeAsync(inspectionStatuses));
+        tasks.Add(context.AddRangeAsync(deviceStatuses));
         tasks.Add(context.AddRangeAsync());
         await Task.WhenAll(tasks);
+        // Load init data to initial objects.
+        DeviceStatusesData gpsData = app.ApplicationServices.GetRequiredService<DeviceStatusesData>();
+        gpsData.SetStatuses(deviceStatuses);
         await context.SaveChangesAsync();
     }
 }

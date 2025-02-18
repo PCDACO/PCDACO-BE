@@ -4,6 +4,7 @@ using API.Middlewares;
 
 using Carter;
 
+using Domain.Data;
 using Domain.Shared;
 
 using Infrastructure;
@@ -119,7 +120,8 @@ public static class BuilderConfig
         {
             Key = configuration["MASTER_KEY"] ?? throw new Exception("Encryption Key is missing")
         });
-        services.AddSingleton<GeometryFactory>(NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
+        services.AddSingleton(NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
+        services.AddSingleton<DeviceStatusesData>();
         services.AddProblemDetails();
         // Add exception handlers
         services.AddExceptionHandler<ValidationAppExceptionHandler>();
