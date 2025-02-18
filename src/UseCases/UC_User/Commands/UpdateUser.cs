@@ -72,6 +72,7 @@ public static class UpdateUser
             user.Address = request.Address;
             user.DateOfBirth = request.DateOfBirth;
             user.Phone = encryptedPhone;
+            user.UpdatedAt = DateTimeOffset.UtcNow;
 
             await _context.SaveChangesAsync(cancellationToken);
 
