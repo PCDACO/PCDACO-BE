@@ -1,5 +1,6 @@
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 
 using MediatR;
@@ -61,7 +62,7 @@ public sealed class GetAmenities
                     request.PageSize,
                     hasNext
                 ),
-                "Lấy danh sách tiện ích thành công"
+                ResponseMessages.Fetched
             );
         }
     }

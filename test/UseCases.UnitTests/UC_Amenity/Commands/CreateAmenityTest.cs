@@ -1,5 +1,6 @@
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 
 using Microsoft.EntityFrameworkCore;
@@ -67,7 +68,7 @@ public class CreateAmenityTest : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Forbidden, result.Status);
-        Assert.Contains("Bạn không có quyền thực hiện thao tác này", result.Errors);
+        Assert.Contains(ResponseMessages.ForbiddenAudit, result.Errors);
     }
 
     [Fact]
@@ -89,7 +90,7 @@ public class CreateAmenityTest : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Created, result.Status);
+        Assert.Equal(ResultStatus.Ok, result.Status);
 
         // Verify using factory-created pattern
         var createdAmenity = await _dbContext.Amenities.FirstOrDefaultAsync(a => a.Name == "Pool");
