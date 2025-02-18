@@ -15,6 +15,7 @@ namespace UseCases.UnitTests.UC_Booking.Commands;
 public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
+    private readonly TestDataEmailService _emailService = new();
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly IPaymentService _paymentService = new TestDataPaymentService();
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
@@ -31,7 +32,12 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new CompleteBooking.Handler(_dbContext, _currentUser, _paymentService);
+        var handler = new CompleteBooking.Handler(
+            _dbContext,
+            _currentUser,
+            _emailService,
+            _paymentService
+        );
         var command = new CompleteBooking.Command(Guid.NewGuid());
 
         // Act
@@ -50,7 +56,12 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new CompleteBooking.Handler(_dbContext, _currentUser, _paymentService);
+        var handler = new CompleteBooking.Handler(
+            _dbContext,
+            _currentUser,
+            _emailService,
+            _paymentService
+        );
         var command = new CompleteBooking.Command(Guid.NewGuid());
 
         // Act
@@ -109,7 +120,12 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             statusId
         );
 
-        var handler = new CompleteBooking.Handler(_dbContext, _currentUser, _paymentService);
+        var handler = new CompleteBooking.Handler(
+            _dbContext,
+            _currentUser,
+            _emailService,
+            _paymentService
+        );
         var command = new CompleteBooking.Command(booking.Id);
 
         // Act
@@ -165,7 +181,12 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             ongoingStatusId
         );
 
-        var handler = new CompleteBooking.Handler(_dbContext, _currentUser, _paymentService);
+        var handler = new CompleteBooking.Handler(
+            _dbContext,
+            _currentUser,
+            _emailService,
+            _paymentService
+        );
         var command = new CompleteBooking.Command(booking.Id);
 
         // Act
@@ -241,7 +262,12 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             ongoingStatusId
         );
 
-        var handler = new CompleteBooking.Handler(_dbContext, _currentUser, _paymentService);
+        var handler = new CompleteBooking.Handler(
+            _dbContext,
+            _currentUser,
+            _emailService,
+            _paymentService
+        );
         var command = new CompleteBooking.Command(booking.Id);
 
         // Act
