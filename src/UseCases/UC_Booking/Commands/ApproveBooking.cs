@@ -73,21 +73,28 @@ public sealed class ApproveBooking
             booking.StatusId = status.Id;
             await context.SaveChangesAsync(cancellationToken);
 
-            // Create email template
-            var emailTemplate = GetBookingApprovedTemplate.Template(
+            await SendEmail(request, booking);
+
+            return Result.SuccessWithMessage($"Đã {message} booking thành công");
+        }
+
+        private async Task SendEmail(Command request, Domain.Entities.Booking booking)
+        {
+            // Send email to driver
+            var emailTemplate = DriverApproveBookingTemplate.Template(
                 booking.User.Name,
                 booking.Car.Model.Name,
+                booking.StartTime,
+                booking.EndTime,
+                booking.TotalAmount,
                 request.IsApproved
             );
 
-            // Send email to driver
             await emailService.SendEmailAsync(
                 booking.User.Email,
                 "Phê duyệt đặt xe",
                 emailTemplate
             );
-
-            return Result.SuccessWithMessage($"Đã {message} booking thành công");
         }
     }
 
