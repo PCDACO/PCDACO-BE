@@ -68,5 +68,7 @@ public class UpdateDatabase
         gpsData.SetStatuses(deviceStatuses);
         TransactionStatusesData transactionStatusesData = app.ApplicationServices.GetRequiredService<TransactionStatusesData>();
         transactionStatusesData.Set(transactionStatuses);
+        BookingStatusesData bookingStatusesData = app.ApplicationServices.GetRequiredService<BookingStatusesData>();
+        bookingStatusesData.Set(bookingStatuses);
     }
 }

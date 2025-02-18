@@ -20,6 +20,7 @@ using Persistance;
 
 using UseCases;
 using UseCases.Abstractions;
+using UseCases.BackgroundServices.BS_CarStatistics;
 using UseCases.BackgroundServices.InspectionSchedule;
 using UseCases.Utils;
 
@@ -122,9 +123,12 @@ public static class BuilderConfig
         services.AddSingleton(NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326));
         services.AddSingleton<DeviceStatusesData>();
         services.AddSingleton<TransactionStatusesData>();
+        services.AddSingleton<BookingStatusesData>();
         // add channels
         services.AddSingleton(_ =>
             Channel.CreateUnbounded<CreateInspectionScheduleChannel>());
+        // add background service
+        services.AddHostedService<UpdateCarStatisticsBackgroundService>();
         // add problem details
         services.AddProblemDetails();
         // Add exception handlers
