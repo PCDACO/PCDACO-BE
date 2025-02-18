@@ -6,6 +6,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
+using UseCases.DTOs;
 using UseCases.Utils;
 
 namespace UseCases.UC_User.Commands;
@@ -26,6 +27,7 @@ public sealed class CreateStaff
 
     public sealed class Handler(
         IAppDBContext context,
+        CurrentUser currentUser,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings
@@ -36,6 +38,10 @@ public sealed class CreateStaff
             CancellationToken cancellationToken
         )
         {
+            // Check if user is admin
+            if (!currentUser.User!.IsAdmin())
+                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
+
             // Check if role name is valid
             if (!new[] { "consultant", "technician" }.Contains(request.RoleName.ToLower()))
                 return Result.Error(ResponseMessages.MustBeConsultantOrTechnician);
@@ -50,7 +56,7 @@ public sealed class CreateStaff
 
             if (existingUser is not null)
             {
-                return EF.Functions.ILike(existingUser.Email, request.Email)
+                return existingUser.Email.ToLower() == request.Email.ToLower()
                     ? Result.Error(ResponseMessages.EmailAddressIsExisted)
                     : Result.Error(ResponseMessages.PhoneNumberIsExisted);
             }
