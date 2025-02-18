@@ -1,5 +1,6 @@
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 
 using MediatR;
@@ -23,13 +24,13 @@ public sealed class DeleteAmenity
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
-            if (!currentUser.User!.IsAdmin()) return Result.Forbidden("Bạn không có quyền xóa tiện nghi");
+            if (!currentUser.User!.IsAdmin()) return Result.Forbidden(ResponseMessages.ForbiddenAudit);
             Amenity? deletingAmenity = await context.Amenities.FirstOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
             if (deletingAmenity is null)
-                return Result.Error("Không tìm thấy tiện nghi");
+                return Result.Error(ResponseMessages.AmenitiesNotFound);
             deletingAmenity.Delete();
             await context.SaveChangesAsync(cancellationToken);
-            return Result.SuccessWithMessage("Xóa tiện nghi thành công");
+            return Result.SuccessWithMessage(ResponseMessages.Deleted);
         }
     }
 }

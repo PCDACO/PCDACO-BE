@@ -1,7 +1,12 @@
 using Ardalis.Result;
+
+using Domain.Constants;
 using Domain.Entities;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 using UseCases.Utils;
 
@@ -41,10 +46,10 @@ public sealed class GetAmenityById
                 .FirstOrDefaultAsync(a => a.Id == request.Id, cancellationToken);
 
             if (gettingAmenity is null)
-                return Result.NotFound("Không tìm thấy tiện nghi");
+                return Result.NotFound(ResponseMessages.AmenitiesNotFound);
             return Result.Success(
                 Response.FromEntity(gettingAmenity),
-                "Lấy thông tin tiện ích thành công"
+                ResponseMessages.Fetched
             );
         }
     }

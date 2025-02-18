@@ -2,6 +2,7 @@ using System.Text;
 
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 
 using FluentValidation;
@@ -38,13 +39,13 @@ public sealed class UpdateAmenity
         public async Task<Result<Response>> Handle(Command request, CancellationToken cancellationToken)
         {
             if (!currentUser.User!.IsAdmin())
-                return Result.Forbidden("Bạn không có quyền thực hiện thao tác này");
+                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
             Amenity? updatingAmenity = await context.Amenities.FirstOrDefaultAsync(
                 a => a.Id == request.Id,
                 cancellationToken
             );
             if (updatingAmenity is null)
-                return Result.NotFound("Không tìm thấy tiện nghi");
+                return Result.NotFound(ResponseMessages.AmenitiesNotFound);
             // Update the amenity
             updatingAmenity.Name = request.Name;
             updatingAmenity.Description = request.Description;
@@ -59,7 +60,7 @@ public sealed class UpdateAmenity
                 updatingAmenity.IconUrl = iconUrl;
             }
             await context.SaveChangesAsync(cancellationToken);
-            return Result.Success(Response.FromEntity(updatingAmenity), "Cập nhật tiện nghi thành công");
+            return Result.Success(Response.FromEntity(updatingAmenity), ResponseMessages.Updated);
         }
     }
 

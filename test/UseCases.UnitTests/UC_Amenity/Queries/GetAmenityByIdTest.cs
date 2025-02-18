@@ -1,4 +1,7 @@
 using Ardalis.Result;
+
+using Domain.Constants;
+
 using Persistance.Data;
 using UseCases.UC_Amenity.Queries;
 using UseCases.UnitTests.TestBases;
@@ -67,6 +70,6 @@ public class GetAmenityByIdTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.NotFound, result.Status);
-        Assert.Contains("Không tìm thấy tiện nghi", result.Errors);
+        Assert.Contains(ResponseMessages.AmenitiesNotFound, result.Errors);
     }
 }
