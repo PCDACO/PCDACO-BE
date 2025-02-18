@@ -14,6 +14,13 @@ public class ResponseMessages
     // USER
     public const string UserNotFound = "Không tìm thấy người dùng";
     public const string OldPasswordIsInvalid = "Mật khẩu cũ không đúng";
+    public const string EmailAddressIsExisted = "Email đã tồn tại";
+    public const string PhoneNumberIsExisted = "Số điện thoại đã tồn tại";
+
+    // USER ROLE
+    public const string MustBeConsultantOrTechnician = "Vai trò phải là consultant hoặc technician";
+    public const string RoleNotFound = "Không tìm thấy vai trò";
+
     // GPS DEVICES
     public const string GPSDeviceNotFound = "Không tìm thấy thiết bị GPS";
     public const string GPSDeviceIsExisted = "Đã tồn tại thiết bị GPS";
