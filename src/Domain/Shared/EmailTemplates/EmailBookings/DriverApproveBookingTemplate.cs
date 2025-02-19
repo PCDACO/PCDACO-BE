@@ -26,16 +26,16 @@ public static class DriverApproveBookingTemplate
         var status = isApproved ? "chấp thuận" : "từ chối";
 
         return $@"
-            <div style='font-family: Roboto, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;'>
-                <div style='background-color: {headerColor}; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;'>
+            <div style=' {EmailTemplateStyles.ContainerStyle}'>
+                <div style='{EmailTemplateStyles.HeaderStyle(headerColor)}'>
                     <h2 style='margin: 0;'>Thông Báo Đặt Xe</h2>
                 </div>
 
-                <div style='padding: 20px; border: 1px solid #ddd; border-radius: 0 0 8px 8px;'>
+                <div style='{EmailTemplateStyles.BodyStyle}'>
                     <p>Xin chào {customerName},</p>
                     <p>Yêu cầu đặt xe {carName} của bạn đã được chủ xe <strong>{status}</strong>.</p>
 
-                    <div style='background-color: {bgColor}; padding: 20px; border-radius: 8px; margin: 20px 0;'>
+                    <div style='{EmailTemplateStyles.DetailBoxStyle(bgColor)}'>
                         <h3 style='color: {accentColor}; margin-top: 0;'>Chi Tiết Đặt Xe:</h3>
                         <table style='width: 100%; border-collapse: collapse;'>
                             <tr>
@@ -68,7 +68,7 @@ public static class DriverApproveBookingTemplate
                     </div>
                     " : "")}
 
-                    <p style='text-align: center; color: {EmailTemplateColors.Footer}; margin-top: 30px;'>
+                    <p style='{EmailTemplateStyles.FooterStyle}'>
                         Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!<br>
                         <small><strong>Cần hỗ trợ?</strong> Hãy trả lời email này</small>
                     </p>
