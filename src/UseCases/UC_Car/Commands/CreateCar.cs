@@ -1,19 +1,12 @@
 using Ardalis.Result;
-
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Shared;
-
 using FluentValidation;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
-
 using UUIDNext;
 
 namespace UseCases.UC_Car.Commands;
@@ -31,9 +24,7 @@ public sealed class CreateCar
         string Description,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        decimal Price,
-        decimal? Latitude,
-        decimal? Longtitude
+        decimal Price
     ) : IRequest<Result<Response>>;
 
     public sealed record Response(Guid Id)
@@ -184,8 +175,6 @@ public sealed class CreateCar
                 .WithMessage("Giá thuê theo ngày không được để trống !")
                 .GreaterThan(0)
                 .WithMessage("Giá thuê theo ngày phải lớn hơn 0 !");
-            RuleFor(x => x.Latitude).NotEmpty().WithMessage("Vĩ độ không được để trống !");
-            RuleFor(x => x.Longtitude).NotEmpty().WithMessage("Kinh độ không được để trống !");
         }
     }
 }

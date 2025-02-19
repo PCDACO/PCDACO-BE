@@ -61,9 +61,7 @@ public class CreateCarTests : IAsyncLifetime
             FuelTypeId: fuelType.Id,
             FuelConsumption: 7.5m,
             RequiresCollateral: true,
-            Price: 500m,
-            Latitude: 10.5m,
-            Longtitude: 106.5m
+            Price: 500m
         );
 
     [Fact]
@@ -198,9 +196,7 @@ public class CreateCarTests : IAsyncLifetime
             FuelTypeId: fuelType.Id,
             FuelConsumption: 0,
             RequiresCollateral: true,
-            Price: 0,
-            Latitude: null,
-            Longtitude: null
+            Price: 0
         );
 
         // Act
