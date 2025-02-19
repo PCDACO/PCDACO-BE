@@ -59,11 +59,8 @@ public sealed class CreateInspectionSchedule
                     cancellationToken
                 );
 
-            if (technician is null)
-                return Result.Error(ResponseMessages.UserNotFound);
-
-            if (!technician.IsTechnician())
-                return Result.Error(ResponseMessages.UserIsNotTechnician);
+            if (technician is null || !technician.IsTechnician())
+                return Result.Error(ResponseMessages.TechnicianNotFound);
 
             // Create inspection schedule
             var schedule = new InspectionSchedule
