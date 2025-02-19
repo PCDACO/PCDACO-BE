@@ -11,16 +11,16 @@ public static class DriverCreateBookingTemplate
     )
     {
         return $@"
-            <div style='font-family: Roboto, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;'>
-                <div style='background-color: {EmailTemplateColors.SuccessHeader}; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;'>
+            <div style='{EmailTemplateStyles.ContainerStyle}'>
+                <div style='{EmailTemplateStyles.HeaderStyle(EmailTemplateColors.SuccessHeader)}'>
                     <h2 style='margin: 0;'>Xác Nhận Đặt Xe</h2>
                 </div>
 
-                <div style='padding: 20px; border: 1px solid #ddd; border-radius: 0 0 8px 8px;'>
+                <div style='{EmailTemplateStyles.BodyStyle}'>
                     <p>Xin chào {customerName},</p>
                     <p>Yêu cầu đặt xe của bạn đã được tạo thành công và đang chờ chủ xe xác nhận.</p>
 
-                    <div style='background-color: {EmailTemplateColors.SuccessBackground}; padding: 20px; border-radius: 8px; margin: 20px 0;'>
+                    <div style='{EmailTemplateStyles.DetailBoxStyle(EmailTemplateColors.SuccessBackground)}'>
                         <h3 style='color: {EmailTemplateColors.SuccessAccent}; margin-top: 0;'>Chi Tiết Đặt Xe:</h3>
                         <table style='width: 100%; border-collapse: collapse;'>
                             <tr>
@@ -46,7 +46,7 @@ public static class DriverCreateBookingTemplate
                         <p style='margin: 0;'><strong>Lưu ý:</strong> Vui lòng chờ xác nhận từ chủ xe. Bạn sẽ nhận được email thông báo ngay khi chủ xe phản hồi.</p>
                     </div>
 
-                    <p style='text-align: center; color: {EmailTemplateColors.Footer}; margin-top: 30px;'>
+                    <p style='{EmailTemplateStyles.FooterStyle}'>
                         Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!<br>
                         <small><strong>Cần hỗ trợ?</strong> Hãy trả lời email này</small>
                     </p>

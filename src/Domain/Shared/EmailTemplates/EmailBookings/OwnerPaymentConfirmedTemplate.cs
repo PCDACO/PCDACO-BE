@@ -12,16 +12,16 @@ public static class OwnerPaymentConfirmedTemplate
     )
     {
         return $@"
-            <div style='font-family: Roboto, Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;'>
-                <div style='background-color: {EmailTemplateColors.SuccessHeader}; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0;'>
+            <div style='{EmailTemplateStyles.ContainerStyle}'>
+                <div style='{EmailTemplateStyles.HeaderStyle(EmailTemplateColors.SuccessHeader)}'>
                     <h2 style='margin: 0;'>Thông Báo Thanh Toán</h2>
                 </div>
 
-                <div style='padding: 20px; border: 1px solid #ddd; border-radius: 0 0 8px 8px;'>
+                <div style='{EmailTemplateStyles.BodyStyle}'>
                     <p>Xin chào {ownerName},</p>
                     <p>Khách hàng <strong>{driverName}</strong> đã hoàn tất thanh toán cho việc thuê xe {carName} của bạn.</p>
 
-                    <div style='background-color: {EmailTemplateColors.SuccessBackground}; padding: 20px; border-radius: 8px; margin: 20px 0;'>
+                    <div style='{EmailTemplateStyles.DetailBoxStyle(EmailTemplateColors.SuccessBackground)}'>
                         <h3 style='color: {EmailTemplateColors.SuccessAccent}; margin-top: 0;'>Chi Tiết Thanh Toán:</h3>
                         <table style='width: 100%; border-collapse: collapse;'>
                             <tr>
@@ -47,7 +47,7 @@ public static class OwnerPaymentConfirmedTemplate
                         <p style='margin: 0;'><strong>Lưu ý:</strong> Số tiền đã được chuyển vào ví của bạn.</p>
                     </div>
 
-                    <p style='text-align: center; color: {EmailTemplateColors.Footer}; margin-top: 30px;'>
+                    <p style='{EmailTemplateStyles.FooterStyle}'>
                         Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!<br>
                         <small><strong>Cần hỗ trợ?</strong> Hãy trả lời email này</small>
                     </p>
