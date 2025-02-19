@@ -37,7 +37,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 await UpdateDatabase.Execute(app);
-await AddAdminUser.Execute(app);
+// await AddAdminUser.Execute(app);
 app.UseAuthentication();
 app.UseMiddleware<AuthMiddleware>();
 app.UseAuthorization();
