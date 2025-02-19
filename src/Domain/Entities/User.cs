@@ -46,4 +46,8 @@ public class User : BaseEntity
     public bool IsDriver() => Role.Name == "Driver";
 
     public bool IsOwner() => Role.Name == "Owner";
+
+    public bool IsConsultant() => Role.Name == "Consultant";
+
+    public bool IsTechnician() => Role.Name == "Technician";
 }

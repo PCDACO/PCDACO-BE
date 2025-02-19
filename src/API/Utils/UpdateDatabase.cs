@@ -70,5 +70,7 @@ public class UpdateDatabase
         transactionStatusesData.Set(transactionStatuses);
         UserRolesData userRolesData = app.ApplicationServices.GetRequiredService<UserRolesData>();
         userRolesData.Set(userRoles);
+        InspectionStatusesData inspectionStatusesData = app.ApplicationServices.GetRequiredService<InspectionStatusesData>();
+        inspectionStatusesData.SetStatuses(inspectionStatuses);
     }
 }

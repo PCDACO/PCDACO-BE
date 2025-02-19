@@ -18,6 +18,7 @@ public class ResponseMessages
     public const string OldPasswordIsInvalid = "Mật khẩu cũ không đúng";
     public const string EmailAddressIsExisted = "Email đã tồn tại";
     public const string PhoneNumberIsExisted = "Số điện thoại đã tồn tại";
+    public const string TechnicianNotFound = "Không tìm thấy kiểm định viên";
 
     // USER ROLE
     public const string MustBeConsultantOrTechnician = "Vai trò phải là consultant hoặc technician";
@@ -45,7 +46,11 @@ public class ResponseMessages
 
     // CAR
     public const string CarNotFound = "Không tìm thấy xe";
+    public const string CarIsNotInPending = "Xe không ở trạng thái chờ duyệt";
 
     // MODEL
     public const string ModelNotFound = "Không tìm thấy dòng xe";
+
+    // Inspection Statuses
+    public const string InspectionStatusNotFound = "Không tìm thấy trạng thái kiểm định";
 }
