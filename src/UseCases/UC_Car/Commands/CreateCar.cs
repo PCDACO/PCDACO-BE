@@ -88,7 +88,7 @@ public sealed class CreateCar
             CarStatus? checkingStatus = await context
                 .CarStatuses.AsNoTracking()
                 .FirstOrDefaultAsync(
-                    s => EF.Functions.ILike(s.Name, $"%available%") && !s.IsDeleted,
+                    s => EF.Functions.ILike(s.Name, $"%pending%") && !s.IsDeleted,
                     cancellationToken
                 );
             if (checkingStatus is null)
