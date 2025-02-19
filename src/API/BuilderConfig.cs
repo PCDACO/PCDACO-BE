@@ -123,6 +123,7 @@ public static class BuilderConfig
         services.AddSingleton<DeviceStatusesData>();
         services.AddSingleton<TransactionStatusesData>();
         services.AddSingleton<UserRolesData>();
+        services.AddSingleton<InspectionStatusesData>();
         // add channels
         services.AddSingleton(_ =>
             Channel.CreateUnbounded<CreateInspectionScheduleChannel>());

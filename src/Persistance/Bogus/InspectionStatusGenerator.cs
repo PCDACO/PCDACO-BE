@@ -6,10 +6,11 @@ public class InspectionStatusGenerator
 {
     private static readonly string[] _inspectionStatus =
     [
-        "Pending", // Initial state when inspection is scheduled
-        "Completed", // Inspection has been done
-        "Cancelled", // Inspection was cancelled
-        "Failed", // Car failed inspection
+        "Pending", // Initial state when schedule created
+        "Scheduled", // Time agreed with owner
+        "InProgress", // During inspection
+        "Approved", // Car passed inspection
+        "Rejected", // Failed inspection
     ];
 
     public static InspectionStatus[] Execute()
