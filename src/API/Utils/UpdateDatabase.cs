@@ -54,6 +54,16 @@ public class UpdateDatabase
             keyManageService,
             tokenService
         );
+        Car[] cars = await CarGenerator.Execute(
+            transmissionTypes,
+            models,
+            fuelTypes,
+            carStatuses,
+            encryptionSettings,
+            aesEncryptionService,
+            keyManageService,
+            tokenService
+        );
         List<Task> tasks = [];
         tasks.Add(context.AddRangeAsync(withdrawalRequestStatuses));
         tasks.Add(context.AddRangeAsync(userRoles));
@@ -72,8 +82,8 @@ public class UpdateDatabase
         tasks.Add(context.AddRangeAsync(models));
         tasks.Add(context.AddRangeAsync(inspectionStatuses));
         tasks.Add(context.AddRangeAsync(deviceStatuses));
-        tasks.Add(context.AddRangeAsync());
         tasks.Add(context.AddRangeAsync(users));
+        tasks.Add(context.AddRangeAsync(cars));
         await Task.WhenAll(tasks);
         await context.SaveChangesAsync();
         // Load init data to initial objects.
