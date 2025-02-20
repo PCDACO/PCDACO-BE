@@ -1,6 +1,7 @@
 using Ardalis.Result;
 
 using Domain.Constants;
+using Domain.Constants.EntityNames;
 using Domain.Data;
 using Domain.Entities;
 using Domain.Shared;

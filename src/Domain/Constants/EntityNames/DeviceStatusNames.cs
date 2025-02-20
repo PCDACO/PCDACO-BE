@@ -1,4 +1,4 @@
-namespace Domain.Constants;
+namespace Domain.Constants.EntityNames;
 public class DeviceStatusNames
 {
     public const string Available = "Available";
