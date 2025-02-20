@@ -8,7 +8,6 @@ public class InspectionStatusGenerator
     private static readonly string[] _inspectionStatus =
     [
         InspectionStatusNames.Pending,
-        InspectionStatusNames.Scheduled,
         InspectionStatusNames.InProgress,
         InspectionStatusNames.Approved,
         InspectionStatusNames.Rejected,

@@ -67,6 +67,7 @@ public sealed class UploadDriverLicenseImage
             // Update license images
             license.LicenseImageFrontUrl = frontImageUrl;
             license.LicenseImageBackUrl = backImageUrl;
+            license.UpdatedAt = DateTimeOffset.UtcNow;
 
             await context.SaveChangesAsync(cancellationToken);
 

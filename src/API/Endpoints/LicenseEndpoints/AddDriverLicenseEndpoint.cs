@@ -38,6 +38,6 @@ public class AddDriverLicenseEndpoint : ICarterModule
         );
         return result.MapResult();
     }
-}
 
-public record AddDriverLicenseRequest(string LicenseNumber, DateTimeOffset ExpirationDate);
+    private record AddDriverLicenseRequest(string LicenseNumber, DateTimeOffset ExpirationDate);
+}

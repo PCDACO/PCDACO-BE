@@ -29,6 +29,6 @@ public class UpdateDriverLicenseEndpoint : ICarterModule
         );
         return result.MapResult();
     }
-}
 
-public record UpdateDriverLicenseRequest(string LicenseNumber, DateTimeOffset ExpirationDate);
+    private record UpdateDriverLicenseRequest(string LicenseNumber, DateTimeOffset ExpirationDate);
+}

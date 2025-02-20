@@ -28,6 +28,6 @@ public class ApproveLicenseEndpoint : ICarterModule
         );
         return result.MapResult();
     }
-}
 
-public sealed record ApproveLicenseRequest(bool IsApproved, string? RejectReason);
+    private sealed record ApproveLicenseRequest(bool IsApproved, string? RejectReason);
+}

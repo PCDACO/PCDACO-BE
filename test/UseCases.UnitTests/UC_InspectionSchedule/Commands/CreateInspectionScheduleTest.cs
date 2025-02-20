@@ -67,7 +67,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
 
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains(ResponseMessages.InspectionStatusNotFound, result.Errors);
+        Assert.Contains(ResponseMessages.PendingStatusNotAvailable, result.Errors);
     }
 
     [Fact]

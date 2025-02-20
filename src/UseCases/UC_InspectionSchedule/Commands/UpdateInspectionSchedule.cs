@@ -1,6 +1,5 @@
 using Ardalis.Result;
 using Domain.Constants;
-using Domain.Constants.EntityNames;
 using Domain.Entities;
 using FluentValidation;
 using MediatR;
@@ -10,9 +9,9 @@ using UseCases.DTOs;
 
 namespace UseCases.UC_InspectionSchedule.Commands;
 
-public sealed class CreateInspectionSchedule
+public sealed class UpdateInspectionSchedule
 {
-    public sealed record Command(Guid TechnicianId, Guid CarId, DateTimeOffset InspectionDate)
+    public sealed record Command(Guid Id, Guid TechnicianId, DateTimeOffset InspectionDate)
         : IRequest<Result<Response>>;
 
     public sealed record Response(Guid Id)
@@ -32,29 +31,22 @@ public sealed class CreateInspectionSchedule
             if (!currentUser.User!.IsConsultant())
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
-            // Get pending inspection status
-            var pendingStatus = await context.InspectionStatuses.FirstOrDefaultAsync(
-                s => EF.Functions.ILike(s.Name, "%pending%") && !s.IsDeleted,
-                cancellationToken
-            );
+            // Get the existing schedule
+            var schedule = await context
+                .InspectionSchedules.Include(s => s.InspectionStatus)
+                .FirstOrDefaultAsync(s => s.Id == request.Id && !s.IsDeleted, cancellationToken);
 
-            if (pendingStatus is null)
-                return Result.Error(ResponseMessages.PendingStatusNotAvailable);
+            if (schedule is null)
+                return Result.Error(ResponseMessages.InspectionScheduleNotFound);
 
-            // Verify car exists and is in pending status
-            var car = await context
-                .Cars.Include(c => c.CarStatus)
-                .FirstOrDefaultAsync(c => c.Id == request.CarId && !c.IsDeleted, cancellationToken);
+            // Check if schedule can be updated (only pending schedules can be updated)
+            if (!schedule.InspectionStatus.Name.ToLower().Contains("pending"))
+                return Result.Error(ResponseMessages.OnlyUpdatePendingInspectionSchedule);
 
-            if (car is null)
-                return Result.Error(ResponseMessages.CarNotFound);
-
-            if (car.CarStatus.Name.ToLower() != CarStatusNames.Pending.ToLower())
-                return Result.Error(ResponseMessages.CarIsNotInPending);
-
-            // Verify user exists and is a technician
+            // Verify technician exists and is a technician
             var technician = await context
-                .Users.Include(u => u.Role)
+                .Users.AsNoTracking()
+                .Include(u => u.Role)
                 .FirstOrDefaultAsync(
                     u => u.Id == request.TechnicianId && !u.IsDeleted,
                     cancellationToken
@@ -63,19 +55,14 @@ public sealed class CreateInspectionSchedule
             if (technician is null || !technician.IsTechnician())
                 return Result.Error(ResponseMessages.TechnicianNotFound);
 
-            // Create inspection schedule
-            var schedule = new InspectionSchedule
-            {
-                TechnicianId = request.TechnicianId,
-                CarId = request.CarId,
-                InspectionStatusId = pendingStatus.Id,
-                InspectionDate = request.InspectionDate,
-            };
+            // Update schedule
+            schedule.TechnicianId = request.TechnicianId;
+            schedule.InspectionDate = request.InspectionDate;
+            schedule.UpdatedAt = DateTimeOffset.UtcNow;
 
-            await context.InspectionSchedules.AddAsync(schedule, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
 
-            return Result.Success(Response.FromEntity(schedule), ResponseMessages.Created);
+            return Result.Success(Response.FromEntity(schedule), ResponseMessages.Updated);
         }
     }
 
@@ -83,11 +70,11 @@ public sealed class CreateInspectionSchedule
     {
         public Validator()
         {
+            RuleFor(x => x.Id).NotEmpty().WithMessage("Id lịch kiểm định không được để trống");
+
             RuleFor(x => x.TechnicianId)
                 .NotEmpty()
-                .WithMessage("id kiểm định viên không được để trống");
-
-            RuleFor(x => x.CarId).NotEmpty().WithMessage("id xe không được để trống");
+                .WithMessage("Id kiểm định viên không được để trống");
 
             RuleFor(x => x.InspectionDate)
                 .NotEmpty()

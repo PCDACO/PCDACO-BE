@@ -51,6 +51,18 @@ public class ResponseMessages
     // MODEL
     public const string ModelNotFound = "Không tìm thấy dòng xe";
 
+    // Inspection Schedules
+    public const string InspectionScheduleNotFound = "Không tìm thấy lịch kiểm định";
+    public const string OnlyUpdatePendingInspectionSchedule =
+        "Chỉ có thể cập nhật lịch kiểm định đang chờ duyệt";
+    public const string OnlyUpdateInProgressInspectionSchedule =
+        "Chỉ có thể duyệt lịch kiểm định đang được tiến hành";
+
     // Inspection Statuses
     public const string InspectionStatusNotFound = "Không tìm thấy trạng thái kiểm định";
+    public const string ApproveStatusNotFound = "Không tìm thấy trạng thái phê duyệt";
+    public const string RejectStatusNotFound = "Không tìm thấy trạng thái từ chối phê duyệt";
+    public const string InProgressStatusNotAvailable =
+        "Trạng thái kiểm định đang tiến hành không có sẵn";
+    public const string PendingStatusNotAvailable = "Trạng thái kiểm định chờ duyệt không có sẵn";
 }

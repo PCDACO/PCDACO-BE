@@ -1,8 +1,6 @@
 using Domain.Constants.EntityNames;
 using Domain.Entities;
-
 using Persistance.Data;
-
 using UUIDNext;
 
 namespace UseCases.UnitTests.TestBases.TestData;
@@ -30,7 +28,6 @@ public static class TestDataCreateInspectionStatus
         var statusNames = new[]
         {
             InspectionStatusNames.Pending,
-            InspectionStatusNames.Scheduled,
             InspectionStatusNames.InProgress,
             InspectionStatusNames.Approved,
             InspectionStatusNames.Rejected,
