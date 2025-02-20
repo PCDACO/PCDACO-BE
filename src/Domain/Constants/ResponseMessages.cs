@@ -58,4 +58,5 @@ public class ResponseMessages
 
     // Inspection Statuses
     public const string InspectionStatusNotFound = "Không tìm thấy trạng thái kiểm định";
+    public const string ApproveStatusNotFound = "Không tìm thấy trạng thái phê duyệt";
 }
