@@ -69,8 +69,13 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         Assert.Contains(ResponseMessages.InspectionScheduleNotFound, result.Errors);
     }
 
-    [Fact]
-    public async Task Handle_ApproveStatusNotFound_ReturnsError()
+    [Theory]
+    [InlineData(true, ResponseMessages.ApproveStatusNotFound)]
+    [InlineData(false, ResponseMessages.RejectStatusNotFound)]
+    public async Task Handle_ApproveStatusNotFound_ReturnsError(
+        bool isApproved,
+        string expectedErrorMessage
+    )
     {
         // Arrange
         var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
@@ -119,7 +124,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         var command = new ApproveInspectionSchedule.Command(
             Id: schedule.Id,
             Note: "Test note",
-            IsApproved: true
+            IsApproved: isApproved
         );
 
         // Act
@@ -127,7 +132,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
 
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains(ResponseMessages.ApproveStatusNotFound, result.Errors);
+        Assert.Contains(expectedErrorMessage, result.Errors);
     }
 
     [Fact]

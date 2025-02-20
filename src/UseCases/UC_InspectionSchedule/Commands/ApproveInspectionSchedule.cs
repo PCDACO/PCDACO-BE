@@ -51,12 +51,15 @@ public sealed class ApproveInspectionSchedule
                 cancellationToken
             );
 
-            if (status is null)
+            if (status is null && request.IsApproved)
                 return Result.Error(ResponseMessages.ApproveStatusNotFound);
+
+            if (status is null && !request.IsApproved)
+                return Result.Error(ResponseMessages.RejectStatusNotFound);
 
             // Update schedule
             schedule.Note = request.Note;
-            schedule.InspectionStatusId = status.Id;
+            schedule.InspectionStatusId = status!.Id;
             schedule.UpdatedAt = DateTimeOffset.UtcNow;
 
             await context.SaveChangesAsync(cancellationToken);

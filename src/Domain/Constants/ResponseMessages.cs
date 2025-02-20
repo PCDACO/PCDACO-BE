@@ -61,4 +61,8 @@ public class ResponseMessages
     // Inspection Statuses
     public const string InspectionStatusNotFound = "Không tìm thấy trạng thái kiểm định";
     public const string ApproveStatusNotFound = "Không tìm thấy trạng thái phê duyệt";
+    public const string RejectStatusNotFound = "Không tìm thấy trạng thái từ chối phê duyệt";
+    public const string InProgressStatusNotAvailable =
+        "Trạng thái kiểm định đang tiến hành không có sẵn";
+    public const string PendingStatusNotAvailable = "Trạng thái kiểm định chờ duyệt không có sẵn";
 }

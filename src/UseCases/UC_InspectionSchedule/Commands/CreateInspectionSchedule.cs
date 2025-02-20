@@ -39,7 +39,7 @@ public sealed class CreateInspectionSchedule
             );
 
             if (pendingStatus is null)
-                return Result.Error(ResponseMessages.InspectionStatusNotFound);
+                return Result.Error(ResponseMessages.PendingStatusNotAvailable);
 
             // Verify car exists and is in pending status
             var car = await context
