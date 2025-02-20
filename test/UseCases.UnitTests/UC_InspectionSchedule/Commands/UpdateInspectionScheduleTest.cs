@@ -295,6 +295,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         Assert.Equal(technician.Id, updatedSchedule.TechnicianId);
         Assert.Equal(newInspectionDate, updatedSchedule.InspectionDate);
         Assert.Equal(car.Id, updatedSchedule.CarId);
+        Assert.NotNull(updatedSchedule.UpdatedAt);
     }
 
     [Fact]

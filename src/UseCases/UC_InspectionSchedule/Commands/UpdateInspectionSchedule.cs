@@ -58,6 +58,7 @@ public sealed class UpdateInspectionSchedule
             // Update schedule
             schedule.TechnicianId = request.TechnicianId;
             schedule.InspectionDate = request.InspectionDate;
+            schedule.UpdatedAt = DateTimeOffset.UtcNow;
 
             await context.SaveChangesAsync(cancellationToken);
 

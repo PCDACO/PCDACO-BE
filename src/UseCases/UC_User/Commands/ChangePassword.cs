@@ -50,6 +50,7 @@ public static class ChangePassword
             }
 
             user.Password = request.NewPassword.HashString();
+            user.UpdatedAt = DateTimeOffset.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
 
             return Result.Success(Response.FromEntity(user), ResponseMessages.Updated);
