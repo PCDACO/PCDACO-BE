@@ -45,7 +45,8 @@ public sealed class UpdateInspectionSchedule
 
             // Verify technician exists and is a technician
             var technician = await context
-                .Users.Include(u => u.Role)
+                .Users.AsNoTracking()
+                .Include(u => u.Role)
                 .FirstOrDefaultAsync(
                     u => u.Id == request.TechnicianId && !u.IsDeleted,
                     cancellationToken
