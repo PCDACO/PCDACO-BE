@@ -1,4 +1,4 @@
-using Domain.Constants;
+using Domain.Constants.EntityNames;
 using Domain.Entities;
 
 namespace Persistance.Bogus;

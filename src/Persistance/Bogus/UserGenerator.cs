@@ -32,7 +32,7 @@ public class UserGenerator
             Password = "admin".HashString(),
             Phone = "0931512321",
             Address = "480/59A, Đường Bình Quới, Phường 28, Quận Bình Thạnh",
-            RoleId = Guid.Parse( "01951e20-ab3f-722f-aceb-3485c166e8cf"),
+            RoleId = Guid.Parse( "01951e22-c88e-7c99-901e-23ff1ebccf85"),
         },
         // DRIVER
         new(){

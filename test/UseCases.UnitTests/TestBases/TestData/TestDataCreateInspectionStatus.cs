@@ -1,6 +1,8 @@
-using Domain.Constants;
+using Domain.Constants.EntityNames;
 using Domain.Entities;
+
 using Persistance.Data;
+
 using UUIDNext;
 
 namespace UseCases.UnitTests.TestBases.TestData;
