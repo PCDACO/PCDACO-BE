@@ -101,6 +101,67 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         );
 
         // Create schedule
+        var inProgressStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
+            _dbContext,
+            "InProgress"
+        );
+        var schedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car.Id,
+            InspectionStatusId = inProgressStatus.Id,
+            InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
+        };
+        await _dbContext.InspectionSchedules.AddAsync(schedule);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new ApproveInspectionSchedule.Handler(_dbContext, _currentUser);
+        var command = new ApproveInspectionSchedule.Command(
+            Id: schedule.Id,
+            Note: "Test note",
+            IsApproved: true
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(ResponseMessages.ApproveStatusNotFound, result.Errors);
+    }
+
+    [Fact]
+    public async Task Handle_ScheduleNotInProgress_ReturnsError()
+    {
+        // Arrange
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
+        _currentUser.SetUser(technician);
+
+        // Create car
+        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var carModel = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+        var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
+            _dbContext,
+            "Automatic"
+        );
+        var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        var car = await TestDataCreateCar.CreateTestCar(
+            _dbContext,
+            owner.Id,
+            carModel.Id,
+            transmissionType,
+            fuelType,
+            carStatus
+        );
+
+        // Create schedule with a status other than "inprogress"
         var pendingStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
             _dbContext,
             "Pending"
@@ -127,7 +188,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
 
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains(ResponseMessages.ApproveStatusNotFound, result.Errors);
+        Assert.Contains(ResponseMessages.OnlyUpdateInProgressInspectionSchedule, result.Errors);
     }
 
     [Theory]
@@ -164,9 +225,9 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         );
 
         // Create schedule
-        var pendingStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
+        var inProgressStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
             _dbContext,
-            "Pending"
+            "InProgress"
         );
         var approvedStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
             _dbContext,
@@ -180,7 +241,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            InspectionStatusId = pendingStatus.Id,
+            InspectionStatusId = inProgressStatus.Id,
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
         };
         await _dbContext.InspectionSchedules.AddAsync(schedule);
