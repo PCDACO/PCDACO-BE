@@ -1,6 +1,7 @@
 
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 
 using MediatR;
@@ -50,7 +51,7 @@ public class UpdateAmenityToCar
                 AmenityId = a.Id
             }), cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
-            return Result.SuccessWithMessage("Cập nhật thành công");
+            return Result.SuccessWithMessage(ResponseMessages.Updated);
         }
     }
 }

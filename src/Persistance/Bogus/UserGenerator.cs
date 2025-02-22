@@ -27,7 +27,7 @@ public class UserGenerator
         // ADMIN
         new(){
             Id = Guid.Parse("01951ead-d228-7d1d-9174-d9e84d69c119"),
-            Name="Phạm Đức Thịnh",
+            Name="ADMIN",
             Email="admin@gmail.com",
             Password = "admin".HashString(),
             Phone = "0931512321",
@@ -37,7 +37,7 @@ public class UserGenerator
         // DRIVER
         new(){
             Id = Guid.Parse("01950d41-d234-7b63-a360-72b27605b4a4"),
-            Name="Phạm Đức Thịnh",
+            Name="DRIVER",
             Email="thinhdpham2510@gmail.com",
             Password = "Ph@mDucThinh25102003".HashString(),
             Phone = "0938396953",
@@ -47,7 +47,7 @@ public class UserGenerator
         // Owner
         new(){
             Id = Guid.Parse("01951eae-12a7-756d-a8d5-bb1ee525d7b5"),
-            Name="PersieDaGamer",
+            Name="Owner",
             Email="thinhmusicion@gmail.com",
             Password = "Ph@mDucThinh25102003".HashString(),
             Phone = "0877344076",
