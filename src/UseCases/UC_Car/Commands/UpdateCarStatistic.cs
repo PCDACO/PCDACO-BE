@@ -1,5 +1,6 @@
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
 
@@ -78,7 +79,7 @@ public sealed class UpdateCarStatistic
                 .FirstOrDefault()?.EndTime ?? null!;
             // Save
             await context.SaveChangesAsync(cancellationToken);
-            return Result.Success();
+            return Result.SuccessWithMessage(ResponseMessages.Updated);
         }
     }
 }
