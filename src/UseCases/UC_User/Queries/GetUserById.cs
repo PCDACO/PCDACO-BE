@@ -5,8 +5,6 @@ using Domain.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
-using UseCases.DTOs;
-using UseCases.Utils;
 
 namespace UseCases.UC_User.Queries;
 
