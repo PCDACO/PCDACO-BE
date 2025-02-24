@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using Domain.Shared.EmailTemplates.EmailBookings;
+using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Net.payOS.Types;
@@ -46,43 +47,58 @@ public sealed class ProcessPaymentWebhook
 
             decimal ownerAmount = webhookData.amount - booking.PlatformFee;
 
-            await SendEmail(webhookData, booking, ownerAmount);
+            BackgroundJob.Enqueue(
+                () =>
+                    SendEmail(
+                        webhookData.amount,
+                        ownerAmount,
+                        booking.Car.Owner.Name,
+                        booking.Car.Owner.Email,
+                        booking.User.Name,
+                        booking.User.Email,
+                        booking.Car.Model.Name
+                    )
+            );
 
             return Result.Success();
         }
 
-        private async Task SendEmail(
-            WebhookData webhookData,
-            Domain.Entities.Booking booking,
-            decimal ownerAmount
+        public async Task SendEmail(
+            int amount,
+            decimal ownerEraning,
+            string driverName,
+            string driverEmail,
+            string ownerName,
+            string ownerEmail,
+            string carModel
         )
         {
             // Send email to driver
             var driverEmailTemplate = DriverPaymentConfirmedTemplate.Template(
-                booking.User.Name,
-                booking.Car.Model.Name,
-                webhookData.amount,
+                driverName,
+                carModel,
+                amount,
                 DateTimeOffset.UtcNow
             );
 
             await emailService.SendEmailAsync(
-                booking.User.Email,
+                driverEmail,
                 "Xác Nhận Thanh Toán",
                 driverEmailTemplate
             );
 
             // Send email to owner
             var ownerEmailTemplate = OwnerPaymentConfirmedTemplate.Template(
-                booking.Car.Owner.Name,
-                booking.User.Name,
-                booking.Car.Model.Name,
-                webhookData.amount,
-                ownerAmount,
+                ownerName,
+                driverName,
+                carModel,
+                amount,
+                ownerEraning,
                 DateTimeOffset.UtcNow
             );
 
             await emailService.SendEmailAsync(
-                booking.Car.Owner.Email,
+                ownerEmail,
                 "Thông Báo Thanh Toán Thành Công",
                 ownerEmailTemplate
             );

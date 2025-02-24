@@ -3,10 +3,12 @@ using Domain.Entities;
 using Domain.Enums;
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using UseCases.Abstractions;
 using UseCases.DTOs;
+using UseCases.Services.SignalR;
 using UUIDNext;
 
 namespace UseCases.UC_Booking.Commands;
@@ -19,7 +21,8 @@ public sealed class TrackTripLocation
     internal sealed class Handler(
         IAppDBContext context,
         CurrentUser currentUser,
-        GeometryFactory geometryFactory
+        GeometryFactory geometryFactory,
+        IHubContext<LocationHub> hubContext
     ) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -75,6 +78,15 @@ public sealed class TrackTripLocation
 
             context.TripTrackings.Add(tracking);
             await context.SaveChangesAsync(cancellationToken);
+
+            // Send location update to SignalR clients
+            await hubContext.Clients.All.SendAsync(
+                "ReceiveLocationUpdate",
+                booking.Id,
+                request.Latitude,
+                request.Longitude,
+                cancellationToken: cancellationToken
+            );
 
             return Result.Success();
         }

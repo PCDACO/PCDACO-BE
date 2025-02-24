@@ -7,6 +7,7 @@ using CloudinaryDotNet;
 using dotenv.net;
 
 using Scalar.AspNetCore;
+using UseCases.Services.SignalR;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +24,7 @@ builder.Services.AddSingleton(cloudinary);
 builder.Services.AddServices(builder.Configuration);
 builder.Services.AddPayOSService(builder.Configuration);
 builder.Services.AddEmailService(builder.Configuration);
+builder.Services.AddSignalR();
 var app = builder.Build();
 
 app.UseStaticFiles();
@@ -42,5 +44,8 @@ app.UseAuthentication();
 app.UseMiddleware<AuthMiddleware>();
 app.UseAuthorization();
 app.UseHttpsRedirection();
+
+app.MapHub<LocationHub>("location-hub");
+
 app.AddAppConfig();
 app.Run();

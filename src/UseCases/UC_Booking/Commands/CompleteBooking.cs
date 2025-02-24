@@ -2,6 +2,7 @@ using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
+using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -115,7 +116,23 @@ public sealed class CompleteBooking
 
             await context.SaveChangesAsync(cancellationToken);
 
-            await SendEmail(booking, totalDistance, excessFee, paymentResult, ownerAmount);
+            BackgroundJob.Enqueue(
+                () =>
+                    SendEmail(
+                        booking.User.Name,
+                        booking.User.Email,
+                        booking.Car.Owner.Name,
+                        booking.Car.Owner.Email,
+                        booking.Car.Model.Name,
+                        totalDistance,
+                        booking.BasePrice,
+                        excessFee,
+                        booking.PlatformFee,
+                        booking.TotalAmount,
+                        ownerAmount,
+                        paymentResult.CheckoutUrl
+                    )
+            );
 
             return Result.Success(
                 new Response(
@@ -131,47 +148,54 @@ public sealed class CompleteBooking
             );
         }
 
-        private async Task SendEmail(
-            Booking booking,
+        public async Task SendEmail(
+            string driverName,
+            string driverEmail,
+            string ownerName,
+            string ownerEmail,
+            string carModel,
             decimal totalDistance,
+            decimal basePrice,
             decimal excessFee,
-            PaymentLinkResult paymentResult,
-            decimal ownerAmount
+            decimal platformFee,
+            decimal totalAmount,
+            decimal ownerEarning,
+            string paymentUrl
         )
         {
             // Send email to driver
             var driverEmailTemplate = DriverCompleteBookingTemplate.Template(
-                booking.User.Name,
-                booking.Car.Model.Name,
+                driverName,
+                carModel,
                 totalDistance,
-                booking.BasePrice,
+                basePrice,
                 excessFee,
-                booking.PlatformFee,
-                booking.TotalAmount,
-                paymentResult.CheckoutUrl
+                platformFee,
+                totalAmount,
+                paymentUrl
             );
 
             await emailService.SendEmailAsync(
-                booking.User.Email,
+                driverEmail,
                 "Chuyến đi của bạn đã hoàn thành",
                 driverEmailTemplate
             );
 
             // Send email to driver
             var ownerEmailTemplate = OwnerBookingCompletedTemplate.Template(
-                booking.Car.Owner.Name,
-                booking.User.Name,
-                booking.Car.Model.Name,
-                booking.TotalDistance,
-                booking.BasePrice,
-                booking.ExcessDayFee,
-                booking.PlatformFee,
-                booking.TotalAmount,
-                ownerAmount
+                ownerName,
+                driverName,
+                carModel,
+                totalDistance,
+                basePrice,
+                excessFee,
+                platformFee,
+                totalAmount,
+                ownerEarning
             );
 
             await emailService.SendEmailAsync(
-                booking.Car.Owner.Email,
+                ownerEmail,
                 "Thông Báo Hoàn Thành Chuyến Đi",
                 ownerEmailTemplate
             );
