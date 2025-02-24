@@ -1,19 +1,14 @@
 using Ardalis.Result;
-
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
-
 using FluentValidation;
-
+using Hangfire;
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Services.EmailService;
-
 using UUIDNext;
 
 namespace UseCases.UC_Booking.Commands;
@@ -45,7 +40,9 @@ public sealed class CreateBooking
 
             // Check if car exists
             var car = await context
-                .Cars.Include(x => x.CarStatistic)
+                .Cars.AsSplitQuery()
+                .AsNoTracking()
+                .Include(x => x.CarStatistic)
                 .Include(x => x.Owner)
                 .Include(x => x.Model)
                 .FirstOrDefaultAsync(
@@ -128,48 +125,54 @@ public sealed class CreateBooking
             context.Bookings.Add(booking);
             await context.SaveChangesAsync(cancellationToken);
 
-            await SendEmail(request, car, totalAmount, booking);
+            BackgroundJob.Enqueue(
+                () =>
+                    SendEmail(
+                        request.StartTime,
+                        request.EndTime,
+                        totalAmount,
+                        currentUser.User.Name,
+                        currentUser.User.Email,
+                        car.Owner.Name,
+                        car.Owner.Email,
+                        car.Model.Name
+                    )
+            );
 
             return Result<Response>.Success(new Response(bookingId));
         }
 
-        private async Task SendEmail(
-            CreateBookingCommand request,
-            Car car,
+        public async Task SendEmail(
+            DateTime startTime,
+            DateTime endTime,
             decimal totalAmount,
-            Booking booking
+            string driverName,
+            string driverEmail,
+            string ownerName,
+            string ownerEmail,
+            string carModelName
         )
         {
-            // Send email to driver
-            var emailTemplate = DriverCreateBookingTemplate.Template(
-                currentUser.User.Name,
-                car.Model.Name,
-                request.StartTime,
-                request.EndTime,
+            var driverEmailTemplate = DriverCreateBookingTemplate.Template(
+                driverName,
+                carModelName,
+                startTime,
+                endTime,
                 totalAmount
             );
 
-            await emailService.SendEmailAsync(
-                currentUser.User.Email,
-                "Xác nhận đặt xe",
-                emailTemplate
-            );
+            await emailService.SendEmailAsync(driverEmail, "Xác nhận đặt xe", driverEmailTemplate);
 
-            // Send email to owner
-            var emailTemplateOwner = OwnerCreateBookingTemplate.Template(
-                car.Owner.Name,
-                car.Model.Name,
-                booking.User.Name,
-                request.StartTime,
-                request.EndTime,
+            var ownerEmailTemplate = OwnerCreateBookingTemplate.Template(
+                ownerName,
+                carModelName,
+                driverName,
+                startTime,
+                endTime,
                 totalAmount
             );
 
-            await emailService.SendEmailAsync(
-                car.Owner.Email,
-                "Yêu Cầu Đặt Xe Mới",
-                emailTemplateOwner
-            );
+            await emailService.SendEmailAsync(ownerEmail, "Yêu Cầu Đặt Xe Mới", ownerEmailTemplate);
         }
     }
 
