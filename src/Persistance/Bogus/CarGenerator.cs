@@ -49,7 +49,7 @@ public class CarGenerator
             FuelConsumption = 0.75M,
             Price = 30000,
             LicensePlate = "99132",
-            Status = CarStatusNames.Pending,
+            Status = CarStatusNames.Available,
             FuelType = FuelTypeNames.Diesel,
             TransmissionType = TransmissionTypeNames.Automatic,
             Model = "Tiguan"

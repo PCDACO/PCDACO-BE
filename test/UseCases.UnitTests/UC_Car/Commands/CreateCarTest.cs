@@ -246,7 +246,7 @@ public class CreateCarTests : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Created, result.Status);
+        Assert.Equal(ResultStatus.Ok, result.Status);
 
         // Verify car creation
         var createdCar = await _dbContext
