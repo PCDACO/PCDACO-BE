@@ -7,7 +7,8 @@ public enum BookingStatusEnum
     Rejected,
     Ongoing,
     Completed,
-    Cancelled
+    Cancelled,
+    Expired
 }
 
 public static class BookingStatusExtensions

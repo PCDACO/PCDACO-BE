@@ -20,6 +20,7 @@ using Persistance;
 
 using UseCases;
 using UseCases.Abstractions;
+using UseCases.BackgroundServices.Bookings;
 using UseCases.BackgroundServices.InspectionSchedule;
 using UseCases.Utils;
 
@@ -29,7 +30,7 @@ public static class BuilderConfig
 {
     public static IServiceCollection AddServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // Add swagger 
+        // Add swagger
         services.AddSwaggerGen(option =>
         {
             option.EnableAnnotations();
@@ -127,6 +128,10 @@ public static class BuilderConfig
         // add channels
         services.AddSingleton(_ =>
             Channel.CreateUnbounded<CreateInspectionScheduleChannel>());
+        // Add background services
+        services.AddScoped<ExpireBookingsJob>();
+        services.AddHostedService<BookingExpirationService>();
+        services.AddHostedService<ExpiredBookingNotificationService>();
         // add problem details
         services.AddProblemDetails();
         // Add exception handlers
