@@ -23,6 +23,7 @@ public class CreateInspectionScheduleEndpoint : ICarterModule
             new CreateInspectionSchedule.Command(
                 TechnicianId: request.TechnicianId,
                 CarId: request.CarId,
+                InspectionAddress: request.InspectionAddress,
                 InspectionDate: request.InspectionDate
             )
         );
@@ -32,6 +33,7 @@ public class CreateInspectionScheduleEndpoint : ICarterModule
     private record CreateInspectionScheduleRequest(
         Guid TechnicianId,
         Guid CarId,
+        string InspectionAddress,
         DateTimeOffset InspectionDate
     );
 }

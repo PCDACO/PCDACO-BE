@@ -29,6 +29,7 @@ public sealed class GetAllInspectionSchedules
         Guid InspectionStatusId,
         string StatusName,
         string Note,
+        string InspectionAddress,
         DateTimeOffset InspectionDate,
         DateTimeOffset CreatedAt
     )
@@ -44,6 +45,7 @@ public sealed class GetAllInspectionSchedules
                 schedule.InspectionStatusId,
                 schedule.InspectionStatus.Name,
                 schedule.Note,
+                schedule.InspectionAddress,
                 schedule.InspectionDate,
                 GetTimestampFromUuid.Execute(schedule.Id)
             );
@@ -68,12 +70,13 @@ public sealed class GetAllInspectionSchedules
                 .ThenInclude(c => c.Owner)
                 .Where(s => !s.IsDeleted);
 
-            // Apply keyword search for technician name or car owner name
+            // Apply keyword search for technician name or car owner name or inspection address
             if (!string.IsNullOrWhiteSpace(request.Keyword))
             {
                 query = query.Where(s =>
                     EF.Functions.ILike(s.Technician.Name, $"%{request.Keyword}%")
                     || EF.Functions.ILike(s.Car.Owner.Name, $"%{request.Keyword}%")
+                    || EF.Functions.ILike(s.InspectionAddress, $"%{request.Keyword}%")
                 );
             }
 

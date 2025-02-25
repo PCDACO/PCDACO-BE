@@ -20,6 +20,7 @@ public sealed class GetInDateScheduleForCurrentTechnician
         Guid CarId,
         Guid InspectionStatusId,
         string StatusName,
+        string InspectionAddress,
         DateTimeOffset InspectionDate,
         DateTimeOffset CreateAt
     )
@@ -31,6 +32,7 @@ public sealed class GetInDateScheduleForCurrentTechnician
                 schedule.CarId,
                 schedule.InspectionStatusId,
                 schedule.InspectionStatus.Name,
+                schedule.InspectionAddress,
                 schedule.InspectionDate,
                 GetTimestampFromUuid.Execute(schedule.CarId)
             );

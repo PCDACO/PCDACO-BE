@@ -18,7 +18,7 @@ public class GetAllInspectionScheduleEndpoint : ICarterModule
             .WithTags("Inspection Schedules")
             .RequireAuthorization()
             .WithSummary(
-                "Get all inspection schedules by technician name or car owner name, filter by inspection date and sort by options"
+                "Get all inspection schedules by technician name or car owner name or inspection address, filter by inspection date and sort by options"
             );
     }
 
@@ -27,7 +27,7 @@ public class GetAllInspectionScheduleEndpoint : ICarterModule
         [FromQuery(Name = "index")] int? pageNumber = 1,
         [FromQuery(Name = "size")] int? pageSize = 10,
         [FromQuery]
-        [Description("Search by technician name or car owner name")]
+        [Description("Search by technician name or car owner name or inspection address")]
             string? keyword = null,
         [FromQuery] DateTimeOffset? inspectionDate = null,
         [FromQuery] string? sortOrder = "desc"
