@@ -2,9 +2,7 @@ using Ardalis.Result;
 using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
 using FluentValidation;
-
 using Hangfire;
-
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -75,7 +73,6 @@ public sealed class ApproveBooking
                 return Result.NotFound("Không tìm thấy trạng thái phù hợp");
 
             // TODO: set car status to rented
-            // TODO: create background job to update car status to available if driver doesn't start booking after 1 day after start-trip time
 
             booking.StatusId = status.Id;
             await context.SaveChangesAsync(cancellationToken);

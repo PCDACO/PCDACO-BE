@@ -1,9 +1,11 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
+using Domain.Shared;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
+using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.UC_Booking.Commands;
 using UseCases.UnitTests.TestBases;
@@ -18,6 +20,9 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly TestDataEmailService _emailService = new();
     private readonly IBackgroundJobClient _backgroundJobClient = new BackgroundJobClient();
+    private readonly IAesEncryptionService _aesService = fixture.AesEncryptionService;
+    private readonly IKeyManagementService _keyService = fixture.KeyManagementService;
+    private readonly EncryptionSettings _encryptionSettings = fixture.EncryptionSettings;
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
 
@@ -63,6 +68,16 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
+        // Create an already processed license
+        await TestDataCreateLicense.CreateTestLicense(
+            _dbContext,
+            testUser.Id,
+            _aesService,
+            _keyService,
+            _encryptionSettings,
+            isApproved: true
+        );
+
         var handler = new CreateBooking.Handler(
             _dbContext,
             _emailService,
@@ -106,6 +121,16 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         );
         var startTime = DateTime.UtcNow;
         var endTime = DateTime.UtcNow.AddDays(3);
+
+        // Create an already processed license
+        await TestDataCreateLicense.CreateTestLicense(
+            _dbContext,
+            testUser.Id,
+            _aesService,
+            _keyService,
+            _encryptionSettings,
+            isApproved: true
+        );
 
         _currentUser.SetUser(testUser);
 
@@ -183,6 +208,15 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         );
         _currentUser.SetUser(testUser);
 
+        await TestDataCreateLicense.CreateTestLicense(
+            _dbContext,
+            testUser.Id,
+            _aesService,
+            _keyService,
+            _encryptionSettings,
+            isApproved: true
+        );
+
         // Create overlapping booking
         var command1 = new CreateBooking.CreateBookingCommand(
             CarId: testCar.Id,
@@ -246,6 +280,24 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             carStatus: carStatus
         );
 
+        await TestDataCreateLicense.CreateTestLicense(
+            _dbContext,
+            testUser1.Id,
+            _aesService,
+            _keyService,
+            _encryptionSettings,
+            isApproved: true
+        );
+
+        await TestDataCreateLicense.CreateTestLicense(
+            _dbContext,
+            testUser2.Id,
+            _aesService,
+            _keyService,
+            _encryptionSettings,
+            isApproved: true
+        );
+
         // First booking with user1
         _currentUser.SetUser(testUser1);
         var handler1 = new CreateBooking.Handler(
@@ -295,6 +347,38 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.All(
             bookings,
             b => Assert.Equal(BookingStatusEnum.Pending.ToString(), b.Status.Name)
+        );
+    }
+
+    [Fact]
+    public async Task Handle_UserWithoutValidLicense_ReturnsForbidden()
+    {
+        // Arrange
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        _currentUser.SetUser(testUser);
+
+        // Ensure the user has no license
+        var handler = new CreateBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
+        var command = new CreateBooking.CreateBookingCommand(
+            CarId: Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            StartTime: DateTime.UtcNow,
+            EndTime: DateTime.UtcNow.AddDays(1)
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Forbidden, result.Status);
+        Assert.Contains(
+            "Bạn chưa xác thực bằng lái xe hoặc bằng lái xe chưa được phê duyệt!",
+            result.Errors
         );
     }
 }

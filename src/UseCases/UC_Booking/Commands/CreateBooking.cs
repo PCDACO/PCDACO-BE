@@ -7,6 +7,7 @@ using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
+using UseCases.BackgroundServices.Bookings;
 using UseCases.DTOs;
 using UseCases.Services.EmailService;
 using UUIDNext;
@@ -39,6 +40,17 @@ public sealed class CreateBooking
             if (!currentUser.User!.IsDriver())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
+            // Verify driver license first
+            var license = await context.Licenses.FirstOrDefaultAsync(
+                x => x.UserId == currentUser.User.Id,
+                cancellationToken
+            );
+
+            if (license == null || !license.IsApprove.HasValue || !license.IsApprove.Value)
+                return Result.Forbidden(
+                    "Bạn chưa xác thực bằng lái xe hoặc bằng lái xe chưa được phê duyệt!"
+                );
+
             // Check if car exists
             var car = await context
                 .Cars.AsSplitQuery()
@@ -54,7 +66,7 @@ public sealed class CreateBooking
                 );
 
             if (car == null)
-                return Result<Response>.NotFound();
+                return Result<Response>.NotFound("Không tìm thấy xe phù hợp");
 
             var bookingStatus = await context
                 .BookingStatuses.AsNoTracking()
@@ -140,6 +152,10 @@ public sealed class CreateBooking
                     )
             );
 
+            backgroundJobClient.Enqueue<BookingExpiredJob>(job => job.ExpireOldBookings());
+
+            backgroundJobClient.Schedule(() => NotifyOwner(booking.Id), TimeSpan.FromDays(1));
+
             return Result<Response>.Success(new Response(bookingId));
         }
 
@@ -174,6 +190,34 @@ public sealed class CreateBooking
             );
 
             await emailService.SendEmailAsync(ownerEmail, "Yêu Cầu Đặt Xe Mới", ownerEmailTemplate);
+        }
+
+        public async Task NotifyOwner(Guid bookingId)
+        {
+            var booking = await context
+                .Bookings.Include(b => b.User)
+                .Include(b => b.Car)
+                .ThenInclude(c => c.Owner)
+                .FirstOrDefaultAsync(b => b.Id == bookingId);
+
+            if (booking != null && booking.Status.Name == BookingStatusEnum.Pending.ToString())
+            {
+                // Send notification email to the owner
+                var emailTemplate = OwnerNotificationTemplate.Template(
+                    booking.Car.Owner.Name,
+                    booking.User.Name,
+                    booking.Car.Model.Name,
+                    booking.StartTime,
+                    booking.EndTime,
+                    booking.TotalAmount
+                );
+
+                await emailService.SendEmailAsync(
+                    booking.Car.Owner.Email,
+                    "Booking Approval Reminder",
+                    emailTemplate
+                );
+            }
         }
     }
 
