@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using Domain.Constants;
+using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Shared.EmailTemplates.EmailBookings;
 using Hangfire;
