@@ -39,6 +39,17 @@ public sealed class CreateBooking
             if (!currentUser.User!.IsDriver())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
+            // Verify driver license first
+            var license = await context.Licenses.FirstOrDefaultAsync(
+                x => x.UserId == currentUser.User.Id,
+                cancellationToken
+            );
+
+            if (license == null || !license.IsApprove.HasValue || !license.IsApprove.Value)
+                return Result.Forbidden(
+                    "Bạn chưa xác thực bằng lái xe hoặc bằng lái xe chưa được phê duyệt!"
+                );
+
             // Check if car exists
             var car = await context
                 .Cars.AsSplitQuery()
@@ -54,7 +65,7 @@ public sealed class CreateBooking
                 );
 
             if (car == null)
-                return Result<Response>.NotFound();
+                return Result<Response>.NotFound("Không tìm thấy xe phù hợp");
 
             var bookingStatus = await context
                 .BookingStatuses.AsNoTracking()

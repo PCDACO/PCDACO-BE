@@ -15,6 +15,7 @@ public static class TestDataCreateLicense
         IKeyManagementService keyService,
         EncryptionSettings encryptionSettings,
         string licenseNumber = "123456789",
+        bool isApproved = false,
         bool isDeleted = false
     )
     {
@@ -35,6 +36,7 @@ public static class TestDataCreateLicense
             ExpiryDate = DateTime.Now.AddYears(1).ToString("yyyy-MM-dd"),
             LicenseImageFrontUrl = "front-url",
             LicenseImageBackUrl = "back-url",
+            IsApprove = isApproved,
             IsDeleted = isDeleted,
         };
     }
@@ -45,6 +47,7 @@ public static class TestDataCreateLicense
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings,
+        bool isApprove = false,
         bool isDeleted = false
     )
     {
@@ -54,6 +57,7 @@ public static class TestDataCreateLicense
             aesEncryptionService: aesEncryptionService,
             keyService: keyManagementService,
             encryptionSettings: encryptionSettings,
+            isApproved: isApprove,
             isDeleted: isDeleted
         );
 
