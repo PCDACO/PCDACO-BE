@@ -1,5 +1,9 @@
 using Ardalis.Result;
+using Domain.Constants;
+using Domain.Constants.EntityNames;
+using Domain.Entities;
 using Domain.Shared.EmailTemplates.EmailBookings;
+using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Net.payOS.Types;
@@ -37,6 +41,53 @@ public sealed class ProcessPaymentWebhook
             if (booking == null)
                 return Result.NotFound("Không tìm thấy booking");
 
+            // TODO: Add transaction record
+
+            var transactionType = context
+                .TransactionTypes.Where(t =>
+                    new List<string>
+                    {
+                        TransactionTypeNames.BookingPayment,
+                        TransactionTypeNames.PlatformFee
+                    }.Any(name => EF.Functions.ILike(t.Name, name))
+                )
+                .ToList();
+
+            if (transactionType.Count != 2)
+                return Result.Error("Loại giao dịch không hợp lệ");
+
+            var transactionStatus = await context.TransactionStatuses.FirstOrDefaultAsync(
+                t => t.Name == TransactionStatusNames.Completed,
+                cancellationToken: cancellationToken
+            );
+
+            if (transactionStatus == null)
+                return Result.Error("Trạng thái giao dịch không hợp lệ");
+
+            var bookingPayment = new Domain.Entities.Transaction
+            {
+                FromUserId = booking.User.Id,
+                ToUserId = booking.Car.Owner.Id,
+                BookingId = booking.Id,
+                BankAccountId = null,
+                TypeId = transactionType
+                    .First(t => t.Name == TransactionTypeNames.BookingPayment)
+                    .Id,
+                StatusId = transactionStatus.Id,
+                Amount = webhookData.amount,
+            };
+
+            var platformFee = new Domain.Entities.Transaction
+            {
+                FromUserId = booking.User.Id,
+                ToUserId = booking.Car.Owner.Id,
+                BookingId = booking.Id,
+                BankAccountId = null,
+                TypeId = transactionType.First(t => t.Name == TransactionTypeNames.PlatformFee).Id,
+                StatusId = transactionStatus.Id,
+                Amount = booking.PlatformFee,
+            };
+
             // Update booking and statistics
             booking.IsPaid = true;
             booking.Car.Owner.UserStatistic.TotalEarning += webhookData.amount;
@@ -46,43 +97,58 @@ public sealed class ProcessPaymentWebhook
 
             decimal ownerAmount = webhookData.amount - booking.PlatformFee;
 
-            await SendEmail(webhookData, booking, ownerAmount);
+            BackgroundJob.Enqueue(
+                () =>
+                    SendEmail(
+                        webhookData.amount,
+                        ownerAmount,
+                        booking.Car.Owner.Name,
+                        booking.Car.Owner.Email,
+                        booking.User.Name,
+                        booking.User.Email,
+                        booking.Car.Model.Name
+                    )
+            );
 
             return Result.Success();
         }
 
-        private async Task SendEmail(
-            WebhookData webhookData,
-            Domain.Entities.Booking booking,
-            decimal ownerAmount
+        public async Task SendEmail(
+            int amount,
+            decimal ownerEraning,
+            string driverName,
+            string driverEmail,
+            string ownerName,
+            string ownerEmail,
+            string carModel
         )
         {
             // Send email to driver
             var driverEmailTemplate = DriverPaymentConfirmedTemplate.Template(
-                booking.User.Name,
-                booking.Car.Model.Name,
-                webhookData.amount,
+                driverName,
+                carModel,
+                amount,
                 DateTimeOffset.UtcNow
             );
 
             await emailService.SendEmailAsync(
-                booking.User.Email,
+                driverEmail,
                 "Xác Nhận Thanh Toán",
                 driverEmailTemplate
             );
 
             // Send email to owner
             var ownerEmailTemplate = OwnerPaymentConfirmedTemplate.Template(
-                booking.Car.Owner.Name,
-                booking.User.Name,
-                booking.Car.Model.Name,
-                webhookData.amount,
-                ownerAmount,
+                ownerName,
+                driverName,
+                carModel,
+                amount,
+                ownerEraning,
                 DateTimeOffset.UtcNow
             );
 
             await emailService.SendEmailAsync(
-                booking.Car.Owner.Email,
+                ownerEmail,
                 "Thông Báo Thanh Toán Thành Công",
                 ownerEmailTemplate
             );

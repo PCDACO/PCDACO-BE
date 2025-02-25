@@ -1,6 +1,8 @@
 using System.Data.Common;
 using Domain.Shared;
 using DotNet.Testcontainers.Builders;
+using Hangfire;
+using Hangfire.MemoryStorage;
 using Infrastructure.Encryption;
 using Microsoft.EntityFrameworkCore;
 using Npgsql;
@@ -37,6 +39,9 @@ public class DatabaseTestBase : IAsyncLifetime
             .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(5432))
             .WithCleanUp(true)
             .Build();
+
+        // Configure Hangfire to use in-memory storage
+        GlobalConfiguration.Configuration.UseMemoryStorage();
     }
 
     public async Task InitializeAsync()

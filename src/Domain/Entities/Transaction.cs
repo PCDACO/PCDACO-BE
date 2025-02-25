@@ -9,12 +9,10 @@ public class Transaction : BaseEntity
     public required Guid FromUserId { get; set; }
     public required Guid ToUserId { get; set; }
     public required Guid? BookingId { get; set; }
-    public required Guid BankAccountId { get; set; }
+    public required Guid? BankAccountId { get; set; }
     public required Guid TypeId { get; set; }
     public required Guid StatusId { get; set; }
-    public decimal PlatformFee { get; set; } = 0;
-    public decimal OwnerEarning { get; set; } = 0;
-    public decimal TotalAmount { get; set; } = 0;
+    public decimal Amount { get; set; } = 0;
 
     // Navigation properties
     [ForeignKey(nameof(FromUserId))]
@@ -35,5 +33,5 @@ public class Transaction : BaseEntity
     public Booking? Booking { get; set; }
 
     [ForeignKey(nameof(BankAccountId))]
-    public BankAccount BankAccount { get; set; } = null!;
+    public BankAccount? BankAccount { get; set; }
 }
