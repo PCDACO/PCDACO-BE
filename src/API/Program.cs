@@ -41,8 +41,9 @@ if (app.Environment.IsDevelopment())
         c.InjectStylesheet("/swagger-ui/SwaggerDark.css");
     });
 }
-// await UpdateDatabase.Execute(app);
-// await AddAdminUser.Execute(app);
+
+await UpdateDatabase.Execute(app);
+await AddAdminUser.Execute(app);
 app.UseAuthentication();
 app.UseMiddleware<AuthMiddleware>();
 app.UseAuthorization();

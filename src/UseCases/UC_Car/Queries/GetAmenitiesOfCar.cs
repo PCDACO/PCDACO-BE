@@ -1,5 +1,6 @@
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 
 using MediatR;
@@ -57,7 +58,7 @@ public sealed class GetAmenitiesOfCar
                 gettingCar.CarAmenities.Count,
                 request.PageNumber,
                 request.PageSize
-            ), "Lấy danh sách tiện ích của xe thành công");
+            ),ResponseMessages.Fetched);
         }
     }
 }

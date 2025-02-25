@@ -61,9 +61,7 @@ public class CreateCarTests : IAsyncLifetime
             FuelTypeId: fuelType.Id,
             FuelConsumption: 7.5m,
             RequiresCollateral: true,
-            Price: 500m,
-            Latitude: 10.5m,
-            Longtitude: 106.5m
+            Price: 500m
         );
 
     [Fact]
@@ -103,7 +101,7 @@ public class CreateCarTests : IAsyncLifetime
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
+        await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
@@ -142,7 +140,7 @@ public class CreateCarTests : IAsyncLifetime
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
         var user = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
-        await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
+        await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
         _currentUser.SetUser(user);
 
         // Use a random non-existent model ID
@@ -198,9 +196,7 @@ public class CreateCarTests : IAsyncLifetime
             FuelTypeId: fuelType.Id,
             FuelConsumption: 0,
             RequiresCollateral: true,
-            Price: 0,
-            Latitude: null,
-            Longtitude: null
+            Price: 0
         );
 
         // Act
@@ -224,7 +220,7 @@ public class CreateCarTests : IAsyncLifetime
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
         var user = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
-        await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
+        await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
         _currentUser.SetUser(user);
 
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
@@ -250,7 +246,7 @@ public class CreateCarTests : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Created, result.Status);
+        Assert.Equal(ResultStatus.Ok, result.Status);
 
         // Verify car creation
         var createdCar = await _dbContext

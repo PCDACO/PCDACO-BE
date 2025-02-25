@@ -114,8 +114,8 @@ public class LoginTest : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.NotFound, result.Status);
-        Assert.Contains("Không tìm thấy thông tin người dùng", result.Errors);
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains("Sai mật khẩu", result.Errors);
     }
 
     [Fact]

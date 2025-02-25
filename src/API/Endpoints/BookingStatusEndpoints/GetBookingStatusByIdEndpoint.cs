@@ -16,7 +16,7 @@ public class GetBookingStatusByIdEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/users/{id:guid}", Handle)
+        app.MapGet("/api/booking-statuses/{id:guid}", Handle)
         .WithSummary("Get booking status by id")
         .WithTags("Booking Statuses")
         .RequireAuthorization();

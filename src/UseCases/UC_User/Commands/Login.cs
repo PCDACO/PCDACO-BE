@@ -1,7 +1,6 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Shared;
-
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -56,7 +55,7 @@ public class Login
                     u.EncryptionKey.IV
                 );
 
-                if (decryptedPhone == request.Phone && u.Password == request.Password.HashString())
+                if (decryptedPhone == request.Phone)
                 {
                     user = u;
                     break;
@@ -64,6 +63,10 @@ public class Login
             }
             if (user is null)
                 return Result.NotFound("Không tìm thấy thông tin người dùng");
+
+            if (user.Password != request.Password.HashString())
+                return Result.Error("Sai mật khẩu");
+
             string newRefreshToken = tokenService.GenerateRefreshToken();
             await context
                 .RefreshTokens.Where(rt => rt.UserId == user.Id)

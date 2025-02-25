@@ -1,6 +1,7 @@
 
 using Ardalis.Result;
 
+using Domain.Constants;
 using Domain.Entities;
 
 using FluentValidation;
@@ -109,7 +110,7 @@ public sealed class UploadCarImages
             // Save new images
             await context.ImageCars.AddRangeAsync(images, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
-            return Result<Response>.Success(Response.FromEntity(car));
+            return Result.Success(Response.FromEntity(car), ResponseMessages.Updated);
         }
     }
 

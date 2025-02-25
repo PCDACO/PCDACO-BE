@@ -1,12 +1,14 @@
-using System.Threading.Tasks;
-
 using Domain.Data;
 using Domain.Entities;
+using Domain.Shared;
 
 using Microsoft.EntityFrameworkCore;
 
 using Persistance.Bogus;
 using Persistance.Data;
+
+using UseCases.Abstractions;
+using UseCases.Utils;
 
 namespace API.Utils;
 
@@ -19,6 +21,10 @@ public class UpdateDatabase
             .ApplicationServices.GetRequiredService<IServiceScopeFactory>()
             .CreateScope();
         using var context = scope.ServiceProvider.GetService<AppDBContext>();
+        var encryptionSettings = scope.ServiceProvider.GetRequiredService<EncryptionSettings>();
+        var tokenService = scope.ServiceProvider.GetRequiredService<TokenService>();
+        var aesEncryptionService = scope.ServiceProvider.GetRequiredService<IAesEncryptionService>();
+        var keyManageService = scope.ServiceProvider.GetRequiredService<IKeyManagementService>();
         if (context is null)
             throw new ArgumentNullException(nameof(context));
         context.Database.EnsureDeleted();
@@ -42,6 +48,22 @@ public class UpdateDatabase
         Model[] models = ModelGenerator.Execute(manufacturers);
         InspectionStatus[] inspectionStatuses = InspectionStatusGenerator.Execute();
         DeviceStatus[] deviceStatuses = DeviceStatusGenerator.Execute();
+        User[] users = await UserGenerator.Execute(
+            encryptionSettings,
+            aesEncryptionService,
+            keyManageService,
+            tokenService
+        );
+        Car[] cars = await CarGenerator.Execute(
+            transmissionTypes,
+            models,
+            fuelTypes,
+            carStatuses,
+            encryptionSettings,
+            aesEncryptionService,
+            keyManageService,
+            tokenService
+        );
         List<Task> tasks = [];
         tasks.Add(context.AddRangeAsync(withdrawalRequestStatuses));
         tasks.Add(context.AddRangeAsync(userRoles));
@@ -60,7 +82,8 @@ public class UpdateDatabase
         tasks.Add(context.AddRangeAsync(models));
         tasks.Add(context.AddRangeAsync(inspectionStatuses));
         tasks.Add(context.AddRangeAsync(deviceStatuses));
-        tasks.Add(context.AddRangeAsync());
+        tasks.Add(context.AddRangeAsync(users));
+        tasks.Add(context.AddRangeAsync(cars));
         await Task.WhenAll(tasks);
         await context.SaveChangesAsync();
         // Load init data to initial objects.
@@ -70,5 +93,7 @@ public class UpdateDatabase
         transactionStatusesData.Set(transactionStatuses);
         UserRolesData userRolesData = app.ApplicationServices.GetRequiredService<UserRolesData>();
         userRolesData.Set(userRoles);
+        InspectionStatusesData inspectionStatusesData = app.ApplicationServices.GetRequiredService<InspectionStatusesData>();
+        inspectionStatusesData.SetStatuses(inspectionStatuses);
     }
 }

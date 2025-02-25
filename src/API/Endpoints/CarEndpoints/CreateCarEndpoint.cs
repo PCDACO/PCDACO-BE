@@ -39,9 +39,7 @@ public class CreateCarEndpoint : ICarterModule
                 Description: request.Description,
                 FuelConsumption: request.FuelConsumption,
                 RequiresCollateral: request.RequiresCollateral,
-                Price: request.Price,
-                Latitude: request.Latitude,
-                Longtitude: request.Longtitude
+                Price: request.Price
             )
         );
         return result.MapResult();
@@ -58,8 +56,6 @@ public class CreateCarEndpoint : ICarterModule
         string Description,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        decimal Price,
-        decimal? Latitude,
-        decimal? Longtitude
+        decimal Price
     );
 }

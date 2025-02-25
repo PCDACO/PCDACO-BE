@@ -1,3 +1,4 @@
+using Domain.Constants.EntityNames;
 using Domain.Entities;
 
 namespace Persistance.Bogus;
@@ -6,10 +7,10 @@ public class InspectionStatusGenerator
 {
     private static readonly string[] _inspectionStatus =
     [
-        "Pending", // Initial state when inspection is scheduled
-        "Completed", // Inspection has been done
-        "Cancelled", // Inspection was cancelled
-        "Failed", // Car failed inspection
+        InspectionStatusNames.Pending,
+        InspectionStatusNames.InProgress,
+        InspectionStatusNames.Approved,
+        InspectionStatusNames.Rejected,
     ];
 
     public static InspectionStatus[] Execute()
