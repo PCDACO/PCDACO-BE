@@ -12,8 +12,12 @@ namespace UseCases.UC_InspectionSchedule.Commands;
 
 public sealed class CreateInspectionSchedule
 {
-    public sealed record Command(Guid TechnicianId, Guid CarId, DateTimeOffset InspectionDate)
-        : IRequest<Result<Response>>;
+    public sealed record Command(
+        Guid TechnicianId,
+        Guid CarId,
+        string InspectionAddress,
+        DateTimeOffset InspectionDate
+    ) : IRequest<Result<Response>>;
 
     public sealed record Response(Guid Id)
     {
@@ -69,6 +73,7 @@ public sealed class CreateInspectionSchedule
                 TechnicianId = request.TechnicianId,
                 CarId = request.CarId,
                 InspectionStatusId = pendingStatus.Id,
+                InspectionAddress = request.InspectionAddress,
                 InspectionDate = request.InspectionDate,
             };
 
@@ -88,6 +93,10 @@ public sealed class CreateInspectionSchedule
                 .WithMessage("id kiểm định viên không được để trống");
 
             RuleFor(x => x.CarId).NotEmpty().WithMessage("id xe không được để trống");
+
+            RuleFor(x => x.InspectionAddress)
+                .NotEmpty()
+                .WithMessage("Địa chỉ kiểm định không được để trống");
 
             RuleFor(x => x.InspectionDate)
                 .NotEmpty()

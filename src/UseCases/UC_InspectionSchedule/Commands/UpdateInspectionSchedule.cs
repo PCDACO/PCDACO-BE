@@ -11,8 +11,12 @@ namespace UseCases.UC_InspectionSchedule.Commands;
 
 public sealed class UpdateInspectionSchedule
 {
-    public sealed record Command(Guid Id, Guid TechnicianId, DateTimeOffset InspectionDate)
-        : IRequest<Result<Response>>;
+    public sealed record Command(
+        Guid Id,
+        Guid TechnicianId,
+        string InspectionAddress,
+        DateTimeOffset InspectionDate
+    ) : IRequest<Result<Response>>;
 
     public sealed record Response(Guid Id)
     {
@@ -57,6 +61,7 @@ public sealed class UpdateInspectionSchedule
 
             // Update schedule
             schedule.TechnicianId = request.TechnicianId;
+            schedule.InspectionAddress = request.InspectionAddress;
             schedule.InspectionDate = request.InspectionDate;
             schedule.UpdatedAt = DateTimeOffset.UtcNow;
 
@@ -75,6 +80,10 @@ public sealed class UpdateInspectionSchedule
             RuleFor(x => x.TechnicianId)
                 .NotEmpty()
                 .WithMessage("Id kiểm định viên không được để trống");
+
+            RuleFor(x => x.InspectionAddress)
+                .NotEmpty()
+                .WithMessage("Địa chỉ kiểm định không được để trống");
 
             RuleFor(x => x.InspectionDate)
                 .NotEmpty()

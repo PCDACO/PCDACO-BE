@@ -40,8 +40,8 @@ public sealed class ApproveInspectionSchedule
                 return Result.Error(ResponseMessages.InspectionScheduleNotFound);
 
             // Check if schedule can be updated
-            if (!schedule.InspectionStatus.Name.ToLower().Contains("inprogress"))
-                return Result.Error(ResponseMessages.OnlyUpdateInProgressInspectionSchedule);
+            if (!schedule.InspectionStatus.Name.ToLower().Contains("pending"))
+                return Result.Error(ResponseMessages.OnlyUpdatePendingInspectionSchedule);
 
             // Check if the status is existed based on the IsApproved request
             var status = await context.InspectionStatuses.FirstOrDefaultAsync(

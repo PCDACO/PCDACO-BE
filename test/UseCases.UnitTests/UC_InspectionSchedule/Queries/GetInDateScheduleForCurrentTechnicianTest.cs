@@ -111,6 +111,7 @@ public class GetInDateScheduleForCurrentTechnicianTest(DatabaseTestBase fixture)
                 TechnicianId = technician.Id,
                 CarId = car.Id,
                 InspectionStatusId = pendingStatus.Id,
+                InspectionAddress = $"123 Main St {i + 1}",
                 InspectionDate = today,
             };
             schedules.Add(schedule);
@@ -189,6 +190,7 @@ public class GetInDateScheduleForCurrentTechnicianTest(DatabaseTestBase fixture)
                 TechnicianId = technician.Id,
                 CarId = car.Id,
                 InspectionStatusId = pendingStatus.Id,
+                InspectionAddress = $"123 Main St {i + 1}",
                 InspectionDate = today,
             };
             schedules.Add(schedule);

@@ -100,6 +100,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
             TechnicianId = technician.Id,
             CarId = car.Id,
             InspectionStatusId = pendingStatus.Id,
+            InspectionAddress = "123 Main St 1",
             InspectionDate = DateTimeOffset.UtcNow,
             Note = "Test schedule",
         };
@@ -161,6 +162,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
                 TechnicianId = technician.Id,
                 CarId = car.Id,
                 InspectionStatusId = pendingStatus.Id,
+                InspectionAddress = "123 Main St 2",
                 InspectionDate = today,
                 Note = "Today's schedule",
             },
@@ -169,6 +171,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
                 TechnicianId = technician.Id,
                 CarId = car.Id,
                 InspectionStatusId = pendingStatus.Id,
+                InspectionAddress = "123 Main St 3",
                 InspectionDate = tomorrow,
                 Note = "Tomorrow's schedule",
             },
@@ -185,6 +188,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Single(result.Value.Items);
+        Assert.Equal("123 Main St 2", result.Value.Items.First().InspectionAddress);
         Assert.Equal(today.Date, result.Value.Items.First().InspectionDate.Date);
     }
 
@@ -225,6 +229,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
                 TechnicianId = technician.Id,
                 CarId = car.Id,
                 InspectionStatusId = pendingStatus.Id,
+                InspectionAddress = $"123 Main St {i + 1}",
                 InspectionDate = DateTimeOffset.UtcNow.AddDays(i),
                 Note = $"Schedule {i + 1}",
             };

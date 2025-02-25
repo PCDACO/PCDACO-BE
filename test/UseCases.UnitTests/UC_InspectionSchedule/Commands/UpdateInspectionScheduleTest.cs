@@ -32,6 +32,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var command = new UpdateInspectionSchedule.Command(
             Id: Guid.NewGuid(),
             TechnicianId: Guid.NewGuid(),
+            InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(1)
         );
 
@@ -58,6 +59,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var command = new UpdateInspectionSchedule.Command(
             Id: Guid.NewGuid(),
             TechnicianId: Guid.NewGuid(),
+            InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(1)
         );
 
@@ -123,6 +125,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             TechnicianId = technician.Id,
             CarId = car.Id,
             InspectionStatusId = approvedStatus.Id,
+            InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
         };
         await _dbContext.InspectionSchedules.AddAsync(schedule);
@@ -132,6 +135,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var command = new UpdateInspectionSchedule.Command(
             Id: schedule.Id,
             TechnicianId: technician.Id,
+            InspectionAddress: "123 Main St 1",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(2)
         );
 
@@ -196,6 +200,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             TechnicianId = technician.Id,
             CarId = car.Id,
             InspectionStatusId = pendingStatus.Id,
+            InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
         };
         await _dbContext.InspectionSchedules.AddAsync(schedule);
@@ -205,6 +210,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var command = new UpdateInspectionSchedule.Command(
             Id: schedule.Id,
             TechnicianId: Guid.NewGuid(), // Non-existent technician ID
+            InspectionAddress: "123 Main St 1",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(2)
         );
 
@@ -269,6 +275,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             TechnicianId = technician.Id,
             CarId = car.Id,
             InspectionStatusId = pendingStatus.Id,
+            InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
         };
         await _dbContext.InspectionSchedules.AddAsync(originalSchedule);
@@ -279,6 +286,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var command = new UpdateInspectionSchedule.Command(
             Id: originalSchedule.Id,
             TechnicianId: technician.Id,
+            InspectionAddress: "123 Main St 1",
             InspectionDate: newInspectionDate
         );
 
@@ -293,6 +301,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var updatedSchedule = await _dbContext.InspectionSchedules.FindAsync(originalSchedule.Id);
         Assert.NotNull(updatedSchedule);
         Assert.Equal(technician.Id, updatedSchedule.TechnicianId);
+        Assert.Equal("123 Main St 1", updatedSchedule.InspectionAddress);
         Assert.Equal(newInspectionDate, updatedSchedule.InspectionDate);
         Assert.Equal(car.Id, updatedSchedule.CarId);
         Assert.NotNull(updatedSchedule.UpdatedAt);
@@ -306,6 +315,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var command = new UpdateInspectionSchedule.Command(
             Id: Guid.Empty,
             TechnicianId: Guid.Empty,
+            InspectionAddress: string.Empty,
             InspectionDate: DateTimeOffset.UtcNow.AddDays(-1)
         );
 
@@ -316,6 +326,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "Id");
         Assert.Contains(result.Errors, e => e.PropertyName == "TechnicianId");
+        Assert.Contains(result.Errors, e => e.PropertyName == "InspectionAddress");
         Assert.Contains(result.Errors, e => e.PropertyName == "InspectionDate");
     }
 }

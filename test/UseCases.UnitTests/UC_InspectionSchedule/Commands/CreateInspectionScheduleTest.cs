@@ -33,6 +33,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var command = new CreateInspectionSchedule.Command(
             TechnicianId: Guid.NewGuid(),
             CarId: Guid.NewGuid(),
+            InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(1)
         );
 
@@ -59,6 +60,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var command = new CreateInspectionSchedule.Command(
             TechnicianId: Guid.NewGuid(),
             CarId: Guid.NewGuid(),
+            InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(1)
         );
 
@@ -88,6 +90,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var command = new CreateInspectionSchedule.Command(
             TechnicianId: Guid.NewGuid(),
             CarId: Guid.NewGuid(),
+            InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(1)
         );
 
@@ -124,6 +127,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var command = new CreateInspectionSchedule.Command(
             TechnicianId: Guid.NewGuid(),
             CarId: car.Id,
+            InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(1)
         );
 
@@ -160,6 +164,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var command = new CreateInspectionSchedule.Command(
             TechnicianId: Guid.NewGuid(),
             CarId: car.Id,
+            InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(1)
         );
 
@@ -204,6 +209,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var command = new CreateInspectionSchedule.Command(
             TechnicianId: driver.Id,
             CarId: car.Id,
+            InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(1)
         );
 
@@ -254,6 +260,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var command = new CreateInspectionSchedule.Command(
             TechnicianId: technician.Id,
             CarId: car.Id,
+            InspectionAddress: "123 Main St",
             InspectionDate: inspectionDate
         );
 
@@ -273,6 +280,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         Assert.Equal(car.Id, schedule.CarId);
         Assert.Equal(pendingStatus.Id, schedule.InspectionStatusId);
         Assert.Equal(inspectionDate, schedule.InspectionDate);
+        Assert.Equal("123 Main St", schedule.InspectionAddress);
     }
 
     private async Task<Car> CreateTestCar(Guid ownerId, string status)

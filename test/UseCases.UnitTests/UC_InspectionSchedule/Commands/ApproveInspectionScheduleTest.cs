@@ -108,13 +108,14 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         // Create schedule
         var inProgressStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
             _dbContext,
-            "InProgress"
+            "Pending"
         );
         var schedule = new InspectionSchedule
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
             InspectionStatusId = inProgressStatus.Id,
+            InspectionAddress = "123 Main St 1",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
         };
         await _dbContext.InspectionSchedules.AddAsync(schedule);
@@ -136,7 +137,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
     }
 
     [Fact]
-    public async Task Handle_ScheduleNotInProgress_ReturnsError()
+    public async Task Handle_ScheduleNotInPending_ReturnsError()
     {
         // Arrange
         var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
@@ -166,16 +167,17 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
             carStatus
         );
 
-        // Create schedule with a status other than "inprogress"
+        // Create schedule with a status other than "pending"
         var pendingStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
             _dbContext,
-            "Pending"
+            "InProgress"
         );
         var schedule = new InspectionSchedule
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
             InspectionStatusId = pendingStatus.Id,
+            InspectionAddress = "123 Main St 1",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
         };
         await _dbContext.InspectionSchedules.AddAsync(schedule);
@@ -193,7 +195,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
 
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains(ResponseMessages.OnlyUpdateInProgressInspectionSchedule, result.Errors);
+        Assert.Contains(ResponseMessages.OnlyUpdatePendingInspectionSchedule, result.Errors);
     }
 
     [Theory]
@@ -232,7 +234,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         // Create schedule
         var inProgressStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
             _dbContext,
-            "InProgress"
+            "Pending"
         );
         var approvedStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
             _dbContext,
@@ -247,6 +249,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
             TechnicianId = technician.Id,
             CarId = car.Id,
             InspectionStatusId = inProgressStatus.Id,
+            InspectionAddress = "123 Main St 1",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
         };
         await _dbContext.InspectionSchedules.AddAsync(schedule);
@@ -274,6 +277,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
             updatedSchedule.InspectionStatusId
         );
         Assert.Equal("Test note", updatedSchedule.Note);
+        Assert.Equal("123 Main St 1", updatedSchedule.InspectionAddress);
         Assert.NotNull(updatedSchedule.UpdatedAt);
     }
 
