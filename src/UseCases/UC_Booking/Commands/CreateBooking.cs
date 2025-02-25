@@ -7,6 +7,7 @@ using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
+using UseCases.BackgroundServices.Bookings;
 using UseCases.DTOs;
 using UseCases.Services.EmailService;
 using UUIDNext;
@@ -150,6 +151,8 @@ public sealed class CreateBooking
                         car.Model.Name
                     )
             );
+
+            backgroundJobClient.Enqueue<BookingExpiredJob>(job => job.ExpireOldBookings());
 
             backgroundJobClient.Schedule(() => NotifyOwner(booking.Id), TimeSpan.FromDays(1));
 
