@@ -2,7 +2,9 @@ using Ardalis.Result;
 using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
 using FluentValidation;
+
 using Hangfire;
+
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -18,6 +20,7 @@ public sealed class ApproveBooking
     internal sealed class Handler(
         IAppDBContext context,
         IEmailService emailService,
+        IBackgroundJobClient backgroundJobClient,
         CurrentUser currentUser
     ) : IRequestHandler<Command, Result>
     {
@@ -77,7 +80,7 @@ public sealed class ApproveBooking
             booking.StatusId = status.Id;
             await context.SaveChangesAsync(cancellationToken);
 
-            BackgroundJob.Enqueue(
+            backgroundJobClient.Enqueue(
                 () =>
                     SendEmail(
                         request.IsApproved,

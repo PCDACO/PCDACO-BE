@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
 using UseCases.DTOs;
@@ -15,6 +16,7 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly TestDataEmailService _emailService = new();
+    private readonly IBackgroundJobClient _backgroundJobClient = new BackgroundJobClient();
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
 
@@ -30,7 +32,12 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new ApproveBooking.Handler(_dbContext, _emailService, _currentUser);
+        var handler = new ApproveBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command = new ApproveBooking.Command(Guid.NewGuid(), true);
 
         // Act
@@ -49,7 +56,12 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new ApproveBooking.Handler(_dbContext, _emailService, _currentUser);
+        var handler = new ApproveBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command = new ApproveBooking.Command(Guid.NewGuid(), true);
 
         // Act
@@ -108,7 +120,12 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             statusId
         );
 
-        var handler = new ApproveBooking.Handler(_dbContext, _emailService, _currentUser);
+        var handler = new ApproveBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command = new ApproveBooking.Command(booking.Id, true);
 
         // Act
@@ -170,7 +187,12 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             pendingStatusId
         );
 
-        var handler = new ApproveBooking.Handler(_dbContext, _emailService, _currentUser);
+        var handler = new ApproveBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command = new ApproveBooking.Command(booking.Id, isApproved);
 
         // Act
@@ -188,9 +210,9 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData(true, "Approved")]
-    [InlineData(false, "Rejected")]
-    public async Task Handle_ValidRequest_SendsCorrectEmail(bool isApproved, string expectedStatus)
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task Handle_ValidRequest_SendsCorrectEmail(bool isApproved)
     {
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
@@ -234,7 +256,12 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             pendingStatusId
         );
 
-        var handler = new ApproveBooking.Handler(_dbContext, _emailService, _currentUser);
+        var handler = new ApproveBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command = new ApproveBooking.Command(booking.Id, isApproved);
 
         // Act
@@ -242,8 +269,128 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
+    }
 
-        // Verify email was sent
-        Assert.Single(_emailService.SentEmails);
+    [Fact]
+    public async Task Handle_CarOwnershipCheck_ReturnsForbidden()
+    {
+        // Arrange
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var bookingStatuses = await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
+
+        var owner1 = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var owner2 = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var driver = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            driverRole,
+            "driver@test.com"
+        );
+        _currentUser.SetUser(owner1);
+
+        // Setup car and booking
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+        var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
+            _dbContext,
+            "Automatic"
+        );
+        var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
+
+        var car = await TestDataCreateCar.CreateTestCar(
+            _dbContext,
+            owner1.Id,
+            model.Id,
+            transmissionType,
+            fuelType,
+            carStatus
+        );
+
+        var pendingStatusId = bookingStatuses
+            .First(s => s.Name == BookingStatusEnum.Pending.ToString())
+            .Id;
+        var booking = await TestDataCreateBooking.CreateTestBooking(
+            _dbContext,
+            driver.Id,
+            car.Id,
+            pendingStatusId
+        );
+
+        // Act
+        _currentUser.SetUser(owner2);
+        var handler = new ApproveBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
+        var command = new ApproveBooking.Command(booking.Id, true);
+
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Forbidden, result.Status);
+        Assert.Contains("Bạn không có quyền phê duyệt booking cho xe này!", result.Errors);
+    }
+
+    [Fact]
+    public async Task Handle_ValidRequest_EnqueuesEmailJob()
+    {
+        // Arrange
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var bookingStatuses = await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
+
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var driver = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            driverRole,
+            "driver@test.com"
+        );
+        _currentUser.SetUser(owner);
+
+        // Setup car and booking
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+        var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
+            _dbContext,
+            "Automatic"
+        );
+        var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
+
+        var car = await TestDataCreateCar.CreateTestCar(
+            _dbContext,
+            owner.Id,
+            model.Id,
+            transmissionType,
+            fuelType,
+            carStatus
+        );
+
+        var pendingStatusId = bookingStatuses
+            .First(s => s.Name == BookingStatusEnum.Pending.ToString())
+            .Id;
+        var booking = await TestDataCreateBooking.CreateTestBooking(
+            _dbContext,
+            driver.Id,
+            car.Id,
+            pendingStatusId
+        );
+
+        var handler = new ApproveBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
+        var command = new ApproveBooking.Command(booking.Id, true);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
     }
 }

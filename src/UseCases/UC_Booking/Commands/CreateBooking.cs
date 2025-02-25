@@ -26,6 +26,7 @@ public sealed class CreateBooking
     internal sealed class Handler(
         IAppDBContext context,
         IEmailService emailService,
+        IBackgroundJobClient backgroundJobClient,
         CurrentUser currentUser
     ) : IRequestHandler<CreateBookingCommand, Result<Response>>
     {
@@ -125,7 +126,7 @@ public sealed class CreateBooking
             context.Bookings.Add(booking);
             await context.SaveChangesAsync(cancellationToken);
 
-            BackgroundJob.Enqueue(
+            backgroundJobClient.Enqueue(
                 () =>
                     SendEmail(
                         request.StartTime,

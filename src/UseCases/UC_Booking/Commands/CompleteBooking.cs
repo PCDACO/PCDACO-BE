@@ -31,7 +31,8 @@ public sealed class CompleteBooking
         IAppDBContext context,
         CurrentUser currentUser,
         IEmailService emailService,
-        IPaymentService paymentService
+        IPaymentService paymentService,
+        IBackgroundJobClient backgroundJobClient
     ) : IRequestHandler<Command, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
@@ -116,7 +117,7 @@ public sealed class CompleteBooking
 
             await context.SaveChangesAsync(cancellationToken);
 
-            BackgroundJob.Enqueue(
+            backgroundJobClient.Enqueue(
                 () =>
                     SendEmail(
                         booking.User.Name,

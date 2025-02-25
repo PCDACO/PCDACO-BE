@@ -1,4 +1,6 @@
 using Ardalis.Result;
+using Domain.Constants;
+using Domain.Entities;
 using Domain.Shared.EmailTemplates.EmailBookings;
 using Hangfire;
 using MediatR;
@@ -37,6 +39,53 @@ public sealed class ProcessPaymentWebhook
 
             if (booking == null)
                 return Result.NotFound("Không tìm thấy booking");
+
+            // TODO: Add transaction record
+
+            var transactionType = context
+                .TransactionTypes.Where(t =>
+                    new List<string>
+                    {
+                        TransactionTypeNames.BookingPayment,
+                        TransactionTypeNames.PlatformFee
+                    }.Any(name => EF.Functions.ILike(t.Name, name))
+                )
+                .ToList();
+
+            if (transactionType.Count != 2)
+                return Result.Error("Loại giao dịch không hợp lệ");
+
+            var transactionStatus = await context.TransactionStatuses.FirstOrDefaultAsync(
+                t => t.Name == TransactionStatusNames.Completed,
+                cancellationToken: cancellationToken
+            );
+
+            if (transactionStatus == null)
+                return Result.Error("Trạng thái giao dịch không hợp lệ");
+
+            var bookingPayment = new Domain.Entities.Transaction
+            {
+                FromUserId = booking.User.Id,
+                ToUserId = booking.Car.Owner.Id,
+                BookingId = booking.Id,
+                BankAccountId = null,
+                TypeId = transactionType
+                    .First(t => t.Name == TransactionTypeNames.BookingPayment)
+                    .Id,
+                StatusId = transactionStatus.Id,
+                Amount = webhookData.amount,
+            };
+
+            var platformFee = new Domain.Entities.Transaction
+            {
+                FromUserId = booking.User.Id,
+                ToUserId = booking.Car.Owner.Id,
+                BookingId = booking.Id,
+                BankAccountId = null,
+                TypeId = transactionType.First(t => t.Name == TransactionTypeNames.PlatformFee).Id,
+                StatusId = transactionStatus.Id,
+                Amount = booking.PlatformFee,
+            };
 
             // Update booking and statistics
             booking.IsPaid = true;
