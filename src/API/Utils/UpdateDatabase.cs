@@ -64,6 +64,12 @@ public class UpdateDatabase
             keyManageService,
             tokenService
         );
+        // Generate inspection schedules
+        InspectionSchedule[] inspectionSchedules = InspectionScheduleGenerator.Execute(
+            cars,
+            inspectionStatuses,
+            carStatuses
+        );
         List<Task> tasks = [];
         tasks.Add(context.AddRangeAsync(withdrawalRequestStatuses));
         tasks.Add(context.AddRangeAsync(userRoles));
@@ -84,6 +90,7 @@ public class UpdateDatabase
         tasks.Add(context.AddRangeAsync(deviceStatuses));
         tasks.Add(context.AddRangeAsync(users));
         tasks.Add(context.AddRangeAsync(cars));
+        tasks.Add(context.AddRangeAsync(inspectionSchedules));
         await Task.WhenAll(tasks);
         await context.SaveChangesAsync();
         // Load init data to initial objects.
