@@ -75,7 +75,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _aesService,
             _keyService,
             _encryptionSettings,
-            isApprove: true
+            isApproved: true
         );
 
         var handler = new CreateBooking.Handler(
@@ -129,7 +129,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _aesService,
             _keyService,
             _encryptionSettings,
-            isApprove: true
+            isApproved: true
         );
 
         _currentUser.SetUser(testUser);
@@ -214,7 +214,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _aesService,
             _keyService,
             _encryptionSettings,
-            isApprove: true
+            isApproved: true
         );
 
         // Create overlapping booking
@@ -286,7 +286,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _aesService,
             _keyService,
             _encryptionSettings,
-            isApprove: true
+            isApproved: true
         );
 
         await TestDataCreateLicense.CreateTestLicense(
@@ -295,7 +295,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _aesService,
             _keyService,
             _encryptionSettings,
-            isApprove: true
+            isApproved: true
         );
 
         // First booking with user1

@@ -15,7 +15,7 @@ public static class TestDataCreateLicense
         IKeyManagementService keyService,
         EncryptionSettings encryptionSettings,
         string licenseNumber = "123456789",
-        bool isApproved = false,
+        bool? isApproved = null,
         bool isDeleted = false
     )
     {
@@ -47,7 +47,7 @@ public static class TestDataCreateLicense
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings,
-        bool isApprove = false,
+        bool? isApproved = null,
         bool isDeleted = false
     )
     {
@@ -57,7 +57,7 @@ public static class TestDataCreateLicense
             aesEncryptionService: aesEncryptionService,
             keyService: keyManagementService,
             encryptionSettings: encryptionSettings,
-            isApproved: isApprove,
+            isApproved: isApproved,
             isDeleted: isDeleted
         );
 
