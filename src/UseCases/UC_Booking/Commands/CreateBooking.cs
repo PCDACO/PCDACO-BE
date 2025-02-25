@@ -151,6 +151,8 @@ public sealed class CreateBooking
                     )
             );
 
+            backgroundJobClient.Schedule(() => NotifyOwner(booking.Id), TimeSpan.FromDays(1));
+
             return Result<Response>.Success(new Response(bookingId));
         }
 
@@ -185,6 +187,34 @@ public sealed class CreateBooking
             );
 
             await emailService.SendEmailAsync(ownerEmail, "Yêu Cầu Đặt Xe Mới", ownerEmailTemplate);
+        }
+
+        public async Task NotifyOwner(Guid bookingId)
+        {
+            var booking = await context
+                .Bookings.Include(b => b.User)
+                .Include(b => b.Car)
+                .ThenInclude(c => c.Owner)
+                .FirstOrDefaultAsync(b => b.Id == bookingId);
+
+            if (booking != null && booking.Status.Name == BookingStatusEnum.Pending.ToString())
+            {
+                // Send notification email to the owner
+                var emailTemplate = OwnerNotificationTemplate.Template(
+                    booking.Car.Owner.Name,
+                    booking.User.Name,
+                    booking.Car.Model.Name,
+                    booking.StartTime,
+                    booking.EndTime,
+                    booking.TotalAmount
+                );
+
+                await emailService.SendEmailAsync(
+                    booking.Car.Owner.Email,
+                    "Booking Approval Reminder",
+                    emailTemplate
+                );
+            }
         }
     }
 
