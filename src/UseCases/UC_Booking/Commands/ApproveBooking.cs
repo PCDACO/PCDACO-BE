@@ -2,6 +2,9 @@ using Ardalis.Result;
 using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
 using FluentValidation;
+
+using Hangfire;
+
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -17,6 +20,7 @@ public sealed class ApproveBooking
     internal sealed class Handler(
         IAppDBContext context,
         IEmailService emailService,
+        IBackgroundJobClient backgroundJobClient,
         CurrentUser currentUser
     ) : IRequestHandler<Command, Result>
     {
@@ -70,31 +74,49 @@ public sealed class ApproveBooking
             if (status == null)
                 return Result.NotFound("Không tìm thấy trạng thái phù hợp");
 
+            // TODO: set car status to rented
+            // TODO: create background job to update car status to available if driver doesn't start booking after 1 day after start-trip time
+
             booking.StatusId = status.Id;
             await context.SaveChangesAsync(cancellationToken);
 
-            await SendEmail(request, booking);
+            backgroundJobClient.Enqueue(
+                () =>
+                    SendEmail(
+                        request.IsApproved,
+                        booking.User.Name,
+                        booking.User.Email,
+                        booking.Car.Model.Name,
+                        booking.StartTime,
+                        booking.EndTime,
+                        booking.TotalAmount
+                    )
+            );
 
             return Result.SuccessWithMessage($"Đã {message} booking thành công");
         }
 
-        private async Task SendEmail(Command request, Domain.Entities.Booking booking)
+        public async Task SendEmail(
+            bool isApproved,
+            string driverName,
+            string driverEmail,
+            string carModelName,
+            DateTimeOffset startTime,
+            DateTimeOffset endTime,
+            decimal totalAmount
+        )
         {
             // Send email to driver
             var emailTemplate = DriverApproveBookingTemplate.Template(
-                booking.User.Name,
-                booking.Car.Model.Name,
-                booking.StartTime,
-                booking.EndTime,
-                booking.TotalAmount,
-                request.IsApproved
+                driverName,
+                carModelName,
+                startTime,
+                endTime,
+                totalAmount,
+                isApproved
             );
 
-            await emailService.SendEmailAsync(
-                booking.User.Email,
-                "Phê duyệt đặt xe",
-                emailTemplate
-            );
+            await emailService.SendEmailAsync(driverEmail, "Phê duyệt đặt xe", emailTemplate);
         }
     }
 

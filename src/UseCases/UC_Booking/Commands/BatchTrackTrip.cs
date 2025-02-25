@@ -3,10 +3,12 @@ using Domain.Entities;
 using Domain.Enums;
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using UseCases.Abstractions;
 using UseCases.DTOs;
+using UseCases.Services.SignalR;
 using UUIDNext.Tools;
 
 namespace UseCases.UC_Booking.Commands;
@@ -25,7 +27,8 @@ public sealed class BatchTrackTrip
     internal sealed class Handler(
         IAppDBContext context,
         CurrentUser currentUser,
-        GeometryFactory geometryFactory
+        GeometryFactory geometryFactory,
+        IHubContext<LocationHub> hubContext
     ) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -86,6 +89,15 @@ public sealed class BatchTrackTrip
                 trackings.Add(tracking);
 
                 previousTracking = tracking; // Use the newly created tracking as previous for next iteration
+
+                // Send location update to SignalR clients
+                // await hubContext.Clients.All.SendAsync(
+                //     "ReceiveLocationUpdate",
+                //     booking.Id,
+                //     point.Latitude,
+                //     point.Longitude,
+                //     cancellationToken: cancellationToken
+                // );
             }
 
             context.TripTrackings.AddRange(trackings);

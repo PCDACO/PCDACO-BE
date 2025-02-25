@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
 using UseCases.DTOs;
@@ -16,6 +17,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly TestDataEmailService _emailService = new();
+    private readonly IBackgroundJobClient _backgroundJobClient = new BackgroundJobClient();
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
 
@@ -32,7 +34,12 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new CreateBooking.Handler(_dbContext, _emailService, _currentUser);
+        var handler = new CreateBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command = new CreateBooking.CreateBookingCommand(
             CarId: Uuid.NewDatabaseFriendly(Database.PostgreSql),
             StartTime: DateTime.UtcNow,
@@ -56,7 +63,12 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new CreateBooking.Handler(_dbContext, _emailService, _currentUser);
+        var handler = new CreateBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command = new CreateBooking.CreateBookingCommand(
             CarId: Uuid.NewDatabaseFriendly(Database.PostgreSql),
             StartTime: DateTime.UtcNow,
@@ -97,7 +109,12 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         _currentUser.SetUser(testUser);
 
-        var handler = new CreateBooking.Handler(_dbContext, _emailService, _currentUser);
+        var handler = new CreateBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command = new CreateBooking.CreateBookingCommand(
             CarId: testCar.Id,
             StartTime: startTime,
@@ -180,7 +197,12 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             EndTime: DateTime.UtcNow.AddHours(4)
         );
 
-        var handler = new CreateBooking.Handler(_dbContext, _emailService, _currentUser);
+        var handler = new CreateBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
 
         // Act
         var result1 = await handler.Handle(command1, CancellationToken.None);
@@ -226,7 +248,12 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // First booking with user1
         _currentUser.SetUser(testUser1);
-        var handler1 = new CreateBooking.Handler(_dbContext, _emailService, _currentUser);
+        var handler1 = new CreateBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command1 = new CreateBooking.CreateBookingCommand(
             CarId: testCar.Id,
             StartTime: DateTime.UtcNow.AddHours(1),
@@ -238,7 +265,12 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Second booking with user2
         _currentUser.SetUser(testUser2);
-        var handler2 = new CreateBooking.Handler(_dbContext, _emailService, _currentUser);
+        var handler2 = new CreateBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command2 = new CreateBooking.CreateBookingCommand(
             CarId: testCar.Id,
             StartTime: DateTime.UtcNow.AddHours(2), // Overlaps

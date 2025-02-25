@@ -1,17 +1,20 @@
+using Domain.Constants;
 using Domain.Entities;
 
 namespace Persistance.Bogus;
 
 public class TransactionTypeGenerator
 {
-    private static readonly string[] _transactionTypes = ["BookingPayment", "Withdrawal", "IncomeTransfer", "PlatformFee"];
-    public static TransactionType[] Execute()
-    {
-        return [.. _transactionTypes.Select(status => {
-            return new TransactionType()
-            {
-                Name = status,
-            };
-        })];
-    }
+    private static readonly string[] _transactionTypes =
+    [
+        TransactionTypeNames.BookingPayment,
+        TransactionTypeNames.PlatformFee,
+        TransactionTypeNames.OwnerEarning,
+        TransactionTypeNames.Withdrawal,
+        TransactionTypeNames.Refund,
+        TransactionTypeNames.Compensation,
+    ];
+
+    public static TransactionType[] Execute() =>
+        [.. _transactionTypes.Select(status => new TransactionType() { Name = status, })];
 }

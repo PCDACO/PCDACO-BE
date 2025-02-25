@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
 using UseCases.DTOs;
@@ -18,6 +19,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly TestDataEmailService _emailService = new();
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly IPaymentService _paymentService = new TestDataPaymentService();
+    private readonly IBackgroundJobClient _backgroundJobClient = new BackgroundJobClient();
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
 
     public Task InitializeAsync() => Task.CompletedTask;
@@ -36,7 +38,8 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _currentUser,
             _emailService,
-            _paymentService
+            _paymentService,
+            _backgroundJobClient
         );
         var command = new CompleteBooking.Command(Guid.NewGuid());
 
@@ -60,7 +63,8 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _currentUser,
             _emailService,
-            _paymentService
+            _paymentService,
+            _backgroundJobClient
         );
         var command = new CompleteBooking.Command(Guid.NewGuid());
 
@@ -124,7 +128,8 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _currentUser,
             _emailService,
-            _paymentService
+            _paymentService,
+            _backgroundJobClient
         );
         var command = new CompleteBooking.Command(booking.Id);
 
@@ -185,7 +190,8 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _currentUser,
             _emailService,
-            _paymentService
+            _paymentService,
+            _backgroundJobClient
         );
         var command = new CompleteBooking.Command(booking.Id);
 
@@ -266,7 +272,8 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _currentUser,
             _emailService,
-            _paymentService
+            _paymentService,
+            _backgroundJobClient
         );
         var command = new CompleteBooking.Command(booking.Id);
 
