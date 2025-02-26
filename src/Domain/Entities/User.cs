@@ -9,6 +9,7 @@ public class User : BaseEntity
     // Properties
     public required Guid EncryptionKeyId { get; set; }
     public required Guid RoleId { get; set; }
+    public string AvatarUrl { get; set; } = string.Empty;
     public required string Name { get; set; }
     public required string Email { get; set; }
     public required string Password { get; set; }
