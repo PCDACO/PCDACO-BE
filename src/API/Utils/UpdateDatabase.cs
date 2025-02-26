@@ -48,6 +48,7 @@ public class UpdateDatabase
         Model[] models = ModelGenerator.Execute(manufacturers);
         InspectionStatus[] inspectionStatuses = InspectionStatusGenerator.Execute();
         DeviceStatus[] deviceStatuses = DeviceStatusGenerator.Execute();
+        GPSDevice[] gpsDevices = GPSDeviceGenerator.Execute(deviceStatuses);
         User[] users = await UserGenerator.Execute(
             encryptionSettings,
             aesEncryptionService,
@@ -91,6 +92,7 @@ public class UpdateDatabase
         tasks.Add(context.AddRangeAsync(users));
         tasks.Add(context.AddRangeAsync(cars));
         tasks.Add(context.AddRangeAsync(inspectionSchedules));
+        tasks.Add(context.AddRangeAsync(gpsDevices));
         await Task.WhenAll(tasks);
         await context.SaveChangesAsync();
         // Load init data to initial objects.

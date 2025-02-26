@@ -12,7 +12,7 @@ public class AddDriverLicenseEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/users/{id:guid}/licenses", Handle)
+        app.MapPost("/api/licenses", Handle)
             .WithName("AddDriverLicense")
             .WithSummary("Add driver license information")
             .WithTags("Licenses")
@@ -23,14 +23,12 @@ public class AddDriverLicenseEndpoint : ICarterModule
 
     private async Task<IResult> Handle(
         ISender sender,
-        Guid id,
         AddDriverLicenseRequest request,
         CancellationToken cancellationToken
     )
     {
         Result<AddDriverLicense.Response> result = await sender.Send(
             new AddDriverLicense.Command(
-                DriverId: id,
                 LicenseNumber: request.LicenseNumber,
                 ExpirationDate: request.ExpirationDate
             ),

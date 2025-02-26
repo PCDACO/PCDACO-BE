@@ -7,13 +7,19 @@ namespace UseCases.UnitTests.TestBases.TestData;
 
 public static class TestDataCreateUser
 {
-    private static User CreateUser(UserRole userRole, Guid encryptionKeyId, string email) =>
+    private static User CreateUser(
+        UserRole userRole,
+        Guid encryptionKeyId,
+        string email,
+        string AvatarUrl
+    ) =>
         new()
         {
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             EncryptionKeyId = encryptionKeyId,
             Name = "Test User",
             Email = email,
+            AvatarUrl = AvatarUrl,
             Password = "password".HashString(),
             RoleId = userRole.Id,
             Address = "Test Address",
@@ -26,7 +32,8 @@ public static class TestDataCreateUser
         Guid encryptionKeyId,
         string email,
         string name,
-        string phone
+        string phone,
+        string avatarUrl
     ) =>
         new()
         {
@@ -34,6 +41,7 @@ public static class TestDataCreateUser
             EncryptionKeyId = encryptionKeyId,
             Name = name,
             Email = email,
+            AvatarUrl = avatarUrl,
             Password = "password".HashString(),
             RoleId = userRole.Id,
             Address = "Test Address",
@@ -44,12 +52,13 @@ public static class TestDataCreateUser
     public static async Task<User> CreateTestUser(
         AppDBContext dBContext,
         UserRole role,
-        string email = "test@example.com"
+        string email = "test@example.com",
+        string avatarUrl = "http://example.com/avatar.jpg"
     )
     {
         var encryptionKey = await TestDataCreateEncryptionKey.CreateTestEncryptionKey(dBContext);
 
-        var user = CreateUser(role, encryptionKey.Id, email);
+        var user = CreateUser(role, encryptionKey.Id, email, avatarUrl);
 
         var userStatistic = new UserStatistic { UserId = user.Id };
 
@@ -65,12 +74,13 @@ public static class TestDataCreateUser
         UserRole role,
         string email,
         string name,
-        string phone
+        string phone,
+        string avatarUrl = "https://www.example.com/avatar.jpg"
     )
     {
         var encryptionKey = await TestDataCreateEncryptionKey.CreateTestEncryptionKey(dBContext);
 
-        var user = CreateUser(role, encryptionKey.Id, email, name, phone);
+        var user = CreateUser(role, encryptionKey.Id, email, name, phone, avatarUrl);
 
         await dBContext.Users.AddAsync(user);
         await dBContext.SaveChangesAsync();
@@ -86,9 +96,30 @@ public static class TestDataCreateUser
 
         var users = new List<User>
         {
-            CreateUser(role, encryptionKey1.Id, "user1@example.com", "User One", "1234567891"),
-            CreateUser(role, encryptionKey2.Id, "user2@example.com", "User Two", "1234567892"),
-            CreateUser(role, encryptionKey3.Id, "user3@example.com", "User Three", "1234567893"),
+            CreateUser(
+                role,
+                encryptionKey1.Id,
+                "user1@example.com",
+                "User One",
+                "1234567891",
+                "https://www.example.com/avatar1.jpg"
+            ),
+            CreateUser(
+                role,
+                encryptionKey2.Id,
+                "user2@example.com",
+                "User Two",
+                "1234567892",
+                "https://www.example.com/avatar2.jpg"
+            ),
+            CreateUser(
+                role,
+                encryptionKey3.Id,
+                "user3@example.com",
+                "User Three",
+                "1234567893",
+                "https://www.example.com/avatar3.jpg"
+            ),
         };
 
         await dBContext.Users.AddRangeAsync(users);
