@@ -22,12 +22,17 @@ public class GetInDateScheduleForCurrentTechnicianEndpoint : ICarterModule
     private async Task<IResult> Handle(
         ISender sender,
         [FromQuery(Name = "index")] int? pageNumber = 1,
-        [FromQuery(Name = "size")] int? pageSize = 10
+        [FromQuery(Name = "size")] int? pageSize = 10,
+        [FromQuery] string? sortOrder = "desc"
     )
     {
         Result<OffsetPaginatedResponse<GetInDateScheduleForCurrentTechnician.Response>> result =
             await sender.Send(
-                new GetInDateScheduleForCurrentTechnician.Query(pageNumber!.Value, pageSize!.Value)
+                new GetInDateScheduleForCurrentTechnician.Query(
+                    pageNumber!.Value,
+                    pageSize!.Value,
+                    sortOrder
+                )
             );
         return result.MapResult();
     }
