@@ -155,7 +155,7 @@ public class GetCars
                     );
             }
             gettingCarQuery = gettingCarQuery
-                .Where(c => request.LastCarId == null || c.Id.CompareTo(request.LastCarId) < 0)
+                .Where(c => request.LastCarId == null || request.LastCarId > c.Id)
                 .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point))
                 .ThenByDescending(c => c.Id);
             int count = await gettingCarQuery.CountAsync(cancellationToken);
