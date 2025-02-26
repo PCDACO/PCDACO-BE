@@ -29,7 +29,7 @@ public class GetCarForStaffsEndpoint : ICarterModule
         [FromQuery(Name = "index")] int pageNumber = 1,
         [FromQuery(Name = "size")] int pageSize = 10,
         [FromQuery(Name = "keyword")] string? keyword = "",
-        [FromQuery(Name = "status")] string? statusName = "Available"
+        [FromQuery(Name = "status")] string? statusName = ""
         )
     {
         Result<OffsetPaginatedResponse<GetCarsForStaffs.Response>> result =
