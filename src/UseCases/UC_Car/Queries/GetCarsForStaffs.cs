@@ -13,9 +13,9 @@ using UseCases.DTOs;
 
 namespace UseCases.UC_Car.Queries;
 
-public class GetAvailableCars
+public class GetCarsForStaffs
 {
-    public record Query(int PageNumber, int PageSize, string Keyword)
+    public record Query(int PageNumber, int PageSize, string Keyword, string StatusName)
         : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
@@ -33,7 +33,7 @@ public class GetAvailableCars
         decimal FuelConsumption,
         bool RequiresCollateral,
         decimal Price,
-        LocationDetail Location,
+        LocationDetail? Location,
         ManufacturerDetail Manufacturer,
         ImageDetail[] Images,
         AmenityDetail[] Amenities
@@ -70,7 +70,7 @@ public class GetAvailableCars
                 car.FuelConsumption,
                 car.RequiresCollateral,
                 car.Price,
-                new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
+                car.GPS == null ? null : new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
                 new ManufacturerDetail(car.Model.Manufacturer.Id, car.Model.Manufacturer.Name),
                 [.. car.ImageCars.Select(i => new ImageDetail(i.Id, i.Url))],
                 [
@@ -93,7 +93,6 @@ public class GetAvailableCars
 
     public class Handler(
         IAppDBContext context,
-        CurrentUser currentUser,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings
@@ -104,23 +103,24 @@ public class GetAvailableCars
             CancellationToken cancellationToken
         )
         {
-            if (!currentUser.User!.IsAdmin())
-                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
-            IQueryable<Car> query = context
-                .Cars.Include(c => c.Owner)
-                .ThenInclude(o => o.Feedbacks)
-                .Include(c => c.Model)
-                .ThenInclude(o => o.Manufacturer)
+            IQueryable<Car> gettingQuery = context
+                .Cars
+                .AsNoTracking()
+                .IgnoreQueryFilters()
+                .Include(c => c.Owner).ThenInclude(o => o.Feedbacks)
+                .Include(c => c.Model).ThenInclude(o => o.Manufacturer)
                 .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars)
                 .Include(c => c.CarStatus)
-                .Include(c => c.CarAmenities)
-                .ThenInclude(ca => ca.Amenity)
-                .Where(c => EF.Functions.ILike(c.CarStatus.Name, $"%available%"))
-                .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point))
-                .ThenByDescending(c => c.Id);
-            int count = await query.CountAsync(cancellationToken);
-            List<Car> cars = await query
+                .Include(c => c.TransmissionType)
+                .Include(c => c.FuelType)
+                .Include(c => c.GPS)
+                .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
+                .Where(c => !c.IsDeleted)
+                .Where(c => EF.Functions.ILike(c.CarStatus.Name, $"%{request.StatusName}%"))
+                .OrderByDescending(c => c.Id);
+            int count = await gettingQuery.CountAsync(cancellationToken);
+            List<Car> cars = await gettingQuery
                 .Skip(request.PageSize * (request.PageNumber - 1))
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);

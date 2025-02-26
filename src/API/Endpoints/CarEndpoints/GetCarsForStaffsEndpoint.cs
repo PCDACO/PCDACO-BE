@@ -15,11 +15,11 @@ using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.CarEndpoints;
 
-public class GetAvailableCarsEndpoint : ICarterModule
+public class GetCarForStaffsEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/cars/available", Handle)
+        app.MapGet("/api/cars/admin", Handle)
             .WithSummary("Get available cars")
             .WithTags("Cars")
             .RequireAuthorization();
@@ -28,10 +28,12 @@ public class GetAvailableCarsEndpoint : ICarterModule
         ISender sender,
         [FromQuery(Name = "index")] int pageNumber = 1,
         [FromQuery(Name = "size")] int pageSize = 10,
-        [FromQuery(Name = "keyword")] string? keyword = ""
+        [FromQuery(Name = "keyword")] string? keyword = "",
+        [FromQuery(Name = "status")] string? statusName = "Available"
         )
     {
-        Result<OffsetPaginatedResponse<GetAvailableCars.Response>> result = await sender.Send(new GetAvailableCars.Query(pageNumber, pageSize, keyword!));
+        Result<OffsetPaginatedResponse<GetCarsForStaffs.Response>> result =
+            await sender.Send(new GetCarsForStaffs.Query(pageNumber, pageSize, keyword!, statusName!));
         return result.MapResult();
     }
 }
