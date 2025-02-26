@@ -57,24 +57,47 @@ public sealed class ApproveBooking
                 );
             }
 
-            string statusName = request.IsApproved
-                ? BookingStatusEnum.Approved.ToString()
-                : BookingStatusEnum.Rejected.ToString();
             string message = request.IsApproved ? "phê duyệt" : "từ chối";
 
-            var status = await context
+            // Get approved and rejected status
+            var statuses = await context
                 .BookingStatuses.AsNoTracking()
-                .FirstOrDefaultAsync(
-                    x => EF.Functions.ILike(x.Name, statusName),
-                    cancellationToken
-                );
+                .Where(x =>
+                    EF.Functions.ILike(x.Name, BookingStatusEnum.Approved.ToString())
+                    || EF.Functions.ILike(x.Name, BookingStatusEnum.Rejected.ToString())
+                )
+                .ToListAsync(cancellationToken);
 
-            if (status == null)
+            var approvedStatus = statuses.FirstOrDefault(x =>
+                x.Name == BookingStatusEnum.Approved.ToString()
+            );
+            var rejectedStatus = statuses.FirstOrDefault(x =>
+                x.Name == BookingStatusEnum.Rejected.ToString()
+            );
+
+            if (approvedStatus == null || rejectedStatus == null)
                 return Result.NotFound("Không tìm thấy trạng thái phù hợp");
 
-            // TODO: set car status to rented
+            if (request.IsApproved)
+            {
+                // Reject all overlapping pending bookings
+                await context
+                    .Bookings.Where(b =>
+                        b.CarId == booking.CarId
+                        && b.StartTime < booking.EndTime
+                        && b.EndTime > booking.StartTime
+                        && b.Status.Name == BookingStatusEnum.Pending.ToString()
+                        && b.Id != booking.Id // Exclude the booking being approved
+                    )
+                    .ExecuteUpdateAsync(
+                        b =>
+                            b.SetProperty(b => b.StatusId, rejectedStatus.Id)
+                                .SetProperty(b => b.Note, "Đã có booking khác trùng lịch"),
+                        cancellationToken: cancellationToken
+                    );
+            }
 
-            booking.StatusId = status.Id;
+            booking.StatusId = approvedStatus.Id;
             await context.SaveChangesAsync(cancellationToken);
 
             backgroundJobClient.Enqueue(
