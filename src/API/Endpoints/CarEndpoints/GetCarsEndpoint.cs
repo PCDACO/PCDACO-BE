@@ -8,8 +8,6 @@ using MediatR;
 
 using Microsoft.AspNetCore.Mvc;
 
-using Newtonsoft.Json;
-
 using UseCases.DTOs;
 using UseCases.UC_Car.Queries;
 
@@ -36,7 +34,8 @@ public class GetCarsEndpoint : ICarterModule
         [FromQuery(Name = "amenities")] Guid[]? amenities,
         [FromQuery(Name = "fuel")] Guid? fuel,
         [FromQuery(Name = "transmission")] Guid? transmission,
-        [FromQuery(Name = "limit")] int? limit = 10
+        [FromQuery(Name = "limit")] int? limit = 10,
+        [FromQuery(Name = "status-name")] string? statusName = "Available"
     )
     {
         Result<OffsetPaginatedResponse<GetCars.Response>> result = await sender.Send(new GetCars.Query(
@@ -48,18 +47,9 @@ public class GetCarsEndpoint : ICarterModule
             fuel,
             transmission,
             lastCarId,
-            limit!.Value
+            limit!.Value,
+            statusName
         ));
         return result.MapResult();
     }
-
-    private record GetCarsRequest(
-        [FromQuery(Name = "latitude")] decimal? Latitude,
-        [FromQuery(Name = "longtitude")] decimal? Longtitude,
-        [FromQuery(Name = "radius")] decimal? Radius,
-        [FromQuery(Name = "model")] Guid? Model,
-        [FromQuery(Name = "lastCarId")] Guid? LastCarId,
-        [FromQuery(Name = "amenities")] Guid[]? Amenities,
-        [FromQuery(Name = "limit")] int? Limit = 10
-    );
 }
