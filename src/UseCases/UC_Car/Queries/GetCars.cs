@@ -27,7 +27,8 @@ public class GetCars
         Guid? FuelTypes,
         Guid? TransmissionTypes,
         Guid? LastCarId,
-        int Limit
+        int Limit,
+        string? StatusName = CarStatusNames.Available
     ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
@@ -132,7 +133,7 @@ public class GetCars
                 .Include(c => c.GPS)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .Where(c => !c.IsDeleted)
-                .Where(c => c.CarStatus.Name == CarStatusNames.Available)
+                .Where(c => EF.Functions.ILike(c.CarStatus.Name, $"%{request.StatusName}%"))
                 .Where(c => request.Model == null || c.ModelId == request.Model)
                 .Where(c =>
                     request.Amenities == null || request.Amenities.Length == 0

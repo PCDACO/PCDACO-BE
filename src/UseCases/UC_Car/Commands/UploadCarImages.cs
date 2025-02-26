@@ -75,6 +75,12 @@ public sealed class UploadCarImages
                 .Where(it => !it.IsDeleted)
                 .FirstOrDefaultAsync(cancellationToken);
             if (carImageType is null) return Result.Error("Không tìm thấy loại hình ảnh đang cần");
+            if (car.ImageCars.Any())
+            {
+                await context.ImageCars
+                    .Where(c => c.CarId == request.CarId)
+                    .ExecuteDeleteAsync(cancellationToken);
+            }
             List<Task<string>> carTasks = [];
             List<Task<string>> paperTasks = [];
             int carIndex = 0;
