@@ -1,12 +1,19 @@
 using Ardalis.Result;
+
 using Domain.Constants;
+using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Shared;
+
 using FluentValidation;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
+
 using UUIDNext;
 
 namespace UseCases.UC_Car.Commands;
@@ -47,6 +54,7 @@ public sealed class CreateCar
         {
             if (currentUser.User!.IsAdmin())
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
+            if (currentUser.User.Role.Name != UserRoleNames.Owner) return Result.Forbidden(ResponseMessages.ForbiddenAudit);
             // Check if amenities are exist
             if (request.AmenityIds.Length > 0)
             {

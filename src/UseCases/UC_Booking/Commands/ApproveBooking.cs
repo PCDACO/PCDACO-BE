@@ -98,7 +98,7 @@ public sealed class ApproveBooking
                     );
             }
 
-            booking.StatusId = approvedStatus.Id;
+            booking.StatusId = request.IsApproved ? approvedStatus.Id : rejectedStatus.Id;
             await context.SaveChangesAsync(cancellationToken);
 
             backgroundJobClient.Enqueue(

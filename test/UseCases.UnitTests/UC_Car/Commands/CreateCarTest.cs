@@ -100,7 +100,7 @@ public class CreateCarTests : IAsyncLifetime
         TransmissionType transmissionType =
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
@@ -138,7 +138,7 @@ public class CreateCarTests : IAsyncLifetime
         TransmissionType transmissionType =
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var user = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
         _currentUser.SetUser(user);
@@ -218,7 +218,7 @@ public class CreateCarTests : IAsyncLifetime
         TransmissionType transmissionType =
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var user = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
         _currentUser.SetUser(user);

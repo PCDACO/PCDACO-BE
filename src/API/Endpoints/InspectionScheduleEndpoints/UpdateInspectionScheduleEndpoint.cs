@@ -27,6 +27,7 @@ public class UpdateInspectionScheduleEndpoint : ICarterModule
             new UpdateInspectionSchedule.Command(
                 Id: id,
                 TechnicianId: request.TechnicianId,
+                InspectionAddress: request.InspectionAddress,
                 InspectionDate: request.InspectionDate
             )
         );
@@ -35,6 +36,7 @@ public class UpdateInspectionScheduleEndpoint : ICarterModule
 
     private record UpdateInspectionScheduleRequest(
         Guid TechnicianId,
+        string InspectionAddress,
         DateTimeOffset InspectionDate
     );
 }

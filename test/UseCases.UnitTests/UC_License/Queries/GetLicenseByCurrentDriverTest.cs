@@ -12,7 +12,7 @@ using UseCases.UnitTests.TestBases.TestData;
 namespace UseCases.UnitTests.UC_License.Queries;
 
 [Collection("Test Collection")]
-public class GetLicenseByUserIdTests(DatabaseTestBase fixture) : IAsyncLifetime
+public class GetLicenseByCurrentDriverTest(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
@@ -36,14 +36,14 @@ public class GetLicenseByUserIdTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new GetLicenseByUserId.Handler(
+        var handler = new GetLicenseByCurrentDriver.Handler(
             _dbContext,
             _currentUser,
             _aesService,
             _keyService,
             _encryptionSettings
         );
-        var query = new GetLicenseByUserId.Query(testUser.Id);
+        var query = new GetLicenseByCurrentDriver.Query();
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -61,14 +61,14 @@ public class GetLicenseByUserIdTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new GetLicenseByUserId.Handler(
+        var handler = new GetLicenseByCurrentDriver.Handler(
             _dbContext,
             _currentUser,
             _aesService,
             _keyService,
             _encryptionSettings
         );
-        var query = new GetLicenseByUserId.Query(testUser.Id);
+        var query = new GetLicenseByCurrentDriver.Query();
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -110,14 +110,14 @@ public class GetLicenseByUserIdTests(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.Licenses.AddAsync(license);
         await _dbContext.SaveChangesAsync();
 
-        var handler = new GetLicenseByUserId.Handler(
+        var handler = new GetLicenseByCurrentDriver.Handler(
             _dbContext,
             _currentUser,
             _aesService,
             _keyService,
             _encryptionSettings
         );
-        var query = new GetLicenseByUserId.Query(testUser.Id);
+        var query = new GetLicenseByCurrentDriver.Query();
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);

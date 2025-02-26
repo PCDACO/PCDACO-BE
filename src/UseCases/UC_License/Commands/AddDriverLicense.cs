@@ -11,7 +11,7 @@ namespace UseCases.UC_Driver.Commands;
 
 public sealed class AddDriverLicense
 {
-    public sealed record Command(Guid DriverId, string LicenseNumber, DateTimeOffset ExpirationDate)
+    public sealed record Command(string LicenseNumber, DateTimeOffset ExpirationDate)
         : IRequest<Result<Response>>;
 
     public sealed record Response(Guid Id)
@@ -40,9 +40,10 @@ public sealed class AddDriverLicense
             var driver = await context
                 .Users.AsNoTracking()
                 .Include(u => u.License)
+                .Include(u => u.Role)
                 .FirstOrDefaultAsync(
                     u =>
-                        u.Id == request.DriverId
+                        u.Id == currentUser.User!.Id
                         && u.Role != null
                         && EF.Functions.ILike(u.Role.Name, "%Driver%")
                         && !u.IsDeleted,
@@ -55,10 +56,6 @@ public sealed class AddDriverLicense
             //check if driver aldready has license
             if (driver.License is not null)
                 return Result.Error("Người dùng đã có giấy phép lái xe");
-
-            //check if driver is not current user
-            if (driver.Id != currentUser.User!.Id)
-                return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
 
             // Encrypt license number
             (string key, string iv) = await keyManagementService.GenerateKeyAsync();
@@ -74,7 +71,7 @@ public sealed class AddDriverLicense
             // Create new license
             var license = new License
             {
-                UserId = request.DriverId,
+                UserId = currentUser.User!.Id,
                 EncryptedLicenseNumber = encryptedLicenseNumber,
                 EncryptionKeyId = newEncryptionKey.Id,
                 ExpiryDate = request.ExpirationDate.ToString("yyyy-MM-dd"),
@@ -90,22 +87,8 @@ public sealed class AddDriverLicense
 
     public class Validator : AbstractValidator<Command>
     {
-        private readonly string[] allowedExtensions =
-        {
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".gif",
-            ".bmp",
-            ".tiff",
-            ".webp",
-        };
-
         public Validator()
         {
-            RuleFor(x => x.DriverId)
-                .NotEmpty()
-                .WithMessage("Phải chọn id của người lái cần tạo giấy phép !");
             RuleFor(x => x.LicenseNumber)
                 .NotEmpty()
                 .WithMessage("Số giấy phép không được để trống")
