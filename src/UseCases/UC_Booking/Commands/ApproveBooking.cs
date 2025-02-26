@@ -47,7 +47,7 @@ public sealed class ApproveBooking
                 BookingStatusEnum.Rejected,
                 BookingStatusEnum.Ongoing,
                 BookingStatusEnum.Completed,
-                BookingStatusEnum.Cancelled
+                BookingStatusEnum.Cancelled,
             };
 
             if (invalidStatuses.Contains(booking.Status.Name.ToEnum()))
@@ -97,7 +97,7 @@ public sealed class ApproveBooking
                     );
             }
 
-            booking.StatusId = approvedStatus.Id;
+            booking.StatusId = request.IsApproved ? approvedStatus.Id : rejectedStatus.Id;
             await context.SaveChangesAsync(cancellationToken);
 
             backgroundJobClient.Enqueue(
