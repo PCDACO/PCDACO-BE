@@ -9,9 +9,9 @@ using UseCases.Utils;
 
 namespace UseCases.UC_Driver.Queries;
 
-public static class GetLicenseByUserId
+public static class GetLicenseByCurrentDriver
 {
-    public record Query(Guid DriverId) : IRequest<Result<Response>>;
+    public record Query() : IRequest<Result<Response>>;
 
     public record Response(
         Guid Id,
@@ -74,7 +74,7 @@ public static class GetLicenseByUserId
                 .Licenses.AsNoTracking()
                 .Include(l => l.EncryptionKey)
                 .FirstOrDefaultAsync(
-                    l => l.UserId == request.DriverId && !l.IsDeleted,
+                    l => l.UserId == currentUser.User!.Id && !l.IsDeleted,
                     cancellationToken
                 );
 
