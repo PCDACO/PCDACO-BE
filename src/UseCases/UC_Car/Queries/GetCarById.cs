@@ -1,5 +1,3 @@
-using System.Threading.Tasks;
-
 using Ardalis.Result;
 
 using Domain.Constants;
@@ -33,7 +31,7 @@ public class GetCarById
         decimal FuelConsumption,
         bool RequiresCollateral,
         decimal Price,
-        LocationDetail Location,
+        LocationDetail? Location,
         ManufacturerDetail Manufacturer,
         ImageDetail[] Images,
         AmenityDetail[] Amenities
@@ -70,7 +68,7 @@ public class GetCarById
                 car.FuelConsumption,
                 car.RequiresCollateral,
                 car.Price,
-                new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
+                car.GPS == null ? null : new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
                 new ManufacturerDetail(car.Model.Manufacturer.Id, car.Model.Manufacturer.Name),
                 [.. car.ImageCars.Select(i => new ImageDetail(i.Id, i.Url))],
                 [
@@ -103,27 +101,28 @@ public class GetCarById
         public async Task<Result<Response>> Handle(
             Query request,
             CancellationToken cancellationToken
-        ) =>
-            await context
-                .Cars.Include(c => c.Model)
-                .ThenInclude(c => c.Manufacturer)
+        )
+        {
+            Car? gettingCar = await context
+                .Cars
+                .IgnoreQueryFilters()
+                .Include(c => c.Model).ThenInclude(c => c.Manufacturer)
                 .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars)
-                .Include(c => c.CarAmenities)
-                .ThenInclude(ca => ca.Amenity)
+                .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .Include(c => c.Owner)
-                .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken) switch
-            {
-                null => Result<Response>.NotFound(),
-                var car => Result<Response>.Success(
-                    await Response.FromEntity(
-                        car,
-                        encryptionSettings.Key,
-                        aesEncryptionService,
-                        keyManagementService
-                    ),
-                    ResponseMessages.Fetched
+                .Where(c => c.Id == request.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (gettingCar is null) return Result.NotFound(ResponseMessages.CarNotFound);
+            return Result<Response>.Success(
+                await Response.FromEntity(
+                    gettingCar,
+                    encryptionSettings.Key,
+                    aesEncryptionService,
+                    keyManagementService
                 ),
-            };
+                ResponseMessages.Fetched
+            );
+        }
     }
 }

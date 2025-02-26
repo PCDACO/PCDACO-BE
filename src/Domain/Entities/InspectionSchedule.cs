@@ -10,6 +10,7 @@ public class InspectionSchedule : BaseEntity
     public required Guid CarId { get; set; }
     public required Guid InspectionStatusId { get; set; }
     public string Note { get; set; } = string.Empty;
+    public required string InspectionAddress { get; set; }
     public required DateTimeOffset InspectionDate { get; set; }
 
     // Navigation properties

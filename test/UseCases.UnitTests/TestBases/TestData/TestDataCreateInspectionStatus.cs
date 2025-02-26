@@ -28,7 +28,6 @@ public static class TestDataCreateInspectionStatus
         var statusNames = new[]
         {
             InspectionStatusNames.Pending,
-            InspectionStatusNames.InProgress,
             InspectionStatusNames.Approved,
             InspectionStatusNames.Rejected,
         };

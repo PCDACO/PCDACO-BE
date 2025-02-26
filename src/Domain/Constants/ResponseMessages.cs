@@ -29,6 +29,8 @@ public class ResponseMessages
     public const string GPSDeviceIsExisted = "Thiết bị GPS đã tồn tại";
     public const string GPSDeviceHasCarGPS = "Thiết bị GPS đã được đăng kí sử dụng";
 
+    // CAR GPS
+    public const string CarGPSIsExisted = "Thiết bị GPS này đang được sử dụng";
     // DEVICE STATUS
     public const string DeviceStatusNotFound = "Không tìm thấy trạng thái thiết bị";
 

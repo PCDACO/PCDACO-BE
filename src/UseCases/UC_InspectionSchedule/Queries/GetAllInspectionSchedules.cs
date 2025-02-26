@@ -9,32 +9,45 @@ using UseCases.Utils;
 
 namespace UseCases.UC_InspectionSchedule.Queries;
 
-public sealed class GetInDateScheduleForCurrentTechnician
+public sealed class GetAllInspectionSchedules
 {
-    public sealed record Query(int PageNumber = 1, int PageSize = 10)
-        : IRequest<Result<OffsetPaginatedResponse<Response>>>;
+    public sealed record Query(
+        int PageNumber = 1,
+        int PageSize = 10,
+        string? Keyword = null,
+        DateTimeOffset? InspectionDate = null,
+        string SortOrder = "desc"
+    ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public sealed record Response(
         Guid Id,
         Guid TechnicianId,
+        string TechnicianName,
         Guid CarId,
+        Guid CarOwnerId,
+        string CarOwnerName,
         Guid InspectionStatusId,
         string StatusName,
+        string Note,
         string InspectionAddress,
         DateTimeOffset InspectionDate,
-        DateTimeOffset CreateAt
+        DateTimeOffset CreatedAt
     )
     {
         public static Response FromEntity(InspectionSchedule schedule) =>
             new(
                 schedule.Id,
                 schedule.TechnicianId,
+                schedule.Technician.Name,
                 schedule.CarId,
+                schedule.Car.OwnerId,
+                schedule.Car.Owner.Name,
                 schedule.InspectionStatusId,
                 schedule.InspectionStatus.Name,
+                schedule.Note,
                 schedule.InspectionAddress,
                 schedule.InspectionDate,
-                GetTimestampFromUuid.Execute(schedule.CarId)
+                GetTimestampFromUuid.Execute(schedule.Id)
             );
     }
 
@@ -46,21 +59,38 @@ public sealed class GetInDateScheduleForCurrentTechnician
             CancellationToken cancellationToken
         )
         {
-            // Verify current user is technician
-            if (!currentUser.User!.IsTechnician())
+            if (!currentUser.User!.IsConsultant())
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
-            // Get today's schedules for current technician
-            var today = DateTimeOffset.UtcNow.Date;
             var query = context
-                .InspectionSchedules.Include(s => s.InspectionStatus)
-                .Where(s =>
-                    s.TechnicianId == currentUser.User.Id
-                    && EF.Functions.ILike(s.InspectionStatus.Name, "%pending%")
-                    && !s.IsDeleted
-                    && s.InspectionDate.Date == today
-                )
-                .OrderByDescending(s => s.Id);
+                .InspectionSchedules.AsSplitQuery()
+                .Include(s => s.InspectionStatus)
+                .Include(s => s.Technician)
+                .Include(s => s.Car)
+                .ThenInclude(c => c.Owner)
+                .Where(s => !s.IsDeleted);
+
+            // Apply keyword search for technician name or car owner name or inspection address
+            if (!string.IsNullOrWhiteSpace(request.Keyword))
+            {
+                query = query.Where(s =>
+                    EF.Functions.ILike(s.Technician.Name, $"%{request.Keyword}%")
+                    || EF.Functions.ILike(s.Car.Owner.Name, $"%{request.Keyword}%")
+                    || EF.Functions.ILike(s.InspectionAddress, $"%{request.Keyword}%")
+                );
+            }
+
+            // Apply date filter
+            if (request.InspectionDate.HasValue)
+                query = query.Where(s =>
+                    s.InspectionDate.Date == request.InspectionDate.Value.Date
+                );
+
+            // Apply sorting
+            query =
+                request.SortOrder.ToLower() == "asc"
+                    ? query.OrderBy(s => s.Id)
+                    : query.OrderByDescending(s => s.Id);
 
             // Get total count
             var count = await query.CountAsync(cancellationToken);
