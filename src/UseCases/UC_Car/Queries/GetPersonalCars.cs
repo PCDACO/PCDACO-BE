@@ -129,7 +129,7 @@ public class GetPersonalCars
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .Where(c => !c.IsDeleted)
                 .Where(c => EF.Functions.ILike(c.CarStatus.Name, $"%{request.StatusName}%"))
-                .Where(c => c.OwnerId === currentUser.User!.Id)
+                .Where(c => c.OwnerId == currentUser.User!.Id)
                 .Where(c => request.Model == null || c.ModelId == request.Model)
                 .Where(c =>
                     request.Amenities == null || request.Amenities.Length == 0
