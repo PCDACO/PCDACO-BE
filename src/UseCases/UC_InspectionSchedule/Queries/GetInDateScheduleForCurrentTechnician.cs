@@ -64,7 +64,8 @@ namespace UseCases.UC_InspectionSchedule.Queries
                             Price: schedule.Car.Price,
                             Images: [..schedule.Car.ImageCars.Select(image => new ImageDetail(
                                 Id: image.Id,
-                                Url: image.Url
+                                Url: image.Url,
+                                ImageTypeName: image.Type.Name
                             ))],
                             Owner: new(
                                 Id: schedule.Car.Owner.Id,
@@ -97,7 +98,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
             string InspectionAddress
         );
 
-        public record ImageDetail(Guid Id, string Url);
+        public record ImageDetail(Guid Id, string Url, string ImageTypeName);
 
         public record UserDetail(Guid Id, string Name, string AvatarUrl);
 
@@ -125,7 +126,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
                     .Include(s => s.InspectionStatus)
                     .Include(s => s.Technician)
                     .Include(s => s.Car).ThenInclude(c => c.Model).ThenInclude(m => m.Manufacturer)
-                    .Include(s => s.Car).ThenInclude(c => c.ImageCars)
+                    .Include(s => s.Car).ThenInclude(c => c.ImageCars).ThenInclude(i => i.Type)
                     .Include(s => s.Car).ThenInclude(c => c.Owner)
                     .Include(s => s.Car).ThenInclude(c => c.EncryptionKey)
                     .Include(s => s.Car)
