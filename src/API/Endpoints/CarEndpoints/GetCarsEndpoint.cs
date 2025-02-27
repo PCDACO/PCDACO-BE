@@ -34,8 +34,7 @@ public class GetCarsEndpoint : ICarterModule
         [FromQuery(Name = "amenities")] Guid[]? amenities,
         [FromQuery(Name = "fuel")] Guid? fuel,
         [FromQuery(Name = "transmission")] Guid? transmission,
-        [FromQuery(Name = "limit")] int? limit = 10,
-        [FromQuery(Name = "status-name")] string? statusName = "Available"
+        [FromQuery(Name = "limit")] int? limit = 10
     )
     {
         Result<OffsetPaginatedResponse<GetCars.Response>> result = await sender.Send(new GetCars.Query(
@@ -47,8 +46,7 @@ public class GetCarsEndpoint : ICarterModule
             fuel,
             transmission,
             lastCarId,
-            limit!.Value,
-            statusName
+            limit!.Value
         ));
         return result.MapResult();
     }
