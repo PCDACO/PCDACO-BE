@@ -1,10 +1,16 @@
 using API.Utils;
+
 using Ardalis.Result;
+
 using Carter;
+
 using MediatR;
+
 using Microsoft.AspNetCore.Mvc;
+
 using UseCases.DTOs;
 using UseCases.UC_InspectionSchedule.Queries;
+
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.InspectionScheduleEndpoints;
@@ -20,19 +26,11 @@ public class GetInDateScheduleForCurrentTechnicianEndpoint : ICarterModule
     }
 
     private async Task<IResult> Handle(
-        ISender sender,
-        [FromQuery(Name = "index")] int? pageNumber = 1,
-        [FromQuery(Name = "size")] int? pageSize = 10,
-        [FromQuery] string? sortOrder = "desc"
+        ISender sender
     )
     {
-        Result<OffsetPaginatedResponse<GetInDateScheduleForCurrentTechnician.Response>> result =
-            await sender.Send(
-                new GetInDateScheduleForCurrentTechnician.Query(
-                    pageNumber!.Value,
-                    pageSize!.Value,
-                    sortOrder
-                )
+        Result<GetInDateScheduleForCurrentTechnician.Response> result =
+            await sender.Send(new GetInDateScheduleForCurrentTechnician.Query()
             );
         return result.MapResult();
     }
