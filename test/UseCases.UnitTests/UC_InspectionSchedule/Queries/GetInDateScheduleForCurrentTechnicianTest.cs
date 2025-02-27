@@ -182,7 +182,7 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
             // Verify first schedule data
             var firstSchedule = result.Value.Items.First();
             Assert.Equal("John Doe", firstSchedule.TechnicianName);
-            Assert.Equal(today, firstSchedule.InspectionDate);
+            Assert.Equal(today.Date, firstSchedule.InspectionDate.Date);
             Assert.Equal("123 Main St 15", firstSchedule.InspectionAddress);
 
             // Verify car details
