@@ -16,8 +16,8 @@ namespace UseCases.UC_InspectionSchedule.Queries
     public sealed class GetInDateScheduleForCurrentTechnician
     {
         // Query remains the same
-        public sealed record Query(int PageNumber = 1, int PageSize = 10, string SortOrder = "desc")
-            : IRequest<Result<OffsetPaginatedResponse<Response>>>;
+        public sealed record Query()
+            : IRequest<Result<Response>>;
 
         // Updated response records
         public sealed record Response(
@@ -27,56 +27,56 @@ namespace UseCases.UC_InspectionSchedule.Queries
         )
         {
             public static async Task<Response> FromEntity(
-                InspectionSchedule schedule,
+                IEnumerable<InspectionSchedule> schedules,
                 string masterKey,
                 IAesEncryptionService aesEncryptionService,
                 IKeyManagementService keyManagementService
             )
             {
-                string decryptedKey = keyManagementService.DecryptKey(
-                    schedule.Car.EncryptionKey.EncryptedKey,
-                    masterKey
-                );
-
-                string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                    schedule.Car.EncryptedLicensePlate,
-                    decryptedKey,
-                    schedule.Car.EncryptionKey.IV
-                );
-
-                return new(
-                    schedule.Technician.Name,
-                    schedule.InspectionDate,
-                    new[]
+                if (!schedules.Any()) return null!;
+                return new Response(
+                    TechnicianName: schedules.First().Technician.Name,
+                    InspectionDate: DateTimeOffset.UtcNow,
+                    Cars: await Task.WhenAll(schedules.Select(async schedule =>
                     {
-                        new CarDetail(
-                            schedule.Car.Id,
-                            schedule.Car.Model.Id,
-                            schedule.Car.Model.Name,
-                            schedule.Car.Model.Manufacturer.Name,
-                            decryptedLicensePlate,
-                            schedule.Car.Color,
-                            schedule.Car.Seat,
-                            schedule.Car.Description,
-                            schedule.Car.TransmissionType.Name,
-                            schedule.Car.FuelType.Name,
-                            schedule.Car.FuelConsumption,
-                            schedule.Car.RequiresCollateral,
-                            schedule.Car.Price,
-                            schedule
-                                .Car.ImageCars.Select(i => new ImageDetail(i.Id, i.Url))
-                                .ToArray(),
-                            new UserDetail(
-                                schedule.Car.Owner.Id,
-                                schedule.Car.Owner.Name,
-                                schedule.Car.Owner.AvatarUrl
+                        string decryptedKey = keyManagementService.DecryptKey(
+                            schedule.Car.EncryptionKey.EncryptedKey,
+                            masterKey
+                        );
+                        string decryptedLicensePlate = await aesEncryptionService.Decrypt(
+                            schedule.Car.EncryptedLicensePlate,
+                            decryptedKey,
+                            schedule.Car.EncryptionKey.IV
+                        );
+                        return new CarDetail(
+                            Id: schedule.CarId,
+                            ModelId: schedule.Car.ModelId,
+                            ModelName: schedule.Car.Model.Name,
+                            ManufacturerName: schedule.Car.Model.Manufacturer.Name,
+                            LicensePlate: decryptedLicensePlate,
+                            Color: schedule.Car.Color,
+                            Seat: schedule.Car.Seat,
+                            Description: schedule.Car.Description,
+                            TransmissionType: schedule.Car.TransmissionType.Name,
+                            FuelType: schedule.Car.FuelType.Name,
+                            FuelConsumption: schedule.Car.FuelConsumption,
+                            RequiresCollateral: schedule.Car.RequiresCollateral,
+                            Price: schedule.Car.Price,
+                            Images: [..schedule.Car.ImageCars.Select(image => new ImageDetail(
+                                Id: image.Id,
+                                Url: image.Url
+                            ))],
+                            Owner: new(
+                                Id: schedule.Car.Owner.Id,
+                                Name: schedule.Car.Owner.Name,
+                                AvatarUrl: schedule.Car.Owner.AvatarUrl
                             ),
-                            schedule.InspectionAddress
-                        ),
-                    }
+                            InspectionAddress: schedule.InspectionAddress
+                        );
+                    }))
                 );
             }
-        };
+        }
 
         public record CarDetail(
             Guid Id,
@@ -107,9 +107,9 @@ namespace UseCases.UC_InspectionSchedule.Queries
             IAesEncryptionService aesEncryptionService,
             IKeyManagementService keyManagementService,
             EncryptionSettings encryptionSettings
-        ) : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
+        ) : IRequestHandler<Query, Result<Response>>
         {
-            public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(
+            public async Task<Result<Response>> Handle(
                 Query request,
                 CancellationToken cancellationToken
             )
@@ -118,7 +118,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
                     return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
                 var today = DateTimeOffset.UtcNow.Date;
-                var query = context
+                IEnumerable<InspectionSchedule> schedules = await context
                     .InspectionSchedules
                     .AsNoTracking()
                     .AsSplitQuery()
@@ -137,47 +137,16 @@ namespace UseCases.UC_InspectionSchedule.Queries
                         && EF.Functions.ILike(s.InspectionStatus.Name, "%pending%")
                         && !s.IsDeleted
                         && s.InspectionDate.Date == today
-                    );
-
-                // Apply sorting
-                query =
-                    request.SortOrder.ToLower() == "asc"
-                        ? query.OrderBy(s => s.Id)
-                        : query.OrderByDescending(s => s.Id);
-
-                //Get Total Count
-                var count = await query.CountAsync(cancellationToken);
-
-                //Get Paginated Data
-                var schedulesData = await query
-                    .Skip((request.PageNumber - 1) * request.PageSize)
-                    .Take(request.PageSize)
+                    )
+                    .OrderBy(s => s.Id)
                     .ToListAsync(cancellationToken);
 
-                //Map To Schedule Response
-                var schedules = await Task.WhenAll(
-                    schedulesData.Select(async schedule =>
-                        await Response.FromEntity(
-                            schedule,
-                            encryptionSettings.Key,
-                            aesEncryptionService,
-                            keyManagementService
-                        )
-                    )
-                );
-
-                // Check if there are more items
-                var hasNext = await query
-                    .Skip(request.PageNumber * request.PageSize)
-                    .AnyAsync(cancellationToken);
-
                 return Result.Success(
-                    new OffsetPaginatedResponse<Response>(
-                        [.. schedules],
-                        count,
-                        request.PageNumber,
-                        request.PageSize,
-                        hasNext
+                    await Response.FromEntity(
+                        schedules,
+                        encryptionSettings.Key,
+                        aesEncryptionService,
+                        keyManagementService
                     ),
                     ResponseMessages.Fetched
                 );
