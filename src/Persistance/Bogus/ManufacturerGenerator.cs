@@ -6,7 +6,7 @@ namespace Persistance.Bogus;
 
 public class ManufacturerGenerator
 {
-    private static readonly string[] CarBrands =[
+    private static readonly string[] CarBrands = [
     "Toyota",
     "Honda",
     "Ford",
@@ -43,15 +43,10 @@ public class ManufacturerGenerator
     {
         return [.. CarBrands.Select(brand =>
         {
-            bool isRandom = new Random().Next(0, 2) == 1;
-            bool isRandomUpdate = new Random().Next(0, 2) == 1;
             return new Manufacturer
             {
                 Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
                 Name = brand,
-                UpdatedAt = isRandomUpdate ? DateTime.UtcNow : null,
-                IsDeleted = isRandom,
-                DeletedAt = isRandom ? DateTime.UtcNow : null
             };
         })];
     }
