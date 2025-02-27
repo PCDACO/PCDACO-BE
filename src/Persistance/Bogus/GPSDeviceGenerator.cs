@@ -32,7 +32,6 @@ public class GPSDeviceGenerator
         foreach (var device in Devices)
         {
             Guid statusId = statuses.Where(s => s.Name == device.Status).Select(s => s.Id).First();
-
             devices.Add(new GPSDevice { Name = device.Name, StatusId = statusId });
         }
 
