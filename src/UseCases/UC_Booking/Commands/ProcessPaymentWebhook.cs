@@ -41,9 +41,17 @@ public sealed class ProcessPaymentWebhook
             if (booking == null)
                 return Result.NotFound("Không tìm thấy booking");
 
+            var paymentExists = await context.Transactions.AnyAsync(
+                t => t.BookingId == bookingId && t.Type.Name == TransactionTypeNames.BookingPayment,
+                cancellationToken
+            );
+
+            if (paymentExists)
+                return Result.Conflict("Giao dịch đã được xử lý trước đó");
+
             // TODO: Add transaction record
 
-            var transactionType = context
+            var transactionType = await context
                 .TransactionTypes.Where(t =>
                     new List<string>
                     {
@@ -51,7 +59,7 @@ public sealed class ProcessPaymentWebhook
                         TransactionTypeNames.PlatformFee
                     }.Any(name => EF.Functions.ILike(t.Name, name))
                 )
-                .ToList();
+                .ToListAsync(cancellationToken: cancellationToken);
 
             if (transactionType.Count != 2)
                 return Result.Error("Loại giao dịch không hợp lệ");
@@ -63,6 +71,8 @@ public sealed class ProcessPaymentWebhook
 
             if (transactionStatus == null)
                 return Result.Error("Trạng thái giao dịch không hợp lệ");
+
+            // TODO: Check all transaction tables (System, Owner, Driver)
 
             var bookingPayment = new Domain.Entities.Transaction
             {
