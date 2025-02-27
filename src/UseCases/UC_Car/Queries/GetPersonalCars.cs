@@ -106,7 +106,8 @@ public class GetPersonalCars
         IAppDBContext context,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
-        EncryptionSettings encryptionSettings
+        EncryptionSettings encryptionSettings,
+        CurrentUser currentUser
     ) : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
     {
         public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(
@@ -128,6 +129,7 @@ public class GetPersonalCars
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .Where(c => !c.IsDeleted)
                 .Where(c => EF.Functions.ILike(c.CarStatus.Name, $"%{request.StatusName}%"))
+                .Where(c => c.OwnerId === currentUser.User!.Id)
                 .Where(c => request.Model == null || c.ModelId == request.Model)
                 .Where(c =>
                     request.Amenities == null || request.Amenities.Length == 0
