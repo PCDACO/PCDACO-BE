@@ -6,6 +6,7 @@ using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
 using UseCases.Abstractions;
+using UseCases.BackgroundServices.Bookings;
 using UseCases.DTOs;
 using UseCases.UC_Booking.Commands;
 using UseCases.UnitTests.TestBases;
@@ -39,10 +40,17 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
 
+        var bookingReminderJob = new BookingReminderJob(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient
+        );
+
         var handler = new CreateBooking.Handler(
             _dbContext,
             _emailService,
             _backgroundJobClient,
+            bookingReminderJob,
             _currentUser
         );
         var command = new CreateBooking.CreateBookingCommand(
@@ -78,10 +86,17 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             isApproved: true
         );
 
+        var bookingReminderJob = new BookingReminderJob(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient
+        );
+
         var handler = new CreateBooking.Handler(
             _dbContext,
             _emailService,
             _backgroundJobClient,
+            bookingReminderJob,
             _currentUser
         );
         var command = new CreateBooking.CreateBookingCommand(
@@ -134,10 +149,17 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         _currentUser.SetUser(testUser);
 
+        var bookingReminderJob = new BookingReminderJob(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient
+        );
+
         var handler = new CreateBooking.Handler(
             _dbContext,
             _emailService,
             _backgroundJobClient,
+            bookingReminderJob,
             _currentUser
         );
         var command = new CreateBooking.CreateBookingCommand(
@@ -231,10 +253,17 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             EndTime: DateTime.UtcNow.AddHours(4)
         );
 
+        var bookingReminderJob = new BookingReminderJob(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient
+        );
+
         var handler = new CreateBooking.Handler(
             _dbContext,
             _emailService,
             _backgroundJobClient,
+            bookingReminderJob,
             _currentUser
         );
 
@@ -300,10 +329,18 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // First booking with user1
         _currentUser.SetUser(testUser1);
+
+        var bookingReminderJob = new BookingReminderJob(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient
+        );
+
         var handler1 = new CreateBooking.Handler(
             _dbContext,
             _emailService,
             _backgroundJobClient,
+            bookingReminderJob,
             _currentUser
         );
         var command1 = new CreateBooking.CreateBookingCommand(
@@ -317,10 +354,12 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Second booking with user2
         _currentUser.SetUser(testUser2);
+
         var handler2 = new CreateBooking.Handler(
             _dbContext,
             _emailService,
             _backgroundJobClient,
+            bookingReminderJob,
             _currentUser
         );
         var command2 = new CreateBooking.CreateBookingCommand(
@@ -359,10 +398,17 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         _currentUser.SetUser(testUser);
 
         // Ensure the user has no license
+        var bookingReminderJob = new BookingReminderJob(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient
+        );
+
         var handler = new CreateBooking.Handler(
             _dbContext,
             _emailService,
             _backgroundJobClient,
+            bookingReminderJob,
             _currentUser
         );
         var command = new CreateBooking.CreateBookingCommand(

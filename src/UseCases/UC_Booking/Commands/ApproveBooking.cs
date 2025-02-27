@@ -48,6 +48,7 @@ public sealed class ApproveBooking
                 BookingStatusEnum.Ongoing,
                 BookingStatusEnum.Completed,
                 BookingStatusEnum.Cancelled,
+                BookingStatusEnum.Expired
             };
 
             if (invalidStatuses.Contains(booking.Status.Name.ToEnum()))

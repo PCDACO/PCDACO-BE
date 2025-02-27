@@ -91,13 +91,13 @@ public sealed class BatchTrackTrip
                 previousTracking = tracking; // Use the newly created tracking as previous for next iteration
 
                 // Send location update to SignalR clients
-                // await hubContext.Clients.All.SendAsync(
-                //     "ReceiveLocationUpdate",
-                //     booking.Id,
-                //     point.Latitude,
-                //     point.Longitude,
-                //     cancellationToken: cancellationToken
-                // );
+                await hubContext.Clients.All.SendAsync(
+                    "ReceiveLocationUpdate",
+                    booking.Id,
+                    point.Latitude,
+                    point.Longitude,
+                    cancellationToken: cancellationToken
+                );
             }
 
             context.TripTrackings.AddRange(trackings);

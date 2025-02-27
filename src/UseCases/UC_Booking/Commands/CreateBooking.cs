@@ -28,6 +28,7 @@ public sealed class CreateBooking
         IAppDBContext context,
         IEmailService emailService,
         IBackgroundJobClient backgroundJobClient,
+        BookingReminderJob reminderService,
         CurrentUser currentUser
     ) : IRequestHandler<CreateBookingCommand, Result<Response>>
     {
@@ -36,7 +37,6 @@ public sealed class CreateBooking
             CancellationToken cancellationToken
         )
         {
-            // Add Owner role later
             if (!currentUser.User!.IsDriver())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
@@ -152,9 +152,10 @@ public sealed class CreateBooking
                     )
             );
 
-            backgroundJobClient.Enqueue<BookingExpiredJob>(job => job.ExpireOldBookings());
+            // TODO: What if that user Create Booking for 2 cars at the same time
 
-            backgroundJobClient.Schedule(() => NotifyOwner(booking.Id), TimeSpan.FromDays(1));
+            // Schedule automated reminders and expiration
+            await reminderService.ScheduleReminders(booking.Id);
 
             return Result<Response>.Success(new Response(bookingId));
         }
@@ -190,34 +191,6 @@ public sealed class CreateBooking
             );
 
             await emailService.SendEmailAsync(ownerEmail, "Yêu Cầu Đặt Xe Mới", ownerEmailTemplate);
-        }
-
-        public async Task NotifyOwner(Guid bookingId)
-        {
-            var booking = await context
-                .Bookings.Include(b => b.User)
-                .Include(b => b.Car)
-                .ThenInclude(c => c.Owner)
-                .FirstOrDefaultAsync(b => b.Id == bookingId);
-
-            if (booking != null && booking.Status.Name == BookingStatusEnum.Pending.ToString())
-            {
-                // Send notification email to the owner
-                var emailTemplate = OwnerNotificationTemplate.Template(
-                    booking.Car.Owner.Name,
-                    booking.User.Name,
-                    booking.Car.Model.Name,
-                    booking.StartTime,
-                    booking.EndTime,
-                    booking.TotalAmount
-                );
-
-                await emailService.SendEmailAsync(
-                    booking.Car.Owner.Email,
-                    "Booking Approval Reminder",
-                    emailTemplate
-                );
-            }
         }
     }
 

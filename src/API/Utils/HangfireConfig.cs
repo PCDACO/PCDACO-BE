@@ -19,6 +19,7 @@ public static class HangfireConfig
 
         // Register the job service
         services.AddScoped<BookingExpiredJob>();
+        services.AddScoped<BookingReminderJob>();
 
         // Schedule recurring jobs at startup
         using var serviceProvider = services.BuildServiceProvider();
