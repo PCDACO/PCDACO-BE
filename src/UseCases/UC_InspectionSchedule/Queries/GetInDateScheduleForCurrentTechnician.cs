@@ -23,7 +23,6 @@ namespace UseCases.UC_InspectionSchedule.Queries
         public sealed record Response(
             string TechnicianName,
             DateTimeOffset InspectionDate,
-            string InspectionAddress,
             CarDetail[] Cars
         )
         {
@@ -48,7 +47,6 @@ namespace UseCases.UC_InspectionSchedule.Queries
                 return new(
                     schedule.Technician.Name,
                     schedule.InspectionDate,
-                    schedule.InspectionAddress,
                     new[]
                     {
                         new CarDetail(
@@ -72,7 +70,8 @@ namespace UseCases.UC_InspectionSchedule.Queries
                                 schedule.Car.Owner.Id,
                                 schedule.Car.Owner.Name,
                                 schedule.Car.Owner.AvatarUrl
-                            )
+                            ),
+                            schedule.InspectionAddress
                         ),
                     }
                 );
@@ -94,7 +93,8 @@ namespace UseCases.UC_InspectionSchedule.Queries
             bool RequiresCollateral,
             decimal Price,
             ImageDetail[] Images,
-            UserDetail Owner
+            UserDetail Owner,
+            string InspectionAddress
         );
 
         public record ImageDetail(Guid Id, string Url);
