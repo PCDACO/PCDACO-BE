@@ -1,4 +1,5 @@
 using Domain.Entities;
+
 using UUIDNext;
 
 namespace Persistance.Bogus;
@@ -56,9 +57,6 @@ public class ModelGenerator
             {
                 foreach (var modelName in brandModels)
                 {
-                    bool isRandom = random.Next(0, 2) == 1;
-                    bool isRandomUpdate = random.Next(0, 2) == 1;
-
                     models.Add(
                         new Model
                         {
@@ -66,9 +64,6 @@ public class ModelGenerator
                             ManufacturerId = manufacturer.Id,
                             Name = modelName,
                             ReleaseDate = DateTimeOffset.UtcNow.AddYears(-random.Next(0, 10)),
-                            UpdatedAt = isRandomUpdate ? DateTime.UtcNow : null,
-                            IsDeleted = isRandom,
-                            DeletedAt = isRandom ? DateTime.UtcNow : null,
                         }
                     );
                 }

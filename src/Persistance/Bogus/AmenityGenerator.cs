@@ -15,16 +15,11 @@ public class AmenityGenerator
     {
         return [.. arrays.Select(feature =>
         {
-            bool isRandom = new Random().Next(0, 2) == 1;
-            bool isRandomUpdate = new Random().Next(0, 2) == 1;
             return new Amenity
             {
                 Name = feature.Name,
                 Description = feature.Description,
                 IconUrl =feature.IconUrl,
-                UpdatedAt = isRandomUpdate ? DateTime.UtcNow : null,
-                IsDeleted = isRandom,
-                DeletedAt = isRandom ? DateTime.UtcNow : null
             };
         })];
     }

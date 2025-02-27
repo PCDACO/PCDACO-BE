@@ -1,9 +1,13 @@
 using Ardalis.Result;
+
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Shared;
+
 using MediatR;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -115,18 +119,15 @@ namespace UseCases.UC_InspectionSchedule.Queries
 
                 var today = DateTimeOffset.UtcNow.Date;
                 var query = context
-                    .InspectionSchedules.AsSplitQuery()
+                    .InspectionSchedules
+                    .AsNoTracking()
+                    .AsSplitQuery()
                     .Include(s => s.InspectionStatus)
                     .Include(s => s.Technician)
-                    .Include(s => s.Car)
-                    .ThenInclude(c => c.Model)
-                    .ThenInclude(m => m.Manufacturer)
-                    .Include(s => s.Car)
-                    .ThenInclude(c => c.ImageCars)
-                    .Include(s => s.Car)
-                    .ThenInclude(c => c.Owner)
-                    .Include(s => s.Car)
-                    .ThenInclude(c => c.EncryptionKey)
+                    .Include(s => s.Car).ThenInclude(c => c.Model).ThenInclude(m => m.Manufacturer)
+                    .Include(s => s.Car).ThenInclude(c => c.ImageCars)
+                    .Include(s => s.Car).ThenInclude(c => c.Owner)
+                    .Include(s => s.Car).ThenInclude(c => c.EncryptionKey)
                     .Include(s => s.Car)
                     .ThenInclude(c => c.TransmissionType)
                     .Include(s => s.Car)
