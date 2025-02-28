@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
-namespace UseCases.UC_Driver.Commands;
+namespace UseCases.UC_License.Commands;
 
-public sealed class UpdateDriverLicense
+public sealed class UpdateUserLicense
 {
     public sealed record Command(
         Guid LicenseId,
@@ -35,8 +35,8 @@ public sealed class UpdateDriverLicense
             CancellationToken cancellationToken
         )
         {
-            // Check if user is driver
-            if (!currentUser.User!.IsDriver())
+            // Check if user is driver or owner
+            if (!currentUser.User!.IsDriver() && !currentUser.User!.IsOwner())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
 
             // Get license

@@ -1,19 +1,17 @@
 using Ardalis.Result;
 using Domain.Entities;
-using Domain.Shared;
-using Microsoft.EntityFrameworkCore;
 using Moq;
 using Persistance.Data;
 using UseCases.Abstractions;
 using UseCases.DTOs;
-using UseCases.UC_Driver.Commands;
+using UseCases.UC_License.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
 
 namespace UseCases.UnitTests.UC_License.Commands;
 
 [Collection("Test Collection")]
-public class UploadDriverLicenseImageTest(DatabaseTestBase fixture) : IAsyncLifetime
+public class UploadUserLicenseImageTest(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
@@ -24,12 +22,12 @@ public class UploadDriverLicenseImageTest(DatabaseTestBase fixture) : IAsyncLife
 
     public async Task DisposeAsync() => await _resetDatabase();
 
-    private UploadDriverLicenseImage.Command CreateValidCommand(Guid licenseId)
+    private UploadUserLicenseImage.Command CreateValidCommand(Guid licenseId)
     {
         var frontImageStream = new MemoryStream(new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 }); // Valid JPEG signature
         var backImageStream = new MemoryStream(new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 }); // Valid JPEG signature
 
-        return new UploadDriverLicenseImage.Command(
+        return new UploadUserLicenseImage.Command(
             LicenseId: licenseId,
             LicenseImageFrontUrl: frontImageStream,
             LicenseImageBackUrl: backImageStream
@@ -44,7 +42,7 @@ public class UploadDriverLicenseImageTest(DatabaseTestBase fixture) : IAsyncLife
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new UploadDriverLicenseImage.Handler(
+        var handler = new UploadUserLicenseImage.Handler(
             _dbContext,
             _currentUser,
             _cloudinaryServices.Object
@@ -68,7 +66,7 @@ public class UploadDriverLicenseImageTest(DatabaseTestBase fixture) : IAsyncLife
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new UploadDriverLicenseImage.Handler(
+        var handler = new UploadUserLicenseImage.Handler(
             _dbContext,
             _currentUser,
             _cloudinaryServices.Object
@@ -84,12 +82,14 @@ public class UploadDriverLicenseImageTest(DatabaseTestBase fixture) : IAsyncLife
         Assert.Contains("Không tìm thấy giấy phép lái xe", result.Errors);
     }
 
-    [Fact]
-    public async Task Handle_ValidRequest_UpdatesImagesSuccessfully()
+    [Theory]
+    [InlineData("Driver")]
+    [InlineData("Owner")]
+    public async Task Handle_ValidRequest_UpdatesImagesSuccessfully(string roleName)
     {
         // Arrange
-        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        var role = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, roleName);
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, role);
         _currentUser.SetUser(testUser);
 
         var encryptionKey = await TestDataCreateEncryptionKey.CreateTestEncryptionKey(_dbContext);
@@ -125,7 +125,7 @@ public class UploadDriverLicenseImageTest(DatabaseTestBase fixture) : IAsyncLife
             )
             .ReturnsAsync("new-back-url");
 
-        var handler = new UploadDriverLicenseImage.Handler(
+        var handler = new UploadUserLicenseImage.Handler(
             _dbContext,
             _currentUser,
             _cloudinaryServices.Object
@@ -150,8 +150,8 @@ public class UploadDriverLicenseImageTest(DatabaseTestBase fixture) : IAsyncLife
     public void Validator_InvalidImages_ReturnsValidationErrors()
     {
         // Arrange
-        var validator = new UploadDriverLicenseImage.Validator();
-        var command = new UploadDriverLicenseImage.Command(
+        var validator = new UploadUserLicenseImage.Validator();
+        var command = new UploadUserLicenseImage.Command(
             LicenseId: Guid.Empty,
             LicenseImageFrontUrl: null!,
             LicenseImageBackUrl: null!

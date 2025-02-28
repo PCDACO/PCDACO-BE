@@ -6,9 +6,9 @@ using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
-namespace UseCases.UC_Driver.Commands;
+namespace UseCases.UC_License.Commands;
 
-public sealed class UploadDriverLicenseImage
+public sealed class UploadUserLicenseImage
 {
     public sealed record Command(
         Guid LicenseId,
@@ -35,8 +35,8 @@ public sealed class UploadDriverLicenseImage
             CancellationToken cancellationToken
         )
         {
-            //check if user is not driver
-            if (!currentUser.User!.IsDriver())
+            //check if user is not driver or owner
+            if (!currentUser.User!.IsDriver() && !currentUser.User!.IsOwner())
                 return Result.Error("Bạn không có quyền thực hiện chức năng này");
 
             //check if license exists

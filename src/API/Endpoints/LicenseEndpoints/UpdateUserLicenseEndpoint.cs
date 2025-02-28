@@ -2,26 +2,26 @@ using API.Utils;
 using Ardalis.Result;
 using Carter;
 using MediatR;
-using UseCases.UC_Driver.Commands;
+using UseCases.UC_License.Commands;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.LicenseEndpoints;
 
-public class UpdateDriverLicenseEndpoint : ICarterModule
+public class UpdateUserLicenseEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPut("/api/licenses/{id:guid}/information", Handle)
-            .WithName("UpdateDriverLicense")
-            .WithSummary("Update driver license information")
+            .WithName("UpdateUserLicense")
+            .WithSummary("Update User license information")
             .WithTags("Licenses")
             .RequireAuthorization();
     }
 
-    private async Task<IResult> Handle(ISender sender, Guid id, UpdateDriverLicenseRequest request)
+    private async Task<IResult> Handle(ISender sender, Guid id, UpdateUserLicenseRequest request)
     {
-        Result<UpdateDriverLicense.Response> result = await sender.Send(
-            new UpdateDriverLicense.Command(
+        Result<UpdateUserLicense.Response> result = await sender.Send(
+            new UpdateUserLicense.Command(
                 LicenseId: id,
                 LicenseNumber: request.LicenseNumber,
                 ExpirationDate: request.ExpirationDate
@@ -30,5 +30,5 @@ public class UpdateDriverLicenseEndpoint : ICarterModule
         return result.MapResult();
     }
 
-    private record UpdateDriverLicenseRequest(string LicenseNumber, DateTimeOffset ExpirationDate);
+    private record UpdateUserLicenseRequest(string LicenseNumber, DateTimeOffset ExpirationDate);
 }

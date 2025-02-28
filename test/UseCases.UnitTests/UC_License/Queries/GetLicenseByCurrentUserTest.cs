@@ -5,14 +5,14 @@ using Infrastructure.Encryption;
 using Persistance.Data;
 using UseCases.Abstractions;
 using UseCases.DTOs;
-using UseCases.UC_Driver.Queries;
+using UseCases.UC_License.Queries;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
 
 namespace UseCases.UnitTests.UC_License.Queries;
 
 [Collection("Test Collection")]
-public class GetLicenseByCurrentDriverTest(DatabaseTestBase fixture) : IAsyncLifetime
+public class GetLicenseByCurrentUserTest(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
@@ -28,22 +28,25 @@ public class GetLicenseByCurrentDriverTest(DatabaseTestBase fixture) : IAsyncLif
 
     public async Task DisposeAsync() => await _resetDatabase();
 
-    [Fact]
-    public async Task Handle_UserNotDriver_ReturnsForbidden()
+    [Theory]
+    [InlineData("Admin")]
+    [InlineData("Consultant")]
+    [InlineData("Technician")]
+    public async Task Handle_UserNotDriverOrOwner_ReturnsForbidden(string roleName)
     {
         // Arrange
-        var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
+        var role = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, roleName);
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, role);
         _currentUser.SetUser(testUser);
 
-        var handler = new GetLicenseByCurrentDriver.Handler(
+        var handler = new GetLicenseByCurrentUser.Handler(
             _dbContext,
             _currentUser,
             _aesService,
             _keyService,
             _encryptionSettings
         );
-        var query = new GetLicenseByCurrentDriver.Query();
+        var query = new GetLicenseByCurrentUser.Query();
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -61,14 +64,14 @@ public class GetLicenseByCurrentDriverTest(DatabaseTestBase fixture) : IAsyncLif
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new GetLicenseByCurrentDriver.Handler(
+        var handler = new GetLicenseByCurrentUser.Handler(
             _dbContext,
             _currentUser,
             _aesService,
             _keyService,
             _encryptionSettings
         );
-        var query = new GetLicenseByCurrentDriver.Query();
+        var query = new GetLicenseByCurrentUser.Query();
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -78,12 +81,14 @@ public class GetLicenseByCurrentDriverTest(DatabaseTestBase fixture) : IAsyncLif
         Assert.Contains("Không tìm thấy giấy phép lái xe", result.Errors);
     }
 
-    [Fact]
-    public async Task Handle_ValidRequest_ReturnsLicenseSuccessfully()
+    [Theory]
+    [InlineData("Driver")]
+    [InlineData("Owner")]
+    public async Task Handle_ValidRequest_ReturnsLicenseSuccessfully(string roleName)
     {
         // Arrange
-        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        var role = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, roleName);
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, role);
         _currentUser.SetUser(testUser);
 
         // Generate encryption key and encrypted license number
@@ -110,14 +115,14 @@ public class GetLicenseByCurrentDriverTest(DatabaseTestBase fixture) : IAsyncLif
         await _dbContext.Licenses.AddAsync(license);
         await _dbContext.SaveChangesAsync();
 
-        var handler = new GetLicenseByCurrentDriver.Handler(
+        var handler = new GetLicenseByCurrentUser.Handler(
             _dbContext,
             _currentUser,
             _aesService,
             _keyService,
             _encryptionSettings
         );
-        var query = new GetLicenseByCurrentDriver.Query();
+        var query = new GetLicenseByCurrentUser.Query();
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);

@@ -4,14 +4,15 @@ using Infrastructure.Encryption;
 using Persistance.Data;
 using UseCases.Abstractions;
 using UseCases.DTOs;
-using UseCases.UC_Driver.Commands;
+using UseCases.UC_License.Commands;
+using UseCases.UC_User.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
 
 namespace UseCases.UnitTests.UC_License.Commands;
 
 [Collection("Test Collection")]
-public class AddDriverLicenseTests : IAsyncLifetime
+public class AddUserLicenseTest : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext;
     private readonly CurrentUser _currentUser;
@@ -20,7 +21,7 @@ public class AddDriverLicenseTests : IAsyncLifetime
     private readonly IAesEncryptionService _aesService;
     private readonly IKeyManagementService _keyService;
 
-    public AddDriverLicenseTests(DatabaseTestBase fixture)
+    public AddUserLicenseTest(DatabaseTestBase fixture)
     {
         _dbContext = fixture.DbContext;
         _currentUser = fixture.CurrentUser;
@@ -34,18 +35,21 @@ public class AddDriverLicenseTests : IAsyncLifetime
 
     public async Task DisposeAsync() => await _resetDatabase();
 
-    private AddDriverLicense.Command CreateValidCommand() =>
+    private AddUserLicense.Command CreateValidCommand() =>
         new(LicenseNumber: "123456789012", ExpirationDate: DateTime.UtcNow.AddYears(1));
 
-    [Fact]
-    public async Task Handle_UserNotDriver_ReturnsError()
+    [Theory]
+    [InlineData("Admin")]
+    [InlineData("Consultant")]
+    [InlineData("Technician")]
+    public async Task Handle_UserNotDriverOrOwner_ReturnsForbidden(string roleName)
     {
         // Arrange
-        var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
+        var role = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, roleName);
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, role);
         _currentUser.SetUser(testUser);
 
-        var handler = new AddDriverLicense.Handler(
+        var handler = new AddUserLicense.Handler(
             _dbContext,
             _currentUser,
             _aesService,
@@ -80,7 +84,7 @@ public class AddDriverLicenseTests : IAsyncLifetime
             _encryptionSettings
         );
 
-        var handler = new AddDriverLicense.Handler(
+        var handler = new AddUserLicense.Handler(
             _dbContext,
             _currentUser,
             _aesService,
@@ -99,6 +103,57 @@ public class AddDriverLicenseTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task Handle_DuplicateLicenseNumber_ReturnsError()
+    {
+        // Arrange
+        // Create first driver with a license
+        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var driver1 = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            driverRole,
+            "driver1@example.com"
+        );
+
+        string existingLicenseNumber = "123456789012";
+        var existingLicense = await TestDataCreateLicense.CreateTestLicense(
+            _dbContext,
+            driver1.Id,
+            _aesService,
+            _keyService,
+            _encryptionSettings,
+            existingLicenseNumber
+        );
+
+        // Create second driver who will try to use the same license number
+        var driver2 = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            driverRole,
+            "driver2@example.com"
+        );
+        _currentUser.SetUser(driver2);
+
+        var handler = new AddUserLicense.Handler(
+            _dbContext,
+            _currentUser,
+            _aesService,
+            _keyService,
+            _encryptionSettings
+        );
+
+        var command = new AddUserLicense.Command(
+            LicenseNumber: existingLicenseNumber,
+            ExpirationDate: DateTime.UtcNow.AddYears(1)
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains("Số giấy phép lái xe đã tồn tại", result.Errors);
+    }
+
+    [Fact]
     public async Task Handle_ValidRequest_CreatesLicenseSuccessfully()
     {
         // Arrange
@@ -106,7 +161,7 @@ public class AddDriverLicenseTests : IAsyncLifetime
         var driver = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(driver);
 
-        var handler = new AddDriverLicense.Handler(
+        var handler = new AddUserLicense.Handler(
             _dbContext,
             _currentUser,
             _aesService,

@@ -7,9 +7,9 @@ using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Utils;
 
-namespace UseCases.UC_Driver.Queries;
+namespace UseCases.UC_License.Queries;
 
-public static class GetLicenseByCurrentDriver
+public static class GetLicenseByCurrentUser
 {
     public record Query() : IRequest<Result<Response>>;
 
@@ -68,7 +68,7 @@ public static class GetLicenseByCurrentDriver
             CancellationToken cancellationToken
         )
         {
-            if (!currentUser.User!.IsDriver())
+            if (!currentUser.User!.IsDriver() && !currentUser.User.IsOwner())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
             var license = await context
                 .Licenses.AsNoTracking()
