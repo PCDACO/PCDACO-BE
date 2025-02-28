@@ -5,14 +5,14 @@ using Infrastructure.Encryption;
 using Persistance.Data;
 using UseCases.Abstractions;
 using UseCases.DTOs;
-using UseCases.UC_Driver.Commands;
+using UseCases.UC_License.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
 
 namespace UseCases.UnitTests.UC_License.Commands;
 
 [Collection("Test Collection")]
-public class UpdateDriverLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
+public class UpdateUserLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
@@ -28,7 +28,7 @@ public class UpdateDriverLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
 
     public async Task DisposeAsync() => await _resetDatabase();
 
-    private UpdateDriverLicense.Command CreateValidCommand(Guid licenseId) =>
+    private UpdateUserLicense.Command CreateValidCommand(Guid licenseId) =>
         new(
             LicenseId: licenseId,
             LicenseNumber: "123456789012",
@@ -43,7 +43,7 @@ public class UpdateDriverLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new UpdateDriverLicense.Handler(
+        var handler = new UpdateUserLicense.Handler(
             _dbContext,
             _currentUser,
             _aesService,
@@ -69,7 +69,7 @@ public class UpdateDriverLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new UpdateDriverLicense.Handler(
+        var handler = new UpdateUserLicense.Handler(
             _dbContext,
             _currentUser,
             _aesService,
@@ -110,7 +110,7 @@ public class UpdateDriverLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.Licenses.AddAsync(license);
         await _dbContext.SaveChangesAsync();
 
-        var handler = new UpdateDriverLicense.Handler(
+        var handler = new UpdateUserLicense.Handler(
             _dbContext,
             _currentUser,
             _aesService,
@@ -128,13 +128,15 @@ public class UpdateDriverLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Contains("Bạn không có quyền thực hiện chức năng này", result.Errors);
     }
 
-    [Fact]
-    public async Task Handle_ValidRequest_UpdatesLicenseSuccessfully()
+    [Theory]
+    [InlineData("Driver")]
+    [InlineData("Owner")]
+    public async Task Handle_ValidRequest_UpdatesLicenseSuccessfully(string roleName)
     {
         // Arrange
-        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var driver = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
-        _currentUser.SetUser(driver);
+        var role = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, roleName);
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, role);
+        _currentUser.SetUser(user);
 
         var oldEncryptionKey = await TestDataCreateEncryptionKey.CreateTestEncryptionKey(
             _dbContext
@@ -142,7 +144,7 @@ public class UpdateDriverLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         var oldEncryptedLicenseNumber = "NTjmhIE3YJtqsqXCZYbjzA==";
         var license = new License
         {
-            UserId = driver.Id,
+            UserId = user.Id,
             EncryptionKeyId = oldEncryptionKey.Id,
             EncryptedLicenseNumber = oldEncryptedLicenseNumber,
             ExpiryDate = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd"),
@@ -150,7 +152,7 @@ public class UpdateDriverLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.Licenses.AddAsync(license);
         await _dbContext.SaveChangesAsync();
 
-        var handler = new UpdateDriverLicense.Handler(
+        var handler = new UpdateUserLicense.Handler(
             _dbContext,
             _currentUser,
             _aesService,
@@ -178,8 +180,8 @@ public class UpdateDriverLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
     public void Validator_InvalidRequest_ReturnsValidationErrors()
     {
         // Arrange
-        var validator = new UpdateDriverLicense.Validator();
-        var command = new UpdateDriverLicense.Command(
+        var validator = new UpdateUserLicense.Validator();
+        var command = new UpdateUserLicense.Command(
             LicenseId: Guid.Empty,
             LicenseNumber: "123", // Too short
             ExpirationDate: DateTime.UtcNow.Date.AddDays(-1) // Past date
