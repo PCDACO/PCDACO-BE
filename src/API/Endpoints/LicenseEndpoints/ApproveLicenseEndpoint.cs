@@ -12,7 +12,7 @@ public class ApproveLicenseEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPatch("/api/licenses/{id:guid}/approve", Handle)
-            .WithSummary("Admin approve or reject a driver license")
+            .WithSummary("Admin approve or reject a user license")
             .WithTags("Licenses")
             .RequireAuthorization();
     }

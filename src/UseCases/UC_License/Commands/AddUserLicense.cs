@@ -7,9 +7,9 @@ using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
-namespace UseCases.UC_Driver.Commands;
+namespace UseCases.UC_License.Commands;
 
-public sealed class AddDriverLicense
+public sealed class AddUserLicense
 {
     public sealed record Command(string LicenseNumber, DateTimeOffset ExpirationDate)
         : IRequest<Result<Response>>;
@@ -32,30 +32,57 @@ public sealed class AddDriverLicense
             CancellationToken cancellationToken
         )
         {
-            //check if user is not driver
-            if (!currentUser.User!.IsDriver())
+            //check if user is not driver or owner
+            if (!currentUser.User!.IsDriver() && !currentUser.User!.IsOwner())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
 
-            //check if driver is exist
-            var driver = await context
+            //check if user is exist
+            var user = await context
                 .Users.AsNoTracking()
                 .Include(u => u.License)
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(
-                    u =>
-                        u.Id == currentUser.User!.Id
-                        && u.Role != null
-                        && EF.Functions.ILike(u.Role.Name, "%Driver%")
-                        && !u.IsDeleted,
+                    u => u.Id == currentUser.User!.Id && u.Role != null && !u.IsDeleted,
                     cancellationToken
                 );
 
-            if (driver is null)
+            if (user is null)
                 return Result.Error("Người dùng không tồn tại");
 
-            //check if driver aldready has license
-            if (driver.License is not null)
+            //check if user aldready has license
+            if (user.License is not null)
                 return Result.Error("Người dùng đã có giấy phép lái xe");
+
+            //check if user is not owner role or driver role
+            if (user.Role!.Name.ToLower() != "owner" && user.Role.Name.ToLower() != "driver")
+                return Result.Error("Chỉ chủ xe hoặc tài xế mới có thể thêm giấy phép lái xe");
+
+            //check if license number is already exist
+            var licenses = await context
+                .Licenses.Include(l => l.EncryptionKey)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+
+            var licenseChecks = await Task.WhenAll(
+                licenses.Select(async l =>
+                {
+                    string decryptedKey = keyManagementService.DecryptKey(
+                        l.EncryptionKey.EncryptedKey,
+                        encryptionSettings.Key
+                    );
+                    string decryptedLicenseNumber = await aesEncryptionService.Decrypt(
+                        l.EncryptedLicenseNumber,
+                        decryptedKey,
+                        l.EncryptionKey.IV
+                    );
+                    return decryptedLicenseNumber == request.LicenseNumber;
+                })
+            );
+
+            if (licenseChecks.Any(exists => exists))
+            {
+                return Result.Error("Số giấy phép lái xe đã tồn tại");
+            }
 
             // Encrypt license number
             (string key, string iv) = await keyManagementService.GenerateKeyAsync();

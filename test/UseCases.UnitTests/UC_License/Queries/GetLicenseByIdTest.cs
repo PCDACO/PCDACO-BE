@@ -25,12 +25,14 @@ public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
 
     public async Task DisposeAsync() => await _resetDatabase();
 
-    [Fact]
-    public async Task Handle_UserNotDriverOrAdmin_ReturnsForbidden()
+    [Theory]
+    [InlineData("Technician")]
+    [InlineData("Consultant")]
+    public async Task Handle_UserNotDriverOrAdminOrOwner_ReturnsForbidden(string roleName)
     {
         // Arrange
-        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var role = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, roleName);
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, role);
         _currentUser.SetUser(testUser);
 
         var handler = new GetLicenseById.Handler(
@@ -118,14 +120,24 @@ public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData("Driver")] // Test for owner
+    [InlineData("Driver")] // Test for driver
     [InlineData("Admin")] // Test for admin
+    [InlineData("Owner")] // Test for owner
     public async Task Handle_ValidRequest_ReturnsLicenseSuccessfully(string role)
     {
         // Arrange
         var userRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, role);
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, userRole);
-        var differentUser = await TestDataCreateUser.CreateTestUser(_dbContext, userRole);
+        User differentUser;
+        if (role == "Admin")
+        {
+            var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+            differentUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        }
+        else
+        {
+            differentUser = await TestDataCreateUser.CreateTestUser(_dbContext, userRole);
+        }
         _currentUser.SetUser(testUser);
 
         // Generate encryption key and encrypted license number
@@ -142,7 +154,7 @@ public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Create license
         var license = new License
         {
-            UserId = role == "Driver" ? testUser.Id : differentUser.Id, // Different owner if admin
+            UserId = role == "Admin" ? differentUser.Id : testUser.Id, // Different owner if admin
             EncryptionKeyId = encryptionKey.Id,
             EncryptedLicenseNumber = encryptedLicenseNumber,
             ExpiryDate = DateTime.Now.AddYears(1).ToString("yyyy-MM-dd"),
