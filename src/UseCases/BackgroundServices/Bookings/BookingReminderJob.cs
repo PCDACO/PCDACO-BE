@@ -138,6 +138,8 @@ public class BookingReminderJob(
         booking.StatusId = expiredStatus.Id;
         booking.Note = "Hết hạn tự động do chủ xe không phản hồi";
 
+        await context.SaveChangesAsync(CancellationToken.None);
+
         var driverEmailTempalte = DriverExpiredBookingTemplate.Template(
             booking.User.Name,
             booking.Car.Model.Name,
@@ -152,9 +154,6 @@ public class BookingReminderJob(
             "Thông báo: Yêu cầu đặt xe của bạn đã hết hạn",
             driverEmailTempalte
         );
-
-        // Save changes
-        await context.SaveChangesAsync(CancellationToken.None);
     }
 
     private async Task<Booking?> GetBookingIfPending(Guid bookingId)

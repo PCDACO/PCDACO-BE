@@ -21,16 +21,6 @@ public static class HangfireConfig
         services.AddScoped<BookingExpiredJob>();
         services.AddScoped<BookingReminderJob>();
 
-        // Schedule recurring jobs at startup
-        using var serviceProvider = services.BuildServiceProvider();
-        var recurringJobManager = serviceProvider.GetRequiredService<IRecurringJobManager>();
-
-        recurringJobManager.AddOrUpdate<BookingExpiredJob>(
-            "expire-old-bookings",
-            job => job.ExpireOldBookings(),
-            Cron.Daily // Runs every day at midnight
-        );
-
         return services;
     }
 }
