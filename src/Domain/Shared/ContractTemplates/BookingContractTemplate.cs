@@ -1,34 +1,33 @@
-namespace Domain.Shared.ContractTemplates
-{
-    public static class ContractTemplateGenerator
-    {
-        public class ContractTemplate
-        {
-            public required string ContractNumber { get; set; }
-            public DateTime ContractDate { get; set; }
-            public required string OwnerName { get; set; }
-            public required string OwnerLicenseNumber { get; set; }
-            public required string OwnerAddress { get; set; }
-            public required string DriverName { get; set; }
-            public required string DriverLicenseNumber { get; set; }
-            public required string DriverAddress { get; set; }
-            public required string CarManufacturer { get; set; }
-            public required string CarLicensePlate { get; set; }
-            public required string CarSeat { get; set; }
-            public required string CarColor { get; set; }
-            public required string CarDetail { get; set; }
-            public required string CarTerms { get; set; }
-            public required string RentalPrice { get; set; }
-            public required string OwnerCustomTerms { get; set; }
-            public DateTimeOffset StartDate { get; set; }
-            public DateTimeOffset EndDate { get; set; }
-            public int RentalPeriod => (EndDate - StartDate).Days;
-        }
+namespace Domain.Shared.ContractTemplates;
 
-        public static string GenerateFullContractHtml(ContractTemplate contractTemplate)
-        {
-            string standardClauses =
-                @$"
+public static class ContractTemplateGenerator
+{
+    public class ContractTemplate
+    {
+        public required string ContractNumber { get; set; }
+        public DateTimeOffset ContractDate { get; set; }
+        public required string OwnerName { get; set; }
+        public required string OwnerLicenseNumber { get; set; }
+        public required string OwnerAddress { get; set; }
+        public required string DriverName { get; set; }
+        public required string DriverLicenseNumber { get; set; }
+        public required string DriverAddress { get; set; }
+        public required string CarManufacturer { get; set; }
+        public required string CarLicensePlate { get; set; }
+        public required string CarSeat { get; set; }
+        public required string CarColor { get; set; }
+        public required string CarDetail { get; set; }
+        public required string CarTerms { get; set; }
+        public required string RentalPrice { get; set; }
+        public DateTimeOffset StartDate { get; set; }
+        public DateTimeOffset EndDate { get; set; }
+        public int RentalPeriod => (EndDate - StartDate).Days;
+    }
+
+    public static string GenerateFullContractHtml(ContractTemplate contractTemplate)
+    {
+        string standardClauses =
+            @$"
                 <div class='clause'>
                     <strong>Điều 1: Đối tượng hợp đồng</strong>
                     <p>
@@ -81,12 +80,12 @@ namespace Domain.Shared.ContractTemplates
                     </p>
                 </div>";
 
-            string fullContractTerms = string.IsNullOrWhiteSpace(contractTemplate.OwnerCustomTerms)
-                ? standardClauses
-                : $"<div class='custom-terms'>{contractTemplate.OwnerCustomTerms}</div><br/>{standardClauses}";
+        string fullContractTerms = string.IsNullOrWhiteSpace(contractTemplate.CarTerms)
+            ? standardClauses
+            : $"<div class='custom-terms'>{contractTemplate.CarTerms}</div><br/>{standardClauses}";
 
-            // Return the complete HTML template.
-            return @$"
+        // Return the complete HTML template.
+        return @$"
                     <!DOCTYPE html>
                     <html lang='vi'>
                         <head>
@@ -249,6 +248,5 @@ namespace Domain.Shared.ContractTemplates
                         </body>
                     </html>
                     ";
-        }
     }
 }
