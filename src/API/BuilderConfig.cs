@@ -2,11 +2,17 @@ using System.Text;
 using System.Threading.Channels;
 using API.Middlewares;
 using Carter;
+
+using DinkToPdf;
+using DinkToPdf.Contracts;
+
 using Domain.Data;
 using Domain.Shared;
 using Infrastructure;
 using Infrastructure.Encryption;
 using Infrastructure.Medias;
+using Infrastructure.PdfService;
+
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
@@ -14,6 +20,7 @@ using Persistance;
 using UseCases;
 using UseCases.Abstractions;
 using UseCases.BackgroundServices.InspectionSchedule;
+using UseCases.Services.PdfService;
 using UseCases.Utils;
 
 namespace API;
@@ -137,6 +144,9 @@ public static class BuilderConfig
         services.AddSingleton<TransactionStatusesData>();
         services.AddSingleton<UserRolesData>();
         services.AddSingleton<InspectionStatusesData>();
+        // add pdf
+        services.AddSingleton<IPdfService, PdfService>();
+        services.AddSingleton<IConverter, SynchronizedConverter>(_ => new SynchronizedConverter(new PdfTools()));
         // add channels
         services.AddSingleton(_ => Channel.CreateUnbounded<CreateInspectionScheduleChannel>());
         // Add background services
