@@ -8,6 +8,7 @@ using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
+using UseCases.BackgroundServices.Bookings;
 using UseCases.DTOs;
 using UseCases.Services.EmailService;
 
@@ -21,6 +22,7 @@ public sealed class ApproveBooking
         IAppDBContext context,
         IEmailService emailService,
         IBackgroundJobClient backgroundJobClient,
+        BookingExpiredJob bookingExpiredJob,
         CurrentUser currentUser
     ) : IRequestHandler<Command, Result>
     {
@@ -96,6 +98,7 @@ public sealed class ApproveBooking
                     )
             );
 
+            await bookingExpiredJob.ExpireOldBookings(booking.Id);
 
             string actionVerb = request.IsApproved ? "phê duyệt" : "từ chối";
             return Result.SuccessWithMessage($"Đã {actionVerb} booking thành công");
