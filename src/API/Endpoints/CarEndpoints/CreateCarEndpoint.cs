@@ -39,7 +39,8 @@ public class CreateCarEndpoint : ICarterModule
                 Description: request.Description,
                 FuelConsumption: request.FuelConsumption,
                 RequiresCollateral: request.RequiresCollateral,
-                Price: request.Price
+                Price: request.Price,
+                Terms: request.Terms
             )
         );
         return result.MapResult();
@@ -56,6 +57,7 @@ public class CreateCarEndpoint : ICarterModule
         string Description,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        decimal Price
+        decimal Price,
+        string Terms = ""
     );
 }

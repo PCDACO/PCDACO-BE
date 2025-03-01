@@ -61,7 +61,8 @@ public class CreateCarTests : IAsyncLifetime
             FuelTypeId: fuelType.Id,
             FuelConsumption: 7.5m,
             RequiresCollateral: true,
-            Price: 500m
+            Price: 500m,
+            Terms: ""
         );
 
     [Fact]
@@ -196,7 +197,8 @@ public class CreateCarTests : IAsyncLifetime
             FuelTypeId: fuelType.Id,
             FuelConsumption: 0,
             RequiresCollateral: true,
-            Price: 0
+            Price: 0,
+            Terms: ""
         );
 
         // Act

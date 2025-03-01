@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
@@ -78,24 +79,23 @@ public sealed class CreateBooking
             if (bookingStatus == null)
                 return Result<Response>.NotFound("Không tìm thấy trạng thái phù hợp");
 
-            // Check for overlapping bookings (same user + same car)
             bool hasOverlap = await context
                 .Bookings.AsNoTracking()
                 .AnyAsync(
                     b =>
                         b.UserId == currentUser.User.Id
-                        && b.CarId == request.CarId
                         && b.StartTime < request.EndTime
-                        && b.EndTime > request.StartTime
+                        && b.ActualReturnTime > request.StartTime
                         && b.Status.Name != BookingStatusEnum.Rejected.ToString() // Exclude rejected bookings
-                        && b.Status.Name != BookingStatusEnum.Cancelled.ToString(), // Exclude cancelled bookings
+                        && b.Status.Name != BookingStatusEnum.Cancelled.ToString() // Exclude cancelled bookings
+                        && b.Status.Name != BookingStatusEnum.Expired.ToString(), // Exclude expired bookings
                     cancellationToken
                 );
 
             if (hasOverlap)
             {
                 return Result.Conflict(
-                    "Bạn đã có đơn đặt xe cho chiếc xe này trong khoảng thời gian này."
+                    "Bạn đã có đơn đặt xe trong khoảng thời gian này. Vui lòng kiểm tra lại lịch đặt xe của bạn."
                 );
             }
 
@@ -135,7 +135,37 @@ public sealed class CreateBooking
             car.CarStatistic.TotalRented += 1;
             userStatistic.TotalBooking += 1;
 
+            // Initialize Contract (using default terms combined from Car.Terms and standard clauses)
+            var contractStatus = await context.ContractStatuses.FirstOrDefaultAsync(
+                cs => cs.Name == ContractStatusNames.Pending,
+                cancellationToken
+            );
+
+            if (contractStatus == null)
+                return Result.Error("Không tìm thấy trạng thái hợp đồng hợp lệ");
+
+            string standardClauses = GetStandardContractClauses(
+                basePrice,
+                booking.StartTime,
+                booking.EndTime,
+                (int)totalBookingDay
+            );
+            string fullTerms = string.IsNullOrWhiteSpace(car.Terms)
+                ? standardClauses
+                : car.Terms + "<br/><br/>" + standardClauses;
+
+            var contract = new Contract
+            {
+                BookingId = booking.Id,
+                StatusId = contractStatus.Id,
+                StartDate = booking.StartTime,
+                EndDate = booking.EndTime,
+                Terms = fullTerms,
+                DriverSignatureDate = DateTimeOffset.UtcNow,
+            };
+
             context.Bookings.Add(booking);
+            context.Contracts.Add(contract);
             await context.SaveChangesAsync(cancellationToken);
 
             backgroundJobClient.Enqueue(
@@ -158,6 +188,67 @@ public sealed class CreateBooking
             await reminderService.ScheduleReminders(booking.Id);
 
             return Result<Response>.Success(new Response(bookingId));
+        }
+
+        private static string GetStandardContractClauses(
+            decimal rentalPrice,
+            DateTimeOffset startDate,
+            DateTimeOffset endDate,
+            int rentalPediod
+        )
+        {
+            return @$"
+                    <div class='clause'>
+                    <strong>Điều 1: Đối tượng hợp đồng</strong>
+                    <p>
+                        Bên A đồng ý cho Bên B thuê xe với các thông tin như đã mô tả ở phần thông tin xe thuê.
+                    </p>
+                    </div>
+                    <div class='clause'>
+                        <strong>Điều 2: Thời hạn hợp đồng</strong>
+                        <p>
+                            Hợp đồng có hiệu lực từ {startDate:dd/MM/yyyy} đến {endDate:dd/MM/yyyy}. Thời hạn thuê: {rentalPediod} ngày.
+                        </p>
+                    </div>
+                    <div class='clause'>
+                        <strong>Điều 3: Giá thuê và phương thức thanh toán</strong>
+                        <p>
+                            Giá thuê xe: {rentalPrice} VNĐ. Giá trên chưa bao gồm các khoản đền bù, VAT và phụ phí (nếu có).
+                            Phương thức thanh toán được thỏa thuận giữa hai bên.
+                        </p>
+                    </div>
+                    <div class='clause'>
+                        <strong>Điều 4: Quyền và nghĩa vụ của Bên A (Chủ xe)</strong>
+                        <p>
+                            a) Bên A cam kết bàn giao xe đúng như mô tả và đảm bảo xe có đầy đủ giấy tờ hợp pháp. <br/>
+                            b) Bên A có trách nhiệm bảo trì, bảo dưỡng xe định kỳ, đảm bảo xe luôn trong tình trạng sử dụng tốt. <br/>
+                            c) Nếu xảy ra tranh chấp về quyền sở hữu hoặc sử dụng xe, Bên A chịu trách nhiệm giải quyết theo pháp luật.
+                        </p>
+                    </div>
+                    <div class='clause'>
+                        <strong>Điều 5: Quyền và nghĩa vụ của Bên B (Người thuê xe)</strong>
+                        <p>
+                            a) Bên B có trách nhiệm sử dụng xe đúng mục đích, bảo quản xe cẩn thận và không được tự ý thay đổi cấu trúc xe nếu chưa được Bên A đồng ý.<br/>
+                            b) Bên B cam kết thanh toán đầy đủ số tiền thuê theo thỏa thuận. <br/>
+                            c) Trong trường hợp Bên B vi phạm quy định giao thông, gây ra tai nạn, hoặc không tuân thủ các điều khoản bảo quản xe, Bên B phải chịu phạt và bồi thường thiệt hại cho Bên A theo quy định của pháp luật.
+                        </p>
+                    </div>
+                    <div class='clause'>
+                        <strong>Điều 6: Phạt vi phạm và xử lý sự cố</strong>
+                        <p>
+                            a) Nếu trong quá trình thuê xe, Bên B bị xử phạt vì vi phạm giao thông, Bên B chịu trách nhiệm thanh toán phạt và bồi thường thiệt hại liên quan. <br/>
+                            b) Nếu xe bị hư hỏng do lỗi của Bên B mà không thông báo kịp thời cho Bên A, Bên B sẽ bị phạt theo mức đã thỏa thuận và phải bồi thường thiệt hại. <br/>
+                            c) Nếu sự cố không được thông báo đúng thời hạn, Bên A có quyền đơn phương chấm dứt hợp đồng.
+                        </p>
+                    </div>
+                    <div class='clause'>
+                        <strong>Điều 7: Điều khoản chung</strong>
+                        <p>
+                            a) Hai bên cam kết thực hiện đầy đủ các điều khoản của hợp đồng này. <br/>
+                            b) Mọi tranh chấp phát sinh từ hợp đồng sẽ được thương lượng giải quyết; nếu không đạt được thỏa thuận, tranh chấp sẽ được giải quyết tại Tòa án có thẩm quyền. <br/>
+                            c) Hợp đồng được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản.
+                        </p>
+                    </div>";
         }
 
         public async Task SendEmail(

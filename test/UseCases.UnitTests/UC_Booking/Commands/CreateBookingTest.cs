@@ -147,6 +147,8 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             isApproved: true
         );
 
+        await TestDataCreateContractStatus.InitializeTestContractStatus(_dbContext);
+
         _currentUser.SetUser(testUser);
 
         var bookingReminderJob = new BookingReminderJob(
@@ -239,6 +241,8 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             isApproved: true
         );
 
+        await TestDataCreateContractStatus.InitializeTestContractStatus(_dbContext);
+
         // Create overlapping booking
         var command1 = new CreateBooking.CreateBookingCommand(
             CarId: testCar.Id,
@@ -326,6 +330,8 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _encryptionSettings,
             isApproved: true
         );
+
+        await TestDataCreateContractStatus.InitializeTestContractStatus(_dbContext);
 
         // First booking with user1
         _currentUser.SetUser(testUser1);
