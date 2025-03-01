@@ -21,6 +21,7 @@ public class Car : BaseEntity
     public required decimal FuelConsumption { get; set; }
     public bool RequiresCollateral { get; set; } = false;
     public required decimal Price { get; set; }
+    public string Terms { get; set; } = string.Empty;
     public int TotalRented { get; set; } = 0;
     public decimal TotalEarning { get; set; } = 0;
 
