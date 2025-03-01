@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using Domain.Constants;
 using Domain.Entities;
+using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -11,13 +12,8 @@ namespace UseCases.UC_InspectionSchedule.Queries;
 
 public sealed class GetAllInspectionSchedules
 {
-    public sealed record Query(
-        int PageNumber = 1,
-        int PageSize = 10,
-        string? Keyword = null,
-        DateTimeOffset? InspectionDate = null,
-        string SortOrder = "desc"
-    ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
+    public sealed record Query(Guid? TechnicianId, MonthEnum? Month = null, int? Year = null)
+        : IRequest<Result<IEnumerable<Response>>>;
 
     public sealed record Response(
         Guid Id,
@@ -52,9 +48,9 @@ public sealed class GetAllInspectionSchedules
     }
 
     internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
-        : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
+        : IRequestHandler<Query, Result<IEnumerable<Response>>>
     {
-        public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(
+        public async Task<Result<IEnumerable<Response>>> Handle(
             Query request,
             CancellationToken cancellationToken
         )
@@ -70,52 +66,38 @@ public sealed class GetAllInspectionSchedules
                 .ThenInclude(c => c.Owner)
                 .Where(s => !s.IsDeleted);
 
-            // Apply keyword search for technician name or car owner name or inspection address
-            if (!string.IsNullOrWhiteSpace(request.Keyword))
+            // Filter by technician if provided
+            if (request.TechnicianId != null)
             {
-                query = query.Where(s =>
-                    EF.Functions.ILike(s.Technician.Name, $"%{request.Keyword}%")
-                    || EF.Functions.ILike(s.Car.Owner.Name, $"%{request.Keyword}%")
-                    || EF.Functions.ILike(s.InspectionAddress, $"%{request.Keyword}%")
-                );
+                query = query.Where(s => s.TechnicianId == request.TechnicianId);
             }
 
-            // Apply date filter
-            if (request.InspectionDate.HasValue)
-                query = query.Where(s =>
-                    s.InspectionDate.Date == request.InspectionDate.Value.Date
-                );
+            // Apply month and year filters
+            if (request.Month.HasValue || request.Year.HasValue)
+            {
+                int year = request.Year ?? DateTimeOffset.UtcNow.Year;
 
-            // Apply sorting
-            query =
-                request.SortOrder.ToLower() == "asc"
-                    ? query.OrderBy(s => s.Id)
-                    : query.OrderByDescending(s => s.Id);
+                if (request.Month.HasValue)
+                {
+                    int month = (int)request.Month.Value;
+                    query = query.Where(s =>
+                        s.InspectionDate.Month == month && s.InspectionDate.Year == year
+                    );
+                }
+                else
+                {
+                    query = query.Where(s => s.InspectionDate.Year == year);
+                }
+            }
 
-            // Get total count
-            var count = await query.CountAsync(cancellationToken);
+            // Default sort by ID ascending
+            query = query.OrderBy(s => s.Id);
 
-            // Get paginated data
             var schedules = await query
-                .Skip((request.PageNumber - 1) * request.PageSize)
-                .Take(request.PageSize)
                 .Select(s => Response.FromEntity(s))
                 .ToListAsync(cancellationToken);
 
-            // Check if there are more items
-            var hasNext = await query
-                .Skip(request.PageNumber * request.PageSize)
-                .AnyAsync(cancellationToken);
-
-            return Result.Success(
-                new OffsetPaginatedResponse<Response>(
-                    schedules,
-                    count,
-                    request.PageNumber,
-                    request.PageSize,
-                    hasNext
-                )
-            );
+            return Result.Success((IEnumerable<Response>)schedules, ResponseMessages.Fetched);
         }
     }
 }
