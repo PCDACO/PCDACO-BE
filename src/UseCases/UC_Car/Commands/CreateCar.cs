@@ -31,7 +31,8 @@ public sealed class CreateCar
         string Description,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        decimal Price
+        decimal Price,
+        string Terms
     ) : IRequest<Result<Response>>;
 
     public sealed record Response(Guid Id)
@@ -126,6 +127,7 @@ public sealed class CreateCar
                 FuelConsumption = request.FuelConsumption,
                 RequiresCollateral = request.RequiresCollateral,
                 Price = request.Price,
+                Terms = request.Terms,
                 StatusId = checkingStatus.Id,
                 CarStatistic = new() { CarId = carId },
                 CarAmenities =
