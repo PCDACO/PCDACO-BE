@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
@@ -78,24 +79,23 @@ public sealed class CreateBooking
             if (bookingStatus == null)
                 return Result<Response>.NotFound("Không tìm thấy trạng thái phù hợp");
 
-            // Check for overlapping bookings (same user + same car)
             bool hasOverlap = await context
                 .Bookings.AsNoTracking()
                 .AnyAsync(
                     b =>
                         b.UserId == currentUser.User.Id
-                        && b.CarId == request.CarId
                         && b.StartTime < request.EndTime
-                        && b.EndTime > request.StartTime
+                        && b.ActualReturnTime > request.StartTime
                         && b.Status.Name != BookingStatusEnum.Rejected.ToString() // Exclude rejected bookings
-                        && b.Status.Name != BookingStatusEnum.Cancelled.ToString(), // Exclude cancelled bookings
+                        && b.Status.Name != BookingStatusEnum.Cancelled.ToString() // Exclude cancelled bookings
+                        && b.Status.Name != BookingStatusEnum.Expired.ToString(), // Exclude expired bookings
                     cancellationToken
                 );
 
             if (hasOverlap)
             {
                 return Result.Conflict(
-                    "Bạn đã có đơn đặt xe cho chiếc xe này trong khoảng thời gian này."
+                    "Bạn đã có đơn đặt xe trong khoảng thời gian này. Vui lòng kiểm tra lại lịch đặt xe của bạn."
                 );
             }
 
