@@ -41,6 +41,9 @@ public class GetPersonalCars
         decimal FuelConsumption,
         bool RequiresCollateral,
         decimal Price,
+        string Status,
+        int TotalRented,
+        decimal AverageRating,
         LocationDetail? Location,
         ManufacturerDetail Manufacturer,
         ImageDetail[] Images,
@@ -78,29 +81,55 @@ public class GetPersonalCars
                 car.FuelConsumption,
                 car.RequiresCollateral,
                 car.Price,
+                car.CarStatus.Name,
+                car.CarStatistic.TotalRented,
+                car.CarStatistic.AverageRating,
                 car.GPS == null ? null : new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
                 new ManufacturerDetail(car.Model.Manufacturer.Id, car.Model.Manufacturer.Name),
-                [.. car.ImageCars?.Select(i => new ImageDetail(i.Id, i.Url)) ?? []],
+                [.. car.ImageCars?.Select(i => new ImageDetail(
+                    i.Id,
+                    i.Url,
+                    i.Type.Name
+                )) ?? []],
                 [
                     .. car.CarAmenities.Select(a => new AmenityDetail(
                         a.Id,
                         a.Amenity.Name,
-                        a.Amenity.Description
+                        a.Amenity.Description,
+                        a.Amenity.IconUrl
                     )),
                 ]
             );
         }
     };
 
-    public record PriceDetail(decimal PerHour, decimal PerDay);
+    public record PriceDetail(
+        decimal PerHour,
+        decimal PerDay
+    );
 
-    public record LocationDetail(double Longtitude, double Latitude);
+    public record LocationDetail(
+        double Longtitude,
+        double Latitude
+    );
 
-    public record ManufacturerDetail(Guid Id, string Name);
+    public record ManufacturerDetail(
+        Guid Id,
+        string Name
+    );
 
-    public record ImageDetail(Guid Id, string Url);
+    public record ImageDetail(
+        Guid Id,
+        string Url,
+        string Type
+    );
 
-    public record AmenityDetail(Guid Id, string Name, string Description);
+    public record AmenityDetail(
+        Guid Id,
+        string Name,
+        string Description,
+        string Icon
+    );
 
     public class Handler(
         IAppDBContext context,
@@ -121,8 +150,9 @@ public class GetPersonalCars
                 .Include(c => c.Owner).ThenInclude(o => o.Feedbacks)
                 .Include(c => c.Model).ThenInclude(o => o.Manufacturer)
                 .Include(c => c.EncryptionKey)
-                .Include(c => c.ImageCars)
+                .Include(c => c.ImageCars).ThenInclude(ic => ic.Type)
                 .Include(c => c.CarStatus)
+                .Include(c => c.CarStatistic)
                 .Include(c => c.TransmissionType)
                 .Include(c => c.FuelType)
                 .Include(c => c.GPS)
