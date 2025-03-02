@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
-namespace UseCases.UC_Booking.Commands;
+namespace UseCases.UC_Feedback.Commands;
 
 public sealed class CreateFeedBack
 {
@@ -82,7 +82,7 @@ public sealed class CreateFeedBack
                 UserId = currentUser.User.Id,
                 Point = request.Rating,
                 Content = request.Content,
-                Type = feedbackType
+                Type = feedbackType,
             };
 
             context.Feedbacks.Add(feedback);
