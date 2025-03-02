@@ -16,7 +16,7 @@ public class UploadCarImagesEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch("/api/cars/{carId}/images", Handle)
+        app.MapPatch("/api/cars/{carId}/car-images", Handle)
             .WithSummary("Upload car images (the pictures of a cars)")
             .WithTags("Cars")
             .RequireAuthorization()
@@ -26,12 +26,11 @@ public class UploadCarImagesEndpoint : ICarterModule
     private async Task<IResult> Handle(
         ISender sender,
         Guid carId,
-        IFormFileCollection carImages,
-        IFormFileCollection paperImages)
+        IFormFileCollection images
+        )
     {
-        Stream[] carStreams = [.. carImages.Select(i => i.OpenReadStream())];
-        Stream[] paperStreams = [.. paperImages.Select(i => i.OpenReadStream())];
-        Result<UploadCarImages.Response> result = await sender.Send(new UploadCarImages.Command(carId, carStreams, paperStreams));
+        Stream[] carStreams = [.. images.Select(i => i.OpenReadStream())];
+        Result<UploadCarImages.Response> result = await sender.Send(new UploadCarImages.Command(carId, carStreams));
         return result.MapResult();
     }
 

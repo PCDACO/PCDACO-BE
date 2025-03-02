@@ -7,6 +7,11 @@ public interface ICloudinaryServices
         Stream image,
         CancellationToken cancellationToken = default
     );
+    Task<string> UploadPaperImageAsync(
+        string name,
+        Stream image,
+        CancellationToken cancellationToken = default
+    );
     Task<string> UploadReportImageAsync(
         string name,
         Stream image,
