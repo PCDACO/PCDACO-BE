@@ -18,7 +18,7 @@ public class UploadPaperImagesEndpoint : ICarterModule
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapPatch("/api/cars/{carId}/paper-images", Handle)
-            .WithSummary("Upload car images (the pictures of a cars)")
+            .WithSummary("Upload car images (the pictures of a paper)")
             .WithTags("Cars")
             .RequireAuthorization()
             .DisableAntiforgery();
