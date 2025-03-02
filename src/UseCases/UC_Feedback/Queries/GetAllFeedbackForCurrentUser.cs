@@ -96,13 +96,17 @@ public sealed class GetAllFeedbackForCurrentUser
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
 
+            // Check if there are more results
+            bool hasNext = query.Skip(request.PageSize * request.PageNumber).Any();
+
             // Map to response
             return Result.Success(
                 OffsetPaginatedResponse<Response>.Map(
                     feedbacks.Select(Response.FromEntity),
                     totalCount,
                     request.PageNumber,
-                    request.PageSize
+                    request.PageSize,
+                    hasNext
                 ),
                 ResponseMessages.Fetched
             );
