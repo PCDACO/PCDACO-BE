@@ -1,5 +1,6 @@
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
+
 using UseCases.Abstractions;
 
 namespace Infrastructure.Medias;
@@ -24,7 +25,28 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             uploadParams,
             cancellationToken
         );
-        return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
+        Console.WriteLine("upload" + uploadResult.Url);
+        return uploadResult.Url?.AbsoluteUri ?? throw new Exception("Error uploading image");
+    }
+    public async Task<string> UploadPaperImageAsync(
+        string name,
+        Stream image,
+        CancellationToken cancellationToken = default
+    )
+    {
+        ImageUploadParams uploadParams = new()
+        {
+            File = new FileDescription(name, image),
+            Folder = "car-paper",
+            UseFilename = true,
+            UniqueFilename = false,
+            Overwrite = true,
+        };
+        ImageUploadResult uploadResult = await cloudinary.UploadAsync(
+            uploadParams,
+            cancellationToken
+        );
+        return uploadResult.Url?.AbsoluteUri ?? throw new Exception("Error uploading image");
     }
 
     public async Task<string> UploadReportImageAsync(
