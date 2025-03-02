@@ -5,6 +5,8 @@ using Domain.Shared;
 using UseCases.Abstractions;
 using UseCases.Utils;
 
+using UUIDNext;
+
 namespace Persistance.Bogus;
 public class CarDummyData
 {
@@ -84,8 +86,10 @@ public class CarGenerator
     string encryptedLicensePlate = await aesEncryptionService.Encrypt(u.LicensePlate, key, iv);
     string encryptedKey = keyManagementService.EncryptKey(key, encryptionSettings.Key);
     EncryptionKey encryptionKeyObject = new() { EncryptedKey = encryptedKey, IV = iv };
+    Guid newCarId = Uuid.NewDatabaseFriendly(Database.PostgreSql);
     return new Car()
     {
+        Id = newCarId,
         EncryptionKeyId = encryptionKeyObject.Id,
         TransmissionTypeId = transmissionTypes.Where(tt => tt.Name == u.TransmissionType).Select(tt => tt.Id).First(),
         ModelId = models.Where(tt => tt.Name == u.Model).Select(tt => tt.Id).First(),
@@ -97,7 +101,11 @@ public class CarGenerator
         Price = u.Price,
         Seat = u.Seat,
         OwnerId = Guid.Parse("01951eae-12a7-756d-a8d5-bb1ee525d7b5"),
-        EncryptionKey = encryptionKeyObject
+        EncryptionKey = encryptionKeyObject,
+        CarStatistic = new()
+        {
+            CarId = newCarId,
+        }
     };
 });
         return await Task.WhenAll(userTasks); // Await all tasks and return the array
