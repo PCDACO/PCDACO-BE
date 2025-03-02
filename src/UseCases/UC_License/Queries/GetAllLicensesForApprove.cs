@@ -110,12 +110,16 @@ public class GetAllLicensesForApprove
                 )
             );
 
+            //Check if there are any more items
+            bool hasNext = query.Skip(request.PageSize * request.PageNumber).Any();
+
             return Result.Success(
                 OffsetPaginatedResponse<Response>.Map(
                     responses.AsEnumerable(),
                     count,
                     request.PageNumber,
-                    request.PageSize
+                    request.PageSize,
+                    hasNext
                 )
             );
         }
