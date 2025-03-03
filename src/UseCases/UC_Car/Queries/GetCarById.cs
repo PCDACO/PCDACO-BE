@@ -1,13 +1,10 @@
 using Ardalis.Result;
-
 using Domain.Constants;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Shared;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 
 namespace UseCases.UC_Car.Queries;
@@ -34,7 +31,8 @@ public class GetCarById
         LocationDetail? Location,
         ManufacturerDetail Manufacturer,
         ImageDetail[] Images,
-        AmenityDetail[] Amenities
+        AmenityDetail[] Amenities,
+        BookingSchedule[] Bookings
     )
     {
         public static async Task<Response> FromEntity(
@@ -77,11 +75,11 @@ public class GetCarById
                         a.Amenity.Name,
                         a.Amenity.Description
                     )),
-                ]
+                ],
+                [.. car.Bookings.Select(b => new BookingSchedule(b.StartTime, b.EndTime))]
             );
         }
     };
-
 
     public record LocationDetail(double Longtitude, double Latitude);
 
@@ -90,6 +88,8 @@ public class GetCarById
     public record ImageDetail(Guid Id, string Url);
 
     public record AmenityDetail(Guid Id, string Name, string Description);
+
+    public record BookingSchedule(DateTimeOffset StartTime, DateTimeOffset EndTime);
 
     private sealed class Handler(
         IAppDBContext context,
@@ -104,16 +104,27 @@ public class GetCarById
         )
         {
             Car? gettingCar = await context
-                .Cars
-                .IgnoreQueryFilters()
-                .Include(c => c.Model).ThenInclude(c => c.Manufacturer)
+                .Cars.IgnoreQueryFilters()
+                .Include(c =>
+                    c.Bookings.Where(b =>
+                        b.StartTime > DateTimeOffset.UtcNow
+                        && b.EndTime > DateTimeOffset.UtcNow.AddMonths(3)
+                        && b.Status.Name != BookingStatusEnum.Cancelled.ToString()
+                        && b.Status.Name != BookingStatusEnum.Rejected.ToString()
+                        && b.Status.Name != BookingStatusEnum.Expired.ToString()
+                    )
+                )
+                .Include(c => c.Model)
+                .ThenInclude(c => c.Manufacturer)
                 .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars)
-                .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
+                .Include(c => c.CarAmenities)
+                .ThenInclude(ca => ca.Amenity)
                 .Include(c => c.Owner)
                 .Where(c => c.Id == request.Id)
                 .FirstOrDefaultAsync(cancellationToken);
-            if (gettingCar is null) return Result.NotFound(ResponseMessages.CarNotFound);
+            if (gettingCar is null)
+                return Result.NotFound(ResponseMessages.CarNotFound);
             return Result<Response>.Success(
                 await Response.FromEntity(
                     gettingCar,
