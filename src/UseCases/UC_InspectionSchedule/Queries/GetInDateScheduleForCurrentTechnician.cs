@@ -51,6 +51,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
                         return new CarDetail(
                             Id: schedule.CarId,
                             ModelId: schedule.Car.ModelId,
+                            InspectionScheduleId: schedule.Id,
                             ModelName: schedule.Car.Model.Name,
                             ManufacturerName: schedule.Car.Model.Manufacturer.Name,
                             LicensePlate: decryptedLicensePlate,
@@ -82,6 +83,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
         public record CarDetail(
             Guid Id,
             Guid ModelId,
+            Guid InspectionScheduleId,
             string ModelName,
             string ManufacturerName,
             string LicensePlate,
