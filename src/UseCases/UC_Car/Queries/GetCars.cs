@@ -88,7 +88,7 @@ public class GetCars
                 Price: car.Price,
                 Terms: car.Terms,
                 Status: car.CarStatus.Name,
-                TotalRented: car.CarStatistic.TotalRented,
+                TotalRented: car.CarStatistic.TotalBooking,
                 AverageRating: car.CarStatistic.AverageRating,
                 Location: car.GPS == null ? null : new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
                 Manufacturer: new ManufacturerDetail(car.Model.Manufacturer.Id, car.Model.Manufacturer.Name),

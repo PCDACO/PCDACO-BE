@@ -132,7 +132,7 @@ public sealed class CreateBooking
             };
 
             // Update car statistic
-            car.CarStatistic.TotalRented += 1;
+            car.CarStatistic.TotalBooking += 1;
             userStatistic.TotalBooking += 1;
 
             // Initialize Contract (using default terms combined from Car.Terms and standard clauses)
