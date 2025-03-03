@@ -72,7 +72,7 @@ public class GetCarById
                 car.Price,
                 car.Terms,
                 car.CarStatus.Name,
-                car.CarStatistic.TotalRented,
+                car.CarStatistic.TotalBooking,
                 car.CarStatistic.AverageRating,
                 car.GPS == null ? null : new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
                 new ManufacturerDetail(car.Model.Manufacturer.Id, car.Model.Manufacturer.Name),
@@ -90,14 +90,15 @@ public class GetCarById
         }
     };
 
-
     public record LocationDetail(double Longtitude, double Latitude);
 
     public record ManufacturerDetail(Guid Id, string Name);
 
     public record ImageDetail(Guid Id, string Url, string Type);
 
-    public record AmenityDetail(Guid Id, string Name, string Description);
+    public record AmenityDetail(Guid Id, string Name, string Description, string Icon);
+
+    public record BookingSchedule(DateTimeOffset StartTime, DateTimeOffset EndTime);
 
     private sealed class Handler(
         IAppDBContext context,
@@ -113,12 +114,25 @@ public class GetCarById
         {
             Car? gettingCar = await context
                 .Cars
-                .IgnoreQueryFilters()
-                .Include(c => c.Model).ThenInclude(c => c.Manufacturer)
+                .Include(c =>
+                    c.Bookings.Where(b =>
+                        b.StartTime > DateTimeOffset.UtcNow
+                        && b.EndTime > DateTimeOffset.UtcNow.AddMonths(3)
+                        && b.Status.Name != BookingStatusEnum.Cancelled.ToString()
+                        && b.Status.Name != BookingStatusEnum.Rejected.ToString()
+                        && b.Status.Name != BookingStatusEnum.Expired.ToString()
+                    )
+                )
+                .Include(c => c.Owner).ThenInclude(o => o.Feedbacks)
+                .Include(c => c.Model).ThenInclude(o => o.Manufacturer)
                 .Include(c => c.EncryptionKey)
-                .Include(c => c.ImageCars)
+                .Include(c => c.ImageCars).ThenInclude(ic => ic.Type)
+                .Include(c => c.CarStatus)
+                .Include(c => c.CarStatistic)
+                .Include(c => c.TransmissionType)
+                .Include(c => c.FuelType)
+                .Include(c => c.GPS)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
-                .Include(c => c.Owner)
                 .Where(c => c.Id == request.Id)
                 .FirstOrDefaultAsync(cancellationToken);
             if (gettingCar is null)
