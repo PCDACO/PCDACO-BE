@@ -68,10 +68,12 @@ public sealed class CancelBooking
             if (userStatistic == null)
                 return Result.NotFound("Không tìm thấy thông tin thống kê của user");
 
+            // TODO: if booking is approve, set car status from rented to available
+
             // Update car statistic
             booking.StatusId = status.Id;
-            booking.Car.CarStatistic.TotalCancellation += 1;
-            userStatistic.TotalCancel += 1;
+            booking.Car.CarStatistic.TotalCancelled += 1;
+            userStatistic.TotalCancelled += 1;
 
             await context.SaveChangesAsync(cancellationToken);
 
