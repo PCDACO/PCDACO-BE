@@ -1,7 +1,5 @@
 using UUIDNext;
-
 namespace Domain.Shared;
-
 public class BaseEntity
 {
     public Guid Id { get; set; } = Uuid.NewDatabaseFriendly(Database.PostgreSql);

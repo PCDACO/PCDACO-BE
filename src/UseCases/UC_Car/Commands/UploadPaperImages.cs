@@ -15,19 +15,19 @@ using UseCases.DTOs;
 
 namespace UseCases.UC_Car.Commands;
 
-public sealed class UploadCarImages
+public sealed class UploadPaperImages
 {
     public record Command(
         Guid CarId,
-        Stream[] CarImages
+        Stream[] PaperImages
     ) : IRequest<Result<Response>>;
 
     public record Response(ImageDetail[] Images)
     {
-        public static Response FromEntity(Guid id, string[] urls)
+        public static Response FromEntity(Guid carId, string[] urls)
         {
             return new Response(
-                [.. urls.Select(i => new ImageDetail(id, i))]
+                [.. urls.Select(i => new ImageDetail(carId, i))]
             );
         }
     };
@@ -55,40 +55,40 @@ public sealed class UploadCarImages
             if (currentUser.User!.Id != car.OwnerId)
                 return Result.Forbidden("Không có quyền cập nhật ảnh của xe này");
             // Check if type images is exist
-            ImageType? carImageType = await context.ImageTypes
+            ImageType? paperImageType = await context.ImageTypes
                 .AsNoTracking()
-                .Where(it => EF.Functions.ILike(it.Name, "%car%"))
+                .Where(it => EF.Functions.ILike(it.Name, "%paper%"))
                 .Where(it => !it.IsDeleted)
                 .FirstOrDefaultAsync(cancellationToken);
-            if (carImageType is null) return Result.Error("Không tìm thấy loại hình ảnh đang cần");
-            if (car.ImageCars.Where(ic => ic.Type.Name.Equals("car", StringComparison.CurrentCultureIgnoreCase)).Any())
+            if (paperImageType is null) return Result.Error("Không tìm thấy loại hình ảnh đang cần");
+            if (car.ImageCars.Where(ic => ic.Type.Name.Equals("paper", StringComparison.CurrentCultureIgnoreCase)).Any())
             {
                 await context.ImageCars
                     .Where(c => c.CarId == request.CarId)
-                    .Where(it => EF.Functions.ILike(it.Type.Name, "%car%"))
+                    .Where(it => EF.Functions.ILike(it.Type.Name, "%paper%"))
                     .ExecuteDeleteAsync(cancellationToken);
             }
             List<Task<string>> carTasks = [];
             int carIndex = 0;
-            foreach (var image in request.CarImages)
+            foreach (var image in request.PaperImages)
             {
                 carTasks.Add(cloudinaryServices.UploadCarImageAsync($"Car-{car.Id}-Image-{++carIndex}", image, cancellationToken));
             }
-            string[] carImageUrls = await Task.WhenAll(carTasks);
+            string[] paperImageUrls = await Task.WhenAll(carTasks);
             ImageCar[] images =
             [
-                .. carImageUrls
+                .. paperImageUrls
                     .Select(url => new ImageCar
                     {
                         CarId = car.Id,
                         Url = url,
-                        TypeId = carImageType.Id
+                        TypeId = paperImageType.Id
                     }),
             ];
             // Save new images
             await context.ImageCars.AddRangeAsync(images, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
-            return Result.Success(Response.FromEntity(car.Id, carImageUrls), ResponseMessages.Updated);
+            return Result.Success(Response.FromEntity(car.Id, paperImageUrls), ResponseMessages.Updated);
         }
     }
 
@@ -98,7 +98,7 @@ public sealed class UploadCarImages
         {
             RuleFor(x => x.CarId)
                 .NotEmpty().WithMessage("Phải chọn xe cần cập nhật !");
-            RuleFor(x => x.CarImages)
+            RuleFor(x => x.PaperImages)
                 .NotEmpty().WithMessage("Phải chọn ảnh !");
         }
     }

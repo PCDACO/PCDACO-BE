@@ -2,10 +2,10 @@ using API.Utils;
 using Ardalis.Result;
 using Carter;
 using MediatR;
-using UseCases.UC_Booking.Commands;
+using UseCases.UC_Feedback.Commands;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
-namespace API.Endpoints.BookingEndpoints;
+namespace API.Endpoints.FeedbackEndpoints;
 
 public class CreateFeedbackEndpoint : ICarterModule
 {
@@ -13,7 +13,7 @@ public class CreateFeedbackEndpoint : ICarterModule
     {
         app.MapPost("/api/bookings/{id:guid}/feedback", Handle)
             .WithSummary("Create a new feedback when booking is completed")
-            .WithTags("Bookings")
+            .WithTags("Feedbacks")
             .RequireAuthorization();
     }
 

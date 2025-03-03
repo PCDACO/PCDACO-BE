@@ -68,7 +68,7 @@ public class UserGenerator
         new(){
             Id = Guid.Parse("01951eae-7342-78fb-ae8c-02ce503ed400"),
             Name="Consultant",
-            Email="thinhdpham2510@gmail.com",
+            Email="consultant@gmail.com",
             Password = "consultant".HashString(),
             Phone = "0918231512",
             Address = "480/59A Đường Bình Quới Phường 28 Quận Bình Thạnh",
