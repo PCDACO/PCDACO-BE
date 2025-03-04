@@ -98,6 +98,8 @@ public sealed class ProcessPaymentWebhook
                 Amount = booking.PlatformFee,
             };
 
+            // Update booking and statistics
+            booking.IsPaid = true;
 
             await context.SaveChangesAsync(cancellationToken);
 
