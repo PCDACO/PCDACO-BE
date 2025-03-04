@@ -74,7 +74,9 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                                 b.CarId == cs.CarId
                                 && b.Status.Name == BookingStatusEnum.Completed.ToString()
                             )
-                            .Average(b => (decimal?)b.Feedbacks.Average(f => f.Point)) ?? 0
+                            .SelectMany(b => b.Feedbacks)
+                            .Where(f => f.Type == FeedbackTypeEnum.Driver)
+                            .Average(f => (decimal?)f.Point) ?? 0
                 )
                 .SetProperty(
                     cs => cs.LastRented,
@@ -84,7 +86,7 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                                 b.CarId == cs.CarId
                                 && b.Status.Name == BookingStatusEnum.Completed.ToString()
                             )
-                            .Max(b => (DateTimeOffset?)b.EndTime) ?? null
+                            .Max(b => (DateTimeOffset?)b.ActualReturnTime) ?? null
                 )
         );
     }
