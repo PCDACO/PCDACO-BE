@@ -282,12 +282,12 @@ public sealed class CreateBooking
             RuleFor(x => x.StartTime)
                 .NotEmpty()
                 .WithMessage("Phải chọn thời gian bắt đầu thuê")
-                .GreaterThan(DateTime.Now)
-                .WithMessage("Thời gian bắt đầu thuê phải sau thời gian hiện tại");
-
-            RuleFor(x => x.EndTime).NotEmpty().WithMessage("Phải chọn thời gian kết thúc thuê");
+                .GreaterThan(DateTime.Now.AddHours(24))
+                .WithMessage("Thời gian bắt đầu thuê phải sau thời gian hiện tại một ngày");
 
             RuleFor(x => x.EndTime)
+                .NotEmpty()
+                .WithMessage("Phải chọn thời gian kết thúc thuê")
                 .GreaterThan(x => x.StartTime)
                 .WithMessage("Thời gian kết thúc thuê phải sau thời gian bắt đầu thuê");
         }

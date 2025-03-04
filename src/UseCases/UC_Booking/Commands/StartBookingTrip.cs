@@ -32,17 +32,7 @@ public sealed class StartBookingTrip
                 );
 
             // Validate current status
-            var invalidStatuses = new[]
-            {
-                BookingStatusEnum.Pending,
-                BookingStatusEnum.Rejected,
-                BookingStatusEnum.Ongoing,
-                BookingStatusEnum.Completed,
-                BookingStatusEnum.Cancelled,
-                BookingStatusEnum.Expired
-            };
-
-            if (invalidStatuses.Contains(booking.Status.Name.ToEnum()))
+            if (booking.Status.Name != BookingStatusEnum.ReadyForPickup.ToString())
             {
                 return Result.Conflict(
                     $"Không thể phê duyệt booking ở trạng thái {booking.Status.Name}"
