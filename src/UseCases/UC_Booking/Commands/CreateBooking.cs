@@ -56,7 +56,6 @@ public sealed class CreateBooking
             var car = await context
                 .Cars.AsSplitQuery()
                 .AsNoTracking()
-                .Include(x => x.CarStatistic)
                 .Include(x => x.Owner)
                 .Include(x => x.Model)
                 .FirstOrDefaultAsync(
@@ -99,13 +98,6 @@ public sealed class CreateBooking
                 );
             }
 
-            var userStatistic = await context.UserStatistics.FirstOrDefaultAsync(
-                x => x.UserId == currentUser.User.Id,
-                cancellationToken
-            );
-
-            if (userStatistic == null)
-                return Result.NotFound("Không tìm thấy thông tin thống kê của user");
             const decimal platformFeeRate = 0.1m;
 
             Guid bookingId = Uuid.NewDatabaseFriendly(Database.PostgreSql);
@@ -130,10 +122,6 @@ public sealed class CreateBooking
                 TotalAmount = totalAmount,
                 Note = string.Empty,
             };
-
-            // Update car statistic
-            car.CarStatistic.TotalBooking += 1;
-            userStatistic.TotalBooking += 1;
 
             // Initialize Contract (using default terms combined from Car.Terms and standard clauses)
             var contractStatus = await context.ContractStatuses.FirstOrDefaultAsync(
