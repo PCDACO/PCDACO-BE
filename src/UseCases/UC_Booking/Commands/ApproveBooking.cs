@@ -46,7 +46,7 @@ public sealed class ApproveBooking
                 return Result.Forbidden("Bạn không có quyền phê duyệt booking cho xe này!");
 
             // Check if the booking is in a modifiable status.
-            if (IsBookingInInvalidStatus(booking))
+            if (booking.Status.Name != BookingStatusEnum.Pending.ToString())
             {
                 return Result.Conflict(
                     $"Không thể phê duyệt booking ở trạng thái {booking.Status.Name}"
@@ -102,21 +102,6 @@ public sealed class ApproveBooking
 
             string actionVerb = request.IsApproved ? "phê duyệt" : "từ chối";
             return Result.SuccessWithMessage($"Đã {actionVerb} booking thành công");
-        }
-
-        private static bool IsBookingInInvalidStatus(Booking booking)
-        {
-            BookingStatusEnum[] invalidStatuses =
-            [
-                BookingStatusEnum.Approved,
-                BookingStatusEnum.Rejected,
-                BookingStatusEnum.Ongoing,
-                BookingStatusEnum.Completed,
-                BookingStatusEnum.Cancelled,
-                BookingStatusEnum.Expired
-            ];
-
-            return invalidStatuses.Contains(booking.Status.Name.ToEnum());
         }
 
         // Retrieves both the approved and rejected statuses.

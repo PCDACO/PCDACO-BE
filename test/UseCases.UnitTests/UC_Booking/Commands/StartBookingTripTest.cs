@@ -153,14 +153,14 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
             carStatus
         );
 
-        var approvedStatusId = bookingStatuses
-            .First(s => s.Name == BookingStatusEnum.Approved.ToString())
+        var ongoingStatusId = bookingStatuses
+            .First(s => s.Name == BookingStatusEnum.ReadyForPickup.ToString())
             .Id;
         var booking = await TestDataCreateBooking.CreateTestBooking(
             _dbContext,
             driver.Id,
             car.Id,
-            approvedStatusId
+            ongoingStatusId
         );
 
         var handler = new StartBookingTrip.Handler(_dbContext, _currentUser);
@@ -218,14 +218,14 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
             carStatus
         );
 
-        var approvedStatusId = bookingStatuses
-            .First(s => s.Name == BookingStatusEnum.Approved.ToString())
+        var ongoingStatusId = bookingStatuses
+            .First(s => s.Name == BookingStatusEnum.ReadyForPickup.ToString())
             .Id;
         var booking = await TestDataCreateBooking.CreateTestBooking(
             _dbContext,
             driver.Id,
             car.Id,
-            approvedStatusId
+            ongoingStatusId
         );
 
         var handler = new StartBookingTrip.Handler(_dbContext, _currentUser);

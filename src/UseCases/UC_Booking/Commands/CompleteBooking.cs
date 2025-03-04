@@ -57,17 +57,7 @@ public sealed class CompleteBooking
                 );
 
             // Validate current status
-            var invalidStatuses = new[]
-            {
-                BookingStatusEnum.Pending,
-                BookingStatusEnum.Approved,
-                BookingStatusEnum.Rejected,
-                BookingStatusEnum.Completed,
-                BookingStatusEnum.Cancelled,
-                BookingStatusEnum.Expired
-            };
-
-            if (invalidStatuses.Contains(booking.Status.Name.ToEnum()))
+            if (booking.Status.Name != BookingStatusEnum.Ongoing.ToString())
             {
                 return Result.Conflict(
                     $"Không thể phê duyệt booking ở trạng thái {booking.Status.Name}"
