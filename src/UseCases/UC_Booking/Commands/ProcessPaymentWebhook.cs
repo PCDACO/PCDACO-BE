@@ -98,10 +98,6 @@ public sealed class ProcessPaymentWebhook
                 Amount = booking.PlatformFee,
             };
 
-            // Update booking and statistics
-            booking.IsPaid = true;
-            booking.Car.Owner.UserStatistic.TotalEarning += webhookData.amount;
-            booking.Car.CarStatistic.TotalEarning += webhookData.amount;
 
             await context.SaveChangesAsync(cancellationToken);
 

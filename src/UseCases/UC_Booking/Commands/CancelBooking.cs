@@ -22,7 +22,6 @@ public sealed class CancelBooking
             var booking = await context
                 .Bookings.Include(x => x.Status)
                 .Include(x => x.Car)
-                .ThenInclude(x => x.CarStatistic)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
@@ -59,21 +58,6 @@ public sealed class CancelBooking
 
             if (status == null)
                 return Result.NotFound("Không tìm thấy trạng thái phù hợp");
-
-            var userStatistic = await context.UserStatistics.FirstOrDefaultAsync(
-                x => x.UserId == currentUser.User.Id,
-                cancellationToken
-            );
-
-            if (userStatistic == null)
-                return Result.NotFound("Không tìm thấy thông tin thống kê của user");
-
-            // TODO: if booking is approve, set car status from rented to available
-
-            // Update car statistic
-            booking.StatusId = status.Id;
-            booking.Car.CarStatistic.TotalCancelled += 1;
-            userStatistic.TotalCancelled += 1;
 
             await context.SaveChangesAsync(cancellationToken);
 

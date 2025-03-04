@@ -40,7 +40,6 @@ public sealed class ProcessBookingPayment
             var booking = await context
                 .Bookings.Include(x => x.Status)
                 .Include(x => x.Car)
-                .ThenInclude(x => x.CarStatistic)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
