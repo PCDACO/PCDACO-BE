@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Domain.Constants.EntityNames;
 using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +23,7 @@ public sealed class CancelBooking
             var booking = await context
                 .Bookings.Include(x => x.Status)
                 .Include(x => x.Car)
-                .ThenInclude(x => x.CarStatistic)
+                .ThenInclude(c => c.CarStatus)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
@@ -60,21 +61,20 @@ public sealed class CancelBooking
             if (status == null)
                 return Result.NotFound("Không tìm thấy trạng thái phù hợp");
 
-            var userStatistic = await context.UserStatistics.FirstOrDefaultAsync(
-                x => x.UserId == currentUser.User.Id,
-                cancellationToken
-            );
+            var carStatus = await context
+                .CarStatuses.AsNoTracking()
+                .FirstOrDefaultAsync(
+                    x => EF.Functions.ILike(x.Name, CarStatusNames.Available),
+                    cancellationToken
+                );
 
-            if (userStatistic == null)
-                return Result.NotFound("Không tìm thấy thông tin thống kê của user");
+            if (carStatus == null)
+                return Result.NotFound("Không tìm thấy trạng thái xe phù hợp");
 
-            // TODO: if booking is approve, set car status from rented to available
+            if (booking.Status.Name == BookingStatusEnum.Approved.ToString())
+                booking.Car.StatusId = carStatus.Id;
 
-            // Update car statistic
             booking.StatusId = status.Id;
-            booking.Car.CarStatistic.TotalCancelled += 1;
-            userStatistic.TotalCancelled += 1;
-
             await context.SaveChangesAsync(cancellationToken);
 
             return Result.SuccessWithMessage("Đã hủy booking thành công");

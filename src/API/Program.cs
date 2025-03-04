@@ -51,6 +51,7 @@ app.UseHttpsRedirection();
 app.MapHub<LocationHub>("location-hub");
 
 app.UseHangfireDashboard();
+HangfireConfig.RegisterRecurringJob();
 
 app.AddAppConfig();
 app.Run();

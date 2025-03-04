@@ -1,6 +1,7 @@
 using Hangfire;
 using Hangfire.PostgreSql;
 using UseCases.BackgroundServices.Bookings;
+using UseCases.BackgroundServices.Statistics;
 
 namespace API.Utils;
 
@@ -20,7 +21,24 @@ public static class HangfireConfig
         // Register the job service
         services.AddScoped<BookingExpiredJob>();
         services.AddScoped<BookingReminderJob>();
+        services.AddScoped<UpdateCarStatisticsJob>();
+        services.AddScoped<UpdateUserStatisticsJob>();
 
         return services;
+    }
+
+    public static void RegisterRecurringJob()
+    {
+        RecurringJob.AddOrUpdate<UpdateCarStatisticsJob>(
+            "update-car-statistics",
+            job => job.UpdateCarStatistic(),
+            Cron.Hourly
+        );
+
+        RecurringJob.AddOrUpdate<UpdateUserStatisticsJob>(
+            "update-user-statistics",
+            job => job.UpdateUserStatistic(),
+            Cron.Hourly
+        );
     }
 }
