@@ -19,7 +19,10 @@ public class ConfirmCarReturnEndpoint : ICarterModule
 
     private static async Task<IResult> Handle(ISender sender, Guid id)
     {
-        Result result = await sender.Send(new ConfirmCarReturn.Command(id));
+        Result<ConfirmCarReturn.Response> result = await sender.Send(
+            new ConfirmCarReturn.Command(id)
+        );
+
         return result.MapResult();
     }
 }
