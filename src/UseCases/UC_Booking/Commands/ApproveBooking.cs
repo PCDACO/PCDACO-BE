@@ -8,7 +8,6 @@ using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
-using UseCases.BackgroundServices.Bookings;
 using UseCases.DTOs;
 using UseCases.Services.EmailService;
 
@@ -22,7 +21,6 @@ public sealed class ApproveBooking
         IAppDBContext context,
         IEmailService emailService,
         IBackgroundJobClient backgroundJobClient,
-        BookingExpiredJob bookingExpiredJob,
         CurrentUser currentUser
     ) : IRequestHandler<Command, Result>
     {
@@ -80,6 +78,14 @@ public sealed class ApproveBooking
                 // Update contract with Owner's signature.
                 await UpdateContractForApprovalAsync(booking, cancellationToken);
             }
+            else
+            {
+                // If booking is rejected, provide a full refund
+                booking.StatusId = rejectedStatus.Id;
+                booking.IsRefund = true;
+                booking.RefundAmount = booking.TotalAmount;
+                booking.Note = "Chủ xe từ chối yêu cầu đặt xe - Hoàn trả 100%";
+            }
 
             booking.StatusId = request.IsApproved ? approvedStatus.Id : rejectedStatus.Id;
             await context.SaveChangesAsync(cancellationToken);
@@ -97,8 +103,6 @@ public sealed class ApproveBooking
                         booking.TotalAmount
                     )
             );
-
-            await bookingExpiredJob.ExpireOldBookings(booking.Id);
 
             string actionVerb = request.IsApproved ? "phê duyệt" : "từ chối";
             return Result.SuccessWithMessage($"Đã {actionVerb} booking thành công");
@@ -144,7 +148,8 @@ public sealed class ApproveBooking
             CancellationToken cancellationToken
         )
         {
-            await context
+            // First get the overlapping bookings to access their TotalAmount
+            var overlappingBookings = await context
                 .Bookings.Where(b =>
                     b.CarId == booking.CarId
                     && b.StartTime < booking.EndTime
@@ -152,12 +157,39 @@ public sealed class ApproveBooking
                     && b.Status.Name == BookingStatusEnum.Pending.ToString()
                     && b.Id != booking.Id
                 )
-                .ExecuteUpdateAsync(
-                    b =>
-                        b.SetProperty(b => b.StatusId, rejectedStatus.Id)
-                            .SetProperty(b => b.Note, "Đã có booking khác trùng lịch"),
-                    cancellationToken: cancellationToken
-                );
+                .ToListAsync(cancellationToken);
+
+            foreach (var overlappingBooking in overlappingBookings)
+            {
+                overlappingBooking.StatusId = rejectedStatus.Id;
+                overlappingBooking.IsRefund = true;
+                overlappingBooking.RefundAmount = overlappingBooking.TotalAmount; // Full refund
+                overlappingBooking.Note = "Đã có booking khác trùng lịch  - Hoàn trả 100%";
+            }
+
+            // Save changes if there are overlapping bookings
+            if (overlappingBookings.Any())
+            {
+                await context.SaveChangesAsync(cancellationToken);
+
+                // Optionally, send emails to drivers whose bookings were rejected
+                foreach (var overlappingBooking in overlappingBookings)
+                {
+                    // Enqueue email notification
+                    backgroundJobClient.Enqueue(
+                        () =>
+                            SendEmail(
+                                false, // IsApproved
+                                overlappingBooking.User.Name,
+                                overlappingBooking.User.Email,
+                                overlappingBooking.Car.Model.Name,
+                                overlappingBooking.StartTime,
+                                overlappingBooking.EndTime,
+                                overlappingBooking.TotalAmount
+                            )
+                    );
+                }
+            }
         }
 
         // If the contract exists, update it with the owner's signature and mark as confirmed.
