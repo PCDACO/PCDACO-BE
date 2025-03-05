@@ -289,7 +289,9 @@ public sealed class CreateBooking
                 .NotEmpty()
                 .WithMessage("Phải chọn thời gian kết thúc thuê")
                 .GreaterThan(x => x.StartTime)
-                .WithMessage("Thời gian kết thúc thuê phải sau thời gian bắt đầu thuê");
+                .WithMessage("Thời gian kết thúc thuê phải sau thời gian bắt đầu thuê")
+                .Must((command, endTime) => (endTime - command.StartTime).TotalDays <= 30)
+                .WithMessage("Thời gian thuê không được vượt quá 30 ngày");
         }
     }
 }
