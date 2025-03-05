@@ -1,10 +1,15 @@
 using API;
 using API.Middlewares;
 using API.Utils;
+
 using CloudinaryDotNet;
+
 using dotenv.net;
 
 using Hangfire;
+
+using Serilog;
+using Serilog.Sinks.Grafana.Loki;
 
 using UseCases.Services.SignalR;
 
@@ -26,7 +31,12 @@ builder.Services.AddPayOSService(builder.Configuration);
 builder.Services.AddEmailService(builder.Configuration);
 builder.Services.AddSignalR();
 builder.Services.AddHangFireService(builder.Configuration);
-
+string lokiUrl = builder.Configuration["LOKI_URL"] ?? throw new Exception("Missing LOKI_URL");
+builder.Host.UseSerilog((context, configuration) =>
+{
+    configuration.WriteTo.Console();
+    configuration.WriteTo.GrafanaLoki(lokiUrl);
+});
 var app = builder.Build();
 
 app.UseStaticFiles();
