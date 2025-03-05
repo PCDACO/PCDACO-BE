@@ -9,31 +9,19 @@ using UseCases.Services.EmailService;
 
 namespace UseCases.BackgroundServices.Bookings;
 
-public class BookingExpiredJob(
-    IAppDBContext context,
-    IEmailService emailService,
-    IBackgroundJobClient backgroundJobClient
-)
+public class BookingExpiredJob(IAppDBContext context, IEmailService emailService)
 {
-    private const int AUTO_EXPIRE_APPROVED_HOURS = 24;
+    private const decimal REFUND_PERCENTAGE = 0.5m;
 
-    public async Task ExpireOldBookings(Guid bookingId)
+    public async Task ExpireBookingsAutomatically()
     {
-        backgroundJobClient.Schedule(
-            () => ExpireApprovedBookings(bookingId),
-            TimeSpan.FromHours(AUTO_EXPIRE_APPROVED_HOURS)
-        );
+        await ExpireReadyForPickupBookings();
 
         await UpdateCarsToAvailable();
     }
 
-    public async Task ExpireApprovedBookings(Guid bookingId)
+    private async Task ExpireReadyForPickupBookings()
     {
-        var booking = await GetBookingIfApproved(bookingId);
-        if (booking == null)
-            return;
-
-        // Get the expired status
         var expiredStatus = await context.BookingStatuses.FirstOrDefaultAsync(s =>
             s.Name == BookingStatusEnum.Expired.ToString()
         );
@@ -41,12 +29,42 @@ public class BookingExpiredJob(
         if (expiredStatus == null)
             return;
 
-        booking.StatusId = expiredStatus.Id;
-        booking.Note = "Hết hạn tự động do bạn không nhận xe đúng hạn";
+        // Find all ReadyForPickup bookings that started more than 24 hours ago
+        var expiredBookings = await context
+            .Bookings.Include(b => b.Status)
+            .Include(b => b.Car)
+            .ThenInclude(c => c.Owner)
+            .Include(b => b.User)
+            .Where(b =>
+                b.Status.Name == BookingStatusEnum.ReadyForPickup.ToString()
+                && b.StartTime < DateTimeOffset.UtcNow.AddHours(-24)
+            )
+            .ToListAsync();
 
+        if (!expiredBookings.Any())
+            return;
+
+        foreach (var booking in expiredBookings)
+        {
+            // Mark as expired
+            booking.StatusId = expiredStatus.Id;
+            booking.Note = "Hết hạn tự động do không nhận xe đúng hạn";
+
+            booking.IsRefund = true;
+            booking.RefundAmount = booking.TotalAmount * REFUND_PERCENTAGE;
+
+            // Send notification email
+            await SendExpirationEmail(booking);
+        }
+
+        // Save all changes
         await context.SaveChangesAsync(CancellationToken.None);
+    }
 
-        var driverEmailTempalte = DriverExpiredBookingTemplate.Template(
+    private async Task SendExpirationEmail(Booking booking)
+    {
+        // TODO: add refund amount to the email template
+        var driverEmailTemplate = DriverExpiredBookingTemplate.Template(
             booking.User.Name,
             booking.Car.Model.Name,
             booking.StartTime,
@@ -54,24 +72,14 @@ public class BookingExpiredJob(
             booking.TotalAmount
         );
 
-        // Notify driver about expiration
-        await emailService.SendEmailAsync(
-            booking.User.Email,
-            "Thông báo: Yêu cầu đặt xe của bạn đã hết hạn",
-            driverEmailTempalte
+        BackgroundJob.Enqueue(
+            () =>
+                emailService.SendEmailAsync(
+                    booking.User.Email,
+                    "Thông báo: Yêu cầu đặt xe của bạn đã hết hạn - Hoàn trả 50% tiền đặt cọc",
+                    driverEmailTemplate
+                )
         );
-    }
-
-    private async Task<Booking?> GetBookingIfApproved(Guid bookingId)
-    {
-        return await context
-            .Bookings.Include(b => b.Status)
-            .Include(b => b.Car)
-            .ThenInclude(c => c.Owner)
-            .Include(b => b.User)
-            .FirstOrDefaultAsync(b =>
-                b.Id == bookingId && b.Status.Name == BookingStatusEnum.Approved.ToString()
-            );
     }
 
     private async Task UpdateCarsToAvailable()

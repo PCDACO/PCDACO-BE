@@ -40,5 +40,11 @@ public static class HangfireConfig
             job => job.UpdateUserStatistic(),
             Cron.Hourly
         );
+
+        RecurringJob.AddOrUpdate<BookingExpiredJob>(
+            "expire-bookings-automatically",
+            job => job.ExpireBookingsAutomatically(),
+            Cron.Daily
+        );
     }
 }
