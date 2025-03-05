@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations.Schema;
-
 using Domain.Shared;
 
 namespace Domain.Entities;
@@ -21,11 +20,17 @@ public class Booking : BaseEntity
     public required string Note { get; set; }
     public bool IsCarReturned { get; set; } = true;
     public bool IsPaid { get; set; } = false;
+    public bool IsRefund { get; set; } = false;
+    public decimal? RefundAmount { get; set; } = null;
+    public DateTimeOffset? RefundDate { get; set; } = null;
+
     // Navigation properties
     [ForeignKey(nameof(UserId))]
     public User User { get; set; } = null!;
+
     [ForeignKey(nameof(CarId))]
     public Car Car { get; set; } = null!;
+
     [ForeignKey(nameof(StatusId))]
     public BookingStatus Status { get; set; } = null!;
     public Contract Contract { get; set; } = null!;
@@ -34,4 +39,16 @@ public class Booking : BaseEntity
     public ICollection<TripTracking> TripTrackings { get; set; } = [];
     public ICollection<Feedback> Feedbacks { get; set; } = [];
     public ICollection<Transaction> Transactions { get; set; } = [];
+
+    public decimal CalculateRefundAmount()
+    {
+        var daysUntilStart = (StartTime - DateTimeOffset.UtcNow).TotalDays;
+
+        if (daysUntilStart >= 3)
+            return TotalAmount; // 100% refund
+        else if (daysUntilStart >= 2)
+            return TotalAmount * 0.5M; // 50% refund
+        else
+            return 0; // No refund
+    }
 }
