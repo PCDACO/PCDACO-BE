@@ -42,7 +42,7 @@ builder.Host.UseSerilog((context, configuration) =>
     configuration.WriteTo.Console();
     configuration.WriteTo.Seq(
         serverUrl: seqUrl
-    ).MinimumLevel.Information();
+    ).MinimumLevel.Warning();
 });
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(r => r.AddService("API"))
