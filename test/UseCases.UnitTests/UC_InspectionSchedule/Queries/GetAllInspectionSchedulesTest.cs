@@ -113,6 +113,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
                 InspectionAddress = "123 Tech1 St",
                 InspectionDate = DateTimeOffset.UtcNow,
                 Note = "Technician 1 schedule",
+                CreatedBy = consultant.Id,
             },
             new InspectionSchedule
             {
@@ -122,6 +123,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
                 InspectionAddress = "456 Tech2 St",
                 InspectionDate = DateTimeOffset.UtcNow,
                 Note = "Technician 2 schedule",
+                CreatedBy = consultant.Id,
             },
         };
         await _dbContext.InspectionSchedules.AddRangeAsync(schedules);
@@ -182,6 +184,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
                 InspectionAddress = "123 January St",
                 InspectionDate = januaryDate,
                 Note = "January 2023 schedule",
+                CreatedBy = consultant.Id,
             },
             new InspectionSchedule
             {
@@ -191,6 +194,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
                 InspectionAddress = "456 February St",
                 InspectionDate = februaryDate,
                 Note = "February 2023 schedule",
+                CreatedBy = consultant.Id,
             },
             new InspectionSchedule
             {
@@ -200,6 +204,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
                 InspectionAddress = "789 January Next Year St",
                 InspectionDate = nextYearDate,
                 Note = "January 2024 schedule",
+                CreatedBy = consultant.Id,
             },
         };
         await _dbContext.InspectionSchedules.AddRangeAsync(schedules);
@@ -273,6 +278,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
                 InspectionAddress = "123 Current Year St",
                 InspectionDate = currentYearDate,
                 Note = "Current year schedule",
+                CreatedBy = consultant.Id,
             },
             new InspectionSchedule
             {
@@ -282,6 +288,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
                 InspectionAddress = "456 Last Year St",
                 InspectionDate = lastYearDate,
                 Note = "Last year schedule",
+                CreatedBy = consultant.Id,
             },
         };
         await _dbContext.InspectionSchedules.AddRangeAsync(schedules);
@@ -340,6 +347,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
                 InspectionAddress = $"123 Main St {i + 1}",
                 InspectionDate = DateTimeOffset.UtcNow.AddDays(i),
                 Note = $"Schedule {i + 1}",
+                CreatedBy = consultant.Id,
             };
             schedules.Add(schedule);
         }

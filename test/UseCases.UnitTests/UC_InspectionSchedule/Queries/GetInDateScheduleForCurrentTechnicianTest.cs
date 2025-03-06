@@ -83,6 +83,12 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
         public async Task Handle_WithSchedules_ReturnsAllTodaySchedules()
         {
             // Arrange
+            var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+                _dbContext,
+                "Consultant"
+            );
+            var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+
             var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
                 _dbContext,
                 "Technician"
@@ -148,6 +154,7 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
                     InspectionStatusId = pendingStatus.Id,
                     InspectionAddress = $"123 Main St {i + 1}",
                     InspectionDate = today,
+                    CreatedBy = consultant.Id,
                 };
                 schedules.Add(schedule);
             }
@@ -161,6 +168,7 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
                 InspectionStatusId = pendingStatus.Id,
                 InspectionAddress = "123 Future St",
                 InspectionDate = today.AddDays(1),
+                CreatedBy = consultant.Id,
             };
             await _dbContext.InspectionSchedules.AddAsync(tomorrowSchedule);
 
@@ -207,6 +215,12 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
         public async Task Handle_NonPendingSchedules_AreExcluded()
         {
             // Arrange
+            var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+                _dbContext,
+                "Consultant"
+            );
+            var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+
             var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
                 _dbContext,
                 "Technician"
@@ -267,6 +281,7 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
                 InspectionStatusId = pendingStatus.Id,
                 InspectionAddress = "123 Pending St",
                 InspectionDate = today,
+                CreatedBy = consultant.Id,
             };
 
             var approvedSchedule = new InspectionSchedule
@@ -276,6 +291,7 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
                 InspectionStatusId = approvedStatus.Id,
                 InspectionAddress = "123 Approved St",
                 InspectionDate = today,
+                CreatedBy = consultant.Id,
             };
 
             await _dbContext.InspectionSchedules.AddRangeAsync([pendingSchedule, approvedSchedule]);

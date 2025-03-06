@@ -281,6 +281,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         Assert.Equal(pendingStatus.Id, schedule.InspectionStatusId);
         Assert.Equal(inspectionDate, schedule.InspectionDate);
         Assert.Equal("123 Main St", schedule.InspectionAddress);
+        Assert.Equal(consultant.Id, schedule.CreatedBy);
     }
 
     private async Task<Car> CreateTestCar(Guid ownerId, string status)

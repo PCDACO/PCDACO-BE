@@ -127,6 +127,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             InspectionStatusId = approvedStatus.Id,
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
+            CreatedBy = consultant.Id,
         };
         await _dbContext.InspectionSchedules.AddAsync(schedule);
         await _dbContext.SaveChangesAsync();
@@ -202,6 +203,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             InspectionStatusId = pendingStatus.Id,
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
+            CreatedBy = consultant.Id,
         };
         await _dbContext.InspectionSchedules.AddAsync(schedule);
         await _dbContext.SaveChangesAsync();
@@ -277,6 +279,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             InspectionStatusId = pendingStatus.Id,
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
+            CreatedBy = consultant.Id,
         };
         await _dbContext.InspectionSchedules.AddAsync(originalSchedule);
         await _dbContext.SaveChangesAsync();
