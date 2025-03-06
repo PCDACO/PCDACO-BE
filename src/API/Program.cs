@@ -9,7 +9,6 @@ using dotenv.net;
 using Hangfire;
 
 using Serilog;
-using Serilog.Sinks.Grafana.Loki;
 
 using UseCases.Services.SignalR;
 
@@ -22,7 +21,7 @@ builder.Services.AddSwaggerGen();
 
 DotEnv.Load(options: new DotEnvOptions(probeForEnv: true));
 builder.Configuration.AddEnvironmentVariables();
-Cloudinary cloudinary = new Cloudinary(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
+Cloudinary cloudinary = new(Environment.GetEnvironmentVariable("CLOUDINARY_URL"));
 cloudinary.Api.Secure = true;
 
 builder.Services.AddSingleton(cloudinary);
@@ -31,11 +30,12 @@ builder.Services.AddPayOSService(builder.Configuration);
 builder.Services.AddEmailService(builder.Configuration);
 builder.Services.AddSignalR();
 builder.Services.AddHangFireService(builder.Configuration);
-string lokiUrl = builder.Configuration["LOKI_URL"] ?? throw new Exception("Missing LOKI_URL");
+// ADD SEQ
+string seqUrl = builder.Configuration["SEQ_URL"] ?? throw new Exception("Missing SEQ_URL");
 builder.Host.UseSerilog((context, configuration) =>
 {
     configuration.WriteTo.Console();
-    configuration.WriteTo.GrafanaLoki(lokiUrl);
+    configuration.WriteTo.Seq(seqUrl).MinimumLevel.Information();
 });
 var app = builder.Build();
 
