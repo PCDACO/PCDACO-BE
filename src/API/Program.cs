@@ -42,7 +42,7 @@ builder.Host.UseSerilog((context, configuration) =>
     configuration.WriteTo.Console();
     configuration.WriteTo.Seq(
         serverUrl: seqUrl
-    ).MinimumLevel.Warning();
+    ).MinimumLevel.Information();
 });
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(r => r.AddService("API"))
@@ -50,7 +50,6 @@ builder.Services.AddOpenTelemetry()
     {
         tracing.AddHttpClientInstrumentation()
             .AddAspNetCoreInstrumentation();
-
         tracing.AddOtlpExporter();
     });
 var app = builder.Build();
