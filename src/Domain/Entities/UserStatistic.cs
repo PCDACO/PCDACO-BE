@@ -13,6 +13,10 @@ public class UserStatistic : BaseEntity
     public int TotalCancelled { get; set; } = 0;
     public decimal TotalEarning { get; set; } = 0;
     public decimal AverageRating { get; set; } = 0;
+    public int TotalCreatedInspectionSchedule { get; set; } = 0;
+    public int TotalApprovedInspectionSchedule { get; set; } = 0;
+    public int TotalRejectedInspectionSchedule { get; set; } = 0;
+
     // Navigation properties
     [ForeignKey(nameof(UserId))]
     public User User { get; set; } = null!;

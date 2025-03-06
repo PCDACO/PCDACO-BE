@@ -43,7 +43,9 @@ public class InspectionScheduleGenerator
     public static InspectionSchedule[] Execute(
         Car[] cars,
         InspectionStatus[] statuses,
-        CarStatus[] carStatuses
+        CarStatus[] carStatuses,
+        User[] users,
+        UserRole[] roles
     )
     {
         // Find the pending status
@@ -60,6 +62,17 @@ public class InspectionScheduleGenerator
             return Array.Empty<InspectionSchedule>();
         }
 
+        //Find the consultant role
+        var consultantRole = roles.First(r => r.Name.ToLower() == "consultant");
+
+        // Get all consultants
+        var consultants = users.Where(u => u.RoleId == consultantRole.Id).ToArray();
+
+        if (pendingCars.Length == 0 || consultants.Length == 0)
+        {
+            return Array.Empty<InspectionSchedule>();
+        }
+
         // Generate 15 schedules for today
         var today = DateTimeOffset.UtcNow;
         var schedules = new List<InspectionSchedule>();
@@ -69,6 +82,9 @@ public class InspectionScheduleGenerator
             // Cycle through pending cars if there are fewer than 15
             var car = pendingCars[i % pendingCars.Length];
 
+            // Randomly pick a consultant
+            var consultant = _faker.PickRandom(consultants);
+
             var schedule = new InspectionSchedule
             {
                 TechnicianId = Guid.Parse("01951eae-453b-7ad9-949f-63dd30b592e1"),
@@ -77,6 +93,7 @@ public class InspectionScheduleGenerator
                 InspectionAddress = GenerateVietnameseAddress(),
                 InspectionDate = today.AddHours(9 + i), // Schedule from 9 AM with 1 hour intervals
                 Note = $"Inspection #{i + 1} for {car.Id}",
+                CreatedBy = consultant.Id,
             };
 
             schedules.Add(schedule);

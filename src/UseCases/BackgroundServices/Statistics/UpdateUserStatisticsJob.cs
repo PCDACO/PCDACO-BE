@@ -70,6 +70,31 @@ public class UpdateUserStatisticsJob(IAppDBContext context)
                             .Where(f => f.Type == FeedbackTypeEnum.Owner)
                             .Average(f => (decimal?)f.Point) ?? 0
                 )
+                .SetProperty(
+                    us => us.TotalCreatedInspectionSchedule,
+                    us =>
+                        context.InspectionSchedules.Count(s =>
+                            s.CreatedBy == us.UserId && !s.IsDeleted
+                        )
+                )
+                .SetProperty(
+                    us => us.TotalApprovedInspectionSchedule,
+                    us =>
+                        context.InspectionSchedules.Count(s =>
+                            s.TechnicianId == us.UserId
+                            && s.InspectionStatus.Name == InspectionStatusNames.Approved.ToString()
+                            && !s.IsDeleted
+                        )
+                )
+                .SetProperty(
+                    us => us.TotalRejectedInspectionSchedule,
+                    us =>
+                        context.InspectionSchedules.Count(s =>
+                            s.TechnicianId == us.UserId
+                            && s.InspectionStatus.Name == InspectionStatusNames.Rejected.ToString()
+                            && !s.IsDeleted
+                        )
+                )
         );
     }
 }

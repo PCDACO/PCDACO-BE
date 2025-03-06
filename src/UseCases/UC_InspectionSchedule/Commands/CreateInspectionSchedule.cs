@@ -75,6 +75,7 @@ public sealed class CreateInspectionSchedule
                 InspectionStatusId = pendingStatus.Id,
                 InspectionAddress = request.InspectionAddress,
                 InspectionDate = request.InspectionDate,
+                CreatedBy = currentUser.User.Id,
             };
 
             await context.InspectionSchedules.AddAsync(schedule, cancellationToken);

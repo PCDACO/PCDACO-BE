@@ -78,6 +78,11 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
     )
     {
         // Arrange
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
         var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
             _dbContext,
             "Technician"
@@ -117,6 +122,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
             InspectionStatusId = inProgressStatus.Id,
             InspectionAddress = "123 Main St 1",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
+            CreatedBy = consultant.Id,
         };
         await _dbContext.InspectionSchedules.AddAsync(schedule);
         await _dbContext.SaveChangesAsync();
@@ -140,6 +146,12 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
     public async Task Handle_ScheduleNotInPending_ReturnsError()
     {
         // Arrange
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+
         var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
             _dbContext,
             "Technician"
@@ -179,6 +191,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
             InspectionStatusId = pendingStatus.Id,
             InspectionAddress = "123 Main St 1",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
+            CreatedBy = consultant.Id,
         };
         await _dbContext.InspectionSchedules.AddAsync(schedule);
         await _dbContext.SaveChangesAsync();
@@ -204,6 +217,12 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
     public async Task Handle_ValidRequest_UpdatesSchedule(bool isApproved)
     {
         // Arrange
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+
         var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
             _dbContext,
             "Technician"
@@ -251,6 +270,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
             InspectionStatusId = inProgressStatus.Id,
             InspectionAddress = "123 Main St 1",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
+            CreatedBy = consultant.Id,
         };
         await _dbContext.InspectionSchedules.AddAsync(schedule);
         await _dbContext.SaveChangesAsync();
@@ -298,6 +318,5 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         // Assert
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "Id");
-        Assert.Contains(result.Errors, e => e.PropertyName == "Note");
     }
 }

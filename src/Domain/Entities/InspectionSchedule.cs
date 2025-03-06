@@ -12,8 +12,10 @@ public class InspectionSchedule : BaseEntity
     public string Note { get; set; } = string.Empty;
     public required string InspectionAddress { get; set; }
     public required DateTimeOffset InspectionDate { get; set; }
+    public required Guid CreatedBy { get; set; }
 
     // Navigation properties
+    [InverseProperty(nameof(User.TechnicianInspectionSchedules))]
     [ForeignKey(nameof(TechnicianId))]
     public User Technician { get; set; } = null!;
 
@@ -22,4 +24,8 @@ public class InspectionSchedule : BaseEntity
 
     [ForeignKey(nameof(InspectionStatusId))]
     public InspectionStatus InspectionStatus { get; set; } = null!;
+
+    [InverseProperty(nameof(User.ConsultantInspectionSchedules))]
+    [ForeignKey(nameof(CreatedBy))]
+    public User Consultant { get; set; } = null!;
 }
