@@ -74,8 +74,6 @@ public sealed class ApproveInspectionSchedule
         {
             RuleFor(x => x.Id).NotEmpty().WithMessage("Id lịch kiểm định không được để trống");
 
-            RuleFor(x => x.Note).NotEmpty().WithMessage("Ghi chú không được để trống");
-
             RuleFor(x => x.IsApproved)
                 .NotNull()
                 .WithMessage("Trạng thái phê duyệt không được để trống");
