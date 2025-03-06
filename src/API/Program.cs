@@ -8,8 +8,6 @@ using dotenv.net;
 
 using Hangfire;
 
-using Microsoft.Extensions.Options;
-
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
@@ -39,8 +37,7 @@ builder.Services.AddHangFireService(builder.Configuration);
 string seqUrl = builder.Configuration["SEQ_URL"] ?? throw new Exception("Missing SEQ_URL");
 builder.Host.UseSerilog((context, configuration) =>
 {
-    configuration.WriteTo.Console();
-    configuration.WriteTo.Seq(seqUrl).MinimumLevel.Information();
+    configuration.WriteTo.Console().MinimumLevel.Warning();
 });
 builder.Services.AddOpenTelemetry()
     .ConfigureResource(r => r.AddService("API"))
