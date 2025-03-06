@@ -69,7 +69,9 @@ public class UpdateDatabase
         InspectionSchedule[] inspectionSchedules = InspectionScheduleGenerator.Execute(
             cars,
             inspectionStatuses,
-            carStatuses
+            carStatuses,
+            users,
+            userRoles
         );
         List<Task> tasks = [];
         tasks.Add(context.AddRangeAsync(withdrawalRequestStatuses));
