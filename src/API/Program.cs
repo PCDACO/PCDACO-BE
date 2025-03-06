@@ -8,6 +8,11 @@ using dotenv.net;
 
 using Hangfire;
 
+using Microsoft.Extensions.Options;
+
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
+
 using Serilog;
 
 using UseCases.Services.SignalR;
@@ -37,6 +42,15 @@ builder.Host.UseSerilog((context, configuration) =>
     configuration.WriteTo.Console();
     configuration.WriteTo.Seq(seqUrl).MinimumLevel.Information();
 });
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService("API"))
+    .WithTracing(tracing =>
+    {
+        tracing.AddHttpClientInstrumentation()
+            .AddAspNetCoreInstrumentation();
+
+        tracing.AddOtlpExporter();
+    });
 var app = builder.Build();
 
 app.UseStaticFiles();
@@ -56,6 +70,7 @@ await UpdateDatabase.Execute(app);
 app.UseAuthentication();
 app.UseMiddleware<AuthMiddleware>();
 app.UseAuthorization();
+app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 
 app.MapHub<LocationHub>("location-hub");
