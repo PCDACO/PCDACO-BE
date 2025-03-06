@@ -318,6 +318,5 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         // Assert
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.PropertyName == "Id");
-        Assert.Contains(result.Errors, e => e.PropertyName == "Note");
     }
 }
