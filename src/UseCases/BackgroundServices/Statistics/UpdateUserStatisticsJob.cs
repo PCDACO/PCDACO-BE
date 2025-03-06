@@ -71,6 +71,13 @@ public class UpdateUserStatisticsJob(IAppDBContext context)
                             .Average(f => (decimal?)f.Point) ?? 0
                 )
                 .SetProperty(
+                    us => us.TotalCreatedInspectionSchedule,
+                    us =>
+                        context.InspectionSchedules.Count(s =>
+                            s.CreatedBy == us.UserId && !s.IsDeleted
+                        )
+                )
+                .SetProperty(
                     us => us.TotalApprovedInspectionSchedule,
                     us =>
                         context.InspectionSchedules.Count(s =>
