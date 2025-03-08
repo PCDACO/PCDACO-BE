@@ -1,7 +1,6 @@
 using Ardalis.Result;
 
 using Domain.Constants;
-using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Shared;
 
@@ -27,7 +26,8 @@ public class GetCars
         Guid? FuelTypes,
         Guid? TransmissionTypes,
         Guid? LastCarId,
-        int Limit
+        int Limit,
+        string Keyword
     ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
@@ -141,6 +141,7 @@ public class GetCars
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .Where(c => !c.IsDeleted)
                 .Where(c => EF.Functions.ILike(c.CarStatus.Name, $"%Available%"))
+                .Where(c => EF.Functions.ILike(c.Model.Name, $"%{request.Keyword}%"))
                 .Where(c => request.Model == null || c.ModelId == request.Model)
                 .Where(c =>
                     request.Amenities == null || request.Amenities.Length == 0
@@ -167,7 +168,7 @@ public class GetCars
                 .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point))
                 .ThenByDescending(c => c.Id);
             int count = await gettingCarQuery.CountAsync(cancellationToken);
-            List<Car> carResult = await gettingCarQuery.ToListAsync(cancellationToken);
+            List<Car> carResult = await gettingCarQuery.Take(request.Limit).ToListAsync(cancellationToken);
             return Result.Success(
                 OffsetPaginatedResponse<Response>.Map(
                     (
