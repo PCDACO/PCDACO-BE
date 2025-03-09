@@ -31,6 +31,7 @@ public class ResponseMessages
 
     // CAR GPS
     public const string CarGPSIsExisted = "Thiết bị GPS này đang được sử dụng";
+
     // DEVICE STATUS
     public const string DeviceStatusNotFound = "Không tìm thấy trạng thái thiết bị";
 
@@ -59,6 +60,9 @@ public class ResponseMessages
         "Chỉ có thể cập nhật lịch kiểm định đang chờ duyệt";
     public const string OnlyUpdateInProgressInspectionSchedule =
         "Chỉ có thể duyệt lịch kiểm định đang được tiến hành";
+
+    public const string CannotDeleteScheduleHasInspectionDateLessThen1DayFromNow =
+        "Không thể xóa lịch kiểm định có ngày kiểm định cách ngày hiện tại ít hơn 1 ngày";
 
     // Inspection Statuses
     public const string InspectionStatusNotFound = "Không tìm thấy trạng thái kiểm định";
