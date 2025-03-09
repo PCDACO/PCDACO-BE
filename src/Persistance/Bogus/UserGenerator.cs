@@ -44,6 +44,15 @@ public class UserGenerator
             Address = "480/59A, Đường Bình Quới, Phường 28, Quận Bình Thạnh",
             RoleId = Guid.Parse( "01951e20-ab3f-722f-aceb-3485c166e8cf"),
         },
+        new(){
+            Id = Guid.Parse("01957a2a-27ca-7315-990e-71e56af48bfa"),
+            Name="Trung Anh Driver",
+            Email="anhthtse151299@gmail.com",
+            Password = "@Trunganh123".HashString(),
+            Phone = "0918516221",
+            Address = "480/59A, Đường Bình Quới, Phường 28, Quận Bình Thạnh",
+            RoleId = Guid.Parse( "01951e20-ab3f-722f-aceb-3485c166e8cf"),
+        },
         // Owner
         new(){
             Id = Guid.Parse("01951eae-12a7-756d-a8d5-bb1ee525d7b5"),
@@ -51,6 +60,15 @@ public class UserGenerator
             Email="thinhmusicion@gmail.com",
             Password = "Ph@mDucThinh25102003".HashString(),
             Phone = "0877344076",
+            Address = "312, Đường Xô Viết Nghệ Tĩnh, Phường 25, Quận Bình Thạnh",
+            RoleId = Guid.Parse("01951e20-7a6e-7106-a6f3-148b63f52149"),
+        },
+        new(){
+            Id = Guid.Parse("01957a2a-4e2e-73a3-ac6a-1dfa84e48520"),
+            Name="Trung Anh Owner",
+            Email="anhthtservice@gmail.com",
+            Password = "@Trunganh123".HashString(),
+            Phone = "0961790276",
             Address = "312, Đường Xô Viết Nghệ Tĩnh, Phường 25, Quận Bình Thạnh",
             RoleId = Guid.Parse("01951e20-7a6e-7106-a6f3-148b63f52149"),
         },
