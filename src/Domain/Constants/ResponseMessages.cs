@@ -60,7 +60,8 @@ public class ResponseMessages
         "Chỉ có thể cập nhật lịch kiểm định đang chờ duyệt";
     public const string OnlyUpdateInProgressInspectionSchedule =
         "Chỉ có thể duyệt lịch kiểm định đang được tiến hành";
-
+    public const string OnlyDeletePendingInspectionSchedule =
+        "Chỉ có thể xóa lịch kiểm định đang chờ duyệt";
     public const string CannotDeleteScheduleHasInspectionDateLessThen1DayFromNow =
         "Không thể xóa lịch kiểm định có ngày kiểm định cách ngày hiện tại ít hơn 1 ngày";
 
