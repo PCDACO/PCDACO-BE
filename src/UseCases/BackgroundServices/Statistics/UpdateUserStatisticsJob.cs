@@ -9,7 +9,10 @@ public class UpdateUserStatisticsJob(IAppDBContext context)
 {
     public async Task UpdateUserStatistic()
     {
-        await context.UserStatistics.ExecuteUpdateAsync(setter =>
+        await context.UserStatistics
+        .Include(us => us.User)
+        .ThenInclude(u => u.Role)
+        .ExecuteUpdateAsync(setter =>
             setter
                 .SetProperty(
                     us => us.TotalBooking,
@@ -51,10 +54,12 @@ public class UpdateUserStatisticsJob(IAppDBContext context)
                     us => us.TotalEarning,
                     us =>
                         context
-                            .Bookings.Where(b =>
-                                b.UserId == us.UserId
+                            .Bookings.Include(b => b.Car)
+                            .ThenInclude(c => c.Owner)
+                            .Where(b =>
+                                b.Car.Owner.Id == us.UserId
                                 && b.Status.Name == BookingStatusEnum.Completed.ToString()
-                                && b.User.Role.Name == UserRoleNames.Owner
+                                && us.User.Role.Name == UserRoleNames.Owner
                             )
                             .Sum(b => (decimal?)b.BasePrice) ?? 0
                 )
