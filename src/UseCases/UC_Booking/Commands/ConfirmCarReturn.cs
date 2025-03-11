@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
@@ -53,6 +54,14 @@ public sealed class ConfirmCarReturn
             if (booking.Status.Name != BookingStatusEnum.Completed.ToString())
                 return Result.Conflict("Chỉ có thể xác nhận trả xe khi chuyến đi đã hoàn thành");
 
+            var carStatus = await context.CarStatuses.FirstOrDefaultAsync(
+                x => EF.Functions.ILike(x.Name, CarStatusNames.Maintain),
+                cancellationToken
+            );
+
+            if (carStatus == null)
+                return Result.Error("Không tìm thấy trạng thái xe phù hợp");
+
             booking.IsCarReturned = true;
             booking.ActualReturnTime = DateTimeOffset.UtcNow;
 
@@ -61,6 +70,7 @@ public sealed class ConfirmCarReturn
             booking.ExcessDay = excessDays;
             booking.ExcessDayFee = excessFee;
             booking.TotalAmount = booking.BasePrice + booking.PlatformFee + excessFee;
+            booking.Car.StatusId = carStatus.Id;
 
             var ownerAmount = booking.TotalAmount - booking.PlatformFee;
 
