@@ -6,4 +6,5 @@ public class CarStatusNames
     public const string Rented = "Rented";
     public const string Pending = "Pending";
     public const string Inactive = "Inactive";
+    public const string Maintain = "Maintain";
 }

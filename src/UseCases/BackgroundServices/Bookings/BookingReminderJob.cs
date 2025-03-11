@@ -138,8 +138,12 @@ public class BookingReminderJob(
         // Mark booking as expired and set refund information
         booking.StatusId = expiredStatus.Id;
         booking.Note = "Hết hạn tự động do chủ xe không phản hồi";
-        booking.IsRefund = true;
-        booking.RefundAmount = booking.TotalAmount; // Provide 100% refund
+
+        if (booking.IsPaid)
+        {
+            booking.IsRefund = true;
+            booking.RefundAmount = booking.TotalAmount; // Provide 100% refund
+        }
 
         await context.SaveChangesAsync(CancellationToken.None);
 
@@ -152,12 +156,12 @@ public class BookingReminderJob(
             booking.TotalAmount
         );
 
+        string message = booking.IsPaid
+            ? "Yêu cầu đặt xe của bạn đã hết hạn - Hoàn trả 100% tiền đặt cọc"
+            : "Yêu cầu đặt xe của bạn đã hết hạn";
+
         // Notify driver about expiration and refund
-        await emailService.SendEmailAsync(
-            booking.User.Email,
-            "Thông báo: Yêu cầu đặt xe của bạn đã hết hạn - Hoàn trả 100% tiền đặt cọc",
-            driverEmailTemplate
-        );
+        await emailService.SendEmailAsync(booking.User.Email, message, driverEmailTemplate);
     }
 
     private async Task<Booking?> GetBookingIfPending(Guid bookingId)

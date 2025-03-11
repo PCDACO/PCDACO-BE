@@ -11,11 +11,16 @@ namespace UseCases.BackgroundServices.Bookings;
 
 public class BookingExpiredJob(IAppDBContext context, IEmailService emailService)
 {
-    private const decimal REFUND_PERCENTAGE = 0.5m;
+    private const decimal HALF_REFUND_PERCENTAGE = 0.5m;
+    private const decimal FULL_REFUND_PERCENTAGE = 1m;
+    const decimal ADMIN_REFUND_PERCENTAGE = 0.1m;
+    const decimal OWNER_REFUND_PERCENTAGE = 0.9m;
 
     public async Task ExpireBookingsAutomatically()
     {
         await ExpireReadyForPickupBookings();
+
+        await ExpirePendingOverDateBookings();
 
         await UpdateCarsToAvailable();
     }
@@ -44,24 +49,95 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
         if (!expiredBookings.Any())
             return;
 
+        var admin = await context.Users.FirstOrDefaultAsync(u =>
+            u.Role.Name == UserRoleNames.Admin
+        );
+
+        if (admin == null)
+            return;
+
         foreach (var booking in expiredBookings)
         {
             // Mark as expired
             booking.StatusId = expiredStatus.Id;
             booking.Note = "Hết hạn tự động do không nhận xe đúng hạn";
 
-            booking.IsRefund = true;
-            booking.RefundAmount = booking.TotalAmount * REFUND_PERCENTAGE;
+            if (booking.IsPaid)
+            {
+                booking.IsRefund = true;
+                booking.RefundAmount = booking.TotalAmount * HALF_REFUND_PERCENTAGE;
 
-            // Send notification email
-            await SendExpirationEmail(booking);
+                var adminAmount = booking.RefundAmount * ADMIN_REFUND_PERCENTAGE;
+                var ownerAmount = booking.RefundAmount * OWNER_REFUND_PERCENTAGE;
+
+                admin.Balance -= (decimal)adminAmount;
+                booking.Car.Owner.Balance -= (decimal)ownerAmount;
+                booking.User.Balance += (decimal)booking.RefundAmount;
+            }
+
+            await SendExpirationEmail(booking, booking.IsPaid);
         }
 
-        // Save all changes
         await context.SaveChangesAsync(CancellationToken.None);
     }
 
-    private async Task SendExpirationEmail(Booking booking)
+    private async Task ExpirePendingOverDateBookings()
+    {
+        var expiredStatus = await context.BookingStatuses.FirstOrDefaultAsync(s =>
+            s.Name == BookingStatusEnum.Expired.ToString()
+        );
+
+        if (expiredStatus == null)
+            return;
+
+        // Find all ReadyForPickup bookings that started more than 24 hours ago
+        var expiredBookings = await context
+            .Bookings.Include(b => b.Status)
+            .Include(b => b.Car)
+            .ThenInclude(c => c.Owner)
+            .Include(b => b.User)
+            .Where(b =>
+                b.Status.Name == BookingStatusEnum.Pending.ToString()
+                && b.StartTime < DateTimeOffset.UtcNow
+            )
+            .ToListAsync();
+
+        if (!expiredBookings.Any())
+            return;
+
+        var admin = await context.Users.FirstOrDefaultAsync(u =>
+            u.Role.Name == UserRoleNames.Admin
+        );
+
+        if (admin == null)
+            return;
+
+        foreach (var booking in expiredBookings)
+        {
+            // Mark as expired
+            booking.StatusId = expiredStatus.Id;
+            booking.Note = "Hết hạn tự động do không nhận xe đúng hạn";
+
+            if (booking.IsPaid)
+            {
+                booking.IsRefund = true;
+                booking.RefundAmount = booking.TotalAmount * FULL_REFUND_PERCENTAGE;
+
+                var adminAmount = booking.RefundAmount * ADMIN_REFUND_PERCENTAGE;
+                var ownerAmount = booking.RefundAmount * OWNER_REFUND_PERCENTAGE;
+
+                admin.Balance -= (decimal)adminAmount;
+                booking.Car.Owner.Balance -= (decimal)ownerAmount;
+                booking.User.Balance += (decimal)booking.RefundAmount;
+            }
+
+            await SendExpirationEmail(booking, booking.IsPaid);
+        }
+
+        await context.SaveChangesAsync(CancellationToken.None);
+    }
+
+    private async Task SendExpirationEmail(Booking booking, bool isPaid)
     {
         // TODO: add refund amount to the email template
         var driverEmailTemplate = DriverExpiredBookingTemplate.Template(
@@ -72,13 +148,12 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
             booking.TotalAmount
         );
 
+        string message = isPaid
+            ? "Thông báo: Yêu cầu đặt xe của bạn đã hết hạn  - Hoàn trả 50% tiền đặt cọc"
+            : "Thông báo: Yêu cầu đặt xe của bạn đã hết hạn";
+
         BackgroundJob.Enqueue(
-            () =>
-                emailService.SendEmailAsync(
-                    booking.User.Email,
-                    "Thông báo: Yêu cầu đặt xe của bạn đã hết hạn - Hoàn trả 50% tiền đặt cọc",
-                    driverEmailTemplate
-                )
+            () => emailService.SendEmailAsync(booking.User.Email, message, driverEmailTemplate)
         );
     }
 
