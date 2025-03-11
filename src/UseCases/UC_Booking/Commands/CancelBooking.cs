@@ -74,8 +74,18 @@ public sealed class CancelBooking
             if (booking.Status.Name == BookingStatusEnum.Approved.ToString())
                 booking.Car.StatusId = carStatus.Id;
 
+            decimal refundAmount = booking.CalculateRefundAmount();
+
+            if (refundAmount > 0 && booking.IsPaid)
+            {
+                booking.IsRefund = true;
+                booking.RefundAmount = refundAmount;
+            }
+
             booking.StatusId = status.Id;
             await context.SaveChangesAsync(cancellationToken);
+
+            // TODO: send email to both Owner and Driver
 
             return Result.SuccessWithMessage("Đã hủy booking thành công");
         }

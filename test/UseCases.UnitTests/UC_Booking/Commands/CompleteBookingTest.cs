@@ -16,10 +16,7 @@ namespace UseCases.UnitTests.UC_Booking.Commands;
 public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
-    private readonly TestDataEmailService _emailService = new();
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
-    private readonly IPaymentService _paymentService = new TestDataPaymentService();
-    private readonly IBackgroundJobClient _backgroundJobClient = new BackgroundJobClient();
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
 
     public Task InitializeAsync() => Task.CompletedTask;
@@ -34,13 +31,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new CompleteBooking.Handler(
-            _dbContext,
-            _currentUser,
-            _emailService,
-            _paymentService,
-            _backgroundJobClient
-        );
+        var handler = new CompleteBooking.Handler(_dbContext, _currentUser);
         var command = new CompleteBooking.Command(Guid.NewGuid());
 
         // Act
@@ -59,13 +50,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new CompleteBooking.Handler(
-            _dbContext,
-            _currentUser,
-            _emailService,
-            _paymentService,
-            _backgroundJobClient
-        );
+        var handler = new CompleteBooking.Handler(_dbContext, _currentUser);
         var command = new CompleteBooking.Command(Guid.NewGuid());
 
         // Act
@@ -124,13 +109,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             statusId
         );
 
-        var handler = new CompleteBooking.Handler(
-            _dbContext,
-            _currentUser,
-            _emailService,
-            _paymentService,
-            _backgroundJobClient
-        );
+        var handler = new CompleteBooking.Handler(_dbContext, _currentUser);
         var command = new CompleteBooking.Command(booking.Id);
 
         // Act
@@ -186,13 +165,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             ongoingStatusId
         );
 
-        var handler = new CompleteBooking.Handler(
-            _dbContext,
-            _currentUser,
-            _emailService,
-            _paymentService,
-            _backgroundJobClient
-        );
+        var handler = new CompleteBooking.Handler(_dbContext, _currentUser);
         var command = new CompleteBooking.Command(booking.Id);
 
         // Act
@@ -204,13 +177,9 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         // Verify response structure
         Assert.NotNull(result.Value);
         Assert.Equal(0, result.Value.TotalDistance); // No tracking in test
-        Assert.Equal(0, result.Value.ExcessDays);
-        Assert.Equal(0, result.Value.ExcessFee);
         Assert.Equal(100m, result.Value.BasePrice);
         Assert.Equal(10m, result.Value.PlatformFee);
         Assert.Equal(110m, result.Value.TotalAmount);
-        Assert.Equal("http://mock-checkout-url", result.Value.PaymentUrl);
-        Assert.Equal("mock-qr-code", result.Value.QrCode);
 
         var updatedBooking = await _dbContext
             .Bookings.Include(b => b.Status)
@@ -268,13 +237,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             ongoingStatusId
         );
 
-        var handler = new CompleteBooking.Handler(
-            _dbContext,
-            _currentUser,
-            _emailService,
-            _paymentService,
-            _backgroundJobClient
-        );
+        var handler = new CompleteBooking.Handler(_dbContext, _currentUser);
         var command = new CompleteBooking.Command(booking.Id);
 
         // Act

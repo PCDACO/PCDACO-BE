@@ -8,7 +8,6 @@ using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
-using UseCases.BackgroundServices.Bookings;
 using UseCases.DTOs;
 using UseCases.Services.EmailService;
 
@@ -22,7 +21,6 @@ public sealed class ApproveBooking
         IAppDBContext context,
         IEmailService emailService,
         IBackgroundJobClient backgroundJobClient,
-        BookingExpiredJob bookingExpiredJob,
         CurrentUser currentUser
     ) : IRequestHandler<Command, Result>
     {
@@ -46,7 +44,7 @@ public sealed class ApproveBooking
                 return Result.Forbidden("Bạn không có quyền phê duyệt booking cho xe này!");
 
             // Check if the booking is in a modifiable status.
-            if (IsBookingInInvalidStatus(booking))
+            if (booking.Status.Name != BookingStatusEnum.Pending.ToString())
             {
                 return Result.Conflict(
                     $"Không thể phê duyệt booking ở trạng thái {booking.Status.Name}"
@@ -80,6 +78,32 @@ public sealed class ApproveBooking
                 // Update contract with Owner's signature.
                 await UpdateContractForApprovalAsync(booking, cancellationToken);
             }
+            else
+            {
+                // If booking is rejected, provide a full refund
+                booking.StatusId = rejectedStatus.Id;
+                booking.Note = "Chủ xe từ chối yêu cầu đặt xe";
+
+                if (booking.IsPaid)
+                {
+                    booking.IsRefund = true;
+                    booking.RefundAmount = booking.TotalAmount;
+
+                    var admin = await context.Users.FirstOrDefaultAsync(u =>
+                        u.Role.Name == UserRoleNames.Admin
+                    );
+
+                    if (admin != null)
+                    {
+                        var adminAmount = booking.RefundAmount * 0.1m;
+                        var ownerAmount = booking.RefundAmount * 0.9m;
+
+                        admin.Balance -= (decimal)adminAmount;
+                        booking.Car.Owner.Balance -= (decimal)ownerAmount;
+                        booking.User.Balance += (decimal)booking.RefundAmount;
+                    }
+                }
+            }
 
             booking.StatusId = request.IsApproved ? approvedStatus.Id : rejectedStatus.Id;
             await context.SaveChangesAsync(cancellationToken);
@@ -98,25 +122,8 @@ public sealed class ApproveBooking
                     )
             );
 
-            await bookingExpiredJob.ExpireOldBookings(booking.Id);
-
             string actionVerb = request.IsApproved ? "phê duyệt" : "từ chối";
             return Result.SuccessWithMessage($"Đã {actionVerb} booking thành công");
-        }
-
-        private static bool IsBookingInInvalidStatus(Booking booking)
-        {
-            BookingStatusEnum[] invalidStatuses =
-            [
-                BookingStatusEnum.Approved,
-                BookingStatusEnum.Rejected,
-                BookingStatusEnum.Ongoing,
-                BookingStatusEnum.Completed,
-                BookingStatusEnum.Cancelled,
-                BookingStatusEnum.Expired
-            ];
-
-            return invalidStatuses.Contains(booking.Status.Name.ToEnum());
         }
 
         // Retrieves both the approved and rejected statuses.
@@ -159,7 +166,8 @@ public sealed class ApproveBooking
             CancellationToken cancellationToken
         )
         {
-            await context
+            // First get the overlapping bookings to access their TotalAmount
+            var overlappingBookings = await context
                 .Bookings.Where(b =>
                     b.CarId == booking.CarId
                     && b.StartTime < booking.EndTime
@@ -167,12 +175,41 @@ public sealed class ApproveBooking
                     && b.Status.Name == BookingStatusEnum.Pending.ToString()
                     && b.Id != booking.Id
                 )
-                .ExecuteUpdateAsync(
-                    b =>
-                        b.SetProperty(b => b.StatusId, rejectedStatus.Id)
-                            .SetProperty(b => b.Note, "Đã có booking khác trùng lịch"),
-                    cancellationToken: cancellationToken
+                .ToListAsync(cancellationToken);
+
+            foreach (var overlappingBooking in overlappingBookings)
+            {
+                overlappingBooking.StatusId = rejectedStatus.Id;
+                overlappingBooking.Note = "Đã có booking khác trùng lịch";
+
+                if (overlappingBooking.IsPaid)
+                {
+                    overlappingBooking.IsRefund = true;
+                    overlappingBooking.RefundAmount = overlappingBooking.TotalAmount; // Full refund
+                }
+            }
+
+            if (!overlappingBookings.Any())
+                return;
+
+            await context.SaveChangesAsync(cancellationToken);
+
+            foreach (var overlappingBooking in overlappingBookings)
+            {
+                // Enqueue email notification
+                backgroundJobClient.Enqueue(
+                    () =>
+                        SendEmail(
+                            false, // IsApproved
+                            overlappingBooking.User.Name,
+                            overlappingBooking.User.Email,
+                            overlappingBooking.Car.Model.Name,
+                            overlappingBooking.StartTime,
+                            overlappingBooking.EndTime,
+                            overlappingBooking.TotalAmount
+                        )
                 );
+            }
         }
 
         // If the contract exists, update it with the owner's signature and mark as confirmed.

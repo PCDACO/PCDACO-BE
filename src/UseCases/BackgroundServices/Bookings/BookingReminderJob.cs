@@ -15,21 +15,15 @@ public class BookingReminderJob(
     IBackgroundJobClient backgroundJobClient
 )
 {
-    private const int FIRST_REMINDER_HOURS = 24;
-    private const int SECOND_REMINDER_HOURS = 48;
-    private const int FINAL_REMINDER_HOURS = 60;
-    private const int AUTO_EXPIRE_HOURS = 72;
+    private const int FIRST_REMINDER_HOURS = 12;
+    private const int FINAL_REMINDER_HOURS = 20 ;
+    private const int AUTO_EXPIRE_HOURS = 24;
 
     public async Task ScheduleReminders(Guid bookingId)
     {
         backgroundJobClient.Schedule(
             () => SendFirstReminder(bookingId),
             TimeSpan.FromHours(FIRST_REMINDER_HOURS)
-        );
-
-        backgroundJobClient.Schedule(
-            () => SendSecondReminder(bookingId),
-            TimeSpan.FromHours(SECOND_REMINDER_HOURS)
         );
 
         backgroundJobClient.Schedule(
@@ -69,32 +63,6 @@ public class BookingReminderJob(
         );
     }
 
-    public async Task SendSecondReminder(Guid bookingId)
-    {
-        var booking = await GetBookingIfPending(bookingId);
-        if (booking == null)
-            return;
-
-        UuidDecoder.TryDecodeTimestamp(booking.Id, out DateTime bookingCreatedTime);
-
-        var ownerEmailTemplate = OwnerBookingReminderTemplate.Template(
-            booking.Car.Owner.Name,
-            booking.User.Name,
-            booking.Car.Model.Name,
-            bookingCreatedTime,
-            booking.StartTime,
-            booking.EndTime,
-            booking.TotalAmount,
-            1
-        );
-
-        await emailService.SendEmailAsync(
-            booking.Car.Owner.Email,
-            "QUAN TRỌNG: Yêu cầu đặt xe cần phản hồi ngay",
-            ownerEmailTemplate
-        );
-    }
-
     public async Task SendFinalReminder(Guid bookingId)
     {
         var booking = await GetBookingIfPending(bookingId);
@@ -111,7 +79,7 @@ public class BookingReminderJob(
             booking.StartTime,
             booking.EndTime,
             booking.TotalAmount,
-            1
+            2
         );
 
         await emailService.SendEmailAsync(
@@ -135,12 +103,20 @@ public class BookingReminderJob(
         if (expiredStatus == null)
             return;
 
+        // Mark booking as expired and set refund information
         booking.StatusId = expiredStatus.Id;
         booking.Note = "Hết hạn tự động do chủ xe không phản hồi";
 
+        if (booking.IsPaid)
+        {
+            booking.IsRefund = true;
+            booking.RefundAmount = booking.TotalAmount; // Provide 100% refund
+        }
+
         await context.SaveChangesAsync(CancellationToken.None);
 
-        var driverEmailTempalte = DriverExpiredBookingTemplate.Template(
+        // TODO: include refund amout in the email template
+        var driverEmailTemplate = DriverExpiredBookingTemplate.Template(
             booking.User.Name,
             booking.Car.Model.Name,
             booking.StartTime,
@@ -148,12 +124,12 @@ public class BookingReminderJob(
             booking.TotalAmount
         );
 
-        // Notify driver about expiration
-        await emailService.SendEmailAsync(
-            booking.User.Email,
-            "Thông báo: Yêu cầu đặt xe của bạn đã hết hạn",
-            driverEmailTempalte
-        );
+        string message = booking.IsPaid
+            ? "Yêu cầu đặt xe của bạn đã hết hạn - Hoàn trả 100% tiền đặt cọc"
+            : "Yêu cầu đặt xe của bạn đã hết hạn";
+
+        // Notify driver about expiration and refund
+        await emailService.SendEmailAsync(booking.User.Email, message, driverEmailTemplate);
     }
 
     private async Task<Booking?> GetBookingIfPending(Guid bookingId)

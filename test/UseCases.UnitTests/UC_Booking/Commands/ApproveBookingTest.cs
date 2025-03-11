@@ -4,7 +4,6 @@ using Domain.Enums;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
-using UseCases.BackgroundServices.Bookings;
 using UseCases.DTOs;
 using UseCases.UC_Booking.Commands;
 using UseCases.UnitTests.TestBases;
@@ -33,17 +32,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var bookingExpiredJob = new BookingExpiredJob(
-            _dbContext,
-            _emailService,
-            _backgroundJobClient
-        );
-
         var handler = new ApproveBooking.Handler(
             _dbContext,
             _emailService,
             _backgroundJobClient,
-            bookingExpiredJob,
             _currentUser
         );
         var command = new ApproveBooking.Command(Guid.NewGuid(), true);
@@ -64,17 +56,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(testUser);
 
-        var bookingExpiredJob = new BookingExpiredJob(
-            _dbContext,
-            _emailService,
-            _backgroundJobClient
-        );
-
         var handler = new ApproveBooking.Handler(
             _dbContext,
             _emailService,
             _backgroundJobClient,
-            bookingExpiredJob,
             _currentUser
         );
         var command = new ApproveBooking.Command(Guid.NewGuid(), true);
@@ -135,17 +120,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             statusId
         );
 
-        var bookingExpiredJob = new BookingExpiredJob(
-            _dbContext,
-            _emailService,
-            _backgroundJobClient
-        );
-
         var handler = new ApproveBooking.Handler(
             _dbContext,
             _emailService,
             _backgroundJobClient,
-            bookingExpiredJob,
             _currentUser
         );
         var command = new ApproveBooking.Command(booking.Id, true);
@@ -211,17 +189,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             pendingStatusId
         );
 
-        var bookingExpiredJob = new BookingExpiredJob(
-            _dbContext,
-            _emailService,
-            _backgroundJobClient
-        );
-
         var handler = new ApproveBooking.Handler(
             _dbContext,
             _emailService,
             _backgroundJobClient,
-            bookingExpiredJob,
             _currentUser
         );
         var command = new ApproveBooking.Command(booking.Id, isApproved);
@@ -289,17 +260,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             pendingStatusId
         );
 
-        var bookingExpiredJob = new BookingExpiredJob(
-            _dbContext,
-            _emailService,
-            _backgroundJobClient
-        );
-
         var handler = new ApproveBooking.Handler(
             _dbContext,
             _emailService,
             _backgroundJobClient,
-            bookingExpiredJob,
             _currentUser
         );
         var command = new ApproveBooking.Command(booking.Id, isApproved);
@@ -357,19 +321,16 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             pendingStatusId
         );
 
+        await TestDataCarStatus.InitializeTestCarStatuses(_dbContext);
+
         // Act
 
-        var bookingExpiredJob = new BookingExpiredJob(
-            _dbContext,
-            _emailService,
-            _backgroundJobClient
-        );
         _currentUser.SetUser(owner2);
+
         var handler = new ApproveBooking.Handler(
             _dbContext,
             _emailService,
             _backgroundJobClient,
-            bookingExpiredJob,
             _currentUser
         );
         var command = new ApproveBooking.Command(booking.Id, true);
@@ -428,17 +389,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             pendingStatusId
         );
 
-        var bookingExpiredJob = new BookingExpiredJob(
-            _dbContext,
-            _emailService,
-            _backgroundJobClient
-        );
-
         var handler = new ApproveBooking.Handler(
             _dbContext,
             _emailService,
             _backgroundJobClient,
-            bookingExpiredJob,
             _currentUser
         );
         var command = new ApproveBooking.Command(booking.Id, true);

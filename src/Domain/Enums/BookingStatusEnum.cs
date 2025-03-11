@@ -5,6 +5,7 @@ public enum BookingStatusEnum
     Pending,
     Approved,
     Rejected,
+    ReadyForPickup,
     Ongoing,
     Completed,
     Cancelled,

@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Persistance.Data;
 namespace Persistance.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250305064355_AddRefundForBooking")]
+    partial class AddRefundForBooking
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -950,9 +953,6 @@ namespace Persistance.Migrations
                     b.Property<Guid>("CarId")
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("CreatedBy")
-                        .HasColumnType("uuid");
-
                     b.Property<DateTimeOffset?>("DeletedAt")
                         .HasColumnType("timestamp with time zone");
 
@@ -982,8 +982,6 @@ namespace Persistance.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CarId");
-
-                    b.HasIndex("CreatedBy");
 
                     b.HasIndex("InspectionStatusId");
 
@@ -1419,9 +1417,6 @@ namespace Persistance.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<int>("TotalApprovedInspectionSchedule")
-                        .HasColumnType("integer");
-
                     b.Property<int>("TotalBooking")
                         .HasColumnType("integer");
 
@@ -1431,9 +1426,6 @@ namespace Persistance.Migrations
                     b.Property<int>("TotalCompleted")
                         .HasColumnType("integer");
 
-                    b.Property<int>("TotalCreatedInspectionSchedule")
-                        .HasColumnType("integer");
-
                     b.Property<decimal>("TotalEarning")
                         .HasColumnType("numeric");
 
@@ -1441,9 +1433,6 @@ namespace Persistance.Migrations
                         .HasColumnType("integer");
 
                     b.Property<int>("TotalRejected")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TotalRejectedInspectionSchedule")
                         .HasColumnType("integer");
 
                     b.Property<DateTimeOffset?>("UpdatedAt")
@@ -1828,12 +1817,6 @@ namespace Persistance.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Domain.Entities.User", "Consultant")
-                        .WithMany("ConsultantInspectionSchedules")
-                        .HasForeignKey("CreatedBy")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
                     b.HasOne("Domain.Entities.InspectionStatus", "InspectionStatus")
                         .WithMany("InspectingSchedules")
                         .HasForeignKey("InspectionStatusId")
@@ -1841,14 +1824,12 @@ namespace Persistance.Migrations
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.User", "Technician")
-                        .WithMany("TechnicianInspectionSchedules")
+                        .WithMany("InspectionSchedules")
                         .HasForeignKey("TechnicianId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Car");
-
-                    b.Navigation("Consultant");
 
                     b.Navigation("InspectionStatus");
 
@@ -2167,9 +2148,9 @@ namespace Persistance.Migrations
 
                     b.Navigation("Cars");
 
-                    b.Navigation("ConsultantInspectionSchedules");
-
                     b.Navigation("Feedbacks");
+
+                    b.Navigation("InspectionSchedules");
 
                     b.Navigation("License")
                         .IsRequired();
@@ -2179,8 +2160,6 @@ namespace Persistance.Migrations
                     b.Navigation("RefreshTokens");
 
                     b.Navigation("SentTransactions");
-
-                    b.Navigation("TechnicianInspectionSchedules");
 
                     b.Navigation("UserStatistic")
                         .IsRequired();

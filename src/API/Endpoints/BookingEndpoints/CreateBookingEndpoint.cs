@@ -15,7 +15,7 @@ public class CreateBookingEndpoint : ICarterModule
         app.MapPost("/api/bookings", Handle)
             .WithSummary("Create a new booking")
             .WithTags("Bookings")
-            // .AddEndpointFilter<IdempotencyFilter>()
+            .AddEndpointFilter<IdempotencyFilter>()
             .RequireAuthorization();
     }
 

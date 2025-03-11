@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using Net.payOS.Types;
 using UseCases.Abstractions;
 using UseCases.Services.EmailService;
+using Transaction = Domain.Entities.Transaction;
 
 namespace UseCases.UC_Booking.Commands;
 
@@ -49,67 +50,64 @@ public sealed class ProcessPaymentWebhook
             if (paymentExists)
                 return Result.Conflict("Giao dịch đã được xử lý trước đó");
 
-            // TODO: Add transaction record
-
-            var transactionType = await context
+            var transactionTypes = await context
                 .TransactionTypes.Where(t =>
-                    new List<string>
+                    new[]
                     {
                         TransactionTypeNames.BookingPayment,
-                        TransactionTypeNames.PlatformFee
-                    }.Any(name => EF.Functions.ILike(t.Name, name))
+                        TransactionTypeNames.PlatformFee,
+                        TransactionTypeNames.OwnerEarning
+                    }.Contains(t.Name)
                 )
-                .ToListAsync(cancellationToken: cancellationToken);
+                .ToListAsync(cancellationToken);
 
-            if (transactionType.Count != 2)
+            if (transactionTypes.Count != 3)
                 return Result.Error("Loại giao dịch không hợp lệ");
 
             var transactionStatus = await context.TransactionStatuses.FirstOrDefaultAsync(
                 t => t.Name == TransactionStatusNames.Completed,
-                cancellationToken: cancellationToken
+                cancellationToken
             );
 
             if (transactionStatus == null)
                 return Result.Error("Trạng thái giao dịch không hợp lệ");
 
-            // TODO: Check all transaction tables (System, Owner, Driver)
+            var admin = await context.Users.FirstOrDefaultAsync(
+                u => u.Role.Name == UserRoleNames.Admin,
+                cancellationToken
+            );
 
-            var bookingPayment = new Domain.Entities.Transaction
-            {
-                FromUserId = booking.User.Id,
-                ToUserId = booking.Car.Owner.Id,
-                BookingId = booking.Id,
-                BankAccountId = null,
-                TypeId = transactionType
-                    .First(t => t.Name == TransactionTypeNames.BookingPayment)
-                    .Id,
-                StatusId = transactionStatus.Id,
-                Amount = webhookData.amount,
-            };
+            if (admin == null)
+                return Result.Error("Không tìm thấy admin");
 
-            var platformFee = new Domain.Entities.Transaction
-            {
-                FromUserId = booking.User.Id,
-                ToUserId = booking.Car.Owner.Id,
-                BookingId = booking.Id,
-                BankAccountId = null,
-                TypeId = transactionType.First(t => t.Name == TransactionTypeNames.PlatformFee).Id,
-                StatusId = transactionStatus.Id,
-                Amount = booking.PlatformFee,
-            };
+            GeneratePaymentTransactions(
+                booking,
+                transactionTypes,
+                transactionStatus,
+                admin,
+                out Transaction bookingPayment,
+                out Transaction platformFeeTransaction,
+                out Transaction ownerEarningTransaction
+            );
+
+            admin.Balance += booking.PlatformFee;
+            booking.Car.Owner.Balance += ownerEarningTransaction.Amount;
 
             // Update booking and statistics
             booking.IsPaid = true;
 
+            context.Transactions.AddRange(
+                bookingPayment,
+                platformFeeTransaction,
+                ownerEarningTransaction
+            );
             await context.SaveChangesAsync(cancellationToken);
-
-            decimal ownerAmount = webhookData.amount - booking.PlatformFee;
 
             BackgroundJob.Enqueue(
                 () =>
                     SendEmail(
                         webhookData.amount,
-                        ownerAmount,
+                        booking.BasePrice,
                         booking.Car.Owner.Name,
                         booking.Car.Owner.Email,
                         booking.User.Name,
@@ -121,9 +119,60 @@ public sealed class ProcessPaymentWebhook
             return Result.Success();
         }
 
+        private static void GeneratePaymentTransactions(
+            Booking booking,
+            List<TransactionType> transactionTypes,
+            TransactionStatus transactionStatus,
+            User admin,
+            out Transaction bookingPayment,
+            out Transaction platformFeeTransaction,
+            out Transaction ownerEarningTransaction
+        )
+        {
+            // Create transaction for booking payment.
+            bookingPayment = new Transaction
+            {
+                FromUserId = booking.UserId,
+                ToUserId = admin.Id,
+                BookingId = booking.Id,
+                BankAccountId = null,
+                TypeId = transactionTypes
+                    .First(t => t.Name == TransactionTypeNames.BookingPayment)
+                    .Id,
+                StatusId = transactionStatus.Id,
+                Amount = booking.TotalAmount
+            };
+
+            // Create transaction for platform (admin) earning.
+            platformFeeTransaction = new Transaction
+            {
+                FromUserId = admin.Id, // funds originate from admin's wallet
+                ToUserId = admin.Id,
+                BookingId = booking.Id,
+                BankAccountId = null,
+                TypeId = transactionTypes.First(t => t.Name == TransactionTypeNames.PlatformFee).Id,
+                StatusId = transactionStatus.Id,
+                Amount = booking.PlatformFee,
+            };
+
+            // Create transaction for owner earning.
+            ownerEarningTransaction = new Transaction
+            {
+                FromUserId = admin.Id, // funds are transferred from the platform
+                ToUserId = booking.Car.Owner.Id,
+                BookingId = booking.Id,
+                BankAccountId = null,
+                TypeId = transactionTypes
+                    .First(t => t.Name == TransactionTypeNames.OwnerEarning)
+                    .Id,
+                StatusId = transactionStatus.Id,
+                Amount = booking.BasePrice,
+            };
+        }
+
         public async Task SendEmail(
             int amount,
-            decimal ownerEraning,
+            decimal ownerEarning,
             string driverName,
             string driverEmail,
             string ownerName,
@@ -141,7 +190,7 @@ public sealed class ProcessPaymentWebhook
 
             await emailService.SendEmailAsync(
                 driverEmail,
-                "Xác Nhận Thanh Toán",
+                "Xác Nhận Thanh Toán Đặt Xe",
                 driverEmailTemplate
             );
 
@@ -151,13 +200,13 @@ public sealed class ProcessPaymentWebhook
                 driverName,
                 carModel,
                 amount,
-                ownerEraning,
+                ownerEarning,
                 DateTimeOffset.UtcNow
             );
 
             await emailService.SendEmailAsync(
                 ownerEmail,
-                "Thông Báo Thanh Toán Thành Công",
+                "Thông Báo: Có Yêu Cầu Đặt Xe Mới",
                 ownerEmailTemplate
             );
         }

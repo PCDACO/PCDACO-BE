@@ -9,8 +9,7 @@ public static class DriverCompleteBookingTemplate
         decimal basePrice,
         decimal excessFee,
         decimal platformFee,
-        decimal totalAmount,
-        string paymentUrl
+        decimal totalAmount
     )
     {
         return $@"
@@ -47,12 +46,6 @@ public static class DriverCompleteBookingTemplate
                                 <td style='text-align: right; color: {EmailTemplateColors.CompleteAccent}; font-weight: bold;'>{totalAmount:N0} VNĐ</td>
                             </tr>
                         </table>
-                    </div>
-
-                    <div style='text-align: center; margin: 30px 0;'>
-                        <a href='{paymentUrl}' style='background-color: {EmailTemplateColors.CompleteAccent}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;'>
-                            Thanh Toán Ngay
-                        </a>
                     </div>
 
                     <p style='{EmailTemplateStyles.FooterStyle}'>
