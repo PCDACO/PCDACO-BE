@@ -90,6 +90,9 @@ public sealed class ProcessPaymentWebhook
                 out Transaction ownerEarningTransaction
             );
 
+            admin.Balance += booking.PlatformFee;
+            booking.Car.Owner.Balance += ownerEarningTransaction.Amount;
+
             // Update booking and statistics
             booking.IsPaid = true;
 

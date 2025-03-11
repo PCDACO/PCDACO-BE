@@ -82,9 +82,27 @@ public sealed class ApproveBooking
             {
                 // If booking is rejected, provide a full refund
                 booking.StatusId = rejectedStatus.Id;
-                booking.IsRefund = true;
-                booking.RefundAmount = booking.TotalAmount;
-                booking.Note = "Chủ xe từ chối yêu cầu đặt xe - Hoàn trả 100%";
+                booking.Note = "Chủ xe từ chối yêu cầu đặt xe";
+
+                if (booking.IsPaid)
+                {
+                    booking.IsRefund = true;
+                    booking.RefundAmount = booking.TotalAmount;
+
+                    var admin = await context.Users.FirstOrDefaultAsync(u =>
+                        u.Role.Name == UserRoleNames.Admin
+                    );
+
+                    if (admin != null)
+                    {
+                        var adminAmount = booking.RefundAmount * 0.1m;
+                        var ownerAmount = booking.RefundAmount * 0.9m;
+
+                        admin.Balance -= (decimal)adminAmount;
+                        booking.Car.Owner.Balance -= (decimal)ownerAmount;
+                        booking.User.Balance += (decimal)booking.RefundAmount;
+                    }
+                }
             }
 
             booking.StatusId = request.IsApproved ? approvedStatus.Id : rejectedStatus.Id;
@@ -162,33 +180,35 @@ public sealed class ApproveBooking
             foreach (var overlappingBooking in overlappingBookings)
             {
                 overlappingBooking.StatusId = rejectedStatus.Id;
-                overlappingBooking.IsRefund = true;
-                overlappingBooking.RefundAmount = overlappingBooking.TotalAmount; // Full refund
-                overlappingBooking.Note = "Đã có booking khác trùng lịch  - Hoàn trả 100%";
+                overlappingBooking.Note = "Đã có booking khác trùng lịch";
+
+                if (overlappingBooking.IsPaid)
+                {
+                    overlappingBooking.IsRefund = true;
+                    overlappingBooking.RefundAmount = overlappingBooking.TotalAmount; // Full refund
+                }
             }
 
-            // Save changes if there are overlapping bookings
-            if (overlappingBookings.Any())
-            {
-                await context.SaveChangesAsync(cancellationToken);
+            if (!overlappingBookings.Any())
+                return;
 
-                // Optionally, send emails to drivers whose bookings were rejected
-                foreach (var overlappingBooking in overlappingBookings)
-                {
-                    // Enqueue email notification
-                    backgroundJobClient.Enqueue(
-                        () =>
-                            SendEmail(
-                                false, // IsApproved
-                                overlappingBooking.User.Name,
-                                overlappingBooking.User.Email,
-                                overlappingBooking.Car.Model.Name,
-                                overlappingBooking.StartTime,
-                                overlappingBooking.EndTime,
-                                overlappingBooking.TotalAmount
-                            )
-                    );
-                }
+            await context.SaveChangesAsync(cancellationToken);
+
+            foreach (var overlappingBooking in overlappingBookings)
+            {
+                // Enqueue email notification
+                backgroundJobClient.Enqueue(
+                    () =>
+                        SendEmail(
+                            false, // IsApproved
+                            overlappingBooking.User.Name,
+                            overlappingBooking.User.Email,
+                            overlappingBooking.Car.Model.Name,
+                            overlappingBooking.StartTime,
+                            overlappingBooking.EndTime,
+                            overlappingBooking.TotalAmount
+                        )
+                );
             }
         }
 

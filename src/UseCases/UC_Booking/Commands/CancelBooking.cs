@@ -76,9 +76,9 @@ public sealed class CancelBooking
 
             decimal refundAmount = booking.CalculateRefundAmount();
 
-            if (refundAmount > 0)
+            if (refundAmount > 0 && booking.IsPaid)
             {
-                booking.IsRefund = false;
+                booking.IsRefund = true;
                 booking.RefundAmount = refundAmount;
             }
 
