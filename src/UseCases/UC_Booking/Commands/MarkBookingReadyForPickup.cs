@@ -22,7 +22,7 @@ public sealed class MarkBookingReadyForPickup
             }
 
             var booking = await context
-                .Bookings.Include(x => x.Status)
+                .Bookings
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)

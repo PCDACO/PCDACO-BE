@@ -31,7 +31,7 @@ public sealed class TrackTripLocation
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này!");
 
             var booking = await context
-                .Bookings.Include(b => b.Status)
+                .Bookings
                 .Include(b => b.TripTrackings)
                 .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken);
 

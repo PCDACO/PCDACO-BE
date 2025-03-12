@@ -20,7 +20,7 @@ public sealed class StartBookingTrip
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
             var booking = await context
-                .Bookings.Include(x => x.Status)
+                .Bookings
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)

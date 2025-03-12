@@ -47,32 +47,32 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         Assert.Contains(ResponseMessages.ForbiddenAudit, result.Errors);
     }
 
-    [Fact]
-    public async Task Handle_PendingStatusNotFound_ReturnsError()
-    {
-        // Arrange
-        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
-            _dbContext,
-            "Consultant"
-        );
-        var user = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
-        _currentUser.SetUser(user);
-
-        var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
-        var command = new CreateInspectionSchedule.Command(
-            TechnicianId: Guid.NewGuid(),
-            CarId: Guid.NewGuid(),
-            InspectionAddress: "123 Main St",
-            InspectionDate: DateTimeOffset.UtcNow.AddDays(1)
-        );
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains(ResponseMessages.PendingStatusNotAvailable, result.Errors);
-    }
+    // [Fact]
+    // public async Task Handle_PendingStatusNotFound_ReturnsError()
+    // {
+    //     // Arrange
+    //     var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+    //         _dbContext,
+    //         "Consultant"
+    //     );
+    //     var user = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+    //     _currentUser.SetUser(user);
+    //
+    //     var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
+    //     var command = new CreateInspectionSchedule.Command(
+    //         TechnicianId: Guid.NewGuid(),
+    //         CarId: Guid.NewGuid(),
+    //         InspectionAddress: "123 Main St",
+    //         InspectionDate: DateTimeOffset.UtcNow.AddDays(1)
+    //     );
+    //
+    //     // Act
+    //     var result = await handler.Handle(command, CancellationToken.None);
+    //
+    //     // Assert
+    //     Assert.Equal(ResultStatus.Error, result.Status);
+    //     Assert.Contains(ResponseMessages.PendingStatusNotAvailable, result.Errors);
+    // }
 
     [Fact]
     public async Task Handle_CarNotFound_ReturnsError()

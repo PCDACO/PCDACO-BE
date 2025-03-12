@@ -30,7 +30,7 @@ public sealed class ApproveBooking
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
             var booking = await context
-                .Bookings.Include(x => x.Status)
+                .Bookings
                 .Include(x => x.Car)
                 .ThenInclude(x => x.Model)
                 .Include(x => x.User)
