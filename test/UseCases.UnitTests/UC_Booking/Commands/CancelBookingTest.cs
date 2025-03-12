@@ -69,7 +69,6 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var bookingStatuses = await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
 
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         var driver = await TestDataCreateUser.CreateTestUser(
@@ -87,7 +86,6 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             "Automatic"
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         var car = await TestDataCreateCar.CreateTestCar(
             _dbContext,
@@ -95,15 +93,13 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmissionType,
             fuelType,
-            carStatus
+            "Available"
         );
-
-        var statusId = bookingStatuses.First(s => s.Name == status.ToString()).Id;
         var booking = await TestDataCreateBooking.CreateTestBooking(
             _dbContext,
             driver.Id,
             car.Id,
-            statusId
+            status.ToString()
         );
 
         var handler = new CancelBooking.Handler(_dbContext, _currentUser);
@@ -127,7 +123,6 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var bookingStatuses = await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
 
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         var driver = await TestDataCreateUser.CreateTestUser(
@@ -145,7 +140,6 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             "Automatic"
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         var car = await TestDataCreateCar.CreateTestCar(
             _dbContext,
@@ -153,15 +147,14 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmissionType,
             fuelType,
-            carStatus
+            "Available"
         );
 
-        var initialStatusId = bookingStatuses.First(s => s.Name == initialStatus.ToString()).Id;
         var booking = await TestDataCreateBooking.CreateTestBooking(
             _dbContext,
             driver.Id,
             car.Id,
-            initialStatusId
+            initialStatus.ToString()
         );
 
         var handler = new CancelBooking.Handler(_dbContext, _currentUser);
@@ -178,6 +171,6 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             .Bookings.Include(b => b.Status)
             .FirstAsync(b => b.Id == booking.Id);
 
-        Assert.Equal(BookingStatusEnum.Cancelled.ToString(), updatedBooking.Status.Name);
+        Assert.Equal(BookingStatusEnum.Cancelled, updatedBooking.Status);
     }
 }

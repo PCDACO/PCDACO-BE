@@ -83,7 +83,6 @@ public class DeleteInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         // Create owner and car prerequisites
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var carModel = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
@@ -99,19 +98,15 @@ public class DeleteInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             modelId: carModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: carStatus
+            carStatus: "Pending"
         );
 
         // Create pending status and schedule for today (within 1 day)
-        var approveStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-            _dbContext,
-            "Approved"
-        );
         var schedule = new InspectionSchedule
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            InspectionStatusId = approveStatus.Id,
+            Status = Domain.Enums.InspectionScheduleStatusEnum.Approved,
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddHours(20), // Less than 1 day away
             CreatedBy = consultant.Id,
@@ -151,7 +146,6 @@ public class DeleteInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         // Create owner and car prerequisites
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var carModel = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
@@ -167,18 +161,14 @@ public class DeleteInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             modelId: carModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: carStatus
+            carStatus: "Pending"
         );
 
-        // Create pending status and schedule for today (within 1 day)
-        var pendingStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-            _dbContext
-        );
         var schedule = new InspectionSchedule
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            InspectionStatusId = pendingStatus.Id,
+            Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddHours(20), // Less than 1 day away
             CreatedBy = consultant.Id,
@@ -221,7 +211,6 @@ public class DeleteInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         // Create owner and car prerequisites
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var carModel = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
@@ -237,18 +226,14 @@ public class DeleteInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             modelId: carModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: carStatus
+            carStatus: "Pending"
         );
 
-        // Create pending status and schedule for a future date (more than 1 day away)
-        var pendingStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-            _dbContext
-        );
         var schedule = new InspectionSchedule
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            InspectionStatusId = pendingStatus.Id,
+            Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(2), // More than 1 day away
             CreatedBy = consultant.Id,

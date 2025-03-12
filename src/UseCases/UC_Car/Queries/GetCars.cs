@@ -89,14 +89,14 @@ public class GetCars
                 RequiresCollateral: car.RequiresCollateral,
                 Price: car.Price,
                 Terms: car.Terms,
-                Status: car.CarStatus.Name,
+                Status: car.Status.ToString(),
                 TotalRented: car.CarStatistic.TotalBooking,
                 AverageRating: car.CarStatistic.AverageRating,
                 Location: car.GPS == null ? null : new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
                 Manufacturer: new ManufacturerDetail(car.Model.Manufacturer.Id, car.Model.Manufacturer.Name),
                 Images: [.. car.ImageCars?.Select(i => new ImageDetail(i.Id, i.Url, i.Type.Name)) ?? []],
                 Amenities: [
-                    .. car.CarAmenities.Select(a => new AmenityDetail(
+                    ..car.CarAmenities.Select(a => new AmenityDetail(
                         a.Id,
                         a.Amenity.Name,
                         a.Amenity.Description,
@@ -135,14 +135,13 @@ public class GetCars
                 .Include(c => c.Model).ThenInclude(o => o.Manufacturer)
                 .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars).ThenInclude(ic => ic.Type)
-                .Include(c => c.CarStatus)
                 .Include(c => c.CarStatistic)
                 .Include(c => c.TransmissionType)
                 .Include(c => c.FuelType)
                 .Include(c => c.GPS)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .Where(c => !c.IsDeleted)
-                .Where(c => EF.Functions.ILike(c.CarStatus.Name, $"%Available%"))
+                .Where(c => c.Status == Domain.Enums.CarStatusEnum.Available)
                 .Where(c => EF.Functions.ILike(c.Model.Name, $"%{request.Keyword}%"))
                 .Where(c => request.Model == null || c.ModelId == request.Model)
                 .Where(c =>

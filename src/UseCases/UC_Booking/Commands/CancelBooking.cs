@@ -1,5 +1,4 @@
 using Ardalis.Result;
-using Domain.Constants.EntityNames;
 using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -23,7 +22,6 @@ public sealed class CancelBooking
             var booking = await context
                 .Bookings.Include(x => x.Status)
                 .Include(x => x.Car)
-                .ThenInclude(c => c.CarStatus)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
@@ -34,46 +32,20 @@ public sealed class CancelBooking
                     "Bạn không có quyền thực hiện chức năng này với booking này!"
                 );
 
-            // Validate current status
-            var invalidStatuses = new[]
-            {
-                BookingStatusEnum.Rejected,
-                BookingStatusEnum.Ongoing,
-                BookingStatusEnum.Completed,
-                BookingStatusEnum.Cancelled,
-                BookingStatusEnum.Expired
-            };
-
-            if (invalidStatuses.Contains(booking.Status.Name.ToEnum()))
+            if (
+                booking.Status == BookingStatusEnum.Rejected &&
+                booking.Status == BookingStatusEnum.Ongoing &&
+                booking.Status == BookingStatusEnum.Completed &&
+                booking.Status == BookingStatusEnum.Cancelled &&
+                booking.Status == BookingStatusEnum.Expired
+            )
             {
                 return Result.Conflict(
-                    $"Không thể phê duyệt booking ở trạng thái {booking.Status.Name}"
+                    $"Không thể phê duyệt booking ở trạng thái " + booking.Status.ToString()
                 );
             }
-
-            var status = await context
-                .BookingStatuses.AsNoTracking()
-                .FirstOrDefaultAsync(
-                    x => EF.Functions.ILike(x.Name, BookingStatusEnum.Cancelled.ToString()),
-                    cancellationToken
-                );
-
-            if (status == null)
-                return Result.NotFound("Không tìm thấy trạng thái phù hợp");
-
-            var carStatus = await context
-                .CarStatuses.AsNoTracking()
-                .FirstOrDefaultAsync(
-                    x => EF.Functions.ILike(x.Name, CarStatusNames.Available),
-                    cancellationToken
-                );
-
-            if (carStatus == null)
-                return Result.NotFound("Không tìm thấy trạng thái xe phù hợp");
-
-            if (booking.Status.Name == BookingStatusEnum.Approved.ToString())
-                booking.Car.StatusId = carStatus.Id;
-
+            if (booking.Status == BookingStatusEnum.Approved)
+                booking.Car.Status = CarStatusEnum.Available;
             decimal refundAmount = booking.CalculateRefundAmount();
 
             if (refundAmount > 0 && booking.IsPaid)
@@ -82,7 +54,7 @@ public sealed class CancelBooking
                 booking.RefundAmount = refundAmount;
             }
 
-            booking.StatusId = status.Id;
+            booking.Status = BookingStatusEnum.Cancelled;
             await context.SaveChangesAsync(cancellationToken);
 
             // TODO: send email to both Owner and Driver

@@ -70,7 +70,7 @@ public sealed class GetBookingById
                     booking.EndTime,
                     booking.ActualReturnTime,
                     booking.TotalDistance,
-                    booking.Status.Name,
+                    booking.Status.ToString(),
                     booking.Note
                 ),
                 new PaymentDetail(
@@ -156,14 +156,14 @@ public sealed class GetBookingById
         {
             var booking = await context
                 .Bookings.Include(b => b.Status)
-                .Include(b => b.Car) .ThenInclude(c => c.Model)
-                .Include(b => b.Car) .ThenInclude(c => c.TransmissionType)
-                .Include(b => b.Car) .ThenInclude(c => c.FuelType)
-                .Include(b => b.Car) .ThenInclude(c => c.EncryptionKey)
-                .Include(b => b.Car) .ThenInclude(c => c.Owner)
+                .Include(b => b.Car).ThenInclude(c => c.Model)
+                .Include(b => b.Car).ThenInclude(c => c.TransmissionType)
+                .Include(b => b.Car).ThenInclude(c => c.FuelType)
+                .Include(b => b.Car).ThenInclude(c => c.EncryptionKey)
+                .Include(b => b.Car).ThenInclude(c => c.Owner)
                 .Include(b => b.User)
                 .Include(b => b.TripTrackings)
-                .Include(b => b.Feedbacks) .ThenInclude(f => f.User)
+                .Include(b => b.Feedbacks).ThenInclude(f => f.User)
                 .FirstOrDefaultAsync(b => b.Id == request.Id, cancellationToken);
 
             if (booking == null)

@@ -44,36 +44,23 @@ public sealed class ApproveBooking
                 return Result.Forbidden("Bạn không có quyền phê duyệt booking cho xe này!");
 
             // Check if the booking is in a modifiable status.
-            if (booking.Status.Name != BookingStatusEnum.Pending.ToString())
+            if (booking.Status != BookingStatusEnum.Pending)
             {
                 return Result.Conflict(
-                    $"Không thể phê duyệt booking ở trạng thái {booking.Status.Name}"
+                    $"Không thể phê duyệt booking ở trạng thái " + booking.Status.ToString()
                 );
             }
-
-            // Retrieve approved and rejected statuses.
-            var (approvedStatus, rejectedStatus) = await GetApprovalStatuses(cancellationToken);
-
-            if (approvedStatus == null || rejectedStatus == null)
-                return Result.NotFound("Không tìm thấy trạng thái phù hợp");
-
-            // Retrieve car status (for the rental state).
-            var rentedCarStatus = await GetRentedCarStatusAsync(cancellationToken);
-
-            if (rentedCarStatus == null)
-                return Result.NotFound("Không tìm thấy trạng thái xe phù hợp");
-
             // Process approval (update booking, possibly update contract)
             if (request.IsApproved)
             {
                 await RejectOverlappingPendingBookingsAsync(
                     booking,
-                    rejectedStatus,
+                    BookingStatusEnum.Rejected,
                     cancellationToken
                 );
 
                 // Mark the car as rented.
-                booking.Car.StatusId = rentedCarStatus.Id;
+                booking.Car.Status = CarStatusEnum.Rented;
 
                 // Update contract with Owner's signature.
                 await UpdateContractForApprovalAsync(booking, cancellationToken);
@@ -81,7 +68,7 @@ public sealed class ApproveBooking
             else
             {
                 // If booking is rejected, provide a full refund
-                booking.StatusId = rejectedStatus.Id;
+                booking.Status = BookingStatusEnum.Rejected;
                 booking.Note = "Chủ xe từ chối yêu cầu đặt xe";
 
                 if (booking.IsPaid)
@@ -105,7 +92,7 @@ public sealed class ApproveBooking
                 }
             }
 
-            booking.StatusId = request.IsApproved ? approvedStatus.Id : rejectedStatus.Id;
+            booking.Status = request.IsApproved ? BookingStatusEnum.Approved : BookingStatusEnum.Rejected;
             await context.SaveChangesAsync(cancellationToken);
 
             // Enqueue email notification
@@ -126,43 +113,10 @@ public sealed class ApproveBooking
             return Result.SuccessWithMessage($"Đã {actionVerb} booking thành công");
         }
 
-        // Retrieves both the approved and rejected statuses.
-        private async Task<(BookingStatus? Approved, BookingStatus? Rejected)> GetApprovalStatuses(
-            CancellationToken cancellationToken
-        )
-        {
-            var statuses = await context
-                .BookingStatuses.AsNoTracking()
-                .Where(x =>
-                    EF.Functions.ILike(x.Name, BookingStatusEnum.Approved.ToString())
-                    || EF.Functions.ILike(x.Name, BookingStatusEnum.Rejected.ToString())
-                )
-                .ToListAsync(cancellationToken);
-
-            var approvedStatus = statuses.FirstOrDefault(x =>
-                x.Name == BookingStatusEnum.Approved.ToString()
-            );
-            var rejectedStatus = statuses.FirstOrDefault(x =>
-                x.Name == BookingStatusEnum.Rejected.ToString()
-            );
-            return (approvedStatus, rejectedStatus);
-        }
-
-        // Retrieves the car status for “Rented”.
-        private async Task<CarStatus?> GetRentedCarStatusAsync(CancellationToken cancellationToken)
-        {
-            return await context
-                .CarStatuses.AsNoTracking()
-                .FirstOrDefaultAsync(
-                    x => EF.Functions.ILike(x.Name, CarStatusNames.Rented),
-                    cancellationToken
-                );
-        }
-
         // Rejects overlapping bookings (if any) for the same car.
         private async Task RejectOverlappingPendingBookingsAsync(
             Booking booking,
-            BookingStatus rejectedStatus,
+            BookingStatusEnum rejectedStatus,
             CancellationToken cancellationToken
         )
         {
@@ -172,14 +126,14 @@ public sealed class ApproveBooking
                     b.CarId == booking.CarId
                     && b.StartTime < booking.EndTime
                     && b.EndTime > booking.StartTime
-                    && b.Status.Name == BookingStatusEnum.Pending.ToString()
+                    && b.Status == BookingStatusEnum.Pending
                     && b.Id != booking.Id
                 )
                 .ToListAsync(cancellationToken);
 
             foreach (var overlappingBooking in overlappingBookings)
             {
-                overlappingBooking.StatusId = rejectedStatus.Id;
+                overlappingBooking.Status = BookingStatusEnum.Rejected;
                 overlappingBooking.Note = "Đã có booking khác trùng lịch";
 
                 if (overlappingBooking.IsPaid)
@@ -228,16 +182,7 @@ public sealed class ApproveBooking
             if (contract != null)
             {
                 contract.OwnerSignatureDate = DateTimeOffset.UtcNow;
-
-                var confirmedStatus = await context.ContractStatuses.FirstOrDefaultAsync(
-                    cs => cs.Name == ContractStatusNames.Confirmed,
-                    cancellationToken: cancellationToken
-                );
-
-                if (confirmedStatus != null)
-                {
-                    contract.StatusId = confirmedStatus.Id;
-                }
+                contract.Status = ContractStatusEnum.Confirmed;
             }
         }
 

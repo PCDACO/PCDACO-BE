@@ -50,7 +50,7 @@ public sealed class ProcessBookingPayment
                     "Bạn không có quyền thực hiện chức năng này với booking này!"
                 );
 
-            if (booking.Status.Name != BookingStatusEnum.Completed.ToString())
+            if (booking.Status != BookingStatusEnum.Completed)
                 return Result.Error("Chỉ có thể thanh toán chuyến đi đã hoàn thành!");
 
             if (booking.IsPaid)

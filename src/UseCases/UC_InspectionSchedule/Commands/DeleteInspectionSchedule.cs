@@ -1,6 +1,5 @@
 using Ardalis.Result;
 using Domain.Constants;
-using Domain.Constants.EntityNames;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -23,14 +22,14 @@ public sealed class DeleteInspectionSchedule
 
             // Get the existing schedule
             var schedule = await context
-                .InspectionSchedules.Include(s => s.InspectionStatus)
+                .InspectionSchedules
                 .FirstOrDefaultAsync(s => s.Id == request.Id && !s.IsDeleted, cancellationToken);
 
             if (schedule is null)
                 return Result.NotFound(ResponseMessages.InspectionScheduleNotFound);
 
             // Verify schedule is in pending status
-            if (schedule.InspectionStatus.Name.ToLower() != InspectionStatusNames.Pending.ToLower())
+            if (schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.Pending)
                 return Result.Error(ResponseMessages.OnlyDeletePendingInspectionSchedule);
 
             // verify only datetimeoffset.utcnow faster than schedule.InspectionDate 1 day can delete

@@ -59,14 +59,14 @@ public static class GetCurrentUser
                     ? user.Bookings.Count(b =>
                         b.UserId == user.Id
                         && !b.IsDeleted
-                        && b.Status.Name == BookingStatusEnum.Completed.ToString()
+                        && b.Status == BookingStatusEnum.Completed
                     )
                     : 0,
                 // Total rented owner has else if user has role driver then 0
                 TotalRented: user.Role.Name == UserRoleNames.Owner
                     ? user.Cars.Sum(c =>
                         c.Bookings.Count(b =>
-                            !b.IsDeleted && b.Status.Name == BookingStatusEnum.Completed.ToString()
+                            !b.IsDeleted && b.Status == BookingStatusEnum.Completed
                         )
                     )
                     : 0,

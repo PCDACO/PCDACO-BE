@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Persistance.Data;
 namespace Persistance.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250312074753_RemoveAllStatusTables")]
+    partial class RemoveAllStatusTables
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -191,21 +194,12 @@ namespace Persistance.Migrations
                     b.Property<bool>("IsPaid")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("IsRefund")
-                        .HasColumnType("boolean");
-
                     b.Property<string>("Note")
                         .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<decimal>("PlatformFee")
                         .HasColumnType("numeric");
-
-                    b.Property<decimal?>("RefundAmount")
-                        .HasColumnType("numeric");
-
-                    b.Property<DateTimeOffset?>("RefundDate")
-                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTimeOffset>("StartTime")
                         .HasColumnType("timestamp with time zone");

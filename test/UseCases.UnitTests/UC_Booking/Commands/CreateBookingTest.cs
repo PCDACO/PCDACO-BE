@@ -121,11 +121,9 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     {
         // Arrange
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
         TransmissionType transmissionType =
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        CarStatus carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
@@ -136,7 +134,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: carStatus
+            carStatus: CarStatusEnum.Available
         );
         var startTime = DateTime.UtcNow;
         var endTime = DateTime.UtcNow.AddDays(3);
@@ -150,8 +148,6 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _encryptionSettings,
             isApproved: true
         );
-
-        await TestDataCreateContractStatus.InitializeTestContractStatus(_dbContext);
 
         _currentUser.SetUser(testUser);
 
@@ -221,8 +217,6 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         TransmissionType transmissionType =
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        CarStatus carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
-        await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
 
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
@@ -233,7 +227,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: carStatus
+            carStatus: CarStatusEnum.Available
         );
         _currentUser.SetUser(testUser);
 
@@ -245,8 +239,6 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _encryptionSettings,
             isApproved: true
         );
-
-        await TestDataCreateContractStatus.InitializeTestContractStatus(_dbContext);
 
         // Create overlapping booking
         var command1 = new CreateBooking.CreateBookingCommand(
@@ -294,9 +286,6 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         TransmissionType transmissionType =
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        CarStatus carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
-        await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
-
         var testUser1 = await TestDataCreateUser.CreateTestUser(
             _dbContext,
             driverRole,
@@ -316,7 +305,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: carStatus
+            carStatus: CarStatusEnum.Available
         );
 
         await TestDataCreateLicense.CreateTestLicense(
@@ -336,8 +325,6 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _encryptionSettings,
             isApproved: true
         );
-
-        await TestDataCreateContractStatus.InitializeTestContractStatus(_dbContext);
 
         // First booking with user1
         _currentUser.SetUser(testUser1);
@@ -399,7 +386,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Contains(bookings, b => b.UserId == testUser2.Id);
         Assert.All(
             bookings,
-            b => Assert.Equal(BookingStatusEnum.Pending.ToString(), b.Status.Name)
+            b => Assert.Equal(BookingStatusEnum.Pending, b.Status)
         );
     }
 

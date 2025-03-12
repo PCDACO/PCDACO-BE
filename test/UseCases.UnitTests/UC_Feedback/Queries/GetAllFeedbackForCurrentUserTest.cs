@@ -2,7 +2,6 @@ using Ardalis.Result;
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
-using Domain.Shared;
 using Persistance.Data;
 using UseCases.DTOs;
 using UseCases.UC_Feedback.Queries;
@@ -422,7 +421,6 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
     private async Task<Car> CreateTestCar(Guid ownerId)
     {
         // Create prerequisites
-        var statusId = await CreateTestCarStatus();
         var modelId = await CreateTestCarModel();
         var fuelTypeId = await CreateTestFuelType();
         var transmissionTypeId = await CreateTestTransmissionType();
@@ -433,7 +431,7 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
         {
             OwnerId = ownerId,
             ModelId = modelId,
-            StatusId = statusId,
+            Status = CarStatusEnum.Available,
             FuelTypeId = fuelTypeId,
             TransmissionTypeId = transmissionTypeId,
             EncryptionKeyId = encryptionKeyId,
@@ -448,14 +446,6 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
         await _dbContext.SaveChangesAsync();
 
         return car;
-    }
-
-    private async Task<Guid> CreateTestCarStatus()
-    {
-        var status = new CarStatus { Name = "Available" };
-        _dbContext.CarStatuses.Add(status);
-        await _dbContext.SaveChangesAsync();
-        return status.Id;
     }
 
     private async Task<Guid> CreateTestCarModel()
@@ -502,17 +492,12 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
 
     private async Task<Booking> CreateTestBooking(Guid userId, Guid carId)
     {
-        // Create booking status
-        var bookingStatus = new BookingStatus { Name = BookingStatusEnum.Completed.ToString() };
-        _dbContext.BookingStatuses.Add(bookingStatus);
-        await _dbContext.SaveChangesAsync();
-
         // Create booking
         var booking = new Booking
         {
             UserId = userId,
             CarId = carId,
-            StatusId = bookingStatus.Id,
+            Status = BookingStatusEnum.Completed,
             StartTime = DateTimeOffset.UtcNow.AddDays(-7),
             EndTime = DateTimeOffset.UtcNow.AddDays(-6),
             ActualReturnTime = DateTimeOffset.UtcNow.AddDays(-6),

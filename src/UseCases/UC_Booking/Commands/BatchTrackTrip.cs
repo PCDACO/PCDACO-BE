@@ -49,7 +49,7 @@ public sealed class BatchTrackTrip
                     "Bạn không có quyền thực hiện chức năng này với booking này!"
                 );
 
-            if (booking.Status.Name != BookingStatusEnum.Ongoing.ToString())
+            if (booking.Status != BookingStatusEnum.Ongoing)
                 return Result.Error("Chỉ có thể cập nhật vị trí khi chuyến đi đang diễn ra");
 
             if (!request.LocationPoints.Any())

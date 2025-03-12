@@ -16,11 +16,12 @@ public class BookingReminderJob(
 )
 {
     private const int FIRST_REMINDER_HOURS = 12;
-    private const int FINAL_REMINDER_HOURS = 20 ;
+    private const int FINAL_REMINDER_HOURS = 20;
     private const int AUTO_EXPIRE_HOURS = 24;
 
     public async Task ScheduleReminders(Guid bookingId)
     {
+        await Task.Delay(0);
         backgroundJobClient.Schedule(
             () => SendFirstReminder(bookingId),
             TimeSpan.FromHours(FIRST_REMINDER_HOURS)
@@ -95,16 +96,8 @@ public class BookingReminderJob(
         if (booking == null)
             return;
 
-        // Get the expired status
-        var expiredStatus = await context.BookingStatuses.FirstOrDefaultAsync(s =>
-            s.Name == BookingStatusEnum.Expired.ToString()
-        );
-
-        if (expiredStatus == null)
-            return;
-
         // Mark booking as expired and set refund information
-        booking.StatusId = expiredStatus.Id;
+        booking.Status = BookingStatusEnum.Expired;
         booking.Note = "Hết hạn tự động do chủ xe không phản hồi";
 
         if (booking.IsPaid)
@@ -140,7 +133,7 @@ public class BookingReminderJob(
             .ThenInclude(c => c.Owner)
             .Include(b => b.User)
             .FirstOrDefaultAsync(b =>
-                b.Id == bookingId && b.Status.Name == BookingStatusEnum.Pending.ToString()
+                b.Id == bookingId && b.Status == BookingStatusEnum.Pending
             );
     }
 }

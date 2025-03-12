@@ -75,7 +75,7 @@ public class DeleteModelTest(DatabaseTestBase fixture) : IAsyncLifetime
             "Automatic"
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
+        // var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         await TestDataCreateCar.CreateTestCar(
             _dbContext,
@@ -83,7 +83,7 @@ public class DeleteModelTest(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmissionType,
             fuelType,
-            carStatus
+    "Available"
         );
 
         var handler = new DeleteModel.Handler(_dbContext, _currentUser);

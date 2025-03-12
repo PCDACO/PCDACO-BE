@@ -27,13 +27,6 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
 
     private async Task ExpireReadyForPickupBookings()
     {
-        var expiredStatus = await context.BookingStatuses.FirstOrDefaultAsync(s =>
-            s.Name == BookingStatusEnum.Expired.ToString()
-        );
-
-        if (expiredStatus == null)
-            return;
-
         // Find all ReadyForPickup bookings that started more than 24 hours ago
         var expiredBookings = await context
             .Bookings.Include(b => b.Status)
@@ -41,7 +34,7 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
             .ThenInclude(c => c.Owner)
             .Include(b => b.User)
             .Where(b =>
-                b.Status.Name == BookingStatusEnum.ReadyForPickup.ToString()
+                b.Status == BookingStatusEnum.ReadyForPickup
                 && b.StartTime < DateTimeOffset.UtcNow.AddHours(-24)
             )
             .ToListAsync();
@@ -59,7 +52,7 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
         foreach (var booking in expiredBookings)
         {
             // Mark as expired
-            booking.StatusId = expiredStatus.Id;
+            booking.Status = BookingStatusEnum.Expired;
             booking.Note = "Hết hạn tự động do không nhận xe đúng hạn";
 
             if (booking.IsPaid)
@@ -83,13 +76,6 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
 
     private async Task ExpirePendingOverDateBookings()
     {
-        var expiredStatus = await context.BookingStatuses.FirstOrDefaultAsync(s =>
-            s.Name == BookingStatusEnum.Expired.ToString()
-        );
-
-        if (expiredStatus == null)
-            return;
-
         // Find all ReadyForPickup bookings that started more than 24 hours ago
         var expiredBookings = await context
             .Bookings.Include(b => b.Status)
@@ -97,7 +83,7 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
             .ThenInclude(c => c.Owner)
             .Include(b => b.User)
             .Where(b =>
-                b.Status.Name == BookingStatusEnum.Pending.ToString()
+                b.Status == BookingStatusEnum.Pending
                 && b.StartTime < DateTimeOffset.UtcNow
             )
             .ToListAsync();
@@ -115,7 +101,7 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
         foreach (var booking in expiredBookings)
         {
             // Mark as expired
-            booking.StatusId = expiredStatus.Id;
+            booking.Status = BookingStatusEnum.Expired;
             booking.Note = "Hết hạn tự động do không nhận xe đúng hạn";
 
             if (booking.IsPaid)
@@ -139,6 +125,7 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
 
     private async Task SendExpirationEmail(Booking booking, bool isPaid)
     {
+        await Task.Delay(0);
         // TODO: add refund amount to the email template
         var driverEmailTemplate = DriverExpiredBookingTemplate.Template(
             booking.User.Name,
@@ -159,26 +146,18 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
 
     private async Task UpdateCarsToAvailable()
     {
-        var availableStatusId = await context
-            .CarStatuses.Where(c => c.Name == CarStatusNames.Available)
-            .Select(c => c.Id)
-            .FirstOrDefaultAsync();
-
-        if (availableStatusId == Guid.Empty)
-            return;
-
         // Find all car IDs associated with expired bookings
         var expiredCarIds = await context
-            .Bookings.Where(b => b.Status.Name == BookingStatusEnum.Expired.ToString())
+            .Bookings.Where(b => b.Status == BookingStatusEnum.Expired)
             .Select(b => b.CarId)
             .Distinct()
             .ToListAsync();
 
-        if (expiredCarIds.Count == 0)
+        if (expiredCarIds.Count() == 0)
             return;
 
         await context
             .Cars.Where(c => expiredCarIds.Contains(c.Id))
-            .ExecuteUpdateAsync(c => c.SetProperty(car => car.StatusId, availableStatusId));
+            .ExecuteUpdateAsync(c => c.SetProperty(car => car.Status, CarStatusEnum.Available));
     }
 }

@@ -83,8 +83,6 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var bookingStatuses = await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
-
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         var driver = await TestDataCreateUser.CreateTestUser(
             _dbContext,
@@ -101,7 +99,6 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             "Automatic"
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         var car = await TestDataCreateCar.CreateTestCar(
             _dbContext,
@@ -109,15 +106,14 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmissionType,
             fuelType,
-            carStatus
+            CarStatusEnum.Available
         );
 
-        var statusId = bookingStatuses.First(s => s.Name == status.ToString()).Id;
         var booking = await TestDataCreateBooking.CreateTestBooking(
             _dbContext,
             driver.Id,
             car.Id,
-            statusId
+            status
         );
 
         var handler = new ApproveBooking.Handler(
@@ -148,7 +144,6 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var bookingStatuses = await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
 
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         var driver = await TestDataCreateUser.CreateTestUser(
@@ -166,7 +161,6 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             "Automatic"
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         var car = await TestDataCreateCar.CreateTestCar(
             _dbContext,
@@ -174,19 +168,14 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmissionType,
             fuelType,
-            carStatus
+            CarStatusEnum.Available
         );
 
-        await TestDataCarStatus.InitializeTestCarStatuses(_dbContext);
-
-        var pendingStatusId = bookingStatuses
-            .First(s => s.Name == BookingStatusEnum.Pending.ToString())
-            .Id;
         var booking = await TestDataCreateBooking.CreateTestBooking(
             _dbContext,
             driver.Id,
             car.Id,
-            pendingStatusId
+            BookingStatusEnum.Pending
         );
 
         var handler = new ApproveBooking.Handler(
@@ -208,7 +197,7 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             .Bookings.Include(b => b.Status)
             .FirstAsync(b => b.Id == booking.Id);
 
-        Assert.Equal(expectedStatus.ToString(), updatedBooking.Status.Name);
+        Assert.Equal(expectedStatus, updatedBooking.Status);
     }
 
     [Theory]
@@ -219,7 +208,6 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var bookingStatuses = await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
 
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         var driver = await TestDataCreateUser.CreateTestUser(
@@ -237,7 +225,6 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             "Automatic"
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         var car = await TestDataCreateCar.CreateTestCar(
             _dbContext,
@@ -245,19 +232,14 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmissionType,
             fuelType,
-            carStatus
+            CarStatusEnum.Available
         );
 
-        await TestDataCarStatus.InitializeTestCarStatuses(_dbContext);
-
-        var pendingStatusId = bookingStatuses
-            .First(s => s.Name == BookingStatusEnum.Pending.ToString())
-            .Id;
         var booking = await TestDataCreateBooking.CreateTestBooking(
             _dbContext,
             driver.Id,
             car.Id,
-            pendingStatusId
+            BookingStatusEnum.Pending
         );
 
         var handler = new ApproveBooking.Handler(
@@ -281,7 +263,6 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var bookingStatuses = await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
 
         var owner1 = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         var owner2 = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
@@ -300,7 +281,6 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             "Automatic"
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         var car = await TestDataCreateCar.CreateTestCar(
             _dbContext,
@@ -308,21 +288,15 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmissionType,
             fuelType,
-            carStatus
+            CarStatusEnum.Available
         );
 
-        var pendingStatusId = bookingStatuses
-            .First(s => s.Name == BookingStatusEnum.Pending.ToString())
-            .Id;
         var booking = await TestDataCreateBooking.CreateTestBooking(
             _dbContext,
             driver.Id,
             car.Id,
-            pendingStatusId
+    BookingStatusEnum.Pending
         );
-
-        await TestDataCarStatus.InitializeTestCarStatuses(_dbContext);
-
         // Act
 
         _currentUser.SetUser(owner2);
@@ -348,7 +322,6 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var bookingStatuses = await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
 
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         var driver = await TestDataCreateUser.CreateTestUser(
@@ -366,7 +339,6 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             "Automatic"
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         var car = await TestDataCreateCar.CreateTestCar(
             _dbContext,
@@ -374,19 +346,14 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmissionType,
             fuelType,
-            carStatus
+            CarStatusEnum.Available
         );
 
-        await TestDataCarStatus.InitializeTestCarStatuses(_dbContext);
-
-        var pendingStatusId = bookingStatuses
-            .First(s => s.Name == BookingStatusEnum.Pending.ToString())
-            .Id;
         var booking = await TestDataCreateBooking.CreateTestBooking(
             _dbContext,
             driver.Id,
             car.Id,
-            pendingStatusId
+            BookingStatusEnum.Pending
         );
 
         var handler = new ApproveBooking.Handler(

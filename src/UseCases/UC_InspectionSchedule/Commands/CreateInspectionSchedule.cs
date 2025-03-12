@@ -1,6 +1,5 @@
 using Ardalis.Result;
 using Domain.Constants;
-using Domain.Constants.EntityNames;
 using Domain.Entities;
 using FluentValidation;
 using MediatR;
@@ -36,24 +35,14 @@ public sealed class CreateInspectionSchedule
             if (!currentUser.User!.IsConsultant())
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
-            // Get pending inspection status
-            var pendingStatus = await context.InspectionStatuses.FirstOrDefaultAsync(
-                s => EF.Functions.ILike(s.Name, "%pending%") && !s.IsDeleted,
-                cancellationToken
-            );
-
-            if (pendingStatus is null)
-                return Result.Error(ResponseMessages.PendingStatusNotAvailable);
-
             // Verify car exists and is in pending status
-            var car = await context
-                .Cars.Include(c => c.CarStatus)
+            var car = await context.Cars
                 .FirstOrDefaultAsync(c => c.Id == request.CarId && !c.IsDeleted, cancellationToken);
 
             if (car is null)
                 return Result.Error(ResponseMessages.CarNotFound);
 
-            if (car.CarStatus.Name.ToLower() != CarStatusNames.Pending.ToLower())
+            if (car.Status != Domain.Enums.CarStatusEnum.Pending)
                 return Result.Error(ResponseMessages.CarIsNotInPending);
 
             // Verify user exists and is a technician
@@ -72,7 +61,6 @@ public sealed class CreateInspectionSchedule
             {
                 TechnicianId = request.TechnicianId,
                 CarId = request.CarId,
-                InspectionStatusId = pendingStatus.Id,
                 InspectionAddress = request.InspectionAddress,
                 InspectionDate = request.InspectionDate,
                 CreatedBy = currentUser.User.Id,

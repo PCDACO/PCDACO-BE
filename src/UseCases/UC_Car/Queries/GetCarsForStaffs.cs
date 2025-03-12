@@ -65,7 +65,7 @@ public class GetCarsForStaffs
                 decryptedLicensePlate,
                 car.Color,
                 car.Seat,
-                car.CarStatus.Name,
+                car.Status.ToString(),
                 car.Description,
                 car.TransmissionType.ToString() ?? string.Empty,
                 car.FuelType.ToString() ?? string.Empty,
@@ -113,14 +113,13 @@ public class GetCarsForStaffs
                 .Include(c => c.Model).ThenInclude(o => o.Manufacturer)
                 .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars).ThenInclude(ic => ic.Type)
-                .Include(c => c.CarStatus)
                 .Include(c => c.CarStatistic)
                 .Include(c => c.TransmissionType)
                 .Include(c => c.FuelType)
                 .Include(c => c.GPS)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .Where(c => !c.IsDeleted)
-                .Where(c => EF.Functions.ILike(c.CarStatus.Name, $"%{request.StatusName}%"))
+                .Where(c => c.Status == Domain.Enums.CarStatusEnum.Available)
                 .OrderByDescending(c => c.Id);
             int count = await gettingQuery.CountAsync(cancellationToken);
             List<Car> cars = await gettingQuery

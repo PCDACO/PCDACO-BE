@@ -93,7 +93,6 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         // Create car
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var carModel = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
@@ -107,19 +106,14 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
             carModel.Id,
             transmissionType,
             fuelType,
-            carStatus
-        );
-
-        // Create schedule
-        var inProgressStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-            _dbContext,
             "Pending"
         );
+
         var schedule = new InspectionSchedule
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            InspectionStatusId = inProgressStatus.Id,
+            Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
             InspectionAddress = "123 Main St 1",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
             CreatedBy = consultant.Id,
@@ -162,7 +156,6 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         // Create car
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var carModel = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
@@ -176,19 +169,14 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
             carModel.Id,
             transmissionType,
             fuelType,
-            carStatus
+            "Pending"
         );
 
-        // Create schedule with a status other than "pending"
-        var pendingStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-            _dbContext,
-            "InProgress"
-        );
         var schedule = new InspectionSchedule
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            InspectionStatusId = pendingStatus.Id,
+            Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
             InspectionAddress = "123 Main St 1",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
             CreatedBy = consultant.Id,
@@ -233,7 +221,6 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         // Create car
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var carModel = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
@@ -247,27 +234,13 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
             carModel.Id,
             transmissionType,
             fuelType,
-            carStatus
-        );
-
-        // Create schedule
-        var inProgressStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-            _dbContext,
             "Pending"
-        );
-        var approvedStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-            _dbContext,
-            "Approved"
-        );
-        var rejectedStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-            _dbContext,
-            "Rejected"
         );
         var schedule = new InspectionSchedule
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            InspectionStatusId = inProgressStatus.Id,
+            Status = Domain.Enums.InspectionScheduleStatusEnum.InProgress,
             InspectionAddress = "123 Main St 1",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
             CreatedBy = consultant.Id,
@@ -293,8 +266,8 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         var updatedSchedule = await _dbContext.InspectionSchedules.FindAsync(schedule.Id);
         Assert.NotNull(updatedSchedule);
         Assert.Equal(
-            isApproved ? approvedStatus.Id : rejectedStatus.Id,
-            updatedSchedule.InspectionStatusId
+            isApproved ? Domain.Enums.InspectionScheduleStatusEnum.Approved : Domain.Enums.InspectionScheduleStatusEnum.Rejected,
+            updatedSchedule.Status
         );
         Assert.Equal("Test note", updatedSchedule.Note);
         Assert.Equal("123 Main St 1", updatedSchedule.InspectionAddress);
