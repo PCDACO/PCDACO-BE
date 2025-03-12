@@ -65,12 +65,12 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         var car = await CreateTestCar(owner.Id, _dbContext);
 
         // Create bookings with different statuses
-        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Completed.ToString()); // Completed
-        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Completed.ToString()); // Completed
-        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Rejected.ToString()); // Rejected
-        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Expired.ToString()); // Expired
-        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Cancelled.ToString()); // Cancelled
-        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Pending.ToString()); // Pending
+        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Completed); // Completed
+        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Completed); // Completed
+        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Rejected); // Rejected
+        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Expired); // Expired
+        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Cancelled); // Cancelled
+        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Pending); // Pending
 
         // Create feedback for the completed booking
         var booking = await _dbContext
@@ -125,8 +125,8 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         var car = await CreateTestCar(owner.Id, _dbContext);
 
         // Create completed bookings
-        var booking1 = await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Completed.ToString(), 500);
-        var booking2 = await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Completed.ToString(), 750);
+        var booking1 = await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Completed, 500);
+        var booking2 = await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Completed, 750);
 
         // Create feedback for the completed bookings
         await CreateFeedback(booking1.Id, FeedbackTypeEnum.Driver, 3, _dbContext);
@@ -185,9 +185,9 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
 
         // Create inspection schedules
-        await CreateInspectionSchedule(car.Id, technician.Id, "Pending", consultant.Id);
-        await CreateInspectionSchedule(car.Id, technician.Id, "Pending", consultant.Id);
-        await CreateInspectionSchedule(car.Id, technician.Id, "Pending", consultant.Id);
+        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Pending, consultant.Id);
+        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Pending, consultant.Id);
+        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Pending, consultant.Id);
 
         var handler = new GetUserStatistics.Handler(_dbContext, _currentUser);
         var query = new GetUserStatistics.Query();
@@ -242,10 +242,10 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         var car = await CreateTestCar(owner.Id, _dbContext);
 
         // Create inspection schedules
-        await CreateInspectionSchedule(car.Id, technician.Id, "Approved", consultant.Id);
-        await CreateInspectionSchedule(car.Id, technician.Id, "Approved", consultant.Id);
-        await CreateInspectionSchedule(car.Id, technician.Id, "Rejected", consultant.Id);
-        await CreateInspectionSchedule(car.Id, technician.Id, "Rejected", consultant.Id);
+        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Approved, consultant.Id);
+        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Approved, consultant.Id);
+        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Rejected, consultant.Id);
+        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Pending, consultant.Id);
 
         var handler = new GetUserStatistics.Handler(_dbContext, _currentUser);
         var query = new GetUserStatistics.Query();
@@ -359,7 +359,7 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
     private async Task<Booking> CreateBooking(
         Guid userId,
         Guid carId,
-        string status,
+        BookingStatusEnum status,
         decimal basePrice = 100
     )
     {
@@ -367,7 +367,7 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         {
             UserId = userId,
             CarId = carId,
-            Status = (BookingStatusEnum)Enum.Parse(typeof(BookingStatusEnum), status),
+            Status = status,
             StartTime = DateTimeOffset.UtcNow.AddDays(-2),
             EndTime = DateTimeOffset.UtcNow.AddDays(-1),
             ActualReturnTime = DateTimeOffset.UtcNow.AddDays(-1),
@@ -381,7 +381,7 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
             IsPaid = false,
         };
 
-        if ((BookingStatusEnum)Enum.Parse(typeof(BookingStatusEnum), status) == BookingStatusEnum.Completed)
+        if (status == BookingStatusEnum.Completed)
         {
             booking.IsCarReturned = true;
             booking.IsPaid = true;
@@ -475,7 +475,7 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
     private async Task<InspectionSchedule> CreateInspectionSchedule(
         Guid carId,
         Guid technicianId,
-        string status,
+        InspectionScheduleStatusEnum status,
         Guid createdById
     )
     {
@@ -483,7 +483,7 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         {
             CarId = carId,
             TechnicianId = technicianId,
-            Status = (InspectionScheduleStatusEnum)Enum.Parse(typeof(InspectionScheduleStatusEnum), status),
+            Status = status,
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
             InspectionAddress = "Test Address",
             Note = "Test note",

@@ -171,7 +171,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(110m, result.Value.TotalAmount);
 
         var updatedBooking = await _dbContext
-            .Bookings.Include(b => b.Status)
+            .Bookings
             .FirstAsync(b => b.Id == booking.Id);
 
         Assert.Equal(BookingStatusEnum.Completed, updatedBooking.Status);

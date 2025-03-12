@@ -176,7 +176,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
+            Status = Domain.Enums.InspectionScheduleStatusEnum.Approved,
             InspectionAddress = "123 Main St 1",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
             CreatedBy = consultant.Id,

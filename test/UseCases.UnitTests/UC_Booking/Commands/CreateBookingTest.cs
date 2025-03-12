@@ -377,7 +377,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Verify both bookings exist
         var bookings = await _dbContext
-            .Bookings.Include(b => b.Status)
+            .Bookings
             .Where(b => b.CarId == testCar.Id)
             .ToListAsync();
 

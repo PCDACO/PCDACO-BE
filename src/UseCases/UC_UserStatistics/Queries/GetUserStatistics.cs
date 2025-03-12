@@ -59,7 +59,6 @@ public sealed class GetUserStatistics
                 user.Role.Name == UserRoleNames.Driver
                     ? await context
                         .Bookings.Where(b => b.UserId == user.Id && !b.IsDeleted)
-                        .Include(b => b.Status)
                         .CountAsync(
                             b => b.Status == BookingStatusEnum.Completed,
                             cancellationToken
@@ -70,7 +69,6 @@ public sealed class GetUserStatistics
                 user.Role.Name == UserRoleNames.Driver
                     ? await context
                         .Bookings.Where(b => b.UserId == user.Id && !b.IsDeleted)
-                        .Include(b => b.Status)
                         .CountAsync(
                             b => b.Status == BookingStatusEnum.Rejected,
                             cancellationToken
@@ -81,7 +79,6 @@ public sealed class GetUserStatistics
                 user.Role.Name == UserRoleNames.Driver
                     ? await context
                         .Bookings.Where(b => b.UserId == user.Id && !b.IsDeleted)
-                        .Include(b => b.Status)
                         .CountAsync(
                             b => b.Status == BookingStatusEnum.Expired,
                             cancellationToken
@@ -92,7 +89,6 @@ public sealed class GetUserStatistics
                 user.Role.Name == UserRoleNames.Driver
                     ? await context
                         .Bookings.Where(b => b.UserId == user.Id && !b.IsDeleted)
-                        .Include(b => b.Status)
                         .CountAsync(
                             b => b.Status == BookingStatusEnum.Cancelled,
                             cancellationToken
@@ -106,7 +102,6 @@ public sealed class GetUserStatistics
                 totalEarning = await context
                     .Bookings.Where(b => !b.IsDeleted)
                     .Include(b => b.Car)
-                    .Include(b => b.Status)
                     .Where(b =>
                         b.Car.OwnerId == user.Id
                         && b.Status == BookingStatusEnum.Completed
@@ -121,7 +116,6 @@ public sealed class GetUserStatistics
                 var feedbacks = await context
                     .Feedbacks.Where(f => !f.IsDeleted)
                     .Include(f => f.Booking)
-                    .Include(f => f.Booking.Status)
                     .ToListAsync(cancellationToken);
 
                 if (user.Role.Name == UserRoleNames.Driver)

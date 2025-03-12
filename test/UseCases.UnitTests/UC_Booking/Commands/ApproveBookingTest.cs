@@ -194,7 +194,7 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Contains($"Đã {expectedMessage} booking thành công", result.SuccessMessage);
 
         var updatedBooking = await _dbContext
-            .Bookings.Include(b => b.Status)
+            .Bookings
             .FirstAsync(b => b.Id == booking.Id);
 
         Assert.Equal(expectedStatus, updatedBooking.Status);

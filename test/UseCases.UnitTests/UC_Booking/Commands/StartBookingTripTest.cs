@@ -166,7 +166,7 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Contains("Đã bắt đầu chuyến đi", result.SuccessMessage);
 
         var updatedBooking = await _dbContext
-            .Bookings.Include(b => b.Status)
+            .Bookings
             .FirstAsync(b => b.Id == booking.Id);
 
         Assert.Equal(BookingStatusEnum.Ongoing, updatedBooking.Status);
