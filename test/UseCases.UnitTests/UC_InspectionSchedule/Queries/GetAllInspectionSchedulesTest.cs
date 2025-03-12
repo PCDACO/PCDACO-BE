@@ -373,7 +373,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
             model.Id,
             transmissionType,
             fuelType,
-            "Pending"
+            CarStatusEnum.Pending
         );
     }
 }

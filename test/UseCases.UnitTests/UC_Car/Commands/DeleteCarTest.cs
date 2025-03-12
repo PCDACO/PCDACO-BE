@@ -47,7 +47,7 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
             modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: "Available"
+            carStatus: Domain.Enums.CarStatusEnum.Available
         );
 
         var handler = new DeleteCar.Handler(_dbContext, _currentUser);
@@ -103,7 +103,7 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
             modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: "Available"
+            carStatus: Domain.Enums.CarStatusEnum.Available
         );
 
         var handler = new DeleteCar.Handler(_dbContext, _currentUser);
@@ -136,7 +136,7 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
             modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: "Available"
+            carStatus: Domain.Enums.CarStatusEnum.Available
         );
 
         var handler = new DeleteCar.Handler(_dbContext, _currentUser);
@@ -188,7 +188,7 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
             modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: "Available",
+            carStatus: Domain.Enums.CarStatusEnum.Available,
             isDeleted: true
         );
 

@@ -214,7 +214,7 @@ public class GetAllFeedbacksByBookingIdTest(DatabaseTestBase fixture) : IAsyncLi
             model.Id,
             transmissionType,
             fuelType,
-            "Available"
+            CarStatusEnum.Available
         );
 
         // Create booking

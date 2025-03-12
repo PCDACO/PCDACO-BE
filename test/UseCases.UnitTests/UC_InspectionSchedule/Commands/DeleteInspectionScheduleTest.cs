@@ -98,7 +98,7 @@ public class DeleteInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             modelId: carModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: "Pending"
+            carStatus: Domain.Enums.CarStatusEnum.Pending
         );
 
         // Create pending status and schedule for today (within 1 day)
@@ -161,7 +161,7 @@ public class DeleteInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             modelId: carModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: "Pending"
+            carStatus: Domain.Enums.CarStatusEnum.Pending
         );
 
         var schedule = new InspectionSchedule
@@ -226,7 +226,7 @@ public class DeleteInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             modelId: carModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: "Pending"
+            carStatus: Domain.Enums.CarStatusEnum.Pending
         );
 
         var schedule = new InspectionSchedule

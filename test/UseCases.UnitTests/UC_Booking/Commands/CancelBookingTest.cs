@@ -93,13 +93,13 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmissionType,
             fuelType,
-            "Available"
+            CarStatusEnum.Available
         );
         var booking = await TestDataCreateBooking.CreateTestBooking(
             _dbContext,
             driver.Id,
             car.Id,
-            status.ToString()
+            status
         );
 
         var handler = new CancelBooking.Handler(_dbContext, _currentUser);
@@ -147,14 +147,14 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmissionType,
             fuelType,
-            "Available"
+            CarStatusEnum.Available
         );
 
         var booking = await TestDataCreateBooking.CreateTestBooking(
             _dbContext,
             driver.Id,
             car.Id,
-            initialStatus.ToString()
+            initialStatus
         );
 
         var handler = new CancelBooking.Handler(_dbContext, _currentUser);

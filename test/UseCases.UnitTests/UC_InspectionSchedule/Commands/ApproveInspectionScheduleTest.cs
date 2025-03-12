@@ -106,7 +106,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
             carModel.Id,
             transmissionType,
             fuelType,
-            "Pending"
+            Domain.Enums.CarStatusEnum.Pending
         );
 
         var schedule = new InspectionSchedule
@@ -169,7 +169,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
             carModel.Id,
             transmissionType,
             fuelType,
-            "Pending"
+            Domain.Enums.CarStatusEnum.Pending
         );
 
         var schedule = new InspectionSchedule
@@ -234,7 +234,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
             carModel.Id,
             transmissionType,
             fuelType,
-            "Pending"
+            Domain.Enums.CarStatusEnum.Pending
         );
         var schedule = new InspectionSchedule
         {

@@ -111,7 +111,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             modelId: carModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: "Pending"
+            carStatus: Domain.Enums.CarStatusEnum.Pending
         );
 
         var schedule = new InspectionSchedule
@@ -182,7 +182,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             modelId: carModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: "Pending"
+            carStatus: Domain.Enums.CarStatusEnum.Pending
         );
 
         var schedule = new InspectionSchedule
@@ -253,7 +253,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             modelId: carModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: "Pending"
+            carStatus: Domain.Enums.CarStatusEnum.Pending
         );
 
         var originalSchedule = new InspectionSchedule

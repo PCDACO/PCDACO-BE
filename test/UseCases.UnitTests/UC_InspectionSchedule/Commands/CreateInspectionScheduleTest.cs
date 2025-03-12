@@ -1,6 +1,8 @@
 using Ardalis.Result;
 using Domain.Constants;
 using Domain.Entities;
+using Domain.Enums;
+
 using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
 using UseCases.DTOs;
@@ -115,7 +117,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             _dbContext,
             await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
         );
-        var car = await CreateTestCar(owner.Id, "Available");
+        var car = await CreateTestCar(owner.Id, CarStatusEnum.Available);
 
         var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
         var command = new CreateInspectionSchedule.Command(
@@ -149,7 +151,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             _dbContext,
             await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
         );
-        var car = await CreateTestCar(owner.Id, "Pending");
+        var car = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
 
         var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
         var command = new CreateInspectionSchedule.Command(
@@ -191,7 +193,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             _dbContext,
             await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
         );
-        var car = await CreateTestCar(owner.Id, "Pending");
+        var car = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
 
         var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
         var command = new CreateInspectionSchedule.Command(
@@ -236,7 +238,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             _dbContext,
             await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
         );
-        var car = await CreateTestCar(owner.Id, "Pending");
+        var car = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
 
         var inspectionDate = DateTimeOffset.UtcNow.AddDays(1);
         var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
@@ -266,7 +268,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         Assert.Equal(consultant.Id, schedule.CreatedBy);
     }
 
-    private async Task<Car> CreateTestCar(Guid ownerId, string status)
+    private async Task<Car> CreateTestCar(Guid ownerId, CarStatusEnum status)
     {
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
