@@ -45,7 +45,8 @@ public sealed class ApproveInspectionSchedule
 
             // Update schedule
             schedule.Note = request.Note;
-            schedule.Status = Domain.Enums.InspectionScheduleStatusEnum.Approved;
+            schedule.Status = request.IsApproved ? Domain.Enums.InspectionScheduleStatusEnum.Approved
+                : Domain.Enums.InspectionScheduleStatusEnum.Rejected;
             schedule.UpdatedAt = DateTimeOffset.UtcNow;
             await context.SaveChangesAsync(cancellationToken);
             return Result.Success(Response.FromEntity(schedule), ResponseMessages.Updated);
