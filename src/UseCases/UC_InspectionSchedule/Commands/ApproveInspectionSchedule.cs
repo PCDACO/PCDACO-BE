@@ -33,37 +33,22 @@ public sealed class ApproveInspectionSchedule
 
             // Get the existing schedule
             var schedule = await context
-                .InspectionSchedules.Include(s => s.InspectionStatus)
+                .InspectionSchedules
                 .FirstOrDefaultAsync(s => s.Id == request.Id && !s.IsDeleted, cancellationToken);
 
             if (schedule is null)
                 return Result.Error(ResponseMessages.InspectionScheduleNotFound);
 
             // Check if schedule can be updated
-            if (!schedule.InspectionStatus.Name.ToLower().Contains("pending"))
+            if (schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.Pending)
                 return Result.Error(ResponseMessages.OnlyUpdatePendingInspectionSchedule);
-
-            // Check if the status is existed based on the IsApproved request
-            var status = await context.InspectionStatuses.FirstOrDefaultAsync(
-                s =>
-                    EF.Functions.ILike(s.Name, request.IsApproved ? "%approved%" : "%rejected%")
-                    && !s.IsDeleted,
-                cancellationToken
-            );
-
-            if (status is null && request.IsApproved)
-                return Result.Error(ResponseMessages.ApproveStatusNotFound);
-
-            if (status is null && !request.IsApproved)
-                return Result.Error(ResponseMessages.RejectStatusNotFound);
 
             // Update schedule
             schedule.Note = request.Note;
-            schedule.InspectionStatusId = status!.Id;
+            schedule.Status = request.IsApproved ? Domain.Enums.InspectionScheduleStatusEnum.Approved
+                : Domain.Enums.InspectionScheduleStatusEnum.Rejected;
             schedule.UpdatedAt = DateTimeOffset.UtcNow;
-
             await context.SaveChangesAsync(cancellationToken);
-
             return Result.Success(Response.FromEntity(schedule), ResponseMessages.Updated);
         }
     }
@@ -73,8 +58,6 @@ public sealed class ApproveInspectionSchedule
         public Validator()
         {
             RuleFor(x => x.Id).NotEmpty().WithMessage("Id lịch kiểm định không được để trống");
-
-            RuleFor(x => x.Note).NotEmpty().WithMessage("Ghi chú không được để trống");
 
             RuleFor(x => x.IsApproved)
                 .NotNull()

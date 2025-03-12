@@ -83,6 +83,12 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
         public async Task Handle_WithSchedules_ReturnsAllTodaySchedules()
         {
             // Arrange
+            var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+                _dbContext,
+                "Consultant"
+            );
+            var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+
             var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
                 _dbContext,
                 "Technician"
@@ -107,7 +113,6 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
                 "0789970768",
                 avatarUrl: "avatar.jpg"
             );
-            var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
             var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
             var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
             var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
@@ -123,17 +128,11 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
                 model.Id,
                 transmissionType,
                 fuelType,
-                carStatus,
+                "Pending",
                 new[] { "image1.jpg", "image2.jpg" },
                 aesEncryptionService: _aesEncryptionService,
                 keyManagementService: _keyManagementService,
                 encryptionSettings: _encryptionSettings
-            );
-
-            // Create pending status
-            var pendingStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-                _dbContext,
-                "Pending"
             );
 
             // Create multiple schedules for today
@@ -145,9 +144,10 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
                 {
                     TechnicianId = technician.Id,
                     CarId = car.Id,
-                    InspectionStatusId = pendingStatus.Id,
+                    Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
                     InspectionAddress = $"123 Main St {i + 1}",
                     InspectionDate = today,
+                    CreatedBy = consultant.Id,
                 };
                 schedules.Add(schedule);
             }
@@ -158,9 +158,10 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
             {
                 TechnicianId = technician.Id,
                 CarId = car.Id,
-                InspectionStatusId = pendingStatus.Id,
+                Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
                 InspectionAddress = "123 Future St",
                 InspectionDate = today.AddDays(1),
+                CreatedBy = consultant.Id,
             };
             await _dbContext.InspectionSchedules.AddAsync(tomorrowSchedule);
 
@@ -207,6 +208,12 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
         public async Task Handle_NonPendingSchedules_AreExcluded()
         {
             // Arrange
+            var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+                _dbContext,
+                "Consultant"
+            );
+            var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+
             var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
                 _dbContext,
                 "Technician"
@@ -224,7 +231,6 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
             // Create prerequisites
             var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
             var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-            var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
             var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
             var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
             var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
@@ -240,21 +246,11 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
                 model.Id,
                 transmissionType,
                 fuelType,
-                carStatus,
+                "Pending",
                 ["image.jpg"],
                 aesEncryptionService: _aesEncryptionService,
                 keyManagementService: _keyManagementService,
                 encryptionSettings: _encryptionSettings
-            );
-
-            // Create statuses
-            var pendingStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-                _dbContext,
-                "Pending"
-            );
-            var approvedStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-                _dbContext,
-                "Approved"
             );
 
             // Create schedules with different statuses
@@ -264,18 +260,20 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
             {
                 TechnicianId = technician.Id,
                 CarId = car.Id,
-                InspectionStatusId = pendingStatus.Id,
+                Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
                 InspectionAddress = "123 Pending St",
                 InspectionDate = today,
+                CreatedBy = consultant.Id,
             };
 
             var approvedSchedule = new InspectionSchedule
             {
                 TechnicianId = technician.Id,
                 CarId = car.Id,
-                InspectionStatusId = approvedStatus.Id,
+                Status = Domain.Enums.InspectionScheduleStatusEnum.Approved,
                 InspectionAddress = "123 Approved St",
                 InspectionDate = today,
+                CreatedBy = consultant.Id,
             };
 
             await _dbContext.InspectionSchedules.AddRangeAsync([pendingSchedule, approvedSchedule]);

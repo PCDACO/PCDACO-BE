@@ -206,7 +206,6 @@ public class GetAllFeedbacksByBookingIdTest(DatabaseTestBase fixture) : IAsyncLi
             "Automatic"
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         // Create car using TestDataCreateCar helper
         var car = await TestDataCreateCar.CreateTestCar(
@@ -215,20 +214,15 @@ public class GetAllFeedbacksByBookingIdTest(DatabaseTestBase fixture) : IAsyncLi
             model.Id,
             transmissionType,
             fuelType,
-            carStatus
+            CarStatusEnum.Available
         );
-
-        // Create booking status
-        var bookingStatus = new BookingStatus { Name = "Completed" };
-        _dbContext.BookingStatuses.Add(bookingStatus);
-        await _dbContext.SaveChangesAsync();
 
         // Create booking
         var booking = new Booking
         {
             UserId = driverId,
             CarId = car.Id,
-            StatusId = bookingStatus.Id,
+            Status = BookingStatusEnum.Completed,
             StartTime = DateTimeOffset.UtcNow.AddDays(-2),
             EndTime = DateTimeOffset.UtcNow.AddDays(-1),
             ActualReturnTime = DateTimeOffset.UtcNow.AddDays(-1),

@@ -19,7 +19,7 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                     cs =>
                         context.Bookings.Count(b =>
                             b.CarId == cs.CarId
-                            && b.Status.Name == BookingStatusEnum.Completed.ToString()
+                            && b.Status == BookingStatusEnum.Completed
                         )
                 )
                 .SetProperty(
@@ -27,7 +27,7 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                     cs =>
                         context.Bookings.Count(b =>
                             b.CarId == cs.CarId
-                            && b.Status.Name == BookingStatusEnum.Rejected.ToString()
+                            && b.Status == BookingStatusEnum.Rejected
                         )
                 )
                 .SetProperty(
@@ -35,7 +35,7 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                     cs =>
                         context.Bookings.Count(b =>
                             b.CarId == cs.CarId
-                            && b.Status.Name == BookingStatusEnum.Expired.ToString()
+                            && b.Status == BookingStatusEnum.Expired
                         )
                 )
                 .SetProperty(
@@ -43,7 +43,7 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                     cs =>
                         context.Bookings.Count(b =>
                             b.CarId == cs.CarId
-                            && b.Status.Name == BookingStatusEnum.Cancelled.ToString()
+                            && b.Status == BookingStatusEnum.Cancelled
                         )
                 )
                 .SetProperty(
@@ -52,7 +52,7 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                         context
                             .Bookings.Where(b =>
                                 b.CarId == cs.CarId
-                                && b.Status.Name == BookingStatusEnum.Completed.ToString()
+                                && b.Status == BookingStatusEnum.Completed
                             )
                             .Sum(b => (decimal?)b.TotalAmount) ?? 0
                 )
@@ -62,7 +62,7 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                         context
                             .Bookings.Where(b =>
                                 b.CarId == cs.CarId
-                                && b.Status.Name == BookingStatusEnum.Completed.ToString()
+                                && b.Status == BookingStatusEnum.Completed
                             )
                             .Sum(b => (decimal?)b.TripTrackings.Sum(t => t.Distance)) ?? 0
                 )
@@ -72,7 +72,7 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                         context
                             .Bookings.Where(b =>
                                 b.CarId == cs.CarId
-                                && b.Status.Name == BookingStatusEnum.Completed.ToString()
+                                && b.Status == BookingStatusEnum.Completed
                             )
                             .SelectMany(b => b.Feedbacks)
                             .Where(f => f.Type == FeedbackTypeEnum.Driver)
@@ -84,7 +84,7 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                         context
                             .Bookings.Where(b =>
                                 b.CarId == cs.CarId
-                                && b.Status.Name == BookingStatusEnum.Completed.ToString()
+                                && b.Status == BookingStatusEnum.Completed
                             )
                             .Max(b => (DateTimeOffset?)b.ActualReturnTime) ?? null
                 )

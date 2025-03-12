@@ -9,7 +9,10 @@ public class UpdateUserStatisticsJob(IAppDBContext context)
 {
     public async Task UpdateUserStatistic()
     {
-        await context.UserStatistics.ExecuteUpdateAsync(setter =>
+        await context.UserStatistics
+        .Include(us => us.User)
+        .ThenInclude(u => u.Role)
+        .ExecuteUpdateAsync(setter =>
             setter
                 .SetProperty(
                     us => us.TotalBooking,
@@ -20,7 +23,7 @@ public class UpdateUserStatisticsJob(IAppDBContext context)
                     us =>
                         context.Bookings.Count(b =>
                             b.UserId == us.UserId
-                            && b.Status.Name == BookingStatusEnum.Completed.ToString()
+                            && b.Status == BookingStatusEnum.Completed
                         )
                 )
                 .SetProperty(
@@ -28,7 +31,7 @@ public class UpdateUserStatisticsJob(IAppDBContext context)
                     us =>
                         context.Bookings.Count(b =>
                             b.UserId == us.UserId
-                            && b.Status.Name == BookingStatusEnum.Rejected.ToString()
+                            && b.Status == BookingStatusEnum.Rejected
                         )
                 )
                 .SetProperty(
@@ -36,7 +39,7 @@ public class UpdateUserStatisticsJob(IAppDBContext context)
                     us =>
                         context.Bookings.Count(b =>
                             b.UserId == us.UserId
-                            && b.Status.Name == BookingStatusEnum.Expired.ToString()
+                            && b.Status == BookingStatusEnum.Expired
                         )
                 )
                 .SetProperty(
@@ -44,17 +47,19 @@ public class UpdateUserStatisticsJob(IAppDBContext context)
                     us =>
                         context.Bookings.Count(b =>
                             b.UserId == us.UserId
-                            && b.Status.Name == BookingStatusEnum.Cancelled.ToString()
+                            && b.Status == BookingStatusEnum.Cancelled
                         )
                 )
                 .SetProperty(
                     us => us.TotalEarning,
                     us =>
                         context
-                            .Bookings.Where(b =>
-                                b.UserId == us.UserId
-                                && b.Status.Name == BookingStatusEnum.Completed.ToString()
-                                && b.User.Role.Name == UserRoleNames.Owner
+                            .Bookings.Include(b => b.Car)
+                            .ThenInclude(c => c.Owner)
+                            .Where(b =>
+                                b.Car.Owner.Id == us.UserId
+                                && b.Status == BookingStatusEnum.Completed
+                                && us.User.Role.Name == UserRoleNames.Owner
                             )
                             .Sum(b => (decimal?)b.BasePrice) ?? 0
                 )
@@ -64,11 +69,36 @@ public class UpdateUserStatisticsJob(IAppDBContext context)
                         context
                             .Bookings.Where(b =>
                                 b.UserId == us.UserId
-                                && b.Status.Name == BookingStatusEnum.Completed.ToString()
+                                && b.Status == BookingStatusEnum.Completed
                             )
                             .SelectMany(b => b.Feedbacks)
                             .Where(f => f.Type == FeedbackTypeEnum.Owner)
                             .Average(f => (decimal?)f.Point) ?? 0
+                )
+                .SetProperty(
+                    us => us.TotalCreatedInspectionSchedule,
+                    us =>
+                        context.InspectionSchedules.Count(s =>
+                            s.CreatedBy == us.UserId && !s.IsDeleted
+                        )
+                )
+                .SetProperty(
+                    us => us.TotalApprovedInspectionSchedule,
+                    us =>
+                        context.InspectionSchedules.Count(s =>
+                            s.TechnicianId == us.UserId
+                            && s.Status == InspectionScheduleStatusEnum.Approved
+                            && !s.IsDeleted
+                        )
+                )
+                .SetProperty(
+                    us => us.TotalRejectedInspectionSchedule,
+                    us =>
+                        context.InspectionSchedules.Count(s =>
+                            s.TechnicianId == us.UserId
+                            && s.Status == InspectionScheduleStatusEnum.Rejected
+                            && !s.IsDeleted
+                        )
                 )
         );
     }

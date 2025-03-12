@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
 using Domain.Shared;
+using Domain.Enums;
 
 
 namespace Domain.Entities;
@@ -13,7 +14,7 @@ public class Car : BaseEntity
     public required Guid EncryptionKeyId { get; set; }
     public required Guid FuelTypeId { get; set; }
     public required Guid TransmissionTypeId { get; set; }
-    public required Guid StatusId { get; set; }
+    public CarStatusEnum Status { get; set; } = CarStatusEnum.Pending;
     public required string EncryptedLicensePlate { get; set; }
     public required string Color { get; set; }
     public required int Seat { get; set; }
@@ -41,8 +42,6 @@ public class Car : BaseEntity
     [ForeignKey(nameof(TransmissionTypeId))]
     public TransmissionType TransmissionType { get; set; } = null!;
 
-    [ForeignKey(nameof(StatusId))]
-    public CarStatus CarStatus { get; set; } = null!;
     public CarStatistic CarStatistic { get; set; } = null!;
     public CarGPS GPS { get; set; } = null!;
     public CarContract Contract { get; set; } = null!;

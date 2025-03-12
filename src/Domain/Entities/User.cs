@@ -40,7 +40,12 @@ public class User : BaseEntity
     [InverseProperty(nameof(Transaction.ToUser))]
     public ICollection<Transaction> ReceivedTransactions { get; set; } = [];
     public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
-    public ICollection<InspectionSchedule> InspectionSchedules { get; set; } = [];
+
+    [InverseProperty(nameof(InspectionSchedule.Technician))]
+    public ICollection<InspectionSchedule> TechnicianInspectionSchedules { get; set; } = [];
+
+    [InverseProperty(nameof(InspectionSchedule.Consultant))]
+    public ICollection<InspectionSchedule> ConsultantInspectionSchedules { get; set; } = [];
 
     public bool IsAdmin() => Role.Name == "Admin";
 

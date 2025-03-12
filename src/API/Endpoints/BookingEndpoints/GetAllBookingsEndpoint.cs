@@ -28,13 +28,13 @@ public class GetAllBookingsEndpoint : ICarterModule
         [FromQuery(Name = "limit")] int? limit,
         [FromQuery(Name = "lastId")] Guid? lastId,
         [FromQuery(Name = "search")] string? searchTerm,
-        [FromQuery(Name = "status")] Guid? statusId,
+        [FromQuery(Name = "status")] string? status,
         [FromQuery(Name = "isPaid")] bool? isPaid,
         CancellationToken cancellationToken
     )
     {
         var result = await sender.Send(
-            new GetAllBookings.Query(limit ?? 10, lastId, searchTerm, statusId, isPaid),
+            new GetAllBookings.Query(limit ?? 10, lastId, searchTerm, status, isPaid),
             cancellationToken
         );
 

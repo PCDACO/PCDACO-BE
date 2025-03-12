@@ -1,5 +1,4 @@
 using Bogus;
-using Domain.Constants.EntityNames;
 using Domain.Entities;
 
 namespace Persistance.Bogus;
@@ -33,7 +32,6 @@ public class InspectionScheduleGenerator
         var wardNumber = _faker.Random.Number(1, 30);
         var streetNumber = _faker.Random.Number(1, 999);
         var streetName = _faker.PickRandom(_streetNames);
-
         return $"{streetNumber} {streetName}, "
             + $"Phường {wardNumber}, "
             + $"Quận {districtNumber}, "
@@ -42,20 +40,25 @@ public class InspectionScheduleGenerator
 
     public static InspectionSchedule[] Execute(
         Car[] cars,
-        InspectionStatus[] statuses,
-        CarStatus[] carStatuses
+        User[] users,
+        UserRole[] roles
     )
     {
-        // Find the pending status
-        var pendingStatus = statuses.First(s => s.Name.ToLower() == "pending");
-
-        // Find the pending car status
-        var pendingCarStatus = carStatuses.First(s => s.Name == CarStatusNames.Pending);
-
         // Find cars in pending status
-        var pendingCars = cars.Where(c => c.StatusId == pendingCarStatus.Id).ToArray();
+        var pendingCars = cars.Where(c => c.Status == Domain.Enums.CarStatusEnum.Pending).ToArray();
 
         if (pendingCars.Length == 0)
+        {
+            return Array.Empty<InspectionSchedule>();
+        }
+
+        //Find the consultant role
+        var consultantRole = roles.First(r => r.Name.ToLower() == "consultant");
+
+        // Get all consultants
+        var consultants = users.Where(u => u.RoleId == consultantRole.Id).ToArray();
+
+        if (pendingCars.Length == 0 || consultants.Length == 0)
         {
             return Array.Empty<InspectionSchedule>();
         }
@@ -69,14 +72,17 @@ public class InspectionScheduleGenerator
             // Cycle through pending cars if there are fewer than 15
             var car = pendingCars[i % pendingCars.Length];
 
+            // Randomly pick a consultant
+            var consultant = _faker.PickRandom(consultants);
+
             var schedule = new InspectionSchedule
             {
                 TechnicianId = Guid.Parse("01951eae-453b-7ad9-949f-63dd30b592e1"),
                 CarId = car.Id,
-                InspectionStatusId = pendingStatus.Id,
                 InspectionAddress = GenerateVietnameseAddress(),
                 InspectionDate = today.AddHours(9 + i), // Schedule from 9 AM with 1 hour intervals
                 Note = $"Inspection #{i + 1} for {car.Id}",
+                CreatedBy = consultant.Id,
             };
 
             schedules.Add(schedule);

@@ -1,4 +1,6 @@
 using Domain.Entities;
+using Domain.Enums;
+
 using Persistance.Data;
 using UUIDNext;
 
@@ -9,7 +11,7 @@ public static class TestDataCreateBooking
     private static Booking CreateBooking(
         Guid userId,
         Guid carId,
-        Guid statusId,
+        BookingStatusEnum status,
         DateTime? startTime = null,
         DateTime? endTime = null
     ) =>
@@ -18,7 +20,7 @@ public static class TestDataCreateBooking
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             UserId = userId,
             CarId = carId,
-            StatusId = statusId,
+            Status = status,
             StartTime = startTime ?? DateTime.UtcNow.AddHours(1),
             EndTime = endTime ?? DateTime.UtcNow.AddHours(3),
             ActualReturnTime = DateTime.UtcNow.AddHours(3),
@@ -34,12 +36,12 @@ public static class TestDataCreateBooking
         AppDBContext dBContext,
         Guid userId,
         Guid carId,
-        Guid statusId,
+        BookingStatusEnum status,
         DateTime? startTime = null,
         DateTime? endTime = null
     )
     {
-        var booking = CreateBooking(userId, carId, statusId, startTime, endTime);
+        var booking = CreateBooking(userId, carId, status, startTime, endTime);
 
         await dBContext.Bookings.AddAsync(booking);
         await dBContext.SaveChangesAsync();

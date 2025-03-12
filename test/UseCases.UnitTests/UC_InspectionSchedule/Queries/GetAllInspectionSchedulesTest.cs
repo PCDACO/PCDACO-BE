@@ -98,9 +98,6 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
 
         var car = await CreateTestCar(owner.Id);
-        var pendingStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-            _dbContext
-        );
 
         // Create schedules for different technicians
         var schedules = new[]
@@ -109,19 +106,21 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
             {
                 TechnicianId = technician1.Id,
                 CarId = car.Id,
-                InspectionStatusId = pendingStatus.Id,
+                Status = InspectionScheduleStatusEnum.Pending,
                 InspectionAddress = "123 Tech1 St",
                 InspectionDate = DateTimeOffset.UtcNow,
                 Note = "Technician 1 schedule",
+                CreatedBy = consultant.Id,
             },
             new InspectionSchedule
             {
                 TechnicianId = technician2.Id,
                 CarId = car.Id,
-                InspectionStatusId = pendingStatus.Id,
+                Status = InspectionScheduleStatusEnum.Pending,
                 InspectionAddress = "456 Tech2 St",
                 InspectionDate = DateTimeOffset.UtcNow,
                 Note = "Technician 2 schedule",
+                CreatedBy = consultant.Id,
             },
         };
         await _dbContext.InspectionSchedules.AddRangeAsync(schedules);
@@ -163,10 +162,6 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
 
         var car = await CreateTestCar(owner.Id);
-        var pendingStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-            _dbContext
-        );
-
         // Create schedules for different months/years
         var januaryDate = new DateTimeOffset(2023, 1, 15, 10, 0, 0, TimeSpan.Zero);
         var februaryDate = new DateTimeOffset(2023, 2, 15, 10, 0, 0, TimeSpan.Zero);
@@ -178,28 +173,31 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
             {
                 TechnicianId = technician.Id,
                 CarId = car.Id,
-                InspectionStatusId = pendingStatus.Id,
+                Status = InspectionScheduleStatusEnum.Pending,
                 InspectionAddress = "123 January St",
                 InspectionDate = januaryDate,
                 Note = "January 2023 schedule",
+                CreatedBy = consultant.Id,
             },
             new InspectionSchedule
             {
                 TechnicianId = technician.Id,
                 CarId = car.Id,
-                InspectionStatusId = pendingStatus.Id,
+                Status = InspectionScheduleStatusEnum.Pending,
                 InspectionAddress = "456 February St",
                 InspectionDate = februaryDate,
                 Note = "February 2023 schedule",
+                CreatedBy = consultant.Id,
             },
             new InspectionSchedule
             {
                 TechnicianId = technician.Id,
                 CarId = car.Id,
-                InspectionStatusId = pendingStatus.Id,
+                Status = InspectionScheduleStatusEnum.Pending,
                 InspectionAddress = "789 January Next Year St",
                 InspectionDate = nextYearDate,
                 Note = "January 2024 schedule",
+                CreatedBy = consultant.Id,
             },
         };
         await _dbContext.InspectionSchedules.AddRangeAsync(schedules);
@@ -254,10 +252,6 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
 
         var car = await CreateTestCar(owner.Id);
-        var pendingStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-            _dbContext
-        );
-
         // Create schedules for current year and last year
         var currentYear = DateTimeOffset.UtcNow.Year;
         var currentYearDate = new DateTimeOffset(currentYear, 3, 15, 10, 0, 0, TimeSpan.Zero);
@@ -269,19 +263,21 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
             {
                 TechnicianId = technician.Id,
                 CarId = car.Id,
-                InspectionStatusId = pendingStatus.Id,
+                Status = InspectionScheduleStatusEnum.Pending,
                 InspectionAddress = "123 Current Year St",
                 InspectionDate = currentYearDate,
                 Note = "Current year schedule",
+                CreatedBy = consultant.Id,
             },
             new InspectionSchedule
             {
                 TechnicianId = technician.Id,
                 CarId = car.Id,
-                InspectionStatusId = pendingStatus.Id,
+                Status = InspectionScheduleStatusEnum.Pending,
                 InspectionAddress = "456 Last Year St",
                 InspectionDate = lastYearDate,
                 Note = "Last year schedule",
+                CreatedBy = consultant.Id,
             },
         };
         await _dbContext.InspectionSchedules.AddRangeAsync(schedules);
@@ -324,9 +320,6 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
 
         var car = await CreateTestCar(owner.Id);
-        var pendingStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-            _dbContext
-        );
 
         // Create multiple schedules
         var schedules = new List<InspectionSchedule>();
@@ -336,10 +329,11 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
             {
                 TechnicianId = technician.Id,
                 CarId = car.Id,
-                InspectionStatusId = pendingStatus.Id,
+                Status = InspectionScheduleStatusEnum.Pending,
                 InspectionAddress = $"123 Main St {i + 1}",
                 InspectionDate = DateTimeOffset.UtcNow.AddDays(i),
                 Note = $"Schedule {i + 1}",
+                CreatedBy = consultant.Id,
             };
             schedules.Add(schedule);
         }
@@ -372,7 +366,6 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
             "Automatic"
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
 
         return await TestDataCreateCar.CreateTestCar(
             _dbContext,
@@ -380,7 +373,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
             model.Id,
             transmissionType,
             fuelType,
-            carStatus
+            CarStatusEnum.Pending
         );
     }
 }

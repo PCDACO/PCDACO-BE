@@ -1,5 +1,4 @@
 using Ardalis.Result;
-using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
@@ -57,25 +56,15 @@ public sealed class CreateBooking
                 .AsNoTracking()
                 .Include(x => x.Owner)
                 .Include(x => x.Model)
+                .Where(c => c.Status == CarStatusEnum.Available)
                 .FirstOrDefaultAsync(
                     x =>
-                        x.Id == request.CarId
-                        && EF.Functions.ILike(x.CarStatus.Name, $"%available%"),
+                        x.Id == request.CarId,
                     cancellationToken: cancellationToken
                 );
 
             if (car == null)
                 return Result<Response>.NotFound("Không tìm thấy xe phù hợp");
-
-            var bookingStatus = await context
-                .BookingStatuses.AsNoTracking()
-                .FirstOrDefaultAsync(
-                    x => EF.Functions.ILike(x.Name, BookingStatusEnum.Pending.ToString()),
-                    cancellationToken: cancellationToken
-                );
-
-            if (bookingStatus == null)
-                return Result<Response>.NotFound("Không tìm thấy trạng thái phù hợp");
 
             bool hasOverlap = await context
                 .Bookings.AsNoTracking()
@@ -84,9 +73,9 @@ public sealed class CreateBooking
                         b.UserId == currentUser.User.Id
                         && b.StartTime < request.EndTime
                         && b.ActualReturnTime > request.StartTime
-                        && b.Status.Name != BookingStatusEnum.Rejected.ToString() // Exclude rejected bookings
-                        && b.Status.Name != BookingStatusEnum.Cancelled.ToString() // Exclude cancelled bookings
-                        && b.Status.Name != BookingStatusEnum.Expired.ToString(), // Exclude expired bookings
+                        && b.Status != BookingStatusEnum.Rejected // Exclude rejected bookings
+                        && b.Status != BookingStatusEnum.Cancelled // Exclude cancelled bookings
+                        && b.Status != BookingStatusEnum.Expired, // Exclude expired bookings
                     cancellationToken
                 );
 
@@ -110,7 +99,6 @@ public sealed class CreateBooking
                 Id = bookingId,
                 UserId = currentUser.User.Id,
                 CarId = request.CarId,
-                StatusId = bookingStatus.Id,
                 StartTime = request.StartTime,
                 EndTime = request.EndTime,
                 ActualReturnTime = request.EndTime, // Update later when user return car
@@ -121,15 +109,6 @@ public sealed class CreateBooking
                 TotalAmount = totalAmount,
                 Note = string.Empty,
             };
-
-            // Initialize Contract (using default terms combined from Car.Terms and standard clauses)
-            var contractStatus = await context.ContractStatuses.FirstOrDefaultAsync(
-                cs => cs.Name == ContractStatusNames.Pending,
-                cancellationToken
-            );
-
-            if (contractStatus == null)
-                return Result.Error("Không tìm thấy trạng thái hợp đồng hợp lệ");
 
             string standardClauses = GetStandardContractClauses(
                 basePrice,
@@ -144,7 +123,6 @@ public sealed class CreateBooking
             var contract = new Contract
             {
                 BookingId = booking.Id,
-                StatusId = contractStatus.Id,
                 StartDate = booking.StartTime,
                 EndDate = booking.EndTime,
                 Terms = fullTerms,
