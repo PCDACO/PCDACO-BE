@@ -96,7 +96,6 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         // Create owner and car prerequisites
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var carModel = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
@@ -112,19 +111,14 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             modelId: carModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: carStatus
+            carStatus: Domain.Enums.CarStatusEnum.Pending
         );
 
-        // Create approved status and schedule
-        var approvedStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-            _dbContext,
-            "Approved"
-        );
         var schedule = new InspectionSchedule
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            InspectionStatusId = approvedStatus.Id,
+            Status = Domain.Enums.InspectionScheduleStatusEnum.Approved,
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
             CreatedBy = consultant.Id,
@@ -173,7 +167,6 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         // Create owner and car prerequisites
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var carModel = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
@@ -189,18 +182,14 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             modelId: carModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: carStatus
+            carStatus: Domain.Enums.CarStatusEnum.Pending
         );
 
-        // Create pending status and schedule
-        var pendingStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-            _dbContext
-        );
         var schedule = new InspectionSchedule
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            InspectionStatusId = pendingStatus.Id,
+            Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
             CreatedBy = consultant.Id,
@@ -249,7 +238,6 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         // Create owner and car prerequisites
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Pending");
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var carModel = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
@@ -265,18 +253,14 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             modelId: carModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: carStatus
+            carStatus: Domain.Enums.CarStatusEnum.Pending
         );
 
-        // Create pending status and schedule
-        var pendingStatus = await TestDataCreateInspectionStatus.CreateTestInspectionStatus(
-            _dbContext
-        );
         var originalSchedule = new InspectionSchedule
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            InspectionStatusId = pendingStatus.Id,
+            Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
             CreatedBy = consultant.Id,

@@ -30,7 +30,7 @@ public sealed class CompleteBooking
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
             var booking = await context
-                .Bookings.Include(x => x.Status)
+                .Bookings
                 .Include(x => x.Car)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
@@ -43,23 +43,12 @@ public sealed class CompleteBooking
                 );
 
             // Validate current status
-            if (booking.Status.Name != BookingStatusEnum.Ongoing.ToString())
+            if (booking.Status != BookingStatusEnum.Ongoing)
             {
                 return Result.Conflict(
-                    $"Không thể phê duyệt booking ở trạng thái {booking.Status.Name}"
+                    $"Không thể phê duyệt booking ở trạng thái " + booking.Status.ToString()
                 );
             }
-
-            var status = await context
-                .BookingStatuses.AsNoTracking()
-                .FirstOrDefaultAsync(
-                    x => EF.Functions.ILike(x.Name, BookingStatusEnum.Completed.ToString()),
-                    cancellationToken
-                );
-
-            if (status == null)
-                return Result.NotFound("Không tìm thấy trạng thái phù hợp");
-
             var lastTracking = await context
                 .TripTrackings.Where(t => t.BookingId == request.BookingId)
                 .OrderByDescending(t => t.Id)
@@ -67,7 +56,7 @@ public sealed class CompleteBooking
 
             decimal totalDistance = lastTracking?.CumulativeDistance ?? 0;
 
-            booking.StatusId = status.Id;
+            booking.Status = BookingStatusEnum.Completed;
             booking.TotalDistance = totalDistance;
 
             await context.SaveChangesAsync(cancellationToken);

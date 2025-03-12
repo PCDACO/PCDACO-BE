@@ -22,7 +22,7 @@ public sealed class MarkBookingReadyForPickup
             }
 
             var booking = await context
-                .Bookings.Include(x => x.Status)
+                .Bookings
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
@@ -32,24 +32,14 @@ public sealed class MarkBookingReadyForPickup
 
             // Ensure the booking is in a valid state (i.e. Approved) before
             // transitioning to ReadyForPickup.
-            if (booking.Status.Name.ToEnum() != BookingStatusEnum.Approved)
+            if (booking.Status != BookingStatusEnum.Approved)
             {
                 return Result.Conflict(
-                    $"Không thể chuyển booking sang Ready For Pickup từ trạng thái {booking.Status.Name}"
+                    $"Không thể chuyển booking sang Ready For Pickup từ trạng thái " + booking.Status.ToString()
                 );
             }
 
-            var readyStatus = await context.BookingStatuses.FirstOrDefaultAsync(
-                x => EF.Functions.Like(x.Name, BookingStatusEnum.ReadyForPickup.ToString()),
-                cancellationToken
-            );
-
-            if (readyStatus == null)
-            {
-                return Result.NotFound("Không tìm thấy trạng thái 'Ready For Pickup'");
-            }
-
-            booking.StatusId = readyStatus.Id;
+            booking.Status = BookingStatusEnum.ReadyForPickup;
             await context.SaveChangesAsync(cancellationToken);
 
             return Result.SuccessWithMessage(

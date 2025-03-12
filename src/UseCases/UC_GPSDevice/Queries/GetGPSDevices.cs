@@ -33,7 +33,7 @@ public class GetGPSDevices
             => new(
                 device.Id,
                 device.Name,
-                device.Status.Name,
+                device.Status.ToString(),
                GetTimestampFromUuid.Execute(device.Id)
             );
     };

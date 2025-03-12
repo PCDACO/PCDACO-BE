@@ -1,13 +1,11 @@
 using Ardalis.Result;
 using Domain.Constants;
-using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared;
 using Infrastructure.Encryption;
 using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
-using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.UC_UserStatistic.Queries;
 using UseCases.UnitTests.TestBases;
@@ -57,13 +55,6 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         var driver = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(driver);
 
-        // Create booking statuses
-        var completedStatus = await CreateBookingStatus(BookingStatusEnum.Completed.ToString());
-        var rejectedStatus = await CreateBookingStatus(BookingStatusEnum.Rejected.ToString());
-        var expiredStatus = await CreateBookingStatus(BookingStatusEnum.Expired.ToString());
-        var cancelledStatus = await CreateBookingStatus(BookingStatusEnum.Cancelled.ToString());
-        var pendingStatus = await CreateBookingStatus(BookingStatusEnum.Pending.ToString());
-
         // Create owner and car for bookings
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var owner = await TestDataCreateUser.CreateTestUser(
@@ -74,17 +65,17 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         var car = await CreateTestCar(owner.Id, _dbContext);
 
         // Create bookings with different statuses
-        await CreateBooking(driver.Id, car.Id, completedStatus.Id); // Completed
-        await CreateBooking(driver.Id, car.Id, completedStatus.Id); // Completed
-        await CreateBooking(driver.Id, car.Id, rejectedStatus.Id); // Rejected
-        await CreateBooking(driver.Id, car.Id, expiredStatus.Id); // Expired
-        await CreateBooking(driver.Id, car.Id, cancelledStatus.Id); // Cancelled
-        await CreateBooking(driver.Id, car.Id, pendingStatus.Id); // Pending
+        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Completed); // Completed
+        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Completed); // Completed
+        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Rejected); // Rejected
+        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Expired); // Expired
+        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Cancelled); // Cancelled
+        await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Pending); // Pending
 
         // Create feedback for the completed booking
         var booking = await _dbContext
             .Bookings.Where(b =>
-                b.UserId == driver.Id && b.Status.Name == BookingStatusEnum.Completed.ToString()
+                b.UserId == driver.Id && b.Status == BookingStatusEnum.Completed
             )
             .FirstAsync();
 
@@ -122,9 +113,6 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(owner);
 
-        // Create booking statuses
-        var completedStatus = await CreateBookingStatus(BookingStatusEnum.Completed.ToString());
-
         // Create driver for bookings
         var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
         var driver = await TestDataCreateUser.CreateTestUser(
@@ -137,8 +125,8 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         var car = await CreateTestCar(owner.Id, _dbContext);
 
         // Create completed bookings
-        var booking1 = await CreateBooking(driver.Id, car.Id, completedStatus.Id, 500);
-        var booking2 = await CreateBooking(driver.Id, car.Id, completedStatus.Id, 750);
+        var booking1 = await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Completed, 500);
+        var booking2 = await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Completed, 750);
 
         // Create feedback for the completed bookings
         await CreateFeedback(booking1.Id, FeedbackTypeEnum.Driver, 3, _dbContext);
@@ -177,9 +165,6 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
         _currentUser.SetUser(consultant);
 
-        // Create inspection status
-        var pendingStatus = await CreateInspectionStatus(InspectionStatusNames.Pending);
-
         // Create car and technician for the schedule
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var owner = await TestDataCreateUser.CreateTestUser(
@@ -200,9 +185,9 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
 
         // Create inspection schedules
-        await CreateInspectionSchedule(car.Id, technician.Id, pendingStatus.Id, consultant.Id);
-        await CreateInspectionSchedule(car.Id, technician.Id, pendingStatus.Id, consultant.Id);
-        await CreateInspectionSchedule(car.Id, technician.Id, pendingStatus.Id, consultant.Id);
+        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Pending, consultant.Id);
+        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Pending, consultant.Id);
+        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Pending, consultant.Id);
 
         var handler = new GetUserStatistics.Handler(_dbContext, _currentUser);
         var query = new GetUserStatistics.Query();
@@ -237,11 +222,6 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         var technician = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
         _currentUser.SetUser(technician);
 
-        // Create inspection statuses
-        var approvedStatus = await CreateInspectionStatus(InspectionStatusNames.Approved);
-        var rejectedStatus = await CreateInspectionStatus(InspectionStatusNames.Rejected);
-        var pendingStatus = await CreateInspectionStatus(InspectionStatusNames.Pending);
-
         // Create consultant, car and owner for the schedule
         var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
             _dbContext,
@@ -262,10 +242,10 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         var car = await CreateTestCar(owner.Id, _dbContext);
 
         // Create inspection schedules
-        await CreateInspectionSchedule(car.Id, technician.Id, approvedStatus.Id, consultant.Id);
-        await CreateInspectionSchedule(car.Id, technician.Id, approvedStatus.Id, consultant.Id);
-        await CreateInspectionSchedule(car.Id, technician.Id, rejectedStatus.Id, consultant.Id);
-        await CreateInspectionSchedule(car.Id, technician.Id, pendingStatus.Id, consultant.Id);
+        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Approved, consultant.Id);
+        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Approved, consultant.Id);
+        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Rejected, consultant.Id);
+        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Pending, consultant.Id);
 
         var handler = new GetUserStatistics.Handler(_dbContext, _currentUser);
         var query = new GetUserStatistics.Query();
@@ -319,20 +299,8 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(0, response.TotalRejectedInspectionSchedule);
     }
 
-    // Helper methods
-    private async Task<BookingStatus> CreateBookingStatus(string name)
-    {
-        var status = new BookingStatus { Name = name };
-        await _dbContext.BookingStatuses.AddAsync(status);
-        await _dbContext.SaveChangesAsync();
-        return status;
-    }
-
     private async Task<Car> CreateTestCar(Guid ownerId, AppDBContext context)
     {
-        var carStatus = new CarStatus { Name = "Available" };
-        await _dbContext.CarStatuses.AddAsync(carStatus);
-
         var manufacturer = new Manufacturer { Name = "Test Manufacturer" };
         await _dbContext.Manufacturers.AddAsync(manufacturer);
 
@@ -363,7 +331,7 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         var car = new Car
         {
             OwnerId = ownerId,
-            StatusId = carStatus.Id,
+            Status = CarStatusEnum.Available,
             EncryptedLicensePlate = encryptedLicensePlate,
             ModelId = model.Id,
             TransmissionTypeId = transmissionType.Id,
@@ -391,7 +359,7 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
     private async Task<Booking> CreateBooking(
         Guid userId,
         Guid carId,
-        Guid statusId,
+        BookingStatusEnum status,
         decimal basePrice = 100
     )
     {
@@ -399,7 +367,7 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         {
             UserId = userId,
             CarId = carId,
-            StatusId = statusId,
+            Status = status,
             StartTime = DateTimeOffset.UtcNow.AddDays(-2),
             EndTime = DateTimeOffset.UtcNow.AddDays(-1),
             ActualReturnTime = DateTimeOffset.UtcNow.AddDays(-1),
@@ -413,12 +381,7 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
             IsPaid = false,
         };
 
-        if (
-            statusId
-            == _dbContext
-                .BookingStatuses.First(s => s.Name == BookingStatusEnum.Completed.ToString())
-                .Id
-        )
+        if (status == BookingStatusEnum.Completed)
         {
             booking.IsCarReturned = true;
             booking.IsPaid = true;
@@ -509,20 +472,10 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         return feedback;
     }
 
-    private async Task<InspectionStatus> CreateInspectionStatus(string name)
-    {
-        var status = new InspectionStatus { Name = name };
-
-        await _dbContext.InspectionStatuses.AddAsync(status);
-        await _dbContext.SaveChangesAsync();
-
-        return status;
-    }
-
     private async Task<InspectionSchedule> CreateInspectionSchedule(
         Guid carId,
         Guid technicianId,
-        Guid statusId,
+        InspectionScheduleStatusEnum status,
         Guid createdById
     )
     {
@@ -530,7 +483,7 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         {
             CarId = carId,
             TechnicianId = technicianId,
-            InspectionStatusId = statusId,
+            Status = status,
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
             InspectionAddress = "Test Address",
             Note = "Test note",

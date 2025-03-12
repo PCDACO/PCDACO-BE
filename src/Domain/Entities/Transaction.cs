@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
 
+using Domain.Enums;
 using Domain.Shared;
 
 namespace Domain.Entities;
@@ -11,7 +12,7 @@ public class Transaction : BaseEntity
     public required Guid? BookingId { get; set; }
     public required Guid? BankAccountId { get; set; }
     public required Guid TypeId { get; set; }
-    public required Guid StatusId { get; set; }
+    public TransactionStatusEnum Status { get; set; } = TransactionStatusEnum.Pending;
     public decimal Amount { get; set; } = 0;
 
     // Navigation properties
@@ -25,9 +26,6 @@ public class Transaction : BaseEntity
 
     [ForeignKey(nameof(TypeId))]
     public TransactionType Type { get; set; } = null!;
-
-    [ForeignKey(nameof(StatusId))]
-    public TransactionStatus Status { get; set; } = null!;
 
     [ForeignKey(nameof(BookingId))]
     public Booking? Booking { get; set; }

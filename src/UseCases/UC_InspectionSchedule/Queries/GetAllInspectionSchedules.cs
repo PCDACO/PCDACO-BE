@@ -22,7 +22,6 @@ public sealed class GetAllInspectionSchedules
         Guid CarId,
         Guid CarOwnerId,
         string CarOwnerName,
-        Guid InspectionStatusId,
         string StatusName,
         string Note,
         string InspectionAddress,
@@ -38,8 +37,7 @@ public sealed class GetAllInspectionSchedules
                 schedule.CarId,
                 schedule.Car.OwnerId,
                 schedule.Car.Owner.Name,
-                schedule.InspectionStatusId,
-                schedule.InspectionStatus.Name,
+                schedule.Status.ToString(),
                 schedule.Note,
                 schedule.InspectionAddress,
                 schedule.InspectionDate,
@@ -60,11 +58,11 @@ public sealed class GetAllInspectionSchedules
 
             var query = context
                 .InspectionSchedules.AsSplitQuery()
-                .Include(s => s.InspectionStatus)
                 .Include(s => s.Technician)
                 .Include(s => s.Car)
                 .ThenInclude(c => c.Owner)
-                .Where(s => !s.IsDeleted);
+                .Where(s => !s.IsDeleted)
+                .Where(s => s.Status == InspectionScheduleStatusEnum.Pending);
 
             // Filter by technician if provided
             if (request.TechnicianId != null)

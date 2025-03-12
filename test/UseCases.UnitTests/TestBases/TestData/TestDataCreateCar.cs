@@ -1,4 +1,5 @@
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Shared;
 
 using Microsoft.EntityFrameworkCore;
@@ -18,7 +19,7 @@ public static class TestDataCreateCar
         Guid encryptionKeyId,
         TransmissionType transmissionType,
         FuelType fuelType,
-        CarStatus carStatus,
+        CarStatusEnum carStatus,
         bool isDeleted = false
     ) =>
         new()
@@ -29,7 +30,7 @@ public static class TestDataCreateCar
             EncryptionKeyId = encryptionKeyId,
             FuelTypeId = fuelType.Id,
             TransmissionTypeId = transmissionType.Id,
-            StatusId = carStatus.Id,
+            Status = carStatus,
             EncryptedLicensePlate = "ABC-12345",
             Color = "Red",
             Seat = 4,
@@ -44,7 +45,7 @@ public static class TestDataCreateCar
         Guid modelId,
         TransmissionType transmissionType,
         FuelType fuelType,
-        CarStatus carStatus,
+        CarStatusEnum carStatus,
         bool isDeleted = false
     )
     {
@@ -74,7 +75,7 @@ public static class TestDataCreateCar
         Guid modelId,
         TransmissionType transmissionType,
         FuelType fuelType,
-        CarStatus carStatus,
+        string carStatus,
         string[] imageUrls,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
@@ -88,7 +89,7 @@ public static class TestDataCreateCar
             modelId,
             transmissionType,
             fuelType,
-            carStatus,
+            (CarStatusEnum)Enum.Parse(typeof(CarStatusEnum), carStatus),
             aesEncryptionService,
             keyManagementService,
             encryptionSettings,
@@ -121,7 +122,7 @@ public static class TestDataCreateCar
         Guid modelId,
         TransmissionType transmissionType,
         FuelType fuelType,
-        CarStatus carStatus,
+        CarStatusEnum carStatus,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings,
@@ -155,7 +156,7 @@ public static class TestDataCreateCar
             EncryptedLicensePlate = encryptedLicensePlate,
             FuelTypeId = fuelType.Id,
             TransmissionTypeId = transmissionType.Id,
-            StatusId = carStatus.Id,
+            Status = carStatus,
             Color = "Red",
             Seat = 4,
             FuelConsumption = 7.5m,

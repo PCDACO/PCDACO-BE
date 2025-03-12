@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations.Schema;
+
+using Domain.Enums;
 using Domain.Shared;
 
 namespace Domain.Entities;
@@ -7,7 +9,7 @@ public class Booking : BaseEntity
 {
     public required Guid UserId { get; set; }
     public required Guid CarId { get; set; }
-    public required Guid StatusId { get; set; }
+    public BookingStatusEnum Status { get; set; } = BookingStatusEnum.Pending;
     public required DateTimeOffset StartTime { get; set; }
     public required DateTimeOffset EndTime { get; set; }
     public required DateTimeOffset ActualReturnTime { get; set; }
@@ -30,16 +32,12 @@ public class Booking : BaseEntity
 
     [ForeignKey(nameof(CarId))]
     public Car Car { get; set; } = null!;
-
-    [ForeignKey(nameof(StatusId))]
-    public BookingStatus Status { get; set; } = null!;
     public Contract Contract { get; set; } = null!;
     public ICollection<Compensation> Compensations { get; set; } = [];
     public ICollection<CarReport> CarReports { get; set; } = [];
     public ICollection<TripTracking> TripTrackings { get; set; } = [];
     public ICollection<Feedback> Feedbacks { get; set; } = [];
     public ICollection<Transaction> Transactions { get; set; } = [];
-
     public decimal CalculateRefundAmount()
     {
         var daysUntilStart = (StartTime - DateTimeOffset.UtcNow).TotalDays;

@@ -2,6 +2,7 @@ using Ardalis.Result;
 using Domain.Constants;
 using Domain.Constants.EntityNames;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
 using Hangfire;
 using MediatR;
@@ -64,14 +65,6 @@ public sealed class ProcessPaymentWebhook
             if (transactionTypes.Count != 3)
                 return Result.Error("Loại giao dịch không hợp lệ");
 
-            var transactionStatus = await context.TransactionStatuses.FirstOrDefaultAsync(
-                t => t.Name == TransactionStatusNames.Completed,
-                cancellationToken
-            );
-
-            if (transactionStatus == null)
-                return Result.Error("Trạng thái giao dịch không hợp lệ");
-
             var admin = await context.Users.FirstOrDefaultAsync(
                 u => u.Role.Name == UserRoleNames.Admin,
                 cancellationToken
@@ -83,7 +76,7 @@ public sealed class ProcessPaymentWebhook
             GeneratePaymentTransactions(
                 booking,
                 transactionTypes,
-                transactionStatus,
+                TransactionStatusEnum.Completed,
                 admin,
                 out Transaction bookingPayment,
                 out Transaction platformFeeTransaction,
@@ -122,7 +115,7 @@ public sealed class ProcessPaymentWebhook
         private static void GeneratePaymentTransactions(
             Booking booking,
             List<TransactionType> transactionTypes,
-            TransactionStatus transactionStatus,
+            TransactionStatusEnum transactionStatus,
             User admin,
             out Transaction bookingPayment,
             out Transaction platformFeeTransaction,
@@ -139,7 +132,7 @@ public sealed class ProcessPaymentWebhook
                 TypeId = transactionTypes
                     .First(t => t.Name == TransactionTypeNames.BookingPayment)
                     .Id,
-                StatusId = transactionStatus.Id,
+                Status = transactionStatus,
                 Amount = booking.TotalAmount
             };
 
@@ -151,7 +144,7 @@ public sealed class ProcessPaymentWebhook
                 BookingId = booking.Id,
                 BankAccountId = null,
                 TypeId = transactionTypes.First(t => t.Name == TransactionTypeNames.PlatformFee).Id,
-                StatusId = transactionStatus.Id,
+                Status = transactionStatus,
                 Amount = booking.PlatformFee,
             };
 
@@ -165,7 +158,7 @@ public sealed class ProcessPaymentWebhook
                 TypeId = transactionTypes
                     .First(t => t.Name == TransactionTypeNames.OwnerEarning)
                     .Id,
-                StatusId = transactionStatus.Id,
+                Status = transactionStatus,
                 Amount = booking.BasePrice,
             };
         }

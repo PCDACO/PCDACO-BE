@@ -83,7 +83,7 @@ public class GetPersonalCars
                 RequiresCollateral: car.RequiresCollateral,
                 Price: car.Price,
                 Terms: car.Terms,
-                Status: car.CarStatus.Name,
+                Status: car.Status.ToString(),
                 TotalRented: car.CarStatistic.TotalBooking,
                 AverageRating: car.CarStatistic.AverageRating,
                 Location: car.GPS == null ? null : new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
@@ -153,14 +153,13 @@ public class GetPersonalCars
                 .Include(c => c.Model).ThenInclude(o => o.Manufacturer)
                 .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars).ThenInclude(ic => ic.Type)
-                .Include(c => c.CarStatus)
                 .Include(c => c.CarStatistic)
                 .Include(c => c.TransmissionType)
                 .Include(c => c.FuelType)
                 .Include(c => c.GPS)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .Where(c => !c.IsDeleted)
-                .Where(c => EF.Functions.ILike(c.CarStatus.Name, $"%{request.StatusName}%"))
+                .Where(c => EF.Functions.ILike(c.Status.ToString(), $"%{request.StatusName}%"))
                 .Where(c => c.OwnerId == currentUser.User!.Id)
                 .Where(c => request.Model == null || c.ModelId == request.Model)
                 .Where(c =>

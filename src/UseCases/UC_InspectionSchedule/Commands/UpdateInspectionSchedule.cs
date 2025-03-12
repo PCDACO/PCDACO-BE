@@ -37,14 +37,14 @@ public sealed class UpdateInspectionSchedule
 
             // Get the existing schedule
             var schedule = await context
-                .InspectionSchedules.Include(s => s.InspectionStatus)
+                .InspectionSchedules
                 .FirstOrDefaultAsync(s => s.Id == request.Id && !s.IsDeleted, cancellationToken);
 
             if (schedule is null)
                 return Result.Error(ResponseMessages.InspectionScheduleNotFound);
 
             // Check if schedule can be updated (only pending schedules can be updated)
-            if (!schedule.InspectionStatus.Name.ToLower().Contains("pending"))
+            if (schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.Pending)
                 return Result.Error(ResponseMessages.OnlyUpdatePendingInspectionSchedule);
 
             // Verify technician exists and is a technician

@@ -31,7 +31,7 @@ public sealed class TrackTripLocation
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này!");
 
             var booking = await context
-                .Bookings.Include(b => b.Status)
+                .Bookings
                 .Include(b => b.TripTrackings)
                 .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken);
 
@@ -43,7 +43,7 @@ public sealed class TrackTripLocation
                     "Bạn không có quyền thực hiện chức năng này với booking này!"
                 );
 
-            if (booking.Status.Name != BookingStatusEnum.Ongoing.ToString())
+            if (booking.Status != BookingStatusEnum.Ongoing)
                 return Result.Error("Chỉ có thể cập nhật vị trí khi chuyến đi đang diễn ra");
 
             // Create current location point

@@ -1,7 +1,5 @@
 using Ardalis.Result;
 
-using Azure;
-
 using Domain.Constants;
 using Domain.Entities;
 
@@ -38,7 +36,6 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
         TransmissionType transmissionType =
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        CarStatus carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         var user = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(user);
@@ -50,7 +47,7 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
             modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: carStatus
+            carStatus: Domain.Enums.CarStatusEnum.Available
         );
 
         var handler = new DeleteCar.Handler(_dbContext, _currentUser);
@@ -93,7 +90,6 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
         TransmissionType transmissionType =
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        CarStatus carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         var requester = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
@@ -107,7 +103,7 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
             modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: carStatus
+            carStatus: Domain.Enums.CarStatusEnum.Available
         );
 
         var handler = new DeleteCar.Handler(_dbContext, _currentUser);
@@ -129,7 +125,6 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
         TransmissionType transmissionType =
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        CarStatus status = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         var user = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(user);
@@ -141,7 +136,7 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
             modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: status
+            carStatus: Domain.Enums.CarStatusEnum.Available
         );
 
         var handler = new DeleteCar.Handler(_dbContext, _currentUser);
@@ -180,7 +175,6 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
         TransmissionType transmissionType =
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        CarStatus status = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         var user = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(user);
@@ -194,7 +188,7 @@ public class DeleteCarTests(DatabaseTestBase fixture) : IAsyncLifetime
             modelId: testModel.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: status,
+            carStatus: Domain.Enums.CarStatusEnum.Available,
             isDeleted: true
         );
 

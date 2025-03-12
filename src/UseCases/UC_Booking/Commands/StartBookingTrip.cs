@@ -20,7 +20,7 @@ public sealed class StartBookingTrip
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
             var booking = await context
-                .Bookings.Include(x => x.Status)
+                .Bookings
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
@@ -32,22 +32,13 @@ public sealed class StartBookingTrip
                 );
 
             // Validate current status
-            if (booking.Status.Name != BookingStatusEnum.ReadyForPickup.ToString())
+            if (booking.Status != BookingStatusEnum.ReadyForPickup)
             {
                 return Result.Conflict(
-                    $"Không thể phê duyệt booking ở trạng thái {booking.Status.Name}"
+                    $"Không thể phê duyệt booking ở trạng thái " + booking.Status.ToString()
                 );
             }
-
-            var status = await context.BookingStatuses.FirstOrDefaultAsync(
-                x => EF.Functions.Like(x.Name, BookingStatusEnum.Ongoing.ToString()),
-                cancellationToken
-            );
-
-            if (status == null)
-                return Result.NotFound("Không tìm thấy trạng thái phù hợp");
-
-            booking.StatusId = status.Id;
+            booking.Status = BookingStatusEnum.Ongoing;
             booking.IsCarReturned = false;
             await context.SaveChangesAsync(cancellationToken);
 

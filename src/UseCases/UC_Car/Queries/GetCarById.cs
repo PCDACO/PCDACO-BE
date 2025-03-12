@@ -71,7 +71,7 @@ public class GetCarById
                 car.RequiresCollateral,
                 car.Price,
                 car.Terms,
-                car.CarStatus.Name,
+                car.Status.ToString(),
                 car.CarStatistic.TotalBooking,
                 car.CarStatistic.AverageRating,
                 car.GPS == null ? null : new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
@@ -118,16 +118,15 @@ public class GetCarById
                     c.Bookings.Where(b =>
                         b.StartTime > DateTimeOffset.UtcNow
                         && b.EndTime > DateTimeOffset.UtcNow.AddMonths(3)
-                        && b.Status.Name != BookingStatusEnum.Cancelled.ToString()
-                        && b.Status.Name != BookingStatusEnum.Rejected.ToString()
-                        && b.Status.Name != BookingStatusEnum.Expired.ToString()
+                        && b.Status != BookingStatusEnum.Cancelled
+                        && b.Status != BookingStatusEnum.Rejected
+                        && b.Status != BookingStatusEnum.Expired
                     )
                 )
                 .Include(c => c.Owner).ThenInclude(o => o.Feedbacks)
                 .Include(c => c.Model).ThenInclude(o => o.Manufacturer)
                 .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars).ThenInclude(ic => ic.Type)
-                .Include(c => c.CarStatus)
                 .Include(c => c.CarStatistic)
                 .Include(c => c.TransmissionType)
                 .Include(c => c.FuelType)

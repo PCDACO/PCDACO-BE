@@ -1,5 +1,6 @@
 using Domain.Constants.EntityNames;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Shared;
 
 using UseCases.Abstractions;
@@ -15,7 +16,7 @@ public class CarDummyData
     public required decimal FuelConsumption { get; set; }
     public required decimal Price { get; set; }
     public required string LicensePlate { get; set; }
-    public required string Status { get; set; }
+    public required CarStatusEnum Status { get; set; }
     public required string FuelType { get; set; }
     public required string TransmissionType { get; set; }
     public required string Model { get; set; }
@@ -29,7 +30,7 @@ public class CarGenerator
             FuelConsumption = 0.75M,
             Price = 30000,
             LicensePlate = "55132",
-            Status = CarStatusNames.Available,
+            Status = CarStatusEnum.Available,
             FuelType = FuelTypeNames.Diesel,
             TransmissionType = TransmissionTypeNames.Automatic,
             Model = "Mustang"
@@ -40,7 +41,7 @@ public class CarGenerator
             FuelConsumption = 0.75M,
             Price = 30000,
             LicensePlate = "13622",
-            Status = CarStatusNames.Pending,
+            Status = CarStatusEnum.Pending,
             FuelType = FuelTypeNames.Gasoline,
             TransmissionType = TransmissionTypeNames.Manual,
             Model = "Suburban"
@@ -51,7 +52,7 @@ public class CarGenerator
             FuelConsumption = 0.75M,
             Price = 30000,
             LicensePlate = "99132",
-            Status = CarStatusNames.Available,
+            Status = CarStatusEnum.Available,
             FuelType = FuelTypeNames.Diesel,
             TransmissionType = TransmissionTypeNames.Automatic,
             Model = "Tiguan"
@@ -62,7 +63,7 @@ public class CarGenerator
             FuelConsumption = 0.75M,
             Price = 100000,
             LicensePlate = "55555",
-            Status = CarStatusNames.Rented,
+            Status = CarStatusEnum.Rented,
             FuelType = FuelTypeNames.Diesel,
             TransmissionType = TransmissionTypeNames.Automatic,
             Model = "Pathfinder"
@@ -72,7 +73,6 @@ public class CarGenerator
         TransmissionType[] transmissionTypes,
         Model[] models,
         FuelType[] fuelTypes,
-        CarStatus[] carStatuses,
         EncryptionSettings encryptionSettings,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
@@ -94,7 +94,7 @@ public class CarGenerator
         TransmissionTypeId = transmissionTypes.Where(tt => tt.Name == u.TransmissionType).Select(tt => tt.Id).First(),
         ModelId = models.Where(tt => tt.Name == u.Model).Select(tt => tt.Id).First(),
         FuelTypeId = fuelTypes.Where(tt => tt.Name == u.FuelType).Select(tt => tt.Id).First(),
-        StatusId = carStatuses.Where(cs => cs.Name == u.Status).Select(cs => cs.Id).First(),
+        Status = u.Status,
         Color = u.Color,
         EncryptedLicensePlate = encryptedLicensePlate,
         FuelConsumption = u.FuelConsumption,

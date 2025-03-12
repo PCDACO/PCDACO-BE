@@ -38,7 +38,7 @@ public sealed class ProcessBookingPayment
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này!");
 
             var booking = await context
-                .Bookings.Include(x => x.Status)
+                .Bookings
                 .Include(x => x.Car)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
@@ -50,7 +50,7 @@ public sealed class ProcessBookingPayment
                     "Bạn không có quyền thực hiện chức năng này với booking này!"
                 );
 
-            if (booking.Status.Name != BookingStatusEnum.Completed.ToString())
+            if (booking.Status != BookingStatusEnum.Completed)
                 return Result.Error("Chỉ có thể thanh toán chuyến đi đã hoàn thành!");
 
             if (booking.IsPaid)

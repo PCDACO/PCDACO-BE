@@ -125,7 +125,6 @@ namespace UseCases.UC_InspectionSchedule.Queries
                     .InspectionSchedules
                     .AsNoTracking()
                     .AsSplitQuery()
-                    .Include(s => s.InspectionStatus)
                     .Include(s => s.Technician)
                     .Include(s => s.Car).ThenInclude(c => c.Model).ThenInclude(m => m.Manufacturer)
                     .Include(s => s.Car).ThenInclude(c => c.ImageCars).ThenInclude(i => i.Type)
@@ -135,9 +134,9 @@ namespace UseCases.UC_InspectionSchedule.Queries
                     .ThenInclude(c => c.TransmissionType)
                     .Include(s => s.Car)
                     .ThenInclude(c => c.FuelType)
+                    .Where(s => s.Status == Domain.Enums.InspectionScheduleStatusEnum.Pending)
                     .Where(s =>
                         s.TechnicianId == currentUser.User.Id
-                        && EF.Functions.ILike(s.InspectionStatus.Name, "%pending%")
                         && !s.IsDeleted
                         && s.InspectionDate.Date == today
                     )

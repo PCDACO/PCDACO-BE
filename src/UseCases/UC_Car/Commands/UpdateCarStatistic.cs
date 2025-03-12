@@ -22,7 +22,6 @@ public sealed class UpdateCarStatistic
                 .Include(x => x.Bookings)
                 .ThenInclude(b => b.Feedbacks)
                 .Include(x => x.Bookings)
-                .ThenInclude(b => b.Status)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
             if (gettingCar is null)
@@ -33,34 +32,21 @@ public sealed class UpdateCarStatistic
             );
             if (updatingCarStatistic is null)
                 return Result.NotFound($"Không tìm thấy xe với Id : {request.Id}");
-            // Get status ids
-            Guid? completedStatusId = await context
-                .BookingStatuses.Where(x => EF.Functions.ILike(x.Name, "%completed%"))
-                .Select(x => x.Id)
-                .FirstOrDefaultAsync(cancellationToken);
-            if (completedStatusId is null)
-                return Result.Error("Không tìm thấy trạng thái hoàn thành");
-            Guid? cancelledStatusId = await context
-                .BookingStatuses.Where(x => EF.Functions.ILike(x.Name, "%cancelled%"))
-                .Select(x => x.Id)
-                .FirstOrDefaultAsync(cancellationToken);
-            if (cancelledStatusId is null)
-                return Result.Error("Không tìm thấy trạng thái đã hủy");
             // Update
             updatingCarStatistic.TotalBooking = gettingCar
-                .Bookings.Where(b => b.Status.Id == completedStatusId)
+                .Bookings.Where(b => b.Status == BookingStatusEnum.Completed)
                 .Where(b => !b.IsDeleted)
                 .Count();
             updatingCarStatistic.TotalCancelled = gettingCar
-                .Bookings.Where(b => b.Status.Id == cancelledStatusId)
+                .Bookings.Where(b => b.Status == BookingStatusEnum.Cancelled)
                 .Where(b => !b.IsDeleted)
                 .Count();
             updatingCarStatistic.TotalEarning = gettingCar
-                .Bookings.Where(b => b.Status.Id == completedStatusId)
+                .Bookings.Where(b => b.Status == BookingStatusEnum.Completed)
                 .Where(b => !b.IsDeleted)
                 .Sum(b => b.TotalAmount);
             updatingCarStatistic.TotalDistance = gettingCar
-                .Bookings.Where(b => b.Status.Id == completedStatusId)
+                .Bookings.Where(b => b.Status == BookingStatusEnum.Completed)
                 .Where(b => !b.IsDeleted)
                 .Sum(b =>
                     b.TripTrackings.OrderByDescending(t => t.Id)
@@ -68,7 +54,7 @@ public sealed class UpdateCarStatistic
                         ?.CumulativeDistance ?? 0
                 );
             updatingCarStatistic.AverageRating = gettingCar
-                .Bookings.Where(b => b.Status.Id == completedStatusId)
+                .Bookings.Where(b => b.Status == BookingStatusEnum.Completed)
                 .Where(b => !b.IsDeleted)
                 .Average(b =>
                     b.Feedbacks.Where(f => f.Type == FeedbackTypeEnum.Owner)
@@ -76,7 +62,7 @@ public sealed class UpdateCarStatistic
                 );
             updatingCarStatistic.LastRented =
                 gettingCar
-                    .Bookings.Where(b => b.Status.Id == completedStatusId)
+                    .Bookings.Where(b => b.Status == BookingStatusEnum.Completed)
                     .Where(b => !b.IsDeleted)
                     .OrderByDescending(b => b.Id)
                     .FirstOrDefault()

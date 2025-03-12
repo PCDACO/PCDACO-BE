@@ -1,5 +1,4 @@
 using Ardalis.Result;
-using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
@@ -41,7 +40,7 @@ public sealed class ConfirmCarReturn
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này!");
 
             var booking = await context
-                .Bookings.Include(x => x.Status)
+                .Bookings
                 .Include(x => x.Car)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
@@ -51,16 +50,8 @@ public sealed class ConfirmCarReturn
             if (booking.Car.OwnerId != currentUser.User.Id)
                 return Result.Forbidden("Bạn không có quyền phê duyệt booking cho xe này!");
 
-            if (booking.Status.Name != BookingStatusEnum.Completed.ToString())
+            if (booking.Status != BookingStatusEnum.Completed)
                 return Result.Conflict("Chỉ có thể xác nhận trả xe khi chuyến đi đã hoàn thành");
-
-            var carStatus = await context.CarStatuses.FirstOrDefaultAsync(
-                x => EF.Functions.ILike(x.Name, CarStatusNames.Maintain),
-                cancellationToken
-            );
-
-            if (carStatus == null)
-                return Result.Error("Không tìm thấy trạng thái xe phù hợp");
 
             booking.IsCarReturned = true;
             booking.ActualReturnTime = DateTimeOffset.UtcNow;
@@ -70,7 +61,7 @@ public sealed class ConfirmCarReturn
             booking.ExcessDay = excessDays;
             booking.ExcessDayFee = excessFee;
             booking.TotalAmount = booking.BasePrice + booking.PlatformFee + excessFee;
-            booking.Car.StatusId = carStatus.Id;
+            booking.Car.Status = CarStatusEnum.Maintain;
 
             var ownerAmount = booking.TotalAmount - booking.PlatformFee;
 

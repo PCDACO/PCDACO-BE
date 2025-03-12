@@ -84,15 +84,6 @@ public sealed class CreateCar
                 );
             if (checkingFuelType is null)
                 return Result.Error(ResponseMessages.FuelTypeNotFound);
-            // Check if status is exist
-            CarStatus? checkingStatus = await context
-                .CarStatuses.AsNoTracking()
-                .FirstOrDefaultAsync(
-                    s => EF.Functions.ILike(s.Name, $"%pending%") && !s.IsDeleted,
-                    cancellationToken
-                );
-            if (checkingStatus is null)
-                return Result.Error(ResponseMessages.CarStatusNotFound);
             // Check if model is exist
             Model? checkingModel = await context
                 .Models.AsNoTracking()
@@ -128,7 +119,6 @@ public sealed class CreateCar
                 RequiresCollateral = request.RequiresCollateral,
                 Price = request.Price,
                 Terms = request.Terms,
-                StatusId = checkingStatus.Id,
                 CarStatistic = new() { CarId = carId },
                 CarAmenities =
                 [

@@ -70,7 +70,6 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var bookingStatuses = await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
 
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         var driver = await TestDataCreateUser.CreateTestUser(
@@ -88,7 +87,6 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
             "Automatic"
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         var car = await TestDataCreateCar.CreateTestCar(
             _dbContext,
@@ -96,15 +94,14 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmissionType,
             fuelType,
-            carStatus
+            CarStatusEnum.Available
         );
 
-        var statusId = bookingStatuses.First(s => s.Name == status.ToString()).Id;
         var booking = await TestDataCreateBooking.CreateTestBooking(
             _dbContext,
             driver.Id,
             car.Id,
-            statusId
+            status
         );
 
         var handler = new StartBookingTrip.Handler(_dbContext, _currentUser);
@@ -124,7 +121,6 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var bookingStatuses = await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
 
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         var driver = await TestDataCreateUser.CreateTestUser(
@@ -142,7 +138,6 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
             "Automatic"
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
 
         var car = await TestDataCreateCar.CreateTestCar(
             _dbContext,
@@ -150,17 +145,14 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmissionType,
             fuelType,
-            carStatus
+            CarStatusEnum.Available
         );
 
-        var ongoingStatusId = bookingStatuses
-            .First(s => s.Name == BookingStatusEnum.ReadyForPickup.ToString())
-            .Id;
         var booking = await TestDataCreateBooking.CreateTestBooking(
             _dbContext,
             driver.Id,
             car.Id,
-            ongoingStatusId
+            BookingStatusEnum.ReadyForPickup
         );
 
         var handler = new StartBookingTrip.Handler(_dbContext, _currentUser);
@@ -174,68 +166,58 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Contains("Đã bắt đầu chuyến đi", result.SuccessMessage);
 
         var updatedBooking = await _dbContext
-            .Bookings.Include(b => b.Status)
+            .Bookings
             .FirstAsync(b => b.Id == booking.Id);
 
-        Assert.Equal(BookingStatusEnum.Ongoing.ToString(), updatedBooking.Status.Name);
+        Assert.Equal(BookingStatusEnum.Ongoing, updatedBooking.Status);
     }
 
-    [Fact]
-    public async Task Handle_OngoingStatusNotFound_ReturnsNotFound()
-    {
-        // Arrange
-        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var driver = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
-        _currentUser.SetUser(driver);
-
-        // Create booking with approved status but remove ongoing status
-        var bookingStatuses = await TestDataBookingStatus.CreateTestBookingStatuses(_dbContext);
-        var ongoingStatus = bookingStatuses.First(s =>
-            s.Name == BookingStatusEnum.Ongoing.ToString()
-        );
-        _dbContext.BookingStatuses.Remove(ongoingStatus);
-        await _dbContext.SaveChangesAsync();
-
-        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
-        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
-        var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
-            _dbContext,
-            "Automatic"
-        );
-        var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        var carStatus = await TestDataCarStatus.CreateTestCarStatus(_dbContext, "Available");
-        var owner = await TestDataCreateUser.CreateTestUser(
-            _dbContext,
-            await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
-        );
-
-        var car = await TestDataCreateCar.CreateTestCar(
-            _dbContext,
-            owner.Id,
-            model.Id,
-            transmissionType,
-            fuelType,
-            carStatus
-        );
-
-        var ongoingStatusId = bookingStatuses
-            .First(s => s.Name == BookingStatusEnum.ReadyForPickup.ToString())
-            .Id;
-        var booking = await TestDataCreateBooking.CreateTestBooking(
-            _dbContext,
-            driver.Id,
-            car.Id,
-            ongoingStatusId
-        );
-
-        var handler = new StartBookingTrip.Handler(_dbContext, _currentUser);
-        var command = new StartBookingTrip.Command(booking.Id);
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.NotFound, result.Status);
-        Assert.Contains("Không tìm thấy trạng thái phù hợp", result.Errors);
-    }
+    // [Fact]
+    // public async Task Handle_OngoingStatusNotFound_ReturnsNotFound()
+    // {
+    //     // Arrange
+    //     UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+    //     var driver = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+    //     _currentUser.SetUser(driver);
+    //
+    //     await _dbContext.SaveChangesAsync();
+    //
+    //     var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+    //     var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+    //     var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
+    //         _dbContext,
+    //         "Automatic"
+    //     );
+    //     var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+    //     var owner = await TestDataCreateUser.CreateTestUser(
+    //         _dbContext,
+    //         await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
+    //     );
+    //
+    //     var car = await TestDataCreateCar.CreateTestCar(
+    //         _dbContext,
+    //         owner.Id,
+    //         model.Id,
+    //         transmissionType,
+    //         fuelType,
+    //         CarStatusEnum.Available
+    //     );
+    //
+    //     var booking = await TestDataCreateBooking.CreateTestBooking(
+    //         _dbContext,
+    //         driver.Id,
+    //         car.Id,
+    //         BookingStatusEnum.Ongoing
+    //     );
+    //
+    //     var handler = new StartBookingTrip.Handler(_dbContext, _currentUser);
+    //     var command = new StartBookingTrip.Command(booking.Id);
+    //
+    //     // Act
+    //     var result = await handler.Handle(command, CancellationToken.None);
+    //
+    //     // Assert
+    //     Assert.Equal(ResultStatus.NotFound, result.Status);
+    //     Assert.Contains("Không tìm thấy trạng thái phù hợp", result.Errors);
+    // }
 }

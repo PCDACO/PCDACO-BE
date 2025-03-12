@@ -1,7 +1,6 @@
 using Ardalis.Result;
 using Domain.Constants;
 using Domain.Constants.EntityNames;
-using Domain.Entities;
 using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -60,9 +59,8 @@ public sealed class GetUserStatistics
                 user.Role.Name == UserRoleNames.Driver
                     ? await context
                         .Bookings.Where(b => b.UserId == user.Id && !b.IsDeleted)
-                        .Include(b => b.Status)
                         .CountAsync(
-                            b => b.Status.Name == BookingStatusEnum.Completed.ToString(),
+                            b => b.Status == BookingStatusEnum.Completed,
                             cancellationToken
                         )
                     : 0;
@@ -71,9 +69,8 @@ public sealed class GetUserStatistics
                 user.Role.Name == UserRoleNames.Driver
                     ? await context
                         .Bookings.Where(b => b.UserId == user.Id && !b.IsDeleted)
-                        .Include(b => b.Status)
                         .CountAsync(
-                            b => b.Status.Name == BookingStatusEnum.Rejected.ToString(),
+                            b => b.Status == BookingStatusEnum.Rejected,
                             cancellationToken
                         )
                     : 0;
@@ -82,9 +79,8 @@ public sealed class GetUserStatistics
                 user.Role.Name == UserRoleNames.Driver
                     ? await context
                         .Bookings.Where(b => b.UserId == user.Id && !b.IsDeleted)
-                        .Include(b => b.Status)
                         .CountAsync(
-                            b => b.Status.Name == BookingStatusEnum.Expired.ToString(),
+                            b => b.Status == BookingStatusEnum.Expired,
                             cancellationToken
                         )
                     : 0;
@@ -93,9 +89,8 @@ public sealed class GetUserStatistics
                 user.Role.Name == UserRoleNames.Driver
                     ? await context
                         .Bookings.Where(b => b.UserId == user.Id && !b.IsDeleted)
-                        .Include(b => b.Status)
                         .CountAsync(
-                            b => b.Status.Name == BookingStatusEnum.Cancelled.ToString(),
+                            b => b.Status == BookingStatusEnum.Cancelled,
                             cancellationToken
                         )
                     : 0;
@@ -107,10 +102,9 @@ public sealed class GetUserStatistics
                 totalEarning = await context
                     .Bookings.Where(b => !b.IsDeleted)
                     .Include(b => b.Car)
-                    .Include(b => b.Status)
                     .Where(b =>
                         b.Car.OwnerId == user.Id
-                        && b.Status.Name == BookingStatusEnum.Completed.ToString()
+                        && b.Status == BookingStatusEnum.Completed
                     )
                     .SumAsync(b => b.BasePrice, cancellationToken);
             }
@@ -122,7 +116,6 @@ public sealed class GetUserStatistics
                 var feedbacks = await context
                     .Feedbacks.Where(f => !f.IsDeleted)
                     .Include(f => f.Booking)
-                    .Include(f => f.Booking.Status)
                     .ToListAsync(cancellationToken);
 
                 if (user.Role.Name == UserRoleNames.Driver)
@@ -130,7 +123,7 @@ public sealed class GetUserStatistics
                     feedbacks = feedbacks
                         .Where(f =>
                             f.Booking.UserId == user.Id
-                            && f.Booking.Status.Name == BookingStatusEnum.Completed.ToString()
+                            && f.Booking.Status == BookingStatusEnum.Completed
                             && f.Type == FeedbackTypeEnum.Owner
                         )
                         .ToList();
@@ -140,7 +133,7 @@ public sealed class GetUserStatistics
                     feedbacks = feedbacks
                         .Where(f =>
                             f.Booking.Car.OwnerId == user.Id
-                            && f.Booking.Status.Name == BookingStatusEnum.Completed.ToString()
+                            && f.Booking.Status == BookingStatusEnum.Completed
                             && f.Type == FeedbackTypeEnum.Driver
                         )
                         .ToList();
@@ -165,9 +158,8 @@ public sealed class GetUserStatistics
                 user.Role.Name == UserRoleNames.Technician
                     ? await context
                         .InspectionSchedules.Where(s => s.TechnicianId == user.Id && !s.IsDeleted)
-                        .Include(s => s.InspectionStatus)
                         .CountAsync(
-                            s => s.InspectionStatus.Name == InspectionStatusNames.Approved,
+                            s => s.Status == InspectionScheduleStatusEnum.Approved,
                             cancellationToken
                         )
                     : 0;
@@ -176,9 +168,8 @@ public sealed class GetUserStatistics
                 user.Role.Name == UserRoleNames.Technician
                     ? await context
                         .InspectionSchedules.Where(s => s.TechnicianId == user.Id && !s.IsDeleted)
-                        .Include(s => s.InspectionStatus)
                         .CountAsync(
-                            s => s.InspectionStatus.Name == InspectionStatusNames.Rejected,
+                            s => s.Status == InspectionScheduleStatusEnum.Rejected,
                             cancellationToken
                         )
                     : 0;
