@@ -1,5 +1,3 @@
-using System;
-
 namespace Domain.Shared.EmailTemplates.EmailBookings
 {
     public static class OwnerBookingReminderTemplate
@@ -18,11 +16,15 @@ namespace Domain.Shared.EmailTemplates.EmailBookings
             // Determine the reminder message based on the level.
             string reminderMessage = reminderLevel switch
             {
-                1 => "Đây là lời nhắc nhở đầu tiên. Vui lòng kiểm tra yêu cầu đặt xe của bạn.",
+                1
+                    => "Đây là lời nhắc nhở đầu tiên. Vui lòng kiểm tra yêu cầu đặt xe của bạn. Yêu cầu sẽ tự động hủy sau 12 giờ nếu không phản hồi.",
                 2
-                    => "Đây là lời nhắc nhở thứ hai. Yêu cầu đặt xe vẫn chưa được xử lý. Vui lòng phản hồi ngay.",
+                    => "Đây là lời nhắc cuối cùng. Nếu không phản hồi, yêu cầu đặt xe sẽ bị hủy tự động. Yêu cầu sẽ tự động hủy sau 4 giờ nếu không phản hồi.",
                 _
-                    => "Đây là lời nhắc cuối cùng. Nếu không phản hồi, yêu cầu đặt xe sẽ bị hủy tự động."
+                    => throw new ArgumentOutOfRangeException(
+                        nameof(reminderLevel),
+                        "Invalid reminder level."
+                    )
             };
 
             return $@"

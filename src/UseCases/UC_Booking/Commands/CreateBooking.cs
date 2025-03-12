@@ -37,7 +37,7 @@ public sealed class CreateBooking
             CancellationToken cancellationToken
         )
         {
-            if (!currentUser.User!.IsDriver())
+            if (currentUser.User == null)
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
             // Verify driver license first
