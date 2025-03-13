@@ -9,9 +9,9 @@ public class GetBookingContractEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/contracts/{id:guid}/download", Handle)
+        app.MapGet("/api/bookings/{id:guid}/contracts", Handle)
             .WithSummary("Get booking contract")
-            .WithTags("Contracts")
+            .WithTags("Bookings")
             .RequireAuthorization();
     }
 

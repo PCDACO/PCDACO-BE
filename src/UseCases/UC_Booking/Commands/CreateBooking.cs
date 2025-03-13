@@ -58,8 +58,7 @@ public sealed class CreateBooking
                 .Include(x => x.Model)
                 .Where(c => c.Status == CarStatusEnum.Available)
                 .FirstOrDefaultAsync(
-                    x =>
-                        x.Id == request.CarId,
+                    x => x.Id == request.CarId,
                     cancellationToken: cancellationToken
                 );
 
