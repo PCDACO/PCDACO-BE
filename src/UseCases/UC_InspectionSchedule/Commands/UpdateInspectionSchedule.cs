@@ -36,9 +36,10 @@ public sealed class UpdateInspectionSchedule
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             // Get the existing schedule
-            var schedule = await context
-                .InspectionSchedules
-                .FirstOrDefaultAsync(s => s.Id == request.Id && !s.IsDeleted, cancellationToken);
+            var schedule = await context.InspectionSchedules.FirstOrDefaultAsync(
+                s => s.Id == request.Id && !s.IsDeleted,
+                cancellationToken
+            );
 
             if (schedule is null)
                 return Result.Error(ResponseMessages.InspectionScheduleNotFound);
@@ -88,7 +89,7 @@ public sealed class UpdateInspectionSchedule
             RuleFor(x => x.InspectionDate)
                 .NotEmpty()
                 .WithMessage("Ngày kiểm định không được để trống")
-                .GreaterThanOrEqualTo(DateTimeOffset.UtcNow)
+                .Must(date => date.Date >= DateTimeOffset.UtcNow.Date)
                 .WithMessage("Thời điểm kiểm định phải lớn hơn hoặc bằng thời điểm hiện tại");
         }
     }

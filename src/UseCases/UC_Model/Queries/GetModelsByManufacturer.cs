@@ -46,7 +46,8 @@ public sealed class GetModelsByManufacturer
     ) : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
     {
         public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(Query request, CancellationToken cancellationToken)
-        {         // Query models
+        {
+            // Query models
             IQueryable<Model> query = context
                 .Models.AsNoTracking()
                 .Include(m => m.Manufacturer)

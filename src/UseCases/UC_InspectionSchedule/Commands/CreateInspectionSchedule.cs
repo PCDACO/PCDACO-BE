@@ -36,8 +36,10 @@ public sealed class CreateInspectionSchedule
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             // Verify car exists and is in pending status
-            var car = await context.Cars
-                .FirstOrDefaultAsync(c => c.Id == request.CarId && !c.IsDeleted, cancellationToken);
+            var car = await context.Cars.FirstOrDefaultAsync(
+                c => c.Id == request.CarId && !c.IsDeleted,
+                cancellationToken
+            );
 
             if (car is null)
                 return Result.Error(ResponseMessages.CarNotFound);
@@ -90,7 +92,7 @@ public sealed class CreateInspectionSchedule
             RuleFor(x => x.InspectionDate)
                 .NotEmpty()
                 .WithMessage("Ngày kiểm định không được để trống")
-                .GreaterThanOrEqualTo(DateTimeOffset.UtcNow)
+                .Must(date => date.Date >= DateTimeOffset.UtcNow.Date)
                 .WithMessage("Thời điểm kiểm định phải lớn hơn hoặc bằng thời điểm hiện tại");
         }
     }

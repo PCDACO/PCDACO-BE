@@ -27,14 +27,6 @@ public class Login
             CancellationToken cancellationToken
         )
         {
-            // string hashedPassword = request.Password.HashString();
-            // User? user = await context
-            //     .Users.AsNoTracking()
-            //     .FirstOrDefaultAsync(
-            //         u => u.Phone == request.Phone && u.Password == hashedPassword,
-            //         cancellationToken
-            //     );
-            // Get all users with their encryption keys
             var users = await context
                 .Users.AsNoTracking()
                 .Include(u => u.EncryptionKey)

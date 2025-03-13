@@ -23,7 +23,8 @@ public class GetAllOwners
         DateTimeOffset DateOfBirth,
         string Phone,
         string Role,
-        DateTimeOffset CreatedAt
+        DateTimeOffset CreatedAt,
+        bool? IsApprovedLicense
     )
     {
         public static async Task<Response> FromEntity(
@@ -52,7 +53,8 @@ public class GetAllOwners
                 user.DateOfBirth,
                 decryptedPhone,
                 user.Role.Name,
-                GetTimestampFromUuid.Execute(user.Id)
+                GetTimestampFromUuid.Execute(user.Id),
+                user.License?.IsApprove
             );
         }
     }
@@ -78,6 +80,7 @@ public class GetAllOwners
             IQueryable<User> query = context
                 .Users.AsNoTracking()
                 .Include(u => u.Role)
+                .Include(u => u.License)
                 .Include(u => u.EncryptionKey)
                 .Where(u =>
                     u.Role != null && EF.Functions.ILike(u.Role.Name, "%Owner%") && !u.IsDeleted

@@ -128,7 +128,7 @@ public sealed class CreateStaff
             RuleFor(x => x.DateOfBirth)
                 .NotEmpty()
                 .WithMessage("Ngày sinh không được để trống")
-                .LessThan(DateTimeOffset.UtcNow)
+                .Must(dob => dob.Date < DateTimeOffset.UtcNow.Date)
                 .WithMessage("Ngày sinh không hợp lệ");
 
             RuleFor(x => x.Phone).NotEmpty().WithMessage("Số điện thoại không được để trống");
