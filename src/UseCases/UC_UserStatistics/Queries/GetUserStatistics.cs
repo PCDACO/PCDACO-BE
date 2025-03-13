@@ -23,7 +23,8 @@ public sealed class GetUserStatistics
         decimal AverageRating,
         int TotalCreatedInspectionSchedule,
         int TotalApprovedInspectionSchedule,
-        int TotalRejectedInspectionSchedule
+        int TotalRejectedInspectionSchedule,
+        decimal StaffSalary
     );
 
     internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
@@ -58,41 +59,33 @@ public sealed class GetUserStatistics
             int totalCompleted =
                 user.Role.Name == UserRoleNames.Driver
                     ? await context
-                        .Bookings.Where(b => b.UserId == user.Id && !b.IsDeleted)
-                        .CountAsync(
-                            b => b.Status == BookingStatusEnum.Completed,
-                            cancellationToken
-                        )
+                        .Bookings.AsNoTracking()
+                        .Where(b => b.UserId == user.Id && !b.IsDeleted)
+                        .CountAsync(b => b.Status == BookingStatusEnum.Completed, cancellationToken)
                     : 0;
 
             int totalRejected =
                 user.Role.Name == UserRoleNames.Driver
                     ? await context
-                        .Bookings.Where(b => b.UserId == user.Id && !b.IsDeleted)
-                        .CountAsync(
-                            b => b.Status == BookingStatusEnum.Rejected,
-                            cancellationToken
-                        )
+                        .Bookings.AsNoTracking()
+                        .Where(b => b.UserId == user.Id && !b.IsDeleted)
+                        .CountAsync(b => b.Status == BookingStatusEnum.Rejected, cancellationToken)
                     : 0;
 
             int totalExpired =
                 user.Role.Name == UserRoleNames.Driver
                     ? await context
-                        .Bookings.Where(b => b.UserId == user.Id && !b.IsDeleted)
-                        .CountAsync(
-                            b => b.Status == BookingStatusEnum.Expired,
-                            cancellationToken
-                        )
+                        .Bookings.AsNoTracking()
+                        .Where(b => b.UserId == user.Id && !b.IsDeleted)
+                        .CountAsync(b => b.Status == BookingStatusEnum.Expired, cancellationToken)
                     : 0;
 
             int totalCancelled =
                 user.Role.Name == UserRoleNames.Driver
                     ? await context
-                        .Bookings.Where(b => b.UserId == user.Id && !b.IsDeleted)
-                        .CountAsync(
-                            b => b.Status == BookingStatusEnum.Cancelled,
-                            cancellationToken
-                        )
+                        .Bookings.AsNoTracking()
+                        .Where(b => b.UserId == user.Id && !b.IsDeleted)
+                        .CountAsync(b => b.Status == BookingStatusEnum.Cancelled, cancellationToken)
                     : 0;
 
             // Calculate total earnings (for owner only)
@@ -100,12 +93,10 @@ public sealed class GetUserStatistics
             if (user.Role.Name == UserRoleNames.Owner)
             {
                 totalEarning = await context
-                    .Bookings.Where(b => !b.IsDeleted)
+                    .Bookings.AsNoTracking()
+                    .Where(b => !b.IsDeleted)
                     .Include(b => b.Car)
-                    .Where(b =>
-                        b.Car.OwnerId == user.Id
-                        && b.Status == BookingStatusEnum.Completed
-                    )
+                    .Where(b => b.Car.OwnerId == user.Id && b.Status == BookingStatusEnum.Completed)
                     .SumAsync(b => b.BasePrice, cancellationToken);
             }
 
@@ -114,8 +105,10 @@ public sealed class GetUserStatistics
             if (user.Role.Name == UserRoleNames.Driver || user.Role.Name == UserRoleNames.Owner)
             {
                 var feedbacks = await context
-                    .Feedbacks.Where(f => !f.IsDeleted)
+                    .Feedbacks.AsNoTracking()
+                    .Where(f => !f.IsDeleted)
                     .Include(f => f.Booking)
+                    .ThenInclude(b => b.Car)
                     .ToListAsync(cancellationToken);
 
                 if (user.Role.Name == UserRoleNames.Driver)
@@ -174,6 +167,37 @@ public sealed class GetUserStatistics
                         )
                     : 0;
 
+            decimal salary = 0;
+
+            if (user.Role.Name == UserRoleNames.Consultant)
+            {
+                const int baseSalary = SalaryConstants.ConsultantBaseSalary;
+                const int kpi = SalaryConstants.Kpi;
+                const decimal rewardedRate = SalaryConstants.ConsultRewardedRate;
+                int totalSchedules = totalCreatedInspectionSchedule;
+
+                salary =
+                    totalSchedules <= kpi
+                        ? totalSchedules * baseSalary
+                        : (kpi * baseSalary)
+                            + ((totalSchedules - kpi) * (rewardedRate * baseSalary));
+            }
+
+            if (user.Role.Name == UserRoleNames.Technician)
+            {
+                const int baseSalary = SalaryConstants.TechnicianBaseSalary;
+                const int kpi = SalaryConstants.Kpi;
+                const decimal rewardedRate = SalaryConstants.TechnicianRewardedRate;
+                int totalSchedules =
+                    totalApprovedInspectionSchedule + totalRejectedInspectionSchedule;
+
+                salary =
+                    totalSchedules <= kpi
+                        ? totalSchedules * baseSalary
+                        : (kpi * baseSalary)
+                            + ((totalSchedules - kpi) * (rewardedRate * baseSalary));
+            }
+
             // Create response with calculated statistics
             var response = new Response(
                 TotalBooking: totalBooking,
@@ -185,7 +209,8 @@ public sealed class GetUserStatistics
                 AverageRating: averageRating,
                 TotalCreatedInspectionSchedule: totalCreatedInspectionSchedule,
                 TotalApprovedInspectionSchedule: totalApprovedInspectionSchedule,
-                TotalRejectedInspectionSchedule: totalRejectedInspectionSchedule
+                TotalRejectedInspectionSchedule: totalRejectedInspectionSchedule,
+                StaffSalary: salary // Salary for consultant or technician
             );
 
             return Result.Success(response, ResponseMessages.Fetched);
