@@ -36,7 +36,7 @@ public sealed class CreateBooking
             CancellationToken cancellationToken
         )
         {
-            if (currentUser.User == null)
+            if (!currentUser.User!.IsDriver())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
             // Verify driver license first
@@ -58,8 +58,7 @@ public sealed class CreateBooking
                 .Include(x => x.Model)
                 .Where(c => c.Status == CarStatusEnum.Available)
                 .FirstOrDefaultAsync(
-                    x =>
-                        x.Id == request.CarId,
+                    x => x.Id == request.CarId,
                     cancellationToken: cancellationToken
                 );
 
