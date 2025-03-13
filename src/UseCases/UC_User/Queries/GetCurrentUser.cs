@@ -100,7 +100,7 @@ public static class GetCurrentUser
                 .Include(u => u.Role)
                 .Include(u => u.EncryptionKey)
                 .Include(u => u.Bookings) // Booking of user - driver
-                .Include(u => u.Cars.Where(c => !c.IsDeleted))
+                .Include(u => u.Cars)
                 .ThenInclude(c => c.Bookings) // Booking of car of owner - owner
                 .FirstOrDefaultAsync(
                     u => u.Id == currentUser.User!.Id && !u.IsDeleted,

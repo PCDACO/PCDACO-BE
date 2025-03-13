@@ -87,7 +87,7 @@ public static class UpdateUser
             RuleFor(x => x.Name)
                 .NotEmpty()
                 .WithMessage("Tên không được để trống")
-                .MinimumLength(5)
+                .MinimumLength(3)
                 .WithMessage("Tên phải có ít nhất 3 ký tự")
                 .MaximumLength(50)
                 .WithMessage("Tên không được quá 50 ký tự");
@@ -103,7 +103,7 @@ public static class UpdateUser
             RuleFor(x => x.DateOfBirth)
                 .NotEmpty()
                 .WithMessage("Ngày sinh không được để trống")
-                .LessThan(DateTimeOffset.UtcNow)
+                .Must(dob => dob.Date < DateTimeOffset.UtcNow.Date)
                 .WithMessage("Ngày sinh phải nhỏ hơn ngày hiện tại");
 
             RuleFor(x => x.Phone).NotEmpty().WithMessage("Số điện thoại không được để trống");
