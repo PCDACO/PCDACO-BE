@@ -35,6 +35,9 @@ builder.Services.AddPayOSService(builder.Configuration);
 builder.Services.AddEmailService(builder.Configuration);
 builder.Services.AddSignalR();
 builder.Services.AddHangFireService(builder.Configuration);
+
+builder.Services.AddMemoryCache();
+
 // ADD SEQ
 string seqUrl = builder.Configuration["SEQ_URL"] ?? throw new Exception("Missing SEQ_URL");
 builder.Host.UseSerilog((context, configuration) =>

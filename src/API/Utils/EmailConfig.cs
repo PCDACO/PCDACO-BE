@@ -1,6 +1,9 @@
 using Domain.Shared;
 using Infrastructure.EmailService;
+using Infrastructure.Services;
+
 using UseCases.Services.EmailService;
+using UseCases.Services.PaymentTokenService;
 
 namespace API.Utils;
 
@@ -31,6 +34,7 @@ public static class EmailConfig
         services.AddSingleton(s => mailSettings);
 
         services.AddScoped<IEmailService, EmailService>();
+        services.AddScoped<IPaymentTokenService, PaymentTokenService>();
 
         return services;
     }
