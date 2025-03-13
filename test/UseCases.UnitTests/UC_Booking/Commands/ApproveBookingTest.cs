@@ -3,8 +3,10 @@ using Domain.Entities;
 using Domain.Enums;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Persistance.Data;
 using UseCases.DTOs;
+using UseCases.Services.PaymentTokenService;
 using UseCases.UC_Booking.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
@@ -18,7 +20,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly TestDataEmailService _emailService = new();
     private readonly IBackgroundJobClient _backgroundJobClient = new BackgroundJobClient();
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
+    private readonly IPaymentTokenService _paymentTokenService =
+        new Infrastructure.Services.PaymentTokenService(new MemoryCache(new MemoryCacheOptions()));
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
+    private const string TEST_BASE_URL = "http://localhost:8080";
 
     public Task InitializeAsync() => Task.CompletedTask;
 
@@ -36,9 +41,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _emailService,
             _backgroundJobClient,
-            _currentUser
+            _currentUser,
+            _paymentTokenService
         );
-        var command = new ApproveBooking.Command(Guid.NewGuid(), true);
+        var command = new ApproveBooking.Command(Guid.NewGuid(), true, TEST_BASE_URL);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -60,9 +66,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _emailService,
             _backgroundJobClient,
-            _currentUser
+            _currentUser,
+            _paymentTokenService
         );
-        var command = new ApproveBooking.Command(Guid.NewGuid(), true);
+        var command = new ApproveBooking.Command(Guid.NewGuid(), true, TEST_BASE_URL);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -120,9 +127,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _emailService,
             _backgroundJobClient,
-            _currentUser
+            _currentUser,
+            _paymentTokenService
         );
-        var command = new ApproveBooking.Command(booking.Id, true);
+        var command = new ApproveBooking.Command(booking.Id, true, TEST_BASE_URL);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -182,9 +190,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _emailService,
             _backgroundJobClient,
-            _currentUser
+            _currentUser,
+            _paymentTokenService
         );
-        var command = new ApproveBooking.Command(booking.Id, isApproved);
+        var command = new ApproveBooking.Command(booking.Id, isApproved, TEST_BASE_URL);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -193,9 +202,7 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Contains($"Đã {expectedMessage} booking thành công", result.SuccessMessage);
 
-        var updatedBooking = await _dbContext
-            .Bookings
-            .FirstAsync(b => b.Id == booking.Id);
+        var updatedBooking = await _dbContext.Bookings.FirstAsync(b => b.Id == booking.Id);
 
         Assert.Equal(expectedStatus, updatedBooking.Status);
     }
@@ -246,9 +253,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _emailService,
             _backgroundJobClient,
-            _currentUser
+            _currentUser,
+            _paymentTokenService
         );
-        var command = new ApproveBooking.Command(booking.Id, isApproved);
+        var command = new ApproveBooking.Command(booking.Id, isApproved, TEST_BASE_URL);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -295,7 +303,7 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             driver.Id,
             car.Id,
-    BookingStatusEnum.Pending
+            BookingStatusEnum.Pending
         );
         // Act
 
@@ -305,9 +313,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _emailService,
             _backgroundJobClient,
-            _currentUser
+            _currentUser,
+            _paymentTokenService
         );
-        var command = new ApproveBooking.Command(booking.Id, true);
+        var command = new ApproveBooking.Command(booking.Id, true, TEST_BASE_URL);
 
         var result = await handler.Handle(command, CancellationToken.None);
 
@@ -360,9 +369,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _emailService,
             _backgroundJobClient,
-            _currentUser
+            _currentUser,
+            _paymentTokenService
         );
-        var command = new ApproveBooking.Command(booking.Id, true);
+        var command = new ApproveBooking.Command(booking.Id, true, TEST_BASE_URL);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);

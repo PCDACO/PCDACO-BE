@@ -20,10 +20,15 @@ public class ApproveBookingEndpoint : ICarterModule
     private static async Task<IResult> Handle(
         ISender sender,
         Guid id,
-        ApproveBookingRequest request
+        ApproveBookingRequest request,
+        HttpContext context
     )
     {
-        Result result = await sender.Send(new ApproveBooking.Command(id, request.IsApproved));
+        var baseUrl = $"{context.Request.Scheme}://{context.Request.Host}";
+        Result result = await sender.Send(
+            new ApproveBooking.Command(id, request.IsApproved, baseUrl)
+        );
+
         return result.MapResult();
     }
 

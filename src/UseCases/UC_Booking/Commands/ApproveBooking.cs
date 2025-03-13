@@ -10,18 +10,21 @@ using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Services.EmailService;
+using UseCases.Services.PaymentTokenService;
 
 namespace UseCases.UC_Booking.Commands;
 
 public sealed class ApproveBooking
 {
-    public sealed record Command(Guid BookingId, bool IsApproved) : IRequest<Result>;
+    public sealed record Command(Guid BookingId, bool IsApproved, string BaseUrl)
+        : IRequest<Result>;
 
     internal sealed class Handler(
         IAppDBContext context,
         IEmailService emailService,
         IBackgroundJobClient backgroundJobClient,
-        CurrentUser currentUser
+        CurrentUser currentUser,
+        IPaymentTokenService paymentTokenService
     ) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -30,8 +33,7 @@ public sealed class ApproveBooking
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
             var booking = await context
-                .Bookings
-                .Include(x => x.Car)
+                .Bookings.Include(x => x.Car)
                 .ThenInclude(x => x.Model)
                 .Include(x => x.User)
                 .Include(x => x.Contract)
@@ -51,13 +53,15 @@ public sealed class ApproveBooking
                 );
             }
             // Process approval (update booking, possibly update contract)
+            string? paymentToken = null;
+            if (request.IsApproved && !booking.IsPaid)
+            {
+                paymentToken = await paymentTokenService.GenerateTokenAsync(booking.Id);
+            }
+
             if (request.IsApproved)
             {
-                await RejectOverlappingPendingBookingsAsync(
-                    booking,
-                    BookingStatusEnum.Rejected,
-                    cancellationToken
-                );
+                await RejectOverlappingPendingBookingsAsync(booking, cancellationToken);
 
                 // Mark the car as rented.
                 booking.Car.Status = CarStatusEnum.Rented;
@@ -67,32 +71,13 @@ public sealed class ApproveBooking
             }
             else
             {
-                // If booking is rejected, provide a full refund
                 booking.Status = BookingStatusEnum.Rejected;
                 booking.Note = "Chủ xe từ chối yêu cầu đặt xe";
-
-                if (booking.IsPaid)
-                {
-                    booking.IsRefund = true;
-                    booking.RefundAmount = booking.TotalAmount;
-
-                    var admin = await context.Users.FirstOrDefaultAsync(u =>
-                        u.Role.Name == UserRoleNames.Admin
-                    );
-
-                    if (admin != null)
-                    {
-                        var adminAmount = booking.RefundAmount * 0.1m;
-                        var ownerAmount = booking.RefundAmount * 0.9m;
-
-                        admin.Balance -= (decimal)adminAmount;
-                        booking.Car.Owner.Balance -= (decimal)ownerAmount;
-                        booking.User.Balance += (decimal)booking.RefundAmount;
-                    }
-                }
             }
 
-            booking.Status = request.IsApproved ? BookingStatusEnum.Approved : BookingStatusEnum.Rejected;
+            booking.Status = request.IsApproved
+                ? BookingStatusEnum.Approved
+                : BookingStatusEnum.Rejected;
             await context.SaveChangesAsync(cancellationToken);
 
             // Enqueue email notification
@@ -105,7 +90,9 @@ public sealed class ApproveBooking
                         booking.Car.Model.Name,
                         booking.StartTime,
                         booking.EndTime,
-                        booking.TotalAmount
+                        booking.TotalAmount,
+                        paymentToken,
+                        request.BaseUrl
                     )
             );
 
@@ -116,7 +103,6 @@ public sealed class ApproveBooking
         // Rejects overlapping bookings (if any) for the same car.
         private async Task RejectOverlappingPendingBookingsAsync(
             Booking booking,
-            BookingStatusEnum rejectedStatus,
             CancellationToken cancellationToken
         )
         {
@@ -135,12 +121,6 @@ public sealed class ApproveBooking
             {
                 overlappingBooking.Status = BookingStatusEnum.Rejected;
                 overlappingBooking.Note = "Đã có booking khác trùng lịch";
-
-                if (overlappingBooking.IsPaid)
-                {
-                    overlappingBooking.IsRefund = true;
-                    overlappingBooking.RefundAmount = overlappingBooking.TotalAmount; // Full refund
-                }
             }
 
             if (!overlappingBookings.Any())
@@ -160,7 +140,9 @@ public sealed class ApproveBooking
                             overlappingBooking.Car.Model.Name,
                             overlappingBooking.StartTime,
                             overlappingBooking.EndTime,
-                            overlappingBooking.TotalAmount
+                            overlappingBooking.TotalAmount,
+                            null,
+                            ""
                         )
                 );
             }
@@ -193,7 +175,9 @@ public sealed class ApproveBooking
             string carModelName,
             DateTimeOffset startTime,
             DateTimeOffset endTime,
-            decimal totalAmount
+            decimal totalAmount,
+            string? paymentToken,
+            string baseUrl
         )
         {
             var emailTemplate = DriverApproveBookingTemplate.Template(
@@ -202,7 +186,9 @@ public sealed class ApproveBooking
                 startTime,
                 endTime,
                 totalAmount,
-                isApproved
+                isApproved,
+                paymentToken,
+                baseUrl
             );
 
             await emailService.SendEmailAsync(driverEmail, "Phê duyệt đặt xe", emailTemplate);
@@ -218,6 +204,8 @@ public sealed class ApproveBooking
             RuleFor(x => x.IsApproved)
                 .NotNull()
                 .WithMessage("Trạng thái phê duyệt không được để trống");
+
+            RuleFor(x => x.BaseUrl).NotEmpty().WithMessage("Base URL không được để trống");
         }
     }
 }

@@ -8,7 +8,9 @@ public static class DriverApproveBookingTemplate
         DateTimeOffset startTime,
         DateTimeOffset endTime,
         decimal totalAmount,
-        bool isApproved
+        bool isApproved,
+        string? paymentToken = null,
+        string baseUrl = "http://localhost:8080"
     )
     {
         var (bgColor, headerColor, accentColor) = isApproved
@@ -24,6 +26,24 @@ public static class DriverApproveBookingTemplate
             );
 
         var status = isApproved ? "chấp thuận" : "từ chối";
+
+        var paymentButton =
+            paymentToken != null
+                ? $@"
+                    <div style='text-align: center; margin: 20px 0;'>
+                        <a href='{baseUrl}/api/bookings/payment/{paymentToken}' style='
+                            background-color: {EmailTemplateColors.SuccessAccent};
+                            color: white;
+                            padding: 12px 24px;
+                            text-decoration: none;
+                            border-radius: 4px;
+                            display: inline-block;
+                        '>
+                            Thanh toán ngay
+                        </a>
+                    </div>
+                "
+                : "";
 
         return $@"
             <div style=' {EmailTemplateStyles.ContainerStyle}'>
@@ -66,6 +86,7 @@ public static class DriverApproveBookingTemplate
                             <li>Giấy tờ thế chấp</li>
                         </ul>
                     </div>
+                    {paymentButton}
                     " : "")}
 
                     <p style='{EmailTemplateStyles.FooterStyle}'>

@@ -10,7 +10,6 @@ using UseCases.Abstractions;
 using UseCases.BackgroundServices.Bookings;
 using UseCases.DTOs;
 using UseCases.Services.EmailService;
-using UseCases.Services.PayOSService;
 using UUIDNext;
 
 namespace UseCases.UC_Booking.Commands;
@@ -20,14 +19,13 @@ public sealed class CreateBooking
     public sealed record CreateBookingCommand(Guid CarId, DateTime StartTime, DateTime EndTime)
         : IRequest<Result<Response>>;
 
-    public sealed record Response(Guid Id, string PaymentUrl, string QrCode);
+    public sealed record Response(Guid Id);
 
     internal sealed class Handler(
         IAppDBContext context,
         IEmailService emailService,
         IBackgroundJobClient backgroundJobClient,
         BookingReminderJob reminderService,
-        IPaymentService paymentService,
         CurrentUser currentUser
     ) : IRequestHandler<CreateBookingCommand, Result<Response>>
     {
@@ -128,14 +126,6 @@ public sealed class CreateBooking
                 DriverSignatureDate = DateTimeOffset.UtcNow,
             };
 
-            // Create payment link
-            var paymentResult = await paymentService.CreatePaymentLinkAsync(
-                booking.Id,
-                booking.TotalAmount,
-                $"Free Driver thanh toan",
-                currentUser.User.Name
-            );
-
             context.Bookings.Add(booking);
             context.Contracts.Add(contract);
             await context.SaveChangesAsync(cancellationToken);
@@ -150,21 +140,14 @@ public sealed class CreateBooking
                         currentUser.User.Email,
                         car.Owner.Name,
                         car.Owner.Email,
-                        car.Model.Name,
-                        paymentResult.CheckoutUrl
+                        car.Model.Name
                     )
             );
 
             // Schedule automated reminders and expiration
             await reminderService.ScheduleReminders(booking.Id);
 
-            return Result<Response>.Success(
-                new Response(
-                    bookingId,
-                    PaymentUrl: paymentResult.CheckoutUrl,
-                    QrCode: paymentResult.QrCode
-                )
-            );
+            return Result<Response>.Success(new Response(bookingId));
         }
 
         private static string GetStandardContractClauses(
@@ -236,8 +219,7 @@ public sealed class CreateBooking
             string driverEmail,
             string ownerName,
             string ownerEmail,
-            string carModelName,
-            string paymentResult
+            string carModelName
         )
         {
             var driverEmailTemplate = DriverCreateBookingTemplate.Template(
@@ -245,8 +227,7 @@ public sealed class CreateBooking
                 carModelName,
                 startTime,
                 endTime,
-                totalAmount,
-                paymentResult
+                totalAmount
             );
 
             await emailService.SendEmailAsync(driverEmail, "Xác nhận đặt xe", driverEmailTemplate);

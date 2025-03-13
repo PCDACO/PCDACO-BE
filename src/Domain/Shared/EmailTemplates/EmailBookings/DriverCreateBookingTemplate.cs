@@ -7,8 +7,7 @@ public static class DriverCreateBookingTemplate
         string carName,
         DateTime startTime,
         DateTime endTime,
-        decimal totalAmount,
-        string paymentUrl
+        decimal totalAmount
     )
     {
         return $@"
@@ -45,12 +44,6 @@ public static class DriverCreateBookingTemplate
 
                     <div style='background-color: {EmailTemplateColors.Warning}; padding: 15px; border-radius: 8px; margin: 20px 0;'>
                         <p style='margin: 0;'><strong>Lưu ý:</strong> Vui lòng chờ xác nhận từ chủ xe. Bạn sẽ nhận được email thông báo ngay khi chủ xe phản hồi.</p>
-                    </div>
-
-                    <div style='text-align: center; margin: 30px 0;'>
-                        <a href='{paymentUrl}' style='background-color: {EmailTemplateColors.SuccessAccent}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;'>
-                            Thanh Toán Ngay
-                        </a>
                     </div>
 
                     <p style='{EmailTemplateStyles.FooterStyle}'>
