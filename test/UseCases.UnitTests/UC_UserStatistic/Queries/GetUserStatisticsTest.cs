@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using Domain.Constants;
+using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared;
@@ -74,9 +75,7 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Create feedback for the completed booking
         var booking = await _dbContext
-            .Bookings.Where(b =>
-                b.UserId == driver.Id && b.Status == BookingStatusEnum.Completed
-            )
+            .Bookings.Where(b => b.UserId == driver.Id && b.Status == BookingStatusEnum.Completed)
             .FirstAsync();
 
         await CreateFeedback(booking.Id, FeedbackTypeEnum.Owner, 4, _dbContext);
@@ -185,9 +184,24 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
 
         // Create inspection schedules
-        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Pending, consultant.Id);
-        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Pending, consultant.Id);
-        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Pending, consultant.Id);
+        await CreateInspectionSchedule(
+            car.Id,
+            technician.Id,
+            InspectionScheduleStatusEnum.Pending,
+            consultant.Id
+        );
+        await CreateInspectionSchedule(
+            car.Id,
+            technician.Id,
+            InspectionScheduleStatusEnum.Pending,
+            consultant.Id
+        );
+        await CreateInspectionSchedule(
+            car.Id,
+            technician.Id,
+            InspectionScheduleStatusEnum.Pending,
+            consultant.Id
+        );
 
         var handler = new GetUserStatistics.Handler(_dbContext, _currentUser);
         var query = new GetUserStatistics.Query();
@@ -242,10 +256,30 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         var car = await CreateTestCar(owner.Id, _dbContext);
 
         // Create inspection schedules
-        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Approved, consultant.Id);
-        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Approved, consultant.Id);
-        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Rejected, consultant.Id);
-        await CreateInspectionSchedule(car.Id, technician.Id, InspectionScheduleStatusEnum.Pending, consultant.Id);
+        await CreateInspectionSchedule(
+            car.Id,
+            technician.Id,
+            InspectionScheduleStatusEnum.Approved,
+            consultant.Id
+        );
+        await CreateInspectionSchedule(
+            car.Id,
+            technician.Id,
+            InspectionScheduleStatusEnum.Approved,
+            consultant.Id
+        );
+        await CreateInspectionSchedule(
+            car.Id,
+            technician.Id,
+            InspectionScheduleStatusEnum.Rejected,
+            consultant.Id
+        );
+        await CreateInspectionSchedule(
+            car.Id,
+            technician.Id,
+            InspectionScheduleStatusEnum.Pending,
+            consultant.Id
+        );
 
         var handler = new GetUserStatistics.Handler(_dbContext, _currentUser);
         var query = new GetUserStatistics.Query();
@@ -299,6 +333,132 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(0, response.TotalRejectedInspectionSchedule);
     }
 
+    [Theory]
+    [InlineData("Consultant", 10, 0, 0)] // Below KPI
+    [InlineData("Consultant", 80, 0, 0)] // At KPI
+    [InlineData("Consultant", 86, 0, 0)] // Above KPI
+    [InlineData("Technician", 0, 10, 20)] // Below KPI
+    [InlineData("Technician", 0, 50, 30)] // At KPI
+    [InlineData("Technician", 0, 60, 40)] // Above KPI
+    public async Task Handle_StaffSalary_CalculatesCorrectly(
+        string roleName,
+        int createdSchedules,
+        int approvedSchedules,
+        int rejectedSchedules
+    )
+    {
+        // Arrange
+        var role = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, roleName);
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, role);
+        _currentUser.SetUser(user);
+
+        // Create prerequisites for schedules
+        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var owner = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            ownerRole,
+            "owner@test.com"
+        );
+        var car = await CreateTestCar(owner.Id, _dbContext);
+
+        // Create other roles needed for testing
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            consultantRole,
+            "consultant@test.com"
+        );
+
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@test.com"
+        );
+
+        // Create schedules based on the role
+        if (roleName == "Consultant")
+        {
+            for (int i = 0; i < createdSchedules; i++)
+            {
+                await CreateInspectionSchedule(
+                    car.Id,
+                    technician.Id,
+                    InspectionScheduleStatusEnum.Pending,
+                    user.Id
+                );
+            }
+        }
+        else if (roleName == "Technician")
+        {
+            for (int i = 0; i < approvedSchedules; i++)
+            {
+                await CreateInspectionSchedule(
+                    car.Id,
+                    user.Id,
+                    InspectionScheduleStatusEnum.Approved,
+                    consultant.Id
+                );
+            }
+
+            for (int i = 0; i < rejectedSchedules; i++)
+            {
+                await CreateInspectionSchedule(
+                    car.Id,
+                    user.Id,
+                    InspectionScheduleStatusEnum.Rejected,
+                    consultant.Id
+                );
+            }
+        }
+
+        var handler = new GetUserStatistics.Handler(_dbContext, _currentUser);
+        var query = new GetUserStatistics.Query();
+
+        // Calculate expected salary
+        decimal expectedSalary = 0;
+        if (roleName == "Consultant")
+        {
+            int totalSchedules = createdSchedules;
+            expectedSalary =
+                totalSchedules <= SalaryConstants.Kpi
+                    ? totalSchedules * SalaryConstants.ConsultantBaseSalary
+                    : (SalaryConstants.Kpi * SalaryConstants.ConsultantBaseSalary)
+                        + (
+                            (totalSchedules - SalaryConstants.Kpi)
+                            * SalaryConstants.ConsultRewardedRate
+                            * SalaryConstants.ConsultantBaseSalary
+                        );
+        }
+        else if (roleName == "Technician")
+        {
+            int totalSchedules = approvedSchedules + rejectedSchedules;
+            expectedSalary =
+                totalSchedules <= SalaryConstants.Kpi
+                    ? totalSchedules * SalaryConstants.TechnicianBaseSalary
+                    : (SalaryConstants.Kpi * SalaryConstants.TechnicianBaseSalary)
+                        + (
+                            (totalSchedules - SalaryConstants.Kpi)
+                            * SalaryConstants.TechnicianRewardedRate
+                            * SalaryConstants.TechnicianBaseSalary
+                        );
+        }
+
+        // Act
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Equal(expectedSalary, result.Value.StaffSalary);
+    }
+
+    // Helper methods
     private async Task<Car> CreateTestCar(Guid ownerId, AppDBContext context)
     {
         var manufacturer = new Manufacturer { Name = "Test Manufacturer" };
