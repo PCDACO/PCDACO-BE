@@ -11,7 +11,7 @@ public class UpdateUserLicenseEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPut("/api/licenses/{id:guid}/information", Handle)
+        app.MapPut("/api/users/licenses/{id:guid}/information", Handle)
             .WithName("UpdateUserLicense")
             .WithSummary("Update User license information")
             .WithTags("Licenses")
