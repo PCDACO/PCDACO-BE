@@ -25,7 +25,6 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly IAesEncryptionService _aesService = fixture.AesEncryptionService;
     private readonly IKeyManagementService _keyService = fixture.KeyManagementService;
     private readonly EncryptionSettings _encryptionSettings = fixture.EncryptionSettings;
-    private readonly IPaymentService _paymentService = new TestDataPaymentService();
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
 
@@ -53,7 +52,6 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             bookingReminderJob,
-            _paymentService,
             _currentUser
         );
         var command = new CreateBooking.CreateBookingCommand(
@@ -100,7 +98,6 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             bookingReminderJob,
-            _paymentService,
             _currentUser
         );
         var command = new CreateBooking.CreateBookingCommand(
@@ -162,7 +159,6 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             bookingReminderJob,
-            _paymentService,
             _currentUser
         );
         var command = new CreateBooking.CreateBookingCommand(
@@ -265,7 +261,6 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             bookingReminderJob,
-            _paymentService,
             _currentUser
         );
 
@@ -340,7 +335,6 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             bookingReminderJob,
-            _paymentService,
             _currentUser
         );
         var command1 = new CreateBooking.CreateBookingCommand(
@@ -360,7 +354,6 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             bookingReminderJob,
-            _paymentService,
             _currentUser
         );
         var command2 = new CreateBooking.CreateBookingCommand(
@@ -376,18 +369,12 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(ResultStatus.Ok, result2.Status);
 
         // Verify both bookings exist
-        var bookings = await _dbContext
-            .Bookings
-            .Where(b => b.CarId == testCar.Id)
-            .ToListAsync();
+        var bookings = await _dbContext.Bookings.Where(b => b.CarId == testCar.Id).ToListAsync();
 
         Assert.Equal(2, bookings.Count);
         Assert.Contains(bookings, b => b.UserId == testUser1.Id);
         Assert.Contains(bookings, b => b.UserId == testUser2.Id);
-        Assert.All(
-            bookings,
-            b => Assert.Equal(BookingStatusEnum.Pending, b.Status)
-        );
+        Assert.All(bookings, b => Assert.Equal(BookingStatusEnum.Pending, b.Status));
     }
 
     [Fact]
@@ -410,7 +397,6 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             bookingReminderJob,
-            _paymentService,
             _currentUser
         );
         var command = new CreateBooking.CreateBookingCommand(
