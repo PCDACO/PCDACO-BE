@@ -58,7 +58,7 @@ public sealed class GetAllBookings
         )
         {
             var query = context
-                .Bookings.Include(b => b.Status)
+                .Bookings
                 .Include(b => b.Car)
                 .ThenInclude(c => c.Model)
                 .Include(b => b.Car)
