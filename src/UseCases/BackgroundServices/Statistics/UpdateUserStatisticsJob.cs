@@ -72,7 +72,7 @@ public class UpdateUserStatisticsJob(IAppDBContext context)
                                 && b.Status == BookingStatusEnum.Completed
                             )
                             .SelectMany(b => b.Feedbacks)
-                            .Where(f => f.Type == FeedbackTypeEnum.Owner)
+                            .Where(f => f.Type == FeedbackTypeEnum.ToDriver)
                             .Average(f => (decimal?)f.Point) ?? 0
                 )
                 .SetProperty(
