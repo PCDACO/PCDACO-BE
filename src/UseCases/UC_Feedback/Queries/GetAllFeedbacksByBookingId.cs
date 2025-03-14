@@ -36,7 +36,7 @@ public sealed class GetAllFeedbacksByBookingId
                 feedback.Point,
                 feedback.Content,
                 feedback.User.Name,
-                feedback.Type == FeedbackTypeEnum.Owner
+                feedback.Type == FeedbackTypeEnum.ToDriver
                     ? feedback.Booking.User.Name
                     : feedback.Booking.Car.Owner.Name,
                 feedback.Type,
@@ -91,11 +91,11 @@ public sealed class GetAllFeedbacksByBookingId
                     EF.Functions.ILike(f.Content, $"%{request.Keyword}%") //find matching content
                     || EF.Functions.ILike(f.User.Name, $"%{request.Keyword}%") //find matching feedback author
                     || (
-                        f.Type == FeedbackTypeEnum.Owner
+                        f.Type == FeedbackTypeEnum.ToDriver
                         && EF.Functions.ILike(f.Booking.User.Name, $"%{request.Keyword}%")
                     ) //find matching feedback receiver - driver
                     || (
-                        f.Type == FeedbackTypeEnum.Driver
+                        f.Type == FeedbackTypeEnum.ToOwner
                         && EF.Functions.ILike(f.Booking.Car.Owner.Name, $"%{request.Keyword}%")
                     ) //find matching feedback receiver - car owner
                 );

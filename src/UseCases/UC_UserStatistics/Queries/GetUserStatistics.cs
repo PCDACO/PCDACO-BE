@@ -117,7 +117,7 @@ public sealed class GetUserStatistics
                         .Where(f =>
                             f.Booking.UserId == user.Id
                             && f.Booking.Status == BookingStatusEnum.Completed
-                            && f.Type == FeedbackTypeEnum.Owner
+                            && f.Type == FeedbackTypeEnum.ToDriver
                         )
                         .ToList();
                 }
@@ -127,7 +127,7 @@ public sealed class GetUserStatistics
                         .Where(f =>
                             f.Booking.Car.OwnerId == user.Id
                             && f.Booking.Status == BookingStatusEnum.Completed
-                            && f.Type == FeedbackTypeEnum.Driver
+                            && f.Type == FeedbackTypeEnum.ToOwner
                         )
                         .ToList();
                 }

@@ -26,17 +26,21 @@ public sealed class ProcessBookingPaymentByToken
             // Validate and decode the token
             var bookingId = await paymentTokenService.ValidateTokenAsync(request.Token);
             if (bookingId == null)
-                return Result.Error("Invalid or expired payment token");
+                return Result.Error("Token không hợp lệ");
 
             var booking = await context
                 .Bookings.Include(x => x.Car)
+                .Include(x => x.User)
                 .FirstOrDefaultAsync(x => x.Id == bookingId, cancellationToken);
 
             if (booking == null)
                 return Result.NotFound("Không tìm thấy booking");
 
-            if (booking.Status != BookingStatusEnum.Completed)
-                return Result.Error("Chỉ có thể thanh toán chuyến đi đã hoàn thành!");
+            if (
+                booking.Status != BookingStatusEnum.Approved
+                && booking.Status != BookingStatusEnum.ReadyForPickup
+            )
+                return Result.Error("Chỉ có thể thanh toán chuyến đi khi được phê duyệt!");
 
             if (booking.IsPaid)
                 return Result.Error("Chuyến đi này đã được thanh toán!");

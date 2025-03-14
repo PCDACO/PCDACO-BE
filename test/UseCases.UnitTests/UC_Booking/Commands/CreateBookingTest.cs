@@ -409,9 +409,9 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Forbidden, result.Status);
+        Assert.Equal(ResultStatus.Error, result.Status);
         Assert.Contains(
-            "Bạn chưa xác thực bằng lái xe hoặc bằng lái xe chưa được phê duyệt!",
+            "Bằng lái xe của bạn không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật thông tin bằng lái xe trước khi đặt xe.",
             result.Errors
         );
     }

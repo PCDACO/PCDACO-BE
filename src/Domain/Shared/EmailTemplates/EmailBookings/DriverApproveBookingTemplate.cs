@@ -27,26 +27,35 @@ public static class DriverApproveBookingTemplate
 
         var status = isApproved ? "chấp thuận" : "từ chối";
 
-        var paymentButton =
+        var paymentWarning =
             paymentToken != null
                 ? $@"
-                    <div style='text-align: center; margin: 20px 0;'>
-                        <a href='{baseUrl}/api/bookings/payment/{paymentToken}' style='
-                            background-color: {EmailTemplateColors.SuccessAccent};
-                            color: white;
-                            padding: 12px 24px;
-                            text-decoration: none;
-                            border-radius: 4px;
-                            display: inline-block;
-                        '>
-                            Thanh toán ngay
-                        </a>
-                    </div>
-                "
+                <div style='background-color: {EmailTemplateColors.Warning}; padding: 15px; border-radius: 8px; margin: 20px 0;'>
+                    <p style='margin: 0; color: #D63301;'><strong>QUAN TRỌNG - Thời hạn thanh toán:</strong></p>
+                    <ul style='margin: 10px 0 0 0; padding-left: 20px;'>
+                        <li>Vui lòng thanh toán trong vòng 12 giờ kể từ khi nhận được email này</li>
+                        <li>Booking sẽ tự động hủy nếu không thanh toán đúng hạn</li>
+                        <li>Sau khi hủy, xe sẽ được mở lại cho người khác đặt</li>
+                    </ul>
+                </div>
+                <div style='text-align: center; margin: 20px 0;'>
+                    <a href='{baseUrl}/api/bookings/payment/{paymentToken}' style='
+                        background-color: {EmailTemplateColors.SuccessAccent};
+                        color: white;
+                        padding: 12px 24px;
+                        text-decoration: none;
+                        border-radius: 4px;
+                        display: inline-block;
+                        font-weight: bold;
+                    '>
+                        Thanh toán ngay
+                    </a>
+                </div>
+            "
                 : "";
 
         return $@"
-            <div style=' {EmailTemplateStyles.ContainerStyle}'>
+            <div style='{EmailTemplateStyles.ContainerStyle}'>
                 <div style='{EmailTemplateStyles.HeaderStyle(headerColor)}'>
                     <h2 style='margin: 0;'>Thông Báo Đặt Xe</h2>
                 </div>
@@ -72,12 +81,13 @@ public static class DriverApproveBookingTemplate
                             </tr>
                             <tr style='border-top: 2px solid #ddd;'>
                                 <td style='padding: 8px 0;'><strong>Tổng tiền:</strong></td>
-                                <td style='text-align: right; style='color: {accentColor}; font-weight: bold;'>{totalAmount:N0} VNĐ</td>
+                                <td style='text-align: right; color: {accentColor}; font-weight: bold;'>{totalAmount:N0} VNĐ</td>
                             </tr>
                         </table>
                     </div>
 
                     {(isApproved ? $@"
+                    {paymentWarning}
                     <div style='background-color: {EmailTemplateColors.Warning}; padding: 15px; border-radius: 8px; margin: 20px 0;'>
                         <p style='margin: 0;'><strong>Lưu ý:</strong> Vui lòng đến đúng giờ và mang theo giấy tờ cần thiết khi nhận xe:</p>
                         <ul style='margin: 10px 0 0 0; padding-left: 20px;'>
@@ -86,7 +96,6 @@ public static class DriverApproveBookingTemplate
                             <li>Giấy tờ thế chấp</li>
                         </ul>
                     </div>
-                    {paymentButton}
                     " : "")}
 
                     <p style='{EmailTemplateStyles.FooterStyle}'>

@@ -114,7 +114,7 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
             BookingId = booking.Id,
             Point = 4,
             Content = "Great driver",
-            Type = FeedbackTypeEnum.Owner,
+            Type = FeedbackTypeEnum.ToDriver,
         };
 
         // Create feedback from driver to owner (driver should NOT see this)
@@ -124,7 +124,7 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
             BookingId = booking.Id,
             Point = 5,
             Content = "Nice car",
-            Type = FeedbackTypeEnum.Driver,
+            Type = FeedbackTypeEnum.ToOwner,
         };
 
         _dbContext.Feedbacks.AddRange(ownerFeedback, driverFeedback);
@@ -147,7 +147,7 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
         Assert.Equal(4, feedback.Rating);
         Assert.Equal("Great driver", feedback.Content);
         Assert.Equal(owner.Name, feedback.FromUserName);
-        Assert.Equal(FeedbackTypeEnum.Owner, feedback.Type);
+        Assert.Equal(FeedbackTypeEnum.ToDriver, feedback.Type);
     }
 
     [Fact]
@@ -182,7 +182,7 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
             BookingId = booking.Id,
             Point = 4,
             Content = "Great driver",
-            Type = FeedbackTypeEnum.Owner,
+            Type = FeedbackTypeEnum.ToDriver,
         };
 
         // Create feedback from driver to owner (owner should see this)
@@ -192,7 +192,7 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
             BookingId = booking.Id,
             Point = 5,
             Content = "Nice car",
-            Type = FeedbackTypeEnum.Driver,
+            Type = FeedbackTypeEnum.ToOwner,
         };
 
         _dbContext.Feedbacks.AddRange(ownerFeedback, driverFeedback);
@@ -215,7 +215,7 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
         Assert.Equal(5, feedback.Rating);
         Assert.Equal("Nice car", feedback.Content);
         Assert.Equal(driver.Name, feedback.FromUserName);
-        Assert.Equal(FeedbackTypeEnum.Driver, feedback.Type);
+        Assert.Equal(FeedbackTypeEnum.ToOwner, feedback.Type);
     }
 
     [Fact]
@@ -250,7 +250,7 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
             BookingId = booking.Id,
             Point = 4,
             Content = "Great experience with this driver",
-            Type = FeedbackTypeEnum.Owner,
+            Type = FeedbackTypeEnum.ToDriver,
         };
 
         var feedback2 = new Feedback
@@ -259,7 +259,7 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
             BookingId = booking.Id,
             Point = 5,
             Content = "Terrible service",
-            Type = FeedbackTypeEnum.Owner,
+            Type = FeedbackTypeEnum.ToDriver,
         };
 
         _dbContext.Feedbacks.AddRange(feedback1, feedback2);
@@ -322,7 +322,7 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
             BookingId = booking1.Id,
             Point = 4,
             Content = "Good driver",
-            Type = FeedbackTypeEnum.Owner,
+            Type = FeedbackTypeEnum.ToDriver,
         };
 
         var feedback2 = new Feedback
@@ -331,7 +331,7 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
             BookingId = booking2.Id,
             Point = 5,
             Content = "Great driver",
-            Type = FeedbackTypeEnum.Owner,
+            Type = FeedbackTypeEnum.ToDriver,
         };
 
         _dbContext.Feedbacks.AddRange(feedback1, feedback2);
@@ -388,7 +388,7 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
                 BookingId = booking.Id,
                 Point = 4 + i % 2, // Alternating between 4 and 5
                 Content = $"Feedback #{i + 1}",
-                Type = FeedbackTypeEnum.Owner,
+                Type = FeedbackTypeEnum.ToDriver,
             };
             feedbacks.Add(feedback);
         }

@@ -78,8 +78,8 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
             .Bookings.Where(b => b.UserId == driver.Id && b.Status == BookingStatusEnum.Completed)
             .FirstAsync();
 
-        await CreateFeedback(booking.Id, FeedbackTypeEnum.Owner, 4, _dbContext);
-        await CreateFeedback(booking.Id, FeedbackTypeEnum.Owner, 5, _dbContext);
+        await CreateFeedback(booking.Id, FeedbackTypeEnum.ToDriver, 4, _dbContext);
+        await CreateFeedback(booking.Id, FeedbackTypeEnum.ToDriver, 5, _dbContext);
 
         var handler = new GetUserStatistics.Handler(_dbContext, _currentUser);
         var query = new GetUserStatistics.Query();
@@ -128,8 +128,8 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         var booking2 = await CreateBooking(driver.Id, car.Id, BookingStatusEnum.Completed, 750);
 
         // Create feedback for the completed bookings
-        await CreateFeedback(booking1.Id, FeedbackTypeEnum.Driver, 3, _dbContext);
-        await CreateFeedback(booking2.Id, FeedbackTypeEnum.Driver, 5, _dbContext);
+        await CreateFeedback(booking1.Id, FeedbackTypeEnum.ToOwner, 3, _dbContext);
+        await CreateFeedback(booking2.Id, FeedbackTypeEnum.ToOwner, 5, _dbContext);
 
         var handler = new GetUserStatistics.Handler(_dbContext, _currentUser);
         var query = new GetUserStatistics.Query();

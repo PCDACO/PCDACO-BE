@@ -40,4 +40,6 @@ public interface IAppDBContext : IDisposable
     DbSet<CarContract> CarContracts { get; }
     DbSet<CarGPS> CarGPSes { get; }
     DbSet<GPSDevice> GPSDevices { get; }
+    DbSet<CarInspection> CarInspections { get; }
+    DbSet<InspectionPhoto> InspectionPhotos { get; }
 }

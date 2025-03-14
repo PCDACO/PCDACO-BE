@@ -111,7 +111,7 @@ public class GetAllFeedbacksByBookingIdTest(DatabaseTestBase fixture) : IAsyncLi
             BookingId = booking.Id,
             Point = 4,
             Content = "Great driver",
-            Type = FeedbackTypeEnum.Owner,
+            Type = FeedbackTypeEnum.ToDriver,
         };
 
         // Create feedback from driver to owner
@@ -121,7 +121,7 @@ public class GetAllFeedbacksByBookingIdTest(DatabaseTestBase fixture) : IAsyncLi
             BookingId = booking.Id,
             Point = 5,
             Content = "Nice car",
-            Type = FeedbackTypeEnum.Driver,
+            Type = FeedbackTypeEnum.ToOwner,
         };
 
         _dbContext.Feedbacks.AddRange(ownerFeedback, driverFeedback);
@@ -166,7 +166,7 @@ public class GetAllFeedbacksByBookingIdTest(DatabaseTestBase fixture) : IAsyncLi
             BookingId = booking.Id,
             Point = 4,
             Content = "Great experience with this driver",
-            Type = FeedbackTypeEnum.Owner,
+            Type = FeedbackTypeEnum.ToDriver,
         };
 
         var feedback2 = new Feedback
@@ -175,7 +175,7 @@ public class GetAllFeedbacksByBookingIdTest(DatabaseTestBase fixture) : IAsyncLi
             BookingId = booking.Id,
             Point = 5,
             Content = "Excellent car condition",
-            Type = FeedbackTypeEnum.Driver,
+            Type = FeedbackTypeEnum.ToOwner,
         };
 
         _dbContext.Feedbacks.AddRange(feedback1, feedback2);

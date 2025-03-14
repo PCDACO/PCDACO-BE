@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Persistance.Data;
 namespace Persistance.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250314123149_AddInspectionForPreAndPostBooking")]
+    partial class AddInspectionForPreAndPostBooking
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -950,8 +953,9 @@ namespace Persistance.Migrations
                     b.Property<Guid>("EncryptionKeyId")
                         .HasColumnType("uuid");
 
-                    b.Property<DateTimeOffset>("ExpiryDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<string>("ExpiryDate")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.Property<bool?>("IsApprove")
                         .HasColumnType("boolean");

@@ -26,6 +26,11 @@ public class ProcessBookingPaymentByTokenEndpoint : ICarterModule
             new ProcessBookingPaymentByToken.Command(token),
             cancellationToken
         );
-        return result.MapResult();
+
+        if (!result.IsSuccess)
+            return result.MapResult();
+
+        // Redirect to payment URL if successful
+        return Results.Redirect(result.Value.PaymentUrl);
     }
 }

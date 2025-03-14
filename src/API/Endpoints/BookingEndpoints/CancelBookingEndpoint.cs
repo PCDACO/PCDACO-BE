@@ -17,9 +17,9 @@ public class CancelBookingEndpoint : ICarterModule
             .RequireAuthorization();
     }
 
-    private static async Task<IResult> Handle(ISender sender, Guid id)
+    private static async Task<IResult> Handle(ISender sender, Guid id, string cancelReason = "")
     {
-        Result result = await sender.Send(new CancelBooking.Command(id));
+        Result result = await sender.Send(new CancelBooking.Command(id, cancelReason));
         return result.MapResult();
     }
 }

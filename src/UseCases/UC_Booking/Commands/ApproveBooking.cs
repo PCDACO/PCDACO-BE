@@ -8,6 +8,7 @@ using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
+using UseCases.BackgroundServices.Bookings;
 using UseCases.DTOs;
 using UseCases.Services.EmailService;
 using UseCases.Services.PaymentTokenService;
@@ -16,6 +17,8 @@ namespace UseCases.UC_Booking.Commands;
 
 public sealed class ApproveBooking
 {
+    private const int PAYMENT_EXPIRATION_HOURS = 12;
+
     public sealed record Command(Guid BookingId, bool IsApproved, string BaseUrl)
         : IRequest<Result>;
 
@@ -68,16 +71,27 @@ public sealed class ApproveBooking
 
                 // Update contract with Owner's signature.
                 await UpdateContractForApprovalAsync(booking, cancellationToken);
+
+                // Schedule expiration job if booking is not paid
+                if (!booking.IsPaid)
+                {
+                    backgroundJobClient.Schedule<BookingExpiredJob>(
+                        job => job.ExpireUnpaidApprovedBooking(booking.Id),
+                        TimeSpan.FromHours(PAYMENT_EXPIRATION_HOURS)
+                    );
+                }
             }
             else
             {
                 booking.Status = BookingStatusEnum.Rejected;
                 booking.Note = "Chủ xe từ chối yêu cầu đặt xe";
+                booking.Car.Status = CarStatusEnum.Available;
             }
 
             booking.Status = request.IsApproved
                 ? BookingStatusEnum.Approved
                 : BookingStatusEnum.Rejected;
+
             await context.SaveChangesAsync(cancellationToken);
 
             // Enqueue email notification

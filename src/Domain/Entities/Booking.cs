@@ -38,15 +38,5 @@ public class Booking : BaseEntity
     public ICollection<TripTracking> TripTrackings { get; set; } = [];
     public ICollection<Feedback> Feedbacks { get; set; } = [];
     public ICollection<Transaction> Transactions { get; set; } = [];
-    public decimal CalculateRefundAmount()
-    {
-        var daysUntilStart = (StartTime - DateTimeOffset.UtcNow).TotalDays;
-
-        if (daysUntilStart >= 3)
-            return TotalAmount; // 100% refund
-        else if (daysUntilStart >= 2)
-            return TotalAmount * 0.5M; // 50% refund
-        else
-            return 0; // No refund
-    }
+    public ICollection<CarInspection> CarInspections { get; set; } = [];
 }

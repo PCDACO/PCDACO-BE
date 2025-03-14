@@ -30,15 +30,8 @@ public class PaymentTokenService(IMemoryCache cache) : IPaymentTokenService
         return token;
     }
 
-    public Task<Guid?> ValidateTokenAsync(string token)
-    {
-        if (cache.TryGetValue($"payment_token:{token}", out Guid bookingId))
-        {
-            // Remove the token after use (one-time use)
-            cache.Remove($"payment_token:{token}");
-            return Task.FromResult<Guid?>(bookingId);
-        }
-
-        return Task.FromResult<Guid?>(null);
-    }
+    public Task<Guid?> ValidateTokenAsync(string token) =>
+        cache.TryGetValue($"payment_token:{token}", out Guid bookingId)
+            ? Task.FromResult<Guid?>(bookingId)
+            : Task.FromResult<Guid?>(null);
 }

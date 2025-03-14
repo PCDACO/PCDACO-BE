@@ -9,19 +9,23 @@ namespace UseCases.UC_Booking.Commands;
 
 public sealed class CancelBooking
 {
-    public sealed record Command(Guid BookingId) : IRequest<Result>;
+    public sealed record Command(Guid BookingId, string CancelReason = "") : IRequest<Result>;
 
     internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
         : IRequestHandler<Command, Result>
     {
+        private const decimal REFUND_PERCENTAGE_BEFORE_7_DAYS = 1.0m;
+        private const decimal REFUND_PERCENTAGE_BEFORE_5_DAYS = 0.5m;
+        private const decimal REFUND_PERCENTAGE_BEFORE_3_DAYS = 0.3m;
+        private const decimal REFUND_PERCENTAGE_BEFORE_1_DAY = 0m;
+
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
             if (!currentUser.User!.IsDriver())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
             var booking = await context
-                .Bookings
-                .Include(x => x.Car)
+                .Bookings.Include(x => x.Car)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
@@ -32,34 +36,68 @@ public sealed class CancelBooking
                     "Bạn không có quyền thực hiện chức năng này với booking này!"
                 );
 
+            // Add cancellation limit check
+            var recentCancellations = await context.Bookings.CountAsync(
+                b =>
+                    b.UserId == currentUser.User.Id
+                    && b.Status == BookingStatusEnum.Cancelled
+                    && b.UpdatedAt >= DateTime.UtcNow.AddDays(-30),
+                cancellationToken
+            );
+
+            if (recentCancellations >= 5)
+                return Result.Error("Bạn đã hủy quá số lần cho phép trong 30 ngày");
+
             if (
-                booking.Status == BookingStatusEnum.Rejected &&
-                booking.Status == BookingStatusEnum.Ongoing &&
-                booking.Status == BookingStatusEnum.Completed &&
-                booking.Status == BookingStatusEnum.Cancelled &&
-                booking.Status == BookingStatusEnum.Expired
+                booking.Status
+                is (
+                    BookingStatusEnum.Rejected
+                    or BookingStatusEnum.Ongoing
+                    or BookingStatusEnum.Completed
+                    or BookingStatusEnum.Cancelled
+                    or BookingStatusEnum.Expired
+                )
             )
             {
                 return Result.Conflict(
-                    $"Không thể phê duyệt booking ở trạng thái " + booking.Status.ToString()
+                    $"Không thể hủy booking ở trạng thái " + booking.Status.ToString()
                 );
             }
+
+            // Calculate days until start time
+            var daysUntilStart = (booking.StartTime - DateTimeOffset.UtcNow).TotalDays;
+
+            // Calculate refund percentage based on cancellation timing
+            decimal refundPercentage = CalculateRefundPercentage(daysUntilStart);
+
             if (booking.Status == BookingStatusEnum.Approved)
                 booking.Car.Status = CarStatusEnum.Available;
-            decimal refundAmount = booking.CalculateRefundAmount();
 
-            if (refundAmount > 0 && booking.IsPaid)
+            if (booking.IsPaid)
             {
                 booking.IsRefund = true;
-                booking.RefundAmount = refundAmount;
+                booking.RefundAmount = booking.TotalAmount * refundPercentage;
             }
 
             booking.Status = BookingStatusEnum.Cancelled;
+            booking.Note = request.CancelReason;
+            booking.UpdatedAt = DateTimeOffset.UtcNow;
             await context.SaveChangesAsync(cancellationToken);
 
-            // TODO: send email to both Owner and Driver
+            // TODO: send email to both Owner and Driver with refund details
 
-            return Result.SuccessWithMessage("Đã hủy booking thành công");
+            return Result.SuccessWithMessage(
+                $"Đã hủy booking thành công. {(booking.IsPaid ? $"Số tiền hoàn trả: {booking.RefundAmount:N0} VND ({refundPercentage * 100}%)" : "")}"
+            );
         }
+
+        private static decimal CalculateRefundPercentage(double daysUntilStart) =>
+            daysUntilStart switch
+            {
+                >= 7 => REFUND_PERCENTAGE_BEFORE_7_DAYS,
+                >= 5 => REFUND_PERCENTAGE_BEFORE_5_DAYS,
+                >= 3 => REFUND_PERCENTAGE_BEFORE_3_DAYS,
+                _ => REFUND_PERCENTAGE_BEFORE_1_DAY,
+            };
     }
 }
