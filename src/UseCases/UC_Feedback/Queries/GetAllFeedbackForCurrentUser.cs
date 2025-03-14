@@ -65,7 +65,7 @@ public sealed class GetAllFeedbackForCurrentUser
             {
                 // Get feedbacks where the current user was the driver and feedback came from owners (Type = Owner)
                 query = query.Where(f =>
-                    f.Booking.UserId == currentUser.User.Id && f.Type == FeedbackTypeEnum.Owner
+                    f.Booking.UserId == currentUser.User.Id && f.Type == FeedbackTypeEnum.ToDriver
                 );
             }
             else if (currentUser.User.IsOwner())
@@ -73,7 +73,7 @@ public sealed class GetAllFeedbackForCurrentUser
                 // Get feedbacks where the current user was the owner and feedback came from drivers (Type = Driver)
                 query = query.Where(f =>
                     f.Booking.Car.OwnerId == currentUser.User.Id
-                    && f.Type == FeedbackTypeEnum.Driver
+                    && f.Type == FeedbackTypeEnum.ToOwner
                 );
             }
 

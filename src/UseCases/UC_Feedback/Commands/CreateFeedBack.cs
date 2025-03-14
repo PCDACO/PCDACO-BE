@@ -73,8 +73,8 @@ public sealed class CreateFeedBack
                 return Result.Error("Chỉ có thể tạo feedback khi chuyến đi đã hoàn thành");
 
             var feedbackType = currentUser.User.IsDriver()
-                ? FeedbackTypeEnum.Driver
-                : FeedbackTypeEnum.Owner;
+                ? FeedbackTypeEnum.ToOwner
+                : FeedbackTypeEnum.ToDriver;
 
             var feedback = new Feedback
             {

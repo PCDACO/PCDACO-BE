@@ -57,7 +57,7 @@ public sealed class UpdateCarStatistic
                 .Bookings.Where(b => b.Status == BookingStatusEnum.Completed)
                 .Where(b => !b.IsDeleted)
                 .Average(b =>
-                    b.Feedbacks.Where(f => f.Type == FeedbackTypeEnum.Owner)
+                    b.Feedbacks.Where(f => f.Type == FeedbackTypeEnum.ToDriver)
                         .Average(f => (decimal)f.Point)
                 );
             updatingCarStatistic.LastRented =
