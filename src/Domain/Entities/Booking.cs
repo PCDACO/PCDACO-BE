@@ -38,4 +38,5 @@ public class Booking : BaseEntity
     public ICollection<TripTracking> TripTrackings { get; set; } = [];
     public ICollection<Feedback> Feedbacks { get; set; } = [];
     public ICollection<Transaction> Transactions { get; set; } = [];
+    public ICollection<CarInspection> CarInspections { get; set; } = [];
 }
