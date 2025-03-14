@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
@@ -163,7 +164,7 @@ public sealed class CreateBooking
             // Schedule automated reminders and expiration
             await reminderService.ScheduleReminders(booking.Id);
 
-            return Result<Response>.Success(new Response(bookingId));
+            return Result<Response>.Success(new Response(bookingId), ResponseMessages.Created);
         }
 
         private static string GetStandardContractClauses(
