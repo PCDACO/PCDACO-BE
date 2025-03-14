@@ -17,10 +17,10 @@ public sealed class LoginEndpoint : ICarterModule
     private async Task<IResult> Handle(ISender sender, LoginRequest request)
     {
         Result<Login.Response> result = await sender.Send(
-            new Login.Command(request.Phone, request.Password)
+            new Login.Command(request.Email, request.Password)
         );
         return result.MapResult();
     }
 
-    private sealed record LoginRequest(string Phone, string Password);
+    private sealed record LoginRequest(string Email, string Password);
 }
