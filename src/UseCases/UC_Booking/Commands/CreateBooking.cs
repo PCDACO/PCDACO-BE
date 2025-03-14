@@ -39,14 +39,30 @@ public sealed class CreateBooking
 
             // Verify driver license first
             var license = await context.Licenses.FirstOrDefaultAsync(
-                x => x.UserId == currentUser.User.Id,
+                l => l.UserId == currentUser.User.Id && l.IsApprove == true
+                // && l.ExpiryDate > request.EndTime
+                ,
                 cancellationToken
             );
 
-            if (license == null || !license.IsApprove.HasValue || !license.IsApprove.Value)
-                return Result.Forbidden(
-                    "Bạn chưa xác thực bằng lái xe hoặc bằng lái xe chưa được phê duyệt!"
+            if (license == null)
+                return Result.Error(
+                    "Bằng lái xe của bạn không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật thông tin bằng lái xe trước khi đặt xe."
                 );
+
+            // Check if driver has active bookings
+            var activeBookingCount = await context.Bookings.CountAsync(
+                b =>
+                    b.UserId == currentUser.User!.Id
+                    && b.Status != BookingStatusEnum.Completed
+                    && b.Status != BookingStatusEnum.Cancelled
+                    && b.Status != BookingStatusEnum.Expired
+                    && b.Status != BookingStatusEnum.Rejected,
+                cancellationToken
+            );
+
+            if (activeBookingCount >= 3)
+                return Result.Error("Bạn chỉ có thể đặt tối đa 3 đơn cùng lúc");
 
             // Check if car exists
             var car = await context
@@ -247,6 +263,9 @@ public sealed class CreateBooking
 
     public sealed class Validator : AbstractValidator<CreateBookingCommand>
     {
+        private const int MAX_BOOKING_DAYS = 30;
+        private const double MIN_HOURS_BEFORE_START = 1.5;
+
         public Validator()
         {
             RuleFor(x => x.CarId).NotEmpty().WithMessage("Car không được để trống");
@@ -254,16 +273,40 @@ public sealed class CreateBooking
             RuleFor(x => x.StartTime)
                 .NotEmpty()
                 .WithMessage("Phải chọn thời gian bắt đầu thuê")
-                .GreaterThan(DateTime.Now.AddHours(24))
-                .WithMessage("Thời gian bắt đầu thuê phải sau thời gian hiện tại một ngày");
+                .GreaterThan(DateTime.UtcNow.AddHours(MIN_HOURS_BEFORE_START))
+                .WithMessage("Thời gian bắt đầu thuê phải sau một tiếng rưỡi");
 
             RuleFor(x => x.EndTime)
                 .NotEmpty()
                 .WithMessage("Phải chọn thời gian kết thúc thuê")
                 .GreaterThan(x => x.StartTime)
                 .WithMessage("Thời gian kết thúc thuê phải sau thời gian bắt đầu thuê")
-                .Must((command, endTime) => (endTime - command.StartTime).TotalDays <= 30)
-                .WithMessage("Thời gian thuê không được vượt quá 30 ngày");
+                .Must(
+                    (command, endTime) =>
+                    {
+                        var duration = (endTime - command.StartTime).TotalDays;
+                        return duration > 0 && duration <= MAX_BOOKING_DAYS;
+                    }
+                )
+                .WithMessage($"Thời gian thuê phải từ 1 đến {MAX_BOOKING_DAYS} ngày");
+
+            // Add validation for previous violations
+            // RuleFor(x => x)
+            //     .MustAsync(
+            //         async (command, cancellation) =>
+            //         {
+            //             var violationCount = await context.Bookings.CountAsync(
+            //                 b =>
+            //                     b.UserId == command.UserId
+            //                     && b.Status == BookingStatusEnum.Completed
+            //                     && (b.ExcessDay > 0 || b.HasDamageReport), // Add HasDamageReport to Booking if not exists
+            //                 cancellation
+            //             );
+
+            //             return violationCount < 3; // Maximum 3 violations allowed
+            //         }
+            //     )
+            //     .WithMessage("Bạn đã vi phạm quá nhiều quy định thuê xe");
         }
     }
 }
