@@ -83,8 +83,7 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
             .ThenInclude(c => c.Owner)
             .Include(b => b.User)
             .Where(b =>
-                b.Status == BookingStatusEnum.Pending
-                && b.StartTime < DateTimeOffset.UtcNow
+                b.Status == BookingStatusEnum.Pending && b.StartTime < DateTimeOffset.UtcNow
             )
             .ToListAsync();
 
@@ -159,5 +158,49 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
         await context
             .Cars.Where(c => expiredCarIds.Contains(c.Id))
             .ExecuteUpdateAsync(c => c.SetProperty(car => car.Status, CarStatusEnum.Available));
+    }
+
+    public async Task ExpireUnpaidApprovedBooking(Guid bookingId)
+    {
+        var booking = await context
+            .Bookings.Include(b => b.Status)
+            .Include(b => b.Car)
+            .ThenInclude(c => c.Owner)
+            .Include(b => b.User)
+            .FirstOrDefaultAsync(b =>
+                b.Id == bookingId
+                && (
+                    b.Status == BookingStatusEnum.Approved
+                    || b.Status == BookingStatusEnum.ReadyForPickup
+                )
+                && !b.IsPaid
+            );
+
+        if (booking == null)
+            return;
+
+        // Mark as expired
+        booking.Status = BookingStatusEnum.Expired;
+        booking.Note = "Hết hạn tự động do không thanh toán trong thời hạn";
+        booking.Car.Status = CarStatusEnum.Available;
+
+        await context.SaveChangesAsync(CancellationToken.None);
+
+        var driverEmailTemplate = DriverExpiredBookingTemplate.Template(
+            booking.User.Name,
+            booking.Car.Model.Name,
+            booking.StartTime,
+            booking.EndTime,
+            booking.TotalAmount
+        );
+
+        BackgroundJob.Enqueue(
+            () =>
+                emailService.SendEmailAsync(
+                    booking.User.Email,
+                    "Thông báo: Yêu cầu đặt xe của bạn đã hết hạn do không thanh toán",
+                    driverEmailTemplate
+                )
+        );
     }
 }
