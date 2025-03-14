@@ -72,7 +72,7 @@ public static class DriverApproveBookingTemplate
                             </tr>
                             <tr style='border-top: 2px solid #ddd;'>
                                 <td style='padding: 8px 0;'><strong>Tổng tiền:</strong></td>
-                                <td style='text-align: right; style='color: {accentColor}; font-weight: bold;'>{totalAmount:N0} VNĐ</td>
+                                <td style='text-align: right; color: {accentColor}; font-weight: bold;'>{totalAmount:N0} VNĐ</td>
                             </tr>
                         </table>
                     </div>
