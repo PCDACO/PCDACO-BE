@@ -108,7 +108,7 @@ public class GetLicenseByCurrentUserTest(DatabaseTestBase fixture) : IAsyncLifet
             UserId = testUser.Id,
             EncryptionKeyId = encryptionKey.Id,
             EncryptedLicenseNumber = encryptedLicenseNumber,
-            ExpiryDate = DateTime.Now.AddYears(1).ToString("yyyy-MM-dd"),
+            ExpiryDate = DateTimeOffset.UtcNow.AddYears(1),
             LicenseImageFrontUrl = "front-url",
             LicenseImageBackUrl = "back-url",
         };
@@ -134,7 +134,7 @@ public class GetLicenseByCurrentUserTest(DatabaseTestBase fixture) : IAsyncLifet
         var response = result.Value;
         Assert.Equal(license.Id, response.Id);
         Assert.Equal(licenseNumber, response.LicenseNumber); // Compare with original license number
-        Assert.Equal(DateTimeOffset.Parse(license.ExpiryDate), response.ExpirationDate);
+        Assert.Equal(license.ExpiryDate.Date, response.ExpirationDate.Date);
         Assert.Equal(license.LicenseImageFrontUrl, response.ImageFrontUrl);
         Assert.Equal(license.LicenseImageBackUrl, response.ImageBackUrl);
     }

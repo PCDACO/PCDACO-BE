@@ -105,7 +105,7 @@ public class UpdateUserLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         {
             UserId = owner.Id,
             EncryptionKeyId = encryptionKey.Id,
-            ExpiryDate = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd"),
+            ExpiryDate = DateTimeOffset.UtcNow.AddDays(1),
         };
         await _dbContext.Licenses.AddAsync(license);
         await _dbContext.SaveChangesAsync();
@@ -147,7 +147,7 @@ public class UpdateUserLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
             UserId = user.Id,
             EncryptionKeyId = oldEncryptionKey.Id,
             EncryptedLicenseNumber = oldEncryptedLicenseNumber,
-            ExpiryDate = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd"),
+            ExpiryDate = DateTimeOffset.UtcNow.AddDays(1),
         };
         await _dbContext.Licenses.AddAsync(license);
         await _dbContext.SaveChangesAsync();
@@ -173,7 +173,7 @@ public class UpdateUserLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.NotNull(updatedLicense);
         Assert.NotEqual(oldEncryptedLicenseNumber, updatedLicense.EncryptedLicenseNumber);
         Assert.NotEqual(oldEncryptionKey.Id, updatedLicense.EncryptionKeyId);
-        Assert.Equal(command.ExpirationDate.ToString("yyyy-MM-dd"), updatedLicense.ExpiryDate);
+        Assert.Equal(command.ExpirationDate.Date, updatedLicense.ExpiryDate.Date);
     }
 
     [Fact]

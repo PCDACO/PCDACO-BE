@@ -100,7 +100,7 @@ public class UploadUserLicenseImageTest(DatabaseTestBase fixture) : IAsyncLifeti
             EncryptionKeyId = encryptionKey.Id,
             LicenseImageFrontUrl = "old-front-url",
             LicenseImageBackUrl = "old-back-url",
-            ExpiryDate = DateTime.Now.AddDays(1).ToString("yyyy-MM-dd"),
+            ExpiryDate = DateTimeOffset.UtcNow.AddDays(1),
         };
         await _dbContext.Licenses.AddAsync(license);
         await _dbContext.SaveChangesAsync();
