@@ -143,7 +143,7 @@ public sealed class AddUserLicense
             RuleFor(x => x.ExpirationDate)
                 .NotEmpty()
                 .WithMessage("Ngày hết hạn không được để trống")
-                .Must(date => date.Date >= DateTimeOffset.UtcNow.Date)
+                .Must(date => date >= DateTimeOffset.UtcNow)
                 .WithMessage("Thời điểm hết hạn phải lớn hơn hoặc bằng thời điểm hiện tại");
         }
     }

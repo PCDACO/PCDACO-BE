@@ -92,7 +92,7 @@ public sealed class CreateInspectionSchedule
             RuleFor(x => x.InspectionDate)
                 .NotEmpty()
                 .WithMessage("Ngày kiểm định không được để trống")
-                .Must(date => date.Date >= DateTimeOffset.UtcNow.Date)
+                .Must(date => date >= DateTimeOffset.UtcNow)
                 .WithMessage("Thời điểm kiểm định phải lớn hơn hoặc bằng thời điểm hiện tại");
         }
     }
