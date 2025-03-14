@@ -17,11 +17,13 @@ public sealed class ConfirmCarReturn
 
     public sealed record Response(
         decimal TotalDistance,
+        decimal UnusedDays,
+        decimal RefundAmount,
         decimal ExcessDays,
         decimal ExcessFee,
         decimal BasePrice,
         decimal PlatformFee,
-        decimal TotalAmount
+        decimal FinalAmount
     );
 
     internal sealed class Handler(
@@ -31,6 +33,9 @@ public sealed class ConfirmCarReturn
         CurrentUser currentUser
     ) : IRequestHandler<Command, Result<Response>>
     {
+        private const decimal EARLY_RETURN_REFUND_PERCENTAGE = 0.3m; // 30% refund for unused days
+        private const decimal LATE_RETURN_PENALTY_MULTIPLIER = 1.2m; // 120% of daily rate for late days
+
         public async Task<Result<Response>> Handle(
             Command request,
             CancellationToken cancellationToken
@@ -40,8 +45,8 @@ public sealed class ConfirmCarReturn
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này!");
 
             var booking = await context
-                .Bookings
-                .Include(x => x.Car)
+                .Bookings.Include(x => x.Car)
+                .Include(x => x.User)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
@@ -56,16 +61,48 @@ public sealed class ConfirmCarReturn
             booking.IsCarReturned = true;
             booking.ActualReturnTime = DateTimeOffset.UtcNow;
 
-            var (excessDays, excessFee) = CalculateExcessFee(booking);
+            var totalBookingDays = (booking.EndTime - booking.StartTime).Days;
+            var actualDays = (booking.ActualReturnTime - booking.StartTime).Days;
+            var dailyRate = booking.BasePrice / totalBookingDays;
 
-            booking.ExcessDay = excessDays;
-            booking.ExcessDayFee = excessFee;
-            booking.TotalAmount = booking.BasePrice + booking.PlatformFee + excessFee;
+            decimal refundAmount = 0;
+            decimal excessDays = 0;
+            decimal excessFee = 0;
+
+            // Early Return Case
+            if (actualDays < totalBookingDays)
+            {
+                var unusedDays = totalBookingDays - actualDays;
+                refundAmount = dailyRate * unusedDays * EARLY_RETURN_REFUND_PERCENTAGE;
+
+                if (booking.IsPaid)
+                {
+                    booking.IsRefund = true;
+                    booking.RefundAmount = refundAmount;
+                }
+            }
+            // Late Return Case
+            else if (actualDays > totalBookingDays)
+            {
+                excessDays = actualDays - totalBookingDays;
+                excessFee = dailyRate * excessDays * LATE_RETURN_PENALTY_MULTIPLIER;
+
+                booking.ExcessDay = excessDays;
+                booking.ExcessDayFee = excessFee;
+            }
+
+            // Calculate final amount
+            var finalAmount = booking.BasePrice + booking.PlatformFee + excessFee - refundAmount;
+            booking.TotalAmount = finalAmount;
             booking.Car.Status = CarStatusEnum.Maintain;
 
-            var ownerAmount = booking.TotalAmount - booking.PlatformFee;
-
             await context.SaveChangesAsync(cancellationToken);
+
+            // Schedule maintenance period check after 3 days
+            backgroundJobClient.Schedule(
+                () => CheckMaintenancePeriod(booking.Car.Id),
+                TimeSpan.FromDays(3)
+            );
 
             backgroundJobClient.Enqueue(
                 () =>
@@ -78,44 +115,34 @@ public sealed class ConfirmCarReturn
                         booking.TotalDistance,
                         booking.BasePrice,
                         booking.PlatformFee,
-                        booking.ExcessDayFee,
-                        booking.TotalAmount,
-                        ownerAmount
+                        excessFee,
+                        refundAmount,
+                        finalAmount
                     )
             );
 
             return Result.Success(
                 new Response(
                     TotalDistance: booking.TotalDistance / 1000, // Convert to kilometers
+                    UnusedDays: actualDays < totalBookingDays ? totalBookingDays - actualDays : 0,
+                    RefundAmount: refundAmount,
                     ExcessDays: excessDays,
                     ExcessFee: excessFee,
                     BasePrice: booking.BasePrice,
                     PlatformFee: booking.PlatformFee,
-                    TotalAmount: booking.TotalAmount
+                    FinalAmount: finalAmount
                 )
             );
         }
 
-        private static (decimal ExcessDays, decimal ExcessFee) CalculateExcessFee(Booking booking)
+        private async Task CheckMaintenancePeriod(Guid carId)
         {
-            // If returned before or on time
-            if (booking.ActualReturnTime <= booking.EndTime)
+            var car = await context.Cars.FindAsync(carId);
+            if (car != null && car.Status == CarStatusEnum.Maintain)
             {
-                return (0, 0);
+                car.Status = CarStatusEnum.Available;
+                await context.SaveChangesAsync();
             }
-
-            // Calculate excess days (round up to full days)
-            var excessTimeSpan = booking.ActualReturnTime - booking.EndTime;
-            var excessDays = Math.Ceiling(excessTimeSpan.TotalDays);
-
-            // Calculate daily rate from the original booking
-            var plannedDays = (booking.EndTime - booking.StartTime).TotalDays;
-            var pricePerDay = booking.BasePrice / (decimal)plannedDays;
-
-            const decimal penaltyMultiplier = 0.2m;
-            var excessFee = pricePerDay * (decimal)excessDays * penaltyMultiplier;
-
-            return ((decimal)excessDays, excessFee);
         }
 
         public async Task SendEmail(
@@ -128,10 +155,18 @@ public sealed class ConfirmCarReturn
             decimal basePrice,
             decimal platformFee,
             decimal excessFee,
-            decimal totalAmount,
-            decimal ownerEarning
+            decimal refundAmount,
+            decimal finalAmount
         )
         {
+            string subject;
+            if (excessFee > 0)
+                subject = "Chuyến đi của bạn đã hoàn thành - Có phí phạt trả xe muộn";
+            else if (refundAmount > 0)
+                subject = "Chuyến đi của bạn đã hoàn thành - Có hoàn tiền cho ngày không sử dụng";
+            else
+                subject = "Chuyến đi của bạn đã hoàn thành";
+
             // Send email to driver
             var driverEmailTemplate = DriverCompleteBookingTemplate.Template(
                 driverName,
@@ -140,16 +175,12 @@ public sealed class ConfirmCarReturn
                 basePrice,
                 excessFee,
                 platformFee,
-                totalAmount
+                finalAmount
             );
 
-            await emailService.SendEmailAsync(
-                driverEmail,
-                "Chuyến đi của bạn đã hoàn thành",
-                driverEmailTemplate
-            );
+            await emailService.SendEmailAsync(driverEmail, subject, driverEmailTemplate);
 
-            // Send email to driver
+            // Send email to owner
             var ownerEmailTemplate = OwnerBookingCompletedTemplate.Template(
                 ownerName,
                 driverName,
@@ -158,8 +189,8 @@ public sealed class ConfirmCarReturn
                 basePrice,
                 excessFee,
                 platformFee,
-                totalAmount,
-                ownerEarning
+                finalAmount,
+                finalAmount - platformFee
             );
 
             await emailService.SendEmailAsync(
