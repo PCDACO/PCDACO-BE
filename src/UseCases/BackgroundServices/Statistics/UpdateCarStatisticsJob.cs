@@ -18,32 +18,28 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                     cs => cs.TotalCompleted,
                     cs =>
                         context.Bookings.Count(b =>
-                            b.CarId == cs.CarId
-                            && b.Status == BookingStatusEnum.Completed
+                            b.CarId == cs.CarId && b.Status == BookingStatusEnum.Completed
                         )
                 )
                 .SetProperty(
                     cs => cs.TotalRejected,
                     cs =>
                         context.Bookings.Count(b =>
-                            b.CarId == cs.CarId
-                            && b.Status == BookingStatusEnum.Rejected
+                            b.CarId == cs.CarId && b.Status == BookingStatusEnum.Rejected
                         )
                 )
                 .SetProperty(
                     cs => cs.TotalExpired,
                     cs =>
                         context.Bookings.Count(b =>
-                            b.CarId == cs.CarId
-                            && b.Status == BookingStatusEnum.Expired
+                            b.CarId == cs.CarId && b.Status == BookingStatusEnum.Expired
                         )
                 )
                 .SetProperty(
                     cs => cs.TotalCancelled,
                     cs =>
                         context.Bookings.Count(b =>
-                            b.CarId == cs.CarId
-                            && b.Status == BookingStatusEnum.Cancelled
+                            b.CarId == cs.CarId && b.Status == BookingStatusEnum.Cancelled
                         )
                 )
                 .SetProperty(
@@ -51,8 +47,7 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                     cs =>
                         context
                             .Bookings.Where(b =>
-                                b.CarId == cs.CarId
-                                && b.Status == BookingStatusEnum.Completed
+                                b.CarId == cs.CarId && b.Status == BookingStatusEnum.Completed
                             )
                             .Sum(b => (decimal?)b.TotalAmount) ?? 0
                 )
@@ -61,8 +56,7 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                     cs =>
                         context
                             .Bookings.Where(b =>
-                                b.CarId == cs.CarId
-                                && b.Status == BookingStatusEnum.Completed
+                                b.CarId == cs.CarId && b.Status == BookingStatusEnum.Completed
                             )
                             .Sum(b => (decimal?)b.TripTrackings.Sum(t => t.Distance)) ?? 0
                 )
@@ -71,11 +65,10 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                     cs =>
                         context
                             .Bookings.Where(b =>
-                                b.CarId == cs.CarId
-                                && b.Status == BookingStatusEnum.Completed
+                                b.CarId == cs.CarId && b.Status == BookingStatusEnum.Completed
                             )
                             .SelectMany(b => b.Feedbacks)
-                            .Where(f => f.Type == FeedbackTypeEnum.Driver)
+                            .Where(f => f.Type == FeedbackTypeEnum.ToOwner)
                             .Average(f => (decimal?)f.Point) ?? 0
                 )
                 .SetProperty(
@@ -83,8 +76,7 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                     cs =>
                         context
                             .Bookings.Where(b =>
-                                b.CarId == cs.CarId
-                                && b.Status == BookingStatusEnum.Completed
+                                b.CarId == cs.CarId && b.Status == BookingStatusEnum.Completed
                             )
                             .Max(b => (DateTimeOffset?)b.ActualReturnTime) ?? null
                 )
