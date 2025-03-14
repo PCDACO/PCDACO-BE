@@ -141,7 +141,7 @@ public sealed class ConfirmCarReturn
             if (car != null && car.Status == CarStatusEnum.Maintain)
             {
                 car.Status = CarStatusEnum.Available;
-                await context.SaveChangesAsync();
+                await context.SaveChangesAsync(CancellationToken.None);
             }
         }
 
