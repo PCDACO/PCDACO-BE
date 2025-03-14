@@ -117,7 +117,7 @@ public sealed class AddUserLicense
 
                 EncryptionKeyId = newEncryptionKey.Id,
 
-                ExpiryDate = request.ExpirationDate.ToString("yyyy-MM-dd"),
+                ExpiryDate = request.ExpirationDate,
 
                 IsApprove = null,
             };

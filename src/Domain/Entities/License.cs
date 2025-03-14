@@ -10,7 +10,7 @@ public class License : BaseEntity
     public string EncryptedLicenseNumber { get; set; } = string.Empty;
     public string LicenseImageFrontUrl { get; set; } = string.Empty;
     public string LicenseImageBackUrl { get; set; } = string.Empty;
-    public required string ExpiryDate { get; set; }
+    public required DateTimeOffset ExpiryDate { get; set; }
     public bool? IsApprove { get; set; } = null!;
     public string? RejectReason { get; set; }
     public DateTimeOffset? ApprovedAt { get; set; }

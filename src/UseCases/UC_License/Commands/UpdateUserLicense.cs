@@ -68,7 +68,7 @@ public sealed class UpdateUserLicense
             // Update license
             license.EncryptedLicenseNumber = encryptedLicenseNumber;
             license.EncryptionKeyId = newEncryptionKey.Id;
-            license.ExpiryDate = request.ExpirationDate.ToString("yyyy-MM-dd");
+            license.ExpiryDate = request.ExpirationDate;
             license.UpdatedAt = DateTimeOffset.UtcNow;
             license.IsApprove = null; // Reset approval status
             license.RejectReason = null; // Clear reject reason

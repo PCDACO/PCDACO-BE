@@ -49,7 +49,7 @@ public class GetAllLicensesForApprove
                 Id: license.Id,
                 UserName: license.User.Name,
                 LicenseNumber: decryptedLicenseNumber,
-                ExpirationDate: DateTimeOffset.Parse(license.ExpiryDate),
+                ExpirationDate: license.ExpiryDate,
                 ImageFrontUrl: license.LicenseImageFrontUrl,
                 ImageBackUrl: license.LicenseImageBackUrl,
                 IsApproved: license.IsApprove,

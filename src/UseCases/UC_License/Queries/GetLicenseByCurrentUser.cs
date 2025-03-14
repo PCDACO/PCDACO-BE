@@ -44,7 +44,7 @@ public static class GetLicenseByCurrentUser
             return new(
                 Id: license.Id,
                 LicenseNumber: decryptedLicenseNumber,
-                ExpirationDate: DateTimeOffset.Parse(license.ExpiryDate),
+                ExpirationDate: license.ExpiryDate,
                 ImageFrontUrl: license.LicenseImageFrontUrl,
                 ImageBackUrl: license.LicenseImageBackUrl,
                 IsApproved: license.IsApprove,
