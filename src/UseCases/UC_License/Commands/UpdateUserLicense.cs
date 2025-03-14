@@ -68,7 +68,7 @@ public sealed class UpdateUserLicense
             // Update license
             license.EncryptedLicenseNumber = encryptedLicenseNumber;
             license.EncryptionKeyId = newEncryptionKey.Id;
-            license.ExpiryDate = request.ExpirationDate.ToString("yyyy-MM-dd");
+            license.ExpiryDate = request.ExpirationDate;
             license.UpdatedAt = DateTimeOffset.UtcNow;
             license.IsApprove = null; // Reset approval status
             license.RejectReason = null; // Clear reject reason
@@ -98,7 +98,7 @@ public sealed class UpdateUserLicense
             RuleFor(x => x.ExpirationDate)
                 .NotEmpty()
                 .WithMessage("Ngày hết hạn không được để trống")
-                .Must(date => date.Date >= DateTimeOffset.UtcNow.Date)
+                .Must(date => date >= DateTimeOffset.UtcNow)
                 .WithMessage("Thời điểm hết hạn phải lớn hơn hoặc bằng thời điểm hiện tại");
         }
     }

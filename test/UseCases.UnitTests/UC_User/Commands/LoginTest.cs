@@ -45,7 +45,9 @@ public class LoginTest : IAsyncLifetime
 
     public async Task DisposeAsync() => await _resetDatabase();
 
-    private async Task<(User User, string DecryptedPhone)> CreateTestUser(string role = "Driver")
+    private async Task<(User User, string DecryptedPhone, string Email)> CreateTestUser(
+        string role = "Driver"
+    )
     {
         var encryptionKey = await TestDataCreateEncryptionKey.CreateTestEncryptionKey(_dbContext);
         var userRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, role);
@@ -69,22 +71,16 @@ public class LoginTest : IAsyncLifetime
         _dbContext.Users.Add(user);
         await _dbContext.SaveChangesAsync();
 
-        return (user, decryptedPhone);
+        return (user, decryptedPhone, user.Email);
     }
 
     [Fact]
     public async Task Handle_ValidCredentials_ReturnsSuccess()
     {
         // Arrange
-        var (_, phone) = await CreateTestUser();
-        var handler = new Login.Handler(
-            _dbContext,
-            _tokenService,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
-        var command = new Login.Command(phone, "password");
+        var (_, _, email) = await CreateTestUser();
+        var handler = new Login.Handler(_dbContext, _tokenService);
+        var command = new Login.Command(email, "password");
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -100,15 +96,9 @@ public class LoginTest : IAsyncLifetime
     public async Task Handle_WrongPassword_ReturnsNotFound()
     {
         // Arrange
-        var (_, phone) = await CreateTestUser();
-        var handler = new Login.Handler(
-            _dbContext,
-            _tokenService,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
-        var command = new Login.Command(phone, "wrongpassword");
+        var (_, _, email) = await CreateTestUser();
+        var handler = new Login.Handler(_dbContext, _tokenService);
+        var command = new Login.Command(email, "wrongpassword");
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -122,13 +112,7 @@ public class LoginTest : IAsyncLifetime
     public async Task Handle_UserNotFound_ReturnsNotFound()
     {
         // Arrange
-        var handler = new Login.Handler(
-            _dbContext,
-            _tokenService,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new Login.Handler(_dbContext, _tokenService);
         var command = new Login.Command("nonexistent", "password");
 
         // Act
@@ -143,18 +127,12 @@ public class LoginTest : IAsyncLifetime
     public async Task Handle_DeletedUser_ReturnsNotFound()
     {
         // Arrange
-        var (user, phone) = await CreateTestUser();
+        var (user, _, email) = await CreateTestUser();
         user.IsDeleted = true;
         await _dbContext.SaveChangesAsync();
 
-        var handler = new Login.Handler(
-            _dbContext,
-            _tokenService,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
-        var command = new Login.Command(phone, "password");
+        var handler = new Login.Handler(_dbContext, _tokenService);
+        var command = new Login.Command(email, "password");
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);

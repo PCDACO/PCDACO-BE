@@ -157,7 +157,7 @@ public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
             UserId = role == "Admin" ? differentUser.Id : testUser.Id, // Different owner if admin
             EncryptionKeyId = encryptionKey.Id,
             EncryptedLicenseNumber = encryptedLicenseNumber,
-            ExpiryDate = DateTime.Now.AddYears(1).ToString("yyyy-MM-dd"),
+            ExpiryDate = DateTimeOffset.UtcNow.AddYears(1),
             LicenseImageFrontUrl = "front-url",
             LicenseImageBackUrl = "back-url",
         };
@@ -183,7 +183,7 @@ public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         var response = result.Value;
         Assert.Equal(license.Id, response.Id);
         Assert.Equal(licenseNumber, response.LicenseNumber);
-        Assert.Equal(DateTimeOffset.Parse(license.ExpiryDate), response.ExpirationDate);
+        Assert.Equal(license.ExpiryDate.Date, response.ExpirationDate.Date);
         Assert.Equal(license.LicenseImageFrontUrl, response.ImageFrontUrl);
         Assert.Equal(license.LicenseImageBackUrl, response.ImageBackUrl);
     }

@@ -33,7 +33,7 @@ public static class TestDataCreateLicense
             UserId = userId,
             EncryptionKeyId = encryptionKey.Id,
             EncryptedLicenseNumber = encryptedLicenseNumber,
-            ExpiryDate = DateTime.Now.AddYears(1).ToString("yyyy-MM-dd"),
+            ExpiryDate = DateTimeOffset.UtcNow.AddYears(1),
             LicenseImageFrontUrl = "front-url",
             LicenseImageBackUrl = "back-url",
             IsApprove = isApproved,

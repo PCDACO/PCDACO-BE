@@ -10,49 +10,25 @@ namespace UseCases.UC_User.Commands;
 
 public class Login
 {
-    public sealed record Command(string Phone, string Password) : IRequest<Result<Response>>;
+    public sealed record Command(string Email, string Password) : IRequest<Result<Response>>;
 
     public sealed record Response(string AccessToken, string RefreshToken);
 
-    public sealed class Handler(
-        IAppDBContext context,
-        TokenService tokenService,
-        IAesEncryptionService aesEncryptionService,
-        IKeyManagementService keyManagementService,
-        EncryptionSettings encryptionSettings
-    ) : IRequestHandler<Command, Result<Response>>
+    public sealed class Handler(IAppDBContext context, TokenService tokenService)
+        : IRequestHandler<Command, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
             Command request,
             CancellationToken cancellationToken
         )
         {
-            var users = await context
+            var user = await context
                 .Users.AsNoTracking()
-                .Include(u => u.EncryptionKey)
-                .Where(u => !u.IsDeleted)
-                .ToListAsync(cancellationToken);
-
-            // Find user by decrypting and comparing phone numbers
-            User? user = null;
-            foreach (var u in users)
-            {
-                string decryptedKey = keyManagementService.DecryptKey(
-                    u.EncryptionKey.EncryptedKey,
-                    encryptionSettings.Key
-                );
-                string decryptedPhone = await aesEncryptionService.Decrypt(
-                    u.Phone,
-                    decryptedKey,
-                    u.EncryptionKey.IV
+                .FirstOrDefaultAsync(
+                    u => u.Email == request.Email && !u.IsDeleted,
+                    cancellationToken
                 );
 
-                if (decryptedPhone == request.Phone)
-                {
-                    user = u;
-                    break;
-                }
-            }
             if (user is null)
                 return Result.NotFound("Không tìm thấy thông tin người dùng");
 
