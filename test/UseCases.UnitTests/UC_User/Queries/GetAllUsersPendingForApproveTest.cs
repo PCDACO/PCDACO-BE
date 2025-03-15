@@ -2,6 +2,7 @@ using Ardalis.Result;
 using Domain.Entities;
 using Domain.Shared;
 using Infrastructure.Encryption;
+using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
 using UseCases.Abstractions;
 using UseCases.DTOs;
@@ -59,6 +60,7 @@ public class GetAllUsersPendingForApproveTest(DatabaseTestBase fixture) : IAsync
             _keyManagementService,
             _encryptionSettings
         );
+        await EncryptPhone(user1);
         await TestDataCreateLicense.CreateTestLicense(
             _dbContext,
             user2.Id,
@@ -66,6 +68,7 @@ public class GetAllUsersPendingForApproveTest(DatabaseTestBase fixture) : IAsync
             _keyManagementService,
             _encryptionSettings
         );
+        await EncryptPhone(user2);
 
         var handler = new GetAllUsersPendingForApprove.Handler(
             _dbContext,
@@ -109,6 +112,7 @@ public class GetAllUsersPendingForApproveTest(DatabaseTestBase fixture) : IAsync
                 _keyManagementService,
                 _encryptionSettings
             );
+            await EncryptPhone(user);
         }
 
         var handler = new GetAllUsersPendingForApprove.Handler(
@@ -130,5 +134,26 @@ public class GetAllUsersPendingForApproveTest(DatabaseTestBase fixture) : IAsync
         Assert.Equal(3, result.Value.TotalItems);
         Assert.Equal(1, result.Value.PageNumber);
         Assert.Equal(2, result.Value.PageSize);
+    }
+
+    // Helper method to encrypt phone number by user's encryption key
+    private async Task<string> EncryptPhone(User user)
+    {
+        string key = _keyManagementService.DecryptKey(
+            user.EncryptionKey.EncryptedKey,
+            _encryptionSettings.Key
+        );
+
+        var encryptedPhone = await _encryptionService.Encrypt(
+            user.Phone,
+            key,
+            user.EncryptionKey.IV
+        );
+
+        var updateUser = await _dbContext.Users.FindAsync(user.Id);
+        updateUser!.Phone = encryptedPhone;
+        await _dbContext.SaveChangesAsync();
+
+        return encryptedPhone;
     }
 }

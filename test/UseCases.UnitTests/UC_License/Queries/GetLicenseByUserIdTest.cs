@@ -57,8 +57,8 @@ public class GetLicenseByUserIdTest(DatabaseTestBase fixture) : IAsyncLifetime
     public async Task Handle_UserNotFound_ReturnsNotFound()
     {
         // Arrange
-        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
 
         var handler = new GetLicenseByUserId.Handler(
@@ -83,9 +83,12 @@ public class GetLicenseByUserIdTest(DatabaseTestBase fixture) : IAsyncLifetime
     public async Task Handle_LicenseNotFound_ReturnsNotFound()
     {
         // Arrange
-        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(testUser);
+
+        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var ownerUser = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
 
         var handler = new GetLicenseByUserId.Handler(
             _dbContext,
@@ -95,7 +98,7 @@ public class GetLicenseByUserIdTest(DatabaseTestBase fixture) : IAsyncLifetime
             _encryptionSettings
         );
 
-        var query = new GetLicenseByUserId.Query(testUser.Id);
+        var query = new GetLicenseByUserId.Query(ownerUser.Id);
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);

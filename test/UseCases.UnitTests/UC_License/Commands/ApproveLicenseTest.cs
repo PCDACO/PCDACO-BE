@@ -43,7 +43,7 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Handle_LicenseNotFound_ReturnsNotFound()
+    public async Task Handle_UserNotFound_ReturnsError()
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
@@ -52,6 +52,28 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         var handler = new ApproveLicense.Handler(_dbContext, _currentUser);
         var command = new ApproveLicense.Command(Guid.NewGuid(), true);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains("Người dùng không tồn tại", result.Errors);
+    }
+
+    [Fact]
+    public async Task Handle_LicenseNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var admin = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
+        _currentUser.SetUser(admin);
+
+        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+
+        var handler = new ApproveLicense.Handler(_dbContext, _currentUser);
+        var command = new ApproveLicense.Command(owner.Id, true);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);

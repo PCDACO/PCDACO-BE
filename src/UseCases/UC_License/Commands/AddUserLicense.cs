@@ -40,7 +40,7 @@ public sealed class AddUserLicense
 
             //check if user is exist
             var user = await context
-                .Users.AsNoTracking()
+                .Users.Include(u => u.EncryptionKey)
                 .Include(u => u.Role)
                 .FirstOrDefaultAsync(
                     u => u.Id == currentUser.User!.Id && u.Role != null && !u.IsDeleted,
