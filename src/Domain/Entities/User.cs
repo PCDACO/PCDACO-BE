@@ -17,6 +17,14 @@ public class User : BaseEntity
     public required DateTimeOffset DateOfBirth { get; set; }
     public required string Phone { get; set; }
     public decimal Balance { get; set; } = 0;
+    public string EncryptedLicenseNumber { get; set; } = string.Empty;
+    public string LicenseImageFrontUrl { get; set; } = string.Empty;
+    public string LicenseImageBackUrl { get; set; } = string.Empty;
+    public DateTimeOffset? LicenseExpiryDate { get; set; }
+    public bool? LicenseIsApproved { get; set; } = null!;
+    public string? LicenseRejectReason { get; set; }
+    public DateTimeOffset? LicenseImageUploadedAt { get; set; }
+    public DateTimeOffset? LicenseApprovedAt { get; set; }
     public bool IsBanned { get; set; } = false;
 
     [Range(1, 5)]
@@ -26,7 +34,6 @@ public class User : BaseEntity
 
     [ForeignKey(nameof(RoleId))]
     public UserRole Role { get; set; } = null!;
-    public License License { get; set; } = null!;
     public UserStatistic UserStatistic { get; set; } = null!;
     public WithdrawalRequest WithdrawalRequest { get; set; } = null!;
     public ICollection<Booking> Bookings { get; set; } = [];

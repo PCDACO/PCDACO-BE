@@ -17,7 +17,6 @@ public interface IAppDBContext : IDisposable
     DbSet<CarStatistic> CarStatistics { get; }
     DbSet<Compensation> Compensations { get; }
     DbSet<Contract> Contracts { get; }
-    DbSet<License> Licenses { get; }
     DbSet<EncryptionKey> EncryptionKeys { get; }
     DbSet<Feedback> Feedbacks { get; }
     DbSet<FuelType> FuelTypes { get; }

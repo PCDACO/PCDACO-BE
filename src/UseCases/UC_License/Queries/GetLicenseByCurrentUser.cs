@@ -14,43 +14,43 @@ public static class GetLicenseByCurrentUser
     public record Query() : IRequest<Result<Response>>;
 
     public record Response(
-        Guid Id,
+        Guid UserId,
         string LicenseNumber,
-        DateTimeOffset ExpirationDate,
+        DateTimeOffset? ExpirationDate,
         string? ImageFrontUrl,
         string? ImageBackUrl,
         bool? IsApproved,
         string? RejectReason,
         DateTimeOffset? ApprovedAt,
-        DateTimeOffset CreatedAt
+        DateTimeOffset? LicenseImageUploadedAt
     )
     {
         public static async Task<Response> FromEntityAsync(
-            License license,
+            User user,
             string masterKey,
             IAesEncryptionService aesEncryptionService,
             IKeyManagementService keyManagementService
         )
         {
             string decryptedKey = keyManagementService.DecryptKey(
-                license.EncryptionKey.EncryptedKey,
+                user.EncryptionKey.EncryptedKey,
                 masterKey
             );
             string decryptedLicenseNumber = await aesEncryptionService.Decrypt(
-                license.EncryptedLicenseNumber,
+                user.EncryptedLicenseNumber,
                 decryptedKey,
-                license.EncryptionKey.IV
+                user.EncryptionKey.IV
             );
             return new(
-                Id: license.Id,
+                UserId: user.Id,
                 LicenseNumber: decryptedLicenseNumber,
-                ExpirationDate: license.ExpiryDate,
-                ImageFrontUrl: license.LicenseImageFrontUrl,
-                ImageBackUrl: license.LicenseImageBackUrl,
-                IsApproved: license.IsApprove,
-                RejectReason: license.RejectReason,
-                ApprovedAt: license.ApprovedAt,
-                CreatedAt: GetTimestampFromUuid.Execute(license.Id)
+                ExpirationDate: user.LicenseExpiryDate,
+                ImageFrontUrl: user.LicenseImageFrontUrl,
+                ImageBackUrl: user.LicenseImageBackUrl,
+                IsApproved: user.LicenseIsApproved,
+                RejectReason: user.LicenseRejectReason,
+                ApprovedAt: user.LicenseApprovedAt,
+                LicenseImageUploadedAt: user.LicenseImageUploadedAt
             );
         }
     };
@@ -70,20 +70,23 @@ public static class GetLicenseByCurrentUser
         {
             if (!currentUser.User!.IsDriver() && !currentUser.User.IsOwner())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
-            var license = await context
-                .Licenses.AsNoTracking()
-                .Include(l => l.EncryptionKey)
+            var user = await context
+                .Users.AsNoTracking()
+                .Include(u => u.EncryptionKey)
                 .FirstOrDefaultAsync(
-                    l => l.UserId == currentUser.User!.Id && !l.IsDeleted,
+                    u => u.Id == currentUser.User!.Id && !u.IsDeleted,
                     cancellationToken
                 );
 
-            if (license is null)
+            if (user is null)
+                return Result.Error("Người dùng không tồn tại");
+
+            if (string.IsNullOrEmpty(user.EncryptedLicenseNumber))
                 return Result.NotFound("Không tìm thấy giấy phép lái xe");
 
             return Result.Success(
                 await Response.FromEntityAsync(
-                    license: license,
+                    user: user,
                     masterKey: encryptionSettings.Key,
                     aesEncryptionService: aesEncryptionService,
                     keyManagementService: keyManagementService

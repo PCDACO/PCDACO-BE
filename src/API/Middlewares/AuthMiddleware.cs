@@ -61,7 +61,6 @@ public class AuthMiddleware(IConfiguration configuration) : IMiddleware
             await dbContext
                 .Users.AsNoTracking()
                 .Include(u => u.Role)
-                .Include(u => u.License)
                 .Include(u => u.EncryptionKey)
                 .FirstOrDefaultAsync(u => u.Id == userId);
         if (user is null)

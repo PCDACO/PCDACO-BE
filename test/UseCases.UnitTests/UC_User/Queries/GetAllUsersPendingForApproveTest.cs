@@ -1,16 +1,19 @@
 using Ardalis.Result;
+using Domain.Entities;
 using Domain.Shared;
 using Infrastructure.Encryption;
+using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
+using UseCases.Abstractions;
 using UseCases.DTOs;
-using UseCases.UC_License.Queries;
+using UseCases.UC_User.Queries;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
 
-namespace UseCases.UnitTests.UC_License.Queries;
+namespace UseCases.UnitTests.UC_User.Queries;
 
 [Collection("Test Collection")]
-public class GetAllLicensesForApproveTest(DatabaseTestBase fixture) : IAsyncLifetime
+public class GetAllUsersPendingForApproveTest(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
@@ -24,7 +27,7 @@ public class GetAllLicensesForApproveTest(DatabaseTestBase fixture) : IAsyncLife
     public async Task DisposeAsync() => await _resetDatabase();
 
     [Fact]
-    public async Task Handle_WithKeyword_ReturnsFilteredLicenses()
+    public async Task Handle_WithKeyword_ReturnsFilteredUsers()
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
@@ -57,6 +60,7 @@ public class GetAllLicensesForApproveTest(DatabaseTestBase fixture) : IAsyncLife
             _keyManagementService,
             _encryptionSettings
         );
+        await EncryptPhone(user1);
         await TestDataCreateLicense.CreateTestLicense(
             _dbContext,
             user2.Id,
@@ -64,8 +68,9 @@ public class GetAllLicensesForApproveTest(DatabaseTestBase fixture) : IAsyncLife
             _keyManagementService,
             _encryptionSettings
         );
+        await EncryptPhone(user2);
 
-        var handler = new GetAllLicensesForApprove.Handler(
+        var handler = new GetAllUsersPendingForApprove.Handler(
             _dbContext,
             _currentUser,
             _encryptionService,
@@ -73,7 +78,7 @@ public class GetAllLicensesForApproveTest(DatabaseTestBase fixture) : IAsyncLife
             _encryptionSettings
         );
 
-        var query = new GetAllLicensesForApprove.Query(1, 10, "match");
+        var query = new GetAllUsersPendingForApprove.Query(1, 10, "maTc");
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -81,7 +86,7 @@ public class GetAllLicensesForApproveTest(DatabaseTestBase fixture) : IAsyncLife
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Single(result.Value.Items);
-        Assert.Equal("Match User", result.Value.Items.First().UserName);
+        Assert.Equal("Match User", result.Value.Items.First().Name);
     }
 
     [Fact]
@@ -107,9 +112,10 @@ public class GetAllLicensesForApproveTest(DatabaseTestBase fixture) : IAsyncLife
                 _keyManagementService,
                 _encryptionSettings
             );
+            await EncryptPhone(user);
         }
 
-        var handler = new GetAllLicensesForApprove.Handler(
+        var handler = new GetAllUsersPendingForApprove.Handler(
             _dbContext,
             _currentUser,
             _encryptionService,
@@ -117,7 +123,7 @@ public class GetAllLicensesForApproveTest(DatabaseTestBase fixture) : IAsyncLife
             _encryptionSettings
         );
 
-        var query = new GetAllLicensesForApprove.Query(1, 2, ""); // Request first page with 2 items
+        var query = new GetAllUsersPendingForApprove.Query(1, 2, ""); // Request first page with 2 items
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -128,5 +134,26 @@ public class GetAllLicensesForApproveTest(DatabaseTestBase fixture) : IAsyncLife
         Assert.Equal(3, result.Value.TotalItems);
         Assert.Equal(1, result.Value.PageNumber);
         Assert.Equal(2, result.Value.PageSize);
+    }
+
+    // Helper method to encrypt phone number by user's encryption key
+    private async Task<string> EncryptPhone(User user)
+    {
+        string key = _keyManagementService.DecryptKey(
+            user.EncryptionKey.EncryptedKey,
+            _encryptionSettings.Key
+        );
+
+        var encryptedPhone = await _encryptionService.Encrypt(
+            user.Phone,
+            key,
+            user.EncryptionKey.IV
+        );
+
+        var updateUser = await _dbContext.Users.FindAsync(user.Id);
+        updateUser!.Phone = encryptedPhone;
+        await _dbContext.SaveChangesAsync();
+
+        return encryptedPhone;
     }
 }
