@@ -78,12 +78,8 @@ public class GetLicenseByUserId
             CancellationToken cancellationToken
         )
         {
-            // Only admin or owner or driver can view
-            if (
-                !_currentUser.User!.IsAdmin()
-                && !_currentUser.User.IsDriver()
-                && !_currentUser.User.IsOwner()
-            )
+            // Only admin can view
+            if (!_currentUser.User!.IsAdmin())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
 
             var user = await _context

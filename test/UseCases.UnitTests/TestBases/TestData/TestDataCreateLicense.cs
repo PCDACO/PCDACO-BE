@@ -1,5 +1,6 @@
 using Domain.Entities;
 using Domain.Shared;
+using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
 using UseCases.Abstractions;
 using UUIDNext;
@@ -8,15 +9,14 @@ namespace UseCases.UnitTests.TestBases.TestData;
 
 public static class TestDataCreateLicense
 {
-    private static async Task<License> CreateLicenseAsync(
+    private static async Task<User?> CreateLicenseAsync(
         AppDBContext dbContext,
         Guid userId,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyService,
         EncryptionSettings encryptionSettings,
         string licenseNumber = "123456789",
-        bool? isApproved = null,
-        bool isDeleted = false
+        bool? isApproved = null
     )
     {
         (string key, string iv) = await keyService.GenerateKeyAsync();
@@ -27,28 +27,31 @@ public static class TestDataCreateLicense
         await dbContext.EncryptionKeys.AddAsync(encryptionKey);
         await dbContext.SaveChangesAsync();
 
-        return new()
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            UserId = userId,
-            EncryptionKeyId = encryptionKey.Id,
-            EncryptedLicenseNumber = encryptedLicenseNumber,
-            ExpiryDate = DateTimeOffset.UtcNow.AddYears(1),
-            LicenseImageFrontUrl = "front-url",
-            LicenseImageBackUrl = "back-url",
-            IsApprove = isApproved,
-            IsDeleted = isDeleted,
-        };
+        var user = await dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId && !u.IsDeleted);
+        if (user is null)
+            return null;
+
+        user.EncryptionKeyId = encryptionKey.Id;
+        user.EncryptedLicenseNumber = encryptedLicenseNumber;
+        user.LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(1);
+        user.LicenseImageFrontUrl = "front-url";
+        user.LicenseImageBackUrl = "back-url";
+        user.UpdatedAt = DateTimeOffset.UtcNow;
+        user.LicenseIsApproved = isApproved;
+        user.LicenseImageUploadedAt = DateTimeOffset.UtcNow;
+
+        await dbContext.SaveChangesAsync();
+
+        return user;
     }
 
-    public static async Task<License> CreateTestLicense(
+    public static async Task<User> CreateTestLicense(
         AppDBContext dBContext,
         Guid userId,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings,
-        bool? isApproved = null,
-        bool isDeleted = false
+        bool? isApproved = null
     )
     {
         var license = await CreateLicenseAsync(
@@ -57,24 +60,19 @@ public static class TestDataCreateLicense
             aesEncryptionService: aesEncryptionService,
             keyService: keyManagementService,
             encryptionSettings: encryptionSettings,
-            isApproved: isApproved,
-            isDeleted: isDeleted
+            isApproved: isApproved
         );
 
-        await dBContext.Licenses.AddAsync(license);
-        await dBContext.SaveChangesAsync();
-
-        return license;
+        return license!;
     }
 
-    public static async Task<License> CreateTestLicense(
+    public static async Task<User> CreateTestLicense(
         AppDBContext dBContext,
         Guid userId,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings,
-        string licenseNumber,
-        bool isDeleted = false
+        string licenseNumber
     )
     {
         var encryptionKey = await TestDataCreateEncryptionKey.CreateTestEncryptionKey(dBContext);
@@ -84,13 +82,9 @@ public static class TestDataCreateLicense
             aesEncryptionService: aesEncryptionService,
             keyService: keyManagementService,
             encryptionSettings: encryptionSettings,
-            licenseNumber: licenseNumber,
-            isDeleted: isDeleted
+            licenseNumber: licenseNumber
         );
 
-        await dBContext.Licenses.AddAsync(license);
-        await dBContext.SaveChangesAsync();
-
-        return license;
+        return license!;
     }
 }

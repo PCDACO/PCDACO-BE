@@ -12,7 +12,7 @@ using UseCases.UnitTests.TestBases.TestData;
 namespace UseCases.UnitTests.UC_License.Queries;
 
 [Collection("Test Collection")]
-public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
+public class GetLicenseByUserIdTest(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
@@ -28,14 +28,14 @@ public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
     [Theory]
     [InlineData("Technician")]
     [InlineData("Consultant")]
-    public async Task Handle_UserNotDriverOrAdminOrOwner_ReturnsForbidden(string roleName)
+    public async Task Handle_UserNotAdmin_ReturnsForbidden(string roleName)
     {
         // Arrange
         var role = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, roleName);
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, role);
         _currentUser.SetUser(testUser);
 
-        var handler = new GetLicenseById.Handler(
+        var handler = new GetLicenseByUserId.Handler(
             _dbContext,
             _currentUser,
             _aesService,
@@ -43,7 +43,7 @@ public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
             _encryptionSettings
         );
 
-        var query = new GetLicenseById.Query(Guid.NewGuid());
+        var query = new GetLicenseByUserId.Query(Guid.NewGuid());
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -54,14 +54,14 @@ public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Handle_LicenseNotFound_ReturnsNotFound()
+    public async Task Handle_UserNotFound_ReturnsNotFound()
     {
         // Arrange
         var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new GetLicenseById.Handler(
+        var handler = new GetLicenseByUserId.Handler(
             _dbContext,
             _currentUser,
             _aesService,
@@ -69,7 +69,33 @@ public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
             _encryptionSettings
         );
 
-        var query = new GetLicenseById.Query(Guid.NewGuid());
+        var query = new GetLicenseByUserId.Query(Guid.NewGuid());
+
+        // Act
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.NotFound, result.Status);
+        Assert.Contains("Người dùng không tồn tại", result.Errors);
+    }
+
+    [Fact]
+    public async Task Handle_LicenseNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        _currentUser.SetUser(testUser);
+
+        var handler = new GetLicenseByUserId.Handler(
+            _dbContext,
+            _currentUser,
+            _aesService,
+            _keyService,
+            _encryptionSettings
+        );
+
+        var query = new GetLicenseByUserId.Query(testUser.Id);
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -80,64 +106,14 @@ public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Handle_NonOwnerNonAdmin_ReturnsForbidden()
+    public async Task Handle_ValidRequest_ReturnsLicenseSuccessfully()
     {
         // Arrange
+        var userRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
         var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var licenseOwner = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
-        var otherDriver = await TestDataCreateUser.CreateTestUser(
-            _dbContext,
-            driverRole,
-            "other@test.com"
-        );
-        _currentUser.SetUser(otherDriver);
 
-        // Create license for owner
-        var license = await TestDataCreateLicense.CreateTestLicense(
-            _dbContext,
-            licenseOwner.Id,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
-
-        var handler = new GetLicenseById.Handler(
-            _dbContext,
-            _currentUser,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
-
-        var query = new GetLicenseById.Query(license.Id);
-
-        // Act
-        var result = await handler.Handle(query, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Forbidden, result.Status);
-        Assert.Contains("Bạn không có quyền xem giấy phép này", result.Errors);
-    }
-
-    [Theory]
-    [InlineData("Driver")] // Test for driver
-    [InlineData("Admin")] // Test for admin
-    [InlineData("Owner")] // Test for owner
-    public async Task Handle_ValidRequest_ReturnsLicenseSuccessfully(string role)
-    {
-        // Arrange
-        var userRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, role);
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, userRole);
-        User differentUser;
-        if (role == "Admin")
-        {
-            var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-            differentUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
-        }
-        else
-        {
-            differentUser = await TestDataCreateUser.CreateTestUser(_dbContext, userRole);
-        }
+        var differentUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
         // Generate encryption key and encrypted license number
@@ -151,27 +127,24 @@ public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.EncryptionKeys.AddAsync(encryptionKey);
         await _dbContext.SaveChangesAsync();
 
-        // Create license
-        var license = new License
-        {
-            UserId = role == "Admin" ? differentUser.Id : testUser.Id, // Different owner if admin
-            EncryptionKeyId = encryptionKey.Id,
-            EncryptedLicenseNumber = encryptedLicenseNumber,
-            ExpiryDate = DateTimeOffset.UtcNow.AddYears(1),
-            LicenseImageFrontUrl = "front-url",
-            LicenseImageBackUrl = "back-url",
-        };
-        await _dbContext.Licenses.AddAsync(license);
+        // Add License
+        var updateDriver = await _dbContext.Users.FindAsync(differentUser.Id);
+        updateDriver!.EncryptionKeyId = encryptionKey.Id;
+        updateDriver.EncryptedLicenseNumber = encryptedLicenseNumber;
+        updateDriver.LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(1);
+        updateDriver.LicenseImageFrontUrl = "front-url";
+        updateDriver.LicenseImageBackUrl = "back-url";
+
         await _dbContext.SaveChangesAsync();
 
-        var handler = new GetLicenseById.Handler(
+        var handler = new GetLicenseByUserId.Handler(
             _dbContext,
             _currentUser,
             _aesService,
             _keyService,
             _encryptionSettings
         );
-        var query = new GetLicenseById.Query(license.Id);
+        var query = new GetLicenseByUserId.Query(differentUser.Id);
 
         // Act
         var result = await handler.Handle(query, CancellationToken.None);
@@ -181,10 +154,13 @@ public class GetLicenseByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal("Lấy thông tin giấy phép lái xe thành công", result.SuccessMessage);
 
         var response = result.Value;
-        Assert.Equal(license.Id, response.Id);
+        Assert.Equal(updateDriver.Id, response.UserId);
         Assert.Equal(licenseNumber, response.LicenseNumber);
-        Assert.Equal(license.ExpiryDate.Date, response.ExpirationDate.Date);
-        Assert.Equal(license.LicenseImageFrontUrl, response.ImageFrontUrl);
-        Assert.Equal(license.LicenseImageBackUrl, response.ImageBackUrl);
+        Assert.Equal(
+            updateDriver.LicenseExpiryDate.Value.Date,
+            response.ExpirationDate!.Value.Date
+        );
+        Assert.Equal(updateDriver.LicenseImageFrontUrl, response.ImageFrontUrl);
+        Assert.Equal(updateDriver.LicenseImageBackUrl, response.ImageBackUrl);
     }
 }
