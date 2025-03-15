@@ -10,18 +10,17 @@ namespace UseCases.UC_License.Commands;
 
 public sealed class UploadUserLicenseImage
 {
-    public sealed record Command(
-        Guid LicenseId,
-        Stream LicenseImageFrontUrl,
-        Stream LicenseImageBackUrl
-    ) : IRequest<Result<Response>>;
+    public sealed record Command(Stream LicenseImageFrontUrl, Stream LicenseImageBackUrl)
+        : IRequest<Result<Response>>;
 
-    public sealed record Response(Guid Id, string LicenseImageFrontUrl, string LicenseImageBackUrl)
+    public sealed record Response(
+        Guid UserId,
+        string LicenseImageFrontUrl,
+        string LicenseImageBackUrl
+    )
     {
-        public static Response FromEntity(License license)
-        {
-            return new(license.Id, license.LicenseImageFrontUrl, license.LicenseImageBackUrl);
-        }
+        public static Response FromEntity(User user) =>
+            new(user.Id, user.LicenseImageFrontUrl, user.LicenseImageBackUrl);
     };
 
     public sealed class Handler(
@@ -40,39 +39,39 @@ public sealed class UploadUserLicenseImage
                 return Result.Error("Bạn không có quyền thực hiện chức năng này");
 
             //check if license exists
-            var license = await context.Licenses.FirstOrDefaultAsync(
-                l => l.Id == request.LicenseId && !l.IsDeleted,
+            var user = await context.Users.FirstOrDefaultAsync(
+                u => u.Id == currentUser.User.Id && !u.IsDeleted,
                 cancellationToken
             );
 
-            if (license is null)
-                return Result.NotFound("Không tìm thấy giấy phép lái xe");
+            if (user is null)
+                return Result.Error("Người dùng không tồn tại");
 
-            //check if current user is owner of the license
-            if (license.UserId != currentUser.User!.Id)
-                return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
+            if (string.IsNullOrEmpty(user.EncryptedLicenseNumber))
+                return Result.NotFound("Không tìm thấy giấy phép lái xe");
 
             // Upload new images
             var frontImageUrl = await cloudinaryServices.UploadDriverLicenseImageAsync(
-                $"License-{request.LicenseId}-FrontImage",
+                $"License-User-{user.Id}-FrontImage",
                 request.LicenseImageFrontUrl,
                 cancellationToken
             );
             var backImageUrl = await cloudinaryServices.UploadDriverLicenseImageAsync(
-                $"License-{request.LicenseId}-BackImage",
+                $"License-User-{user.Id}-BackImage",
                 request.LicenseImageBackUrl,
                 cancellationToken
             );
 
             // Update license images
-            license.LicenseImageFrontUrl = frontImageUrl;
-            license.LicenseImageBackUrl = backImageUrl;
-            license.UpdatedAt = DateTimeOffset.UtcNow;
+            user.LicenseImageFrontUrl = frontImageUrl;
+            user.LicenseImageBackUrl = backImageUrl;
+            user.UpdatedAt = DateTimeOffset.UtcNow;
+            user.LicenseImageUploadedAt = DateTimeOffset.UtcNow;
 
             await context.SaveChangesAsync(cancellationToken);
 
             return Result.Success(
-                Response.FromEntity(license),
+                Response.FromEntity(user),
                 "Cập nhật ảnh giấy phép lái xe thành công"
             );
         }
@@ -93,10 +92,6 @@ public sealed class UploadUserLicenseImage
 
         public Validator()
         {
-            RuleFor(x => x.LicenseId)
-                .NotEmpty()
-                .WithMessage("Phải chọn giấy phép lái xe cần cập nhật !");
-
             RuleFor(x => x.LicenseImageFrontUrl)
                 .NotNull()
                 .WithMessage("Ảnh mặt trước giấy phép không được để trống")
