@@ -28,12 +28,8 @@ public class UpdateUserLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
 
     public async Task DisposeAsync() => await _resetDatabase();
 
-    private UpdateUserLicense.Command CreateValidCommand(Guid licenseId) =>
-        new(
-            LicenseId: licenseId,
-            LicenseNumber: "123456789012",
-            ExpirationDate: DateTime.UtcNow.AddYears(1)
-        );
+    private UpdateUserLicense.Command CreateValidCommand() =>
+        new(LicenseNumber: "123456789012", ExpirationDate: DateTime.UtcNow.AddYears(1));
 
     [Fact]
     public async Task Handle_UserNotDriver_ReturnsError()
@@ -51,7 +47,7 @@ public class UpdateUserLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
             _encryptionSettings
         );
 
-        var command = CreateValidCommand(Guid.NewGuid());
+        var command = CreateValidCommand();
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -77,7 +73,7 @@ public class UpdateUserLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
             _encryptionSettings
         );
 
-        var command = CreateValidCommand(Guid.NewGuid());
+        var command = CreateValidCommand();
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -85,47 +81,6 @@ public class UpdateUserLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Assert
         Assert.Equal(ResultStatus.NotFound, result.Status);
         Assert.Contains("Không tìm thấy giấy phép lái xe", result.Errors);
-    }
-
-    [Fact]
-    public async Task Handle_NotOwnerOfLicense_ReturnsForbidden()
-    {
-        // Arrange
-        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
-        var otherDriver = await TestDataCreateUser.CreateTestUser(
-            _dbContext,
-            driverRole,
-            "other@test.com"
-        );
-        _currentUser.SetUser(otherDriver);
-
-        var encryptionKey = await TestDataCreateEncryptionKey.CreateTestEncryptionKey(_dbContext);
-        var license = new License
-        {
-            UserId = owner.Id,
-            EncryptionKeyId = encryptionKey.Id,
-            ExpiryDate = DateTimeOffset.UtcNow.AddDays(1),
-        };
-        await _dbContext.Licenses.AddAsync(license);
-        await _dbContext.SaveChangesAsync();
-
-        var handler = new UpdateUserLicense.Handler(
-            _dbContext,
-            _currentUser,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
-
-        var command = CreateValidCommand(license.Id);
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Forbidden, result.Status);
-        Assert.Contains("Bạn không có quyền thực hiện chức năng này", result.Errors);
     }
 
     [Theory]
@@ -138,18 +93,22 @@ public class UpdateUserLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         var user = await TestDataCreateUser.CreateTestUser(_dbContext, role);
         _currentUser.SetUser(user);
 
-        var oldEncryptionKey = await TestDataCreateEncryptionKey.CreateTestEncryptionKey(
-            _dbContext
+        (string key, string iv) = await _keyService.GenerateKeyAsync();
+        string oldEncryptedLicenseNumber = await _aesService.Encrypt(
+            "NTjmhIE3YJtqsqXCZYbjzA==",
+            key,
+            iv
         );
-        var oldEncryptedLicenseNumber = "NTjmhIE3YJtqsqXCZYbjzA==";
-        var license = new License
-        {
-            UserId = user.Id,
-            EncryptionKeyId = oldEncryptionKey.Id,
-            EncryptedLicenseNumber = oldEncryptedLicenseNumber,
-            ExpiryDate = DateTimeOffset.UtcNow.AddDays(1),
-        };
-        await _dbContext.Licenses.AddAsync(license);
+        string encryptedKey = _keyService.EncryptKey(key, _encryptionSettings.Key);
+
+        EncryptionKey oldEncryptionKey = new() { EncryptedKey = encryptedKey, IV = iv };
+        await _dbContext.EncryptionKeys.AddAsync(oldEncryptionKey);
+        await _dbContext.SaveChangesAsync();
+
+        var updateUser = await _dbContext.Users.FindAsync(user.Id);
+        updateUser!.EncryptionKeyId = oldEncryptionKey.Id;
+        updateUser.EncryptedLicenseNumber = oldEncryptedLicenseNumber;
+        updateUser.LicenseExpiryDate = DateTimeOffset.UtcNow.AddDays(1);
         await _dbContext.SaveChangesAsync();
 
         var handler = new UpdateUserLicense.Handler(
@@ -160,7 +119,7 @@ public class UpdateUserLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
             _encryptionSettings
         );
 
-        var command = CreateValidCommand(license.Id);
+        var command = CreateValidCommand();
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -169,11 +128,15 @@ public class UpdateUserLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Equal("Cập nhật giấy phép lái xe thành công", result.SuccessMessage);
 
-        var updatedLicense = await _dbContext.Licenses.FindAsync(license.Id);
-        Assert.NotNull(updatedLicense);
-        Assert.NotEqual(oldEncryptedLicenseNumber, updatedLicense.EncryptedLicenseNumber);
-        Assert.NotEqual(oldEncryptionKey.Id, updatedLicense.EncryptionKeyId);
-        Assert.Equal(command.ExpirationDate.Date, updatedLicense.ExpiryDate.Date);
+        var userWithLicenseAdded = await _dbContext.Users.FindAsync(user.Id);
+        Assert.NotNull(userWithLicenseAdded);
+        Assert.NotEmpty(userWithLicenseAdded.EncryptedLicenseNumber);
+        Assert.NotEqual(oldEncryptedLicenseNumber, userWithLicenseAdded.EncryptedLicenseNumber);
+        Assert.NotEqual(oldEncryptionKey.Id, userWithLicenseAdded.EncryptionKeyId);
+        Assert.Equal(
+            command.ExpirationDate.Date,
+            userWithLicenseAdded.LicenseExpiryDate!.Value.Date
+        );
     }
 
     [Fact]
@@ -182,7 +145,6 @@ public class UpdateUserLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Arrange
         var validator = new UpdateUserLicense.Validator();
         var command = new UpdateUserLicense.Command(
-            LicenseId: Guid.Empty,
             LicenseNumber: "123", // Too short
             ExpirationDate: DateTime.UtcNow.Date.AddDays(-1) // Past date
         );
@@ -192,7 +154,6 @@ public class UpdateUserLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == "LicenseId");
         Assert.Contains(result.Errors, e => e.PropertyName == "LicenseNumber");
         Assert.Contains(result.Errors, e => e.PropertyName == "ExpirationDate");
     }

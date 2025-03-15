@@ -102,17 +102,15 @@ public class GetLicenseByCurrentUserTest(DatabaseTestBase fixture) : IAsyncLifet
         await _dbContext.EncryptionKeys.AddAsync(encryptionKey);
         await _dbContext.SaveChangesAsync();
 
-        // Create license
-        var license = new License
-        {
-            UserId = testUser.Id,
-            EncryptionKeyId = encryptionKey.Id,
-            EncryptedLicenseNumber = encryptedLicenseNumber,
-            ExpiryDate = DateTimeOffset.UtcNow.AddYears(1),
-            LicenseImageFrontUrl = "front-url",
-            LicenseImageBackUrl = "back-url",
-        };
-        await _dbContext.Licenses.AddAsync(license);
+        // add license
+        var updateUser = await _dbContext.Users.FindAsync(testUser.Id);
+
+        updateUser!.EncryptionKeyId = encryptionKey.Id;
+        updateUser.EncryptedLicenseNumber = encryptedLicenseNumber;
+        updateUser.LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(1);
+        updateUser.LicenseImageFrontUrl = "front-url";
+        updateUser.LicenseImageBackUrl = "back-url";
+
         await _dbContext.SaveChangesAsync();
 
         var handler = new GetLicenseByCurrentUser.Handler(
@@ -132,10 +130,10 @@ public class GetLicenseByCurrentUserTest(DatabaseTestBase fixture) : IAsyncLifet
         Assert.Equal("Lấy thông tin giấy phép lái xe thành công", result.SuccessMessage);
 
         var response = result.Value;
-        Assert.Equal(license.Id, response.Id);
+        Assert.Equal(updateUser.Id, response.UserId);
         Assert.Equal(licenseNumber, response.LicenseNumber); // Compare with original license number
-        Assert.Equal(license.ExpiryDate.Date, response.ExpirationDate.Date);
-        Assert.Equal(license.LicenseImageFrontUrl, response.ImageFrontUrl);
-        Assert.Equal(license.LicenseImageBackUrl, response.ImageBackUrl);
+        Assert.Equal(updateUser.LicenseExpiryDate.Value.Date, response.ExpirationDate!.Value.Date);
+        Assert.Equal(updateUser.LicenseImageFrontUrl, response.ImageFrontUrl);
+        Assert.Equal(updateUser.LicenseImageBackUrl, response.ImageBackUrl);
     }
 }
