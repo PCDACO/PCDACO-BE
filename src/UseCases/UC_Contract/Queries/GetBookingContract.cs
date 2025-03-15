@@ -34,10 +34,8 @@ public sealed class GetBookingContract
                 .AsSplitQuery()
                 .Include(c => c.Booking)
                 .ThenInclude(b => b.User)
-                .ThenInclude(u => u.License)
                 .Include(c => c.Booking)
                 .ThenInclude(b => b.User)
-                .ThenInclude(u => u.License)
                 .ThenInclude(u => u.EncryptionKey)
                 .Include(c => c.Booking)
                 .ThenInclude(b => b.Car)
@@ -48,7 +46,6 @@ public sealed class GetBookingContract
                 .Include(c => c.Booking)
                 .ThenInclude(b => b.Car)
                 .ThenInclude(car => car.Owner)
-                .ThenInclude(o => o.License)
                 .ThenInclude(l => l.EncryptionKey)
                 .Include(c => c.Booking)
                 .ThenInclude(b => b.Car)
@@ -102,14 +99,14 @@ public sealed class GetBookingContract
         private async Task<string> DecryptDriverLicenseNumber(Contract contract)
         {
             var driverKey = keyManagementService.DecryptKey(
-                contract.Booking.User.License.EncryptionKey.EncryptedKey,
+                contract.Booking.User.EncryptionKey.EncryptedKey,
                 encryptionSettings.Key
             );
 
             var decryptedDriverLicenseNumber = await aesEncryptionService.Decrypt(
-                contract.Booking.User.License.EncryptedLicenseNumber,
+                contract.Booking.User.EncryptedLicenseNumber,
                 driverKey,
-                contract.Booking.User.License.EncryptionKey.IV
+                contract.Booking.User.EncryptionKey.IV
             );
 
             return decryptedDriverLicenseNumber;
@@ -118,14 +115,14 @@ public sealed class GetBookingContract
         private async Task<string> DecryptOwnerLicenseNumber(Contract contract)
         {
             var ownerKey = keyManagementService.DecryptKey(
-                contract.Booking.Car.Owner.License.EncryptionKey.EncryptedKey,
+                contract.Booking.Car.Owner.EncryptionKey.EncryptedKey,
                 encryptionSettings.Key
             );
 
             var decryptedOwnerLicenseNumber = await aesEncryptionService.Decrypt(
-                contract.Booking.Car.Owner.License.EncryptedLicenseNumber,
+                contract.Booking.Car.Owner.EncryptedLicenseNumber,
                 ownerKey,
-                contract.Booking.Car.Owner.License.EncryptionKey.IV
+                contract.Booking.Car.Owner.EncryptionKey.IV
             );
 
             return decryptedOwnerLicenseNumber;
