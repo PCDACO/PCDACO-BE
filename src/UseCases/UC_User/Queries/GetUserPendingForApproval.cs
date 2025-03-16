@@ -121,8 +121,7 @@ public class GetUserPendingForApproval
             if (gettingUser is null)
                 return Result.Error(ResponseMessages.UserNotFound);
             Response result =
-                await Response
-                    .FromEntity(gettingUser, encryptionSettings.Key, aesService, keyService);
+                await Response.FromEntity(gettingUser, encryptionSettings.Key, aesService, keyService);
             return Result.Success(result, "Lấy danh sách người lái xe thành công");
         }
     }
