@@ -41,9 +41,8 @@ public sealed class AddUserLicense
             //check if user is exist
             var user = await context
                 .Users.Include(u => u.EncryptionKey)
-                .Include(u => u.Role)
                 .FirstOrDefaultAsync(
-                    u => u.Id == currentUser.User!.Id && u.Role != null && !u.IsDeleted,
+                    u => u.Id == currentUser.User!.Id && !u.IsDeleted,
                     cancellationToken
                 );
 
@@ -53,10 +52,6 @@ public sealed class AddUserLicense
             //check if user aldready has license
             if (!string.IsNullOrEmpty(user.EncryptedLicenseNumber))
                 return Result.Error("Người dùng đã có giấy phép lái xe");
-
-            //check if user is not owner role or driver role
-            if (user.Role!.Name.ToLower() != "owner" && user.Role.Name.ToLower() != "driver")
-                return Result.Error("Chỉ chủ xe hoặc tài xế mới có thể thêm giấy phép lái xe");
 
             //check if license number is already exist
             var licenses = await context
