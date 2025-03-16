@@ -72,4 +72,7 @@ public class ResponseMessages
     public const string InProgressStatusNotAvailable =
         "Trạng thái kiểm định đang tiến hành không có sẵn";
     public const string PendingStatusNotAvailable = "Trạng thái kiểm định chờ duyệt không có sẵn";
+
+    // Bank Info
+    public const string BankInfoNotFound = "Không tìm thấy thông tin ngân hàng";
 }
