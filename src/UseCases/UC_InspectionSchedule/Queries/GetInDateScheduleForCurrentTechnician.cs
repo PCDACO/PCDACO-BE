@@ -36,8 +36,8 @@ namespace UseCases.UC_InspectionSchedule.Queries
             )
             {
                 return new Response(
-                    TechnicianName: schedules.First().Technician.Name,
-                    InspectionDate: DateTimeOffset.UtcNow,
+                    TechnicianName: technicianName,
+                    InspectionDate: InspectionDate,
                     Cars: await Task.WhenAll(schedules.Any() ? schedules.Select(async schedule =>
                     {
                         string decryptedKey = keyManagementService.DecryptKey(
@@ -121,7 +121,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
                 if (!currentUser.User!.IsTechnician())
                     return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
-                var today = DateTimeOffset.UtcNow.Date;
+                var today = DateTimeOffset.UtcNow;
                 IEnumerable<InspectionSchedule> schedules = await context
                     .InspectionSchedules
                     .AsNoTracking()
@@ -139,7 +139,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
                     .Where(s =>
                         s.TechnicianId == currentUser.User.Id
                         && !s.IsDeleted
-                        && s.InspectionDate.Date == today
+                        && s.InspectionDate.Date == today.Date
                     )
                     .OrderBy(s => s.Id)
                     .ToListAsync(cancellationToken);
