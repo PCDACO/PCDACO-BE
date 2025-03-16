@@ -76,7 +76,9 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
 
             // Assert
             Assert.Equal(ResultStatus.Ok, result.Status);
-            Assert.Null(result.Value);
+            Assert.Equal("Test User", result.Value.TechnicianName);
+            Assert.Equal(DateTimeOffset.UtcNow.Date, result.Value.InspectionDate.Date);
+            Assert.Empty(result.Value.Cars);
         }
 
         [Fact]

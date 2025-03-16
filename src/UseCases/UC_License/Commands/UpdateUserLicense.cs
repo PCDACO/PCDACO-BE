@@ -38,10 +38,12 @@ public sealed class UpdateUserLicense
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
 
             // Get license
-            var user = await context.Users.FirstOrDefaultAsync(
-                u => u.Id == currentUser.User.Id && !u.IsDeleted,
-                cancellationToken
-            );
+            var user = await context
+                .Users.Include(u => u.EncryptionKey)
+                .FirstOrDefaultAsync(
+                    u => u.Id == currentUser.User.Id && !u.IsDeleted,
+                    cancellationToken
+                );
 
             if (user is null)
                 return Result.Error("Người dùng không tồn tại");
