@@ -34,6 +34,10 @@ public sealed class CreateBankAccount
             CancellationToken cancellationToken
         )
         {
+            // Check if user is not driver or owner
+            if (!currentUser.User!.IsDriver() && !currentUser.User!.IsOwner())
+                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
+
             // Get the current user
             User? user = await context
                 .Users.AsNoTracking()
