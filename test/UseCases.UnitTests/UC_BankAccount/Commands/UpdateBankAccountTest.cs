@@ -202,8 +202,8 @@ public class UpdateBankAccountTest(DatabaseTestBase fixture) : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.NotFound, result.Status);
-        Assert.Contains(ResponseMessages.BankAccountNotFound, result.Errors);
+        Assert.Equal(ResultStatus.Forbidden, result.Status);
+        Assert.Contains(ResponseMessages.ForbiddenAudit, result.Errors);
     }
 
     [Fact]

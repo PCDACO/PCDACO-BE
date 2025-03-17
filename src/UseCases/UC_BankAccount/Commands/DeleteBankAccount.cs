@@ -34,12 +34,15 @@ public sealed class DeleteBankAccount
 
             // Get the bank account to delete
             BankAccount? bankAccount = await context.BankAccounts.FirstOrDefaultAsync(
-                ba => ba.Id == request.Id && ba.UserId == currentUser.User!.Id && !ba.IsDeleted,
+                ba => ba.Id == request.Id && !ba.IsDeleted,
                 cancellationToken
             );
 
             if (bankAccount is null)
                 return Result.NotFound(ResponseMessages.BankAccountNotFound);
+
+            if (bankAccount.UserId != currentUser.User!.Id)
+                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             // Check if bank account has associated transactions
             bool hasTransactions = await context.Transactions.AnyAsync(

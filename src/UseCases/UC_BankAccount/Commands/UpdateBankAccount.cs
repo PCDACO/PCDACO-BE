@@ -53,13 +53,13 @@ public sealed class UpdateBankAccount
             // Get the bank account to update
             BankAccount? bankAccount = await context
                 .BankAccounts.Include(ba => ba.EncryptionKey)
-                .FirstOrDefaultAsync(
-                    ba => ba.Id == request.Id && ba.UserId == currentUser.User!.Id && !ba.IsDeleted,
-                    cancellationToken
-                );
+                .FirstOrDefaultAsync(ba => ba.Id == request.Id && !ba.IsDeleted, cancellationToken);
 
             if (bankAccount is null)
                 return Result.NotFound(ResponseMessages.BankAccountNotFound);
+
+            if (bankAccount.UserId != currentUser.User!.Id)
+                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             // Verify bank info exists
             BankInfo? bankInfo = await context
