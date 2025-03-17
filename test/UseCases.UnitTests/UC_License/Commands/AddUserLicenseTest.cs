@@ -76,7 +76,7 @@ public class AddUserLicenseTest : IAsyncLifetime
         _currentUser.SetUser(driver);
 
         // Create existing license
-        var existingLicense = await TestDataCreateLicense.CreateTestLicense(
+        var userWithExistingLicense = await TestDataCreateLicense.CreateTestLicense(
             _dbContext,
             driver.Id,
             _aesService,
@@ -115,7 +115,7 @@ public class AddUserLicenseTest : IAsyncLifetime
         );
 
         string existingLicenseNumber = "123456789012";
-        var existingLicense = await TestDataCreateLicense.CreateTestLicense(
+        var userWithExistingLicense = await TestDataCreateLicense.CreateTestLicense(
             _dbContext,
             driver1.Id,
             _aesService,
@@ -180,9 +180,10 @@ public class AddUserLicenseTest : IAsyncLifetime
         Assert.NotNull(result.Value);
 
         // Verify license was created in database
-        var license = await _dbContext.Licenses.FindAsync(result.Value.Id);
-        Assert.NotNull(license);
-        Assert.Equal(driver.Id, license.UserId);
-        Assert.Equal(command.ExpirationDate.Date, license.ExpiryDate.Date);
+        var user = await _dbContext.Users.FindAsync(result.Value.UserId);
+        Assert.NotNull(user);
+        Assert.Equal(driver.Id, user.Id);
+        Assert.NotEmpty(user.EncryptedLicenseNumber);
+        Assert.Equal(command.ExpirationDate.Date, user.LicenseExpiryDate!.Value.Date);
     }
 }

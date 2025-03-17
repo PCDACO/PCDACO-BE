@@ -14,9 +14,10 @@ public sealed class AddUserLicense
     public sealed record Command(string LicenseNumber, DateTimeOffset ExpirationDate)
         : IRequest<Result<Response>>;
 
-    public sealed record Response(Guid Id)
+    public sealed record Response(Guid UserId, string LicenseNumber, DateTimeOffset ExpirationDate)
     {
-        public static Response FromEntity(License license) => new(license.Id);
+        public static Response FromEntity(User user) =>
+            new(user.Id, user.EncryptedLicenseNumber, user.LicenseExpiryDate!.Value);
     };
 
     public sealed class Handler(
@@ -38,13 +39,10 @@ public sealed class AddUserLicense
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
 
             //check if user is exist
-
             var user = await context
-                .Users.AsNoTracking()
-                .Include(u => u.License)
-                .Include(u => u.Role)
+                .Users.Include(u => u.EncryptionKey)
                 .FirstOrDefaultAsync(
-                    u => u.Id == currentUser.User!.Id && u.Role != null && !u.IsDeleted,
+                    u => u.Id == currentUser.User!.Id && !u.IsDeleted,
                     cancellationToken
                 );
 
@@ -52,20 +50,13 @@ public sealed class AddUserLicense
                 return Result.Error("Người dùng không tồn tại");
 
             //check if user aldready has license
-
-            if (user.License is not null)
+            if (!string.IsNullOrEmpty(user.EncryptedLicenseNumber))
                 return Result.Error("Người dùng đã có giấy phép lái xe");
 
-            //check if user is not owner role or driver role
-
-            if (user.Role!.Name.ToLower() != "owner" && user.Role.Name.ToLower() != "driver")
-                return Result.Error("Chỉ chủ xe hoặc tài xế mới có thể thêm giấy phép lái xe");
-
             //check if license number is already exist
-
             var licenses = await context
-                .Licenses.AsNoTracking()
-                .Include(l => l.EncryptionKey)
+                .Users.AsNoTracking()
+                .Include(u => u.EncryptionKey)
                 .ToListAsync(cancellationToken);
 
             var licenseChecks = await Task.WhenAll(
@@ -92,41 +83,27 @@ public sealed class AddUserLicense
             }
 
             // Encrypt license number
-
-            (string key, string iv) = await keyManagementService.GenerateKeyAsync();
+            string decryptedKey = keyManagementService.DecryptKey(
+                user.EncryptionKey.EncryptedKey,
+                encryptionSettings.Key
+            );
 
             string encryptedLicenseNumber = await aesEncryptionService.Encrypt(
                 request.LicenseNumber,
-                key,
-                iv
+                decryptedKey,
+                user.EncryptionKey.IV
             );
 
-            string encryptedKey = keyManagementService.EncryptKey(key, encryptionSettings.Key);
+            // Add license info to user
 
-            EncryptionKey newEncryptionKey = new() { EncryptedKey = encryptedKey, IV = iv };
-
-            context.EncryptionKeys.Add(newEncryptionKey);
-
-            // Create new license
-
-            var license = new License
-            {
-                UserId = currentUser.User!.Id,
-
-                EncryptedLicenseNumber = encryptedLicenseNumber,
-
-                EncryptionKeyId = newEncryptionKey.Id,
-
-                ExpiryDate = request.ExpirationDate,
-
-                IsApprove = null,
-            };
-
-            await context.Licenses.AddAsync(license, cancellationToken);
+            user.EncryptedLicenseNumber = encryptedLicenseNumber;
+            user.LicenseExpiryDate = request.ExpirationDate;
+            user.UpdatedAt = DateTimeOffset.UtcNow;
+            user.LicenseIsApproved = null;
 
             await context.SaveChangesAsync(cancellationToken);
 
-            return Result.Success(Response.FromEntity(license), "Thêm giấy phép lái xe thành công");
+            return Result.Success(Response.FromEntity(user), "Thêm giấy phép lái xe thành công");
         }
     }
 

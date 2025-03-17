@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Persistance.Data;
 namespace Persistance.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250315144625_MergeLicenseIntoUserTable")]
+    partial class MergeLicenseIntoUserTable
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -53,7 +56,7 @@ namespace Persistance.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Amenities", (string)null);
+                    b.ToTable("Amenities");
                 });
 
             modelBuilder.Entity("Domain.Entities.BankAccount", b =>
@@ -99,7 +102,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("BankAccounts", (string)null);
+                    b.ToTable("BankAccounts");
                 });
 
             modelBuilder.Entity("Domain.Entities.BankInfo", b =>
@@ -152,7 +155,7 @@ namespace Persistance.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("BankInfos", (string)null);
+                    b.ToTable("BankInfos");
                 });
 
             modelBuilder.Entity("Domain.Entities.Booking", b =>
@@ -231,7 +234,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Bookings", (string)null);
+                    b.ToTable("Bookings");
                 });
 
             modelBuilder.Entity("Domain.Entities.Car", b =>
@@ -272,14 +275,6 @@ namespace Persistance.Migrations
 
                     b.Property<Guid>("OwnerId")
                         .HasColumnType("uuid");
-
-                    b.Property<string>("PickupAddress")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<Point>("PickupLocation")
-                        .IsRequired()
-                        .HasColumnType("geometry");
 
                     b.Property<decimal>("Price")
                         .HasColumnType("numeric");
@@ -322,7 +317,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("TransmissionTypeId");
 
-                    b.ToTable("Cars", (string)null);
+                    b.ToTable("Cars");
                 });
 
             modelBuilder.Entity("Domain.Entities.CarAmenity", b =>
@@ -352,7 +347,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("CarId");
 
-                    b.ToTable("CarAmenities", (string)null);
+                    b.ToTable("CarAmenities");
                 });
 
             modelBuilder.Entity("Domain.Entities.CarContract", b =>
@@ -382,7 +377,7 @@ namespace Persistance.Migrations
                     b.HasIndex("CarId")
                         .IsUnique();
 
-                    b.ToTable("CarContracts", (string)null);
+                    b.ToTable("CarContracts");
                 });
 
             modelBuilder.Entity("Domain.Entities.CarGPS", b =>
@@ -418,7 +413,7 @@ namespace Persistance.Migrations
                     b.HasIndex("DeviceId")
                         .IsUnique();
 
-                    b.ToTable("CarGPSes", (string)null);
+                    b.ToTable("CarGPSes");
                 });
 
             modelBuilder.Entity("Domain.Entities.CarInspection", b =>
@@ -453,7 +448,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("BookingId");
 
-                    b.ToTable("CarInspections", (string)null);
+                    b.ToTable("CarInspections");
                 });
 
             modelBuilder.Entity("Domain.Entities.CarReport", b =>
@@ -483,7 +478,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("CarId");
 
-                    b.ToTable("CarReports", (string)null);
+                    b.ToTable("CarReports");
                 });
 
             modelBuilder.Entity("Domain.Entities.CarStatistic", b =>
@@ -536,7 +531,7 @@ namespace Persistance.Migrations
                     b.HasIndex("CarId")
                         .IsUnique();
 
-                    b.ToTable("CarStatistics", (string)null);
+                    b.ToTable("CarStatistics");
                 });
 
             modelBuilder.Entity("Domain.Entities.Compensation", b =>
@@ -571,7 +566,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("BookingId");
 
-                    b.ToTable("Compensations", (string)null);
+                    b.ToTable("Compensations");
                 });
 
             modelBuilder.Entity("Domain.Entities.Contract", b =>
@@ -616,7 +611,7 @@ namespace Persistance.Migrations
                     b.HasIndex("BookingId")
                         .IsUnique();
 
-                    b.ToTable("Contracts", (string)null);
+                    b.ToTable("Contracts");
                 });
 
             modelBuilder.Entity("Domain.Entities.EncryptionKey", b =>
@@ -644,7 +639,7 @@ namespace Persistance.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EncryptionKeys", (string)null);
+                    b.ToTable("EncryptionKeys");
                 });
 
             modelBuilder.Entity("Domain.Entities.Feedback", b =>
@@ -684,7 +679,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Feedbacks", (string)null);
+                    b.ToTable("Feedbacks");
                 });
 
             modelBuilder.Entity("Domain.Entities.FuelType", b =>
@@ -708,7 +703,7 @@ namespace Persistance.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("FuelTypes", (string)null);
+                    b.ToTable("FuelTypes");
                 });
 
             modelBuilder.Entity("Domain.Entities.GPSDevice", b =>
@@ -735,7 +730,7 @@ namespace Persistance.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("GPSDevices", (string)null);
+                    b.ToTable("GPSDevices");
                 });
 
             modelBuilder.Entity("Domain.Entities.ImageCar", b =>
@@ -769,7 +764,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("TypeId");
 
-                    b.ToTable("ImageCars", (string)null);
+                    b.ToTable("ImageCars");
                 });
 
             modelBuilder.Entity("Domain.Entities.ImageFeedback", b =>
@@ -798,7 +793,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("FeedbackId");
 
-                    b.ToTable("ImageFeedbacks", (string)null);
+                    b.ToTable("ImageFeedbacks");
                 });
 
             modelBuilder.Entity("Domain.Entities.ImageReport", b =>
@@ -827,7 +822,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("CarReportId");
 
-                    b.ToTable("ImageReports", (string)null);
+                    b.ToTable("ImageReports");
                 });
 
             modelBuilder.Entity("Domain.Entities.ImageType", b =>
@@ -851,7 +846,7 @@ namespace Persistance.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ImageTypes", (string)null);
+                    b.ToTable("ImageTypes");
                 });
 
             modelBuilder.Entity("Domain.Entities.InspectionPhoto", b =>
@@ -887,7 +882,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("InspectionId");
 
-                    b.ToTable("InspectionPhotos", (string)null);
+                    b.ToTable("InspectionPhotos");
                 });
 
             modelBuilder.Entity("Domain.Entities.InspectionSchedule", b =>
@@ -936,7 +931,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("TechnicianId");
 
-                    b.ToTable("InspectionSchedules", (string)null);
+                    b.ToTable("InspectionSchedules");
                 });
 
             modelBuilder.Entity("Domain.Entities.Manufacturer", b =>
@@ -960,7 +955,7 @@ namespace Persistance.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Manufacturers", (string)null);
+                    b.ToTable("Manufacturers");
                 });
 
             modelBuilder.Entity("Domain.Entities.Model", b =>
@@ -992,7 +987,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("ManufacturerId");
 
-                    b.ToTable("Models", (string)null);
+                    b.ToTable("Models");
                 });
 
             modelBuilder.Entity("Domain.Entities.RefreshToken", b =>
@@ -1019,7 +1014,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("RefreshTokens", (string)null);
+                    b.ToTable("RefreshTokens");
                 });
 
             modelBuilder.Entity("Domain.Entities.Transaction", b =>
@@ -1070,7 +1065,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("TypeId");
 
-                    b.ToTable("Transactions", (string)null);
+                    b.ToTable("Transactions");
                 });
 
             modelBuilder.Entity("Domain.Entities.TransactionType", b =>
@@ -1094,7 +1089,7 @@ namespace Persistance.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TransactionTypes", (string)null);
+                    b.ToTable("TransactionTypes");
                 });
 
             modelBuilder.Entity("Domain.Entities.TransmissionType", b =>
@@ -1118,7 +1113,7 @@ namespace Persistance.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("TransmissionTypes", (string)null);
+                    b.ToTable("TransmissionTypes");
                 });
 
             modelBuilder.Entity("Domain.Entities.TripTracking", b =>
@@ -1153,7 +1148,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("BookingId");
 
-                    b.ToTable("TripTrackings", (string)null);
+                    b.ToTable("TripTrackings");
                 });
 
             modelBuilder.Entity("Domain.Entities.User", b =>
@@ -1244,7 +1239,7 @@ namespace Persistance.Migrations
 
                     b.HasIndex("RoleId");
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users");
                 });
 
             modelBuilder.Entity("Domain.Entities.UserRole", b =>
@@ -1268,7 +1263,7 @@ namespace Persistance.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("UserRoles", (string)null);
+                    b.ToTable("UserRoles");
                 });
 
             modelBuilder.Entity("Domain.Entities.UserStatistic", b =>
@@ -1324,7 +1319,7 @@ namespace Persistance.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("UserStatistics", (string)null);
+                    b.ToTable("UserStatistics");
                 });
 
             modelBuilder.Entity("Domain.Entities.WithdrawalRequest", b =>
@@ -1365,7 +1360,7 @@ namespace Persistance.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("WithdrawalRequests", (string)null);
+                    b.ToTable("WithdrawalRequests");
                 });
 
             modelBuilder.Entity("Domain.Entities.BankAccount", b =>

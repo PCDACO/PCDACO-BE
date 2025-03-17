@@ -77,4 +77,7 @@ public class ResponseMessages
     public const string BookingNotFound = "Không tìm thấy booking";
     public const string OnlyCreatorCanAccessBooking =
         "Bạn không có quyền thực hiện chức năng này với booking này!";
+
+    // Bank Info
+    public const string BankInfoNotFound = "Không tìm thấy thông tin ngân hàng";
 }

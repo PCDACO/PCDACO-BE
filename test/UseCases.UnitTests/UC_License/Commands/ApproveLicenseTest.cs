@@ -43,7 +43,7 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Handle_LicenseNotFound_ReturnsNotFound()
+    public async Task Handle_UserNotFound_ReturnsError()
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
@@ -52,6 +52,28 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         var handler = new ApproveLicense.Handler(_dbContext, _currentUser);
         var command = new ApproveLicense.Command(Guid.NewGuid(), true);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains("Người dùng không tồn tại", result.Errors);
+    }
+
+    [Fact]
+    public async Task Handle_LicenseNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var admin = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
+        _currentUser.SetUser(admin);
+
+        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+
+        var handler = new ApproveLicense.Handler(_dbContext, _currentUser);
+        var command = new ApproveLicense.Command(owner.Id, true);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -72,18 +94,18 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         _currentUser.SetUser(admin);
 
         // Create an already processed license
-        var license = await TestDataCreateLicense.CreateTestLicense(
+        var user = await TestDataCreateLicense.CreateTestLicense(
             _dbContext,
             driver.Id,
             _aesService,
             _keyService,
-            _encryptionSettings
+            _encryptionSettings,
+            isApproved: true
         );
-        license.IsApprove = true;
         await _dbContext.SaveChangesAsync();
 
         var handler = new ApproveLicense.Handler(_dbContext, _currentUser);
-        var command = new ApproveLicense.Command(license.Id, true);
+        var command = new ApproveLicense.Command(user.Id, true);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -103,7 +125,7 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         var driver = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(admin);
 
-        var license = await TestDataCreateLicense.CreateTestLicense(
+        var user = await TestDataCreateLicense.CreateTestLicense(
             _dbContext,
             driver.Id,
             _aesService,
@@ -112,7 +134,7 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
 
         var handler = new ApproveLicense.Handler(_dbContext, _currentUser);
-        var command = new ApproveLicense.Command(license.Id, false); // No reject reason
+        var command = new ApproveLicense.Command(user.Id, false); // No reject reason
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -138,7 +160,7 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         var driver = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(admin);
 
-        var license = await TestDataCreateLicense.CreateTestLicense(
+        var user = await TestDataCreateLicense.CreateTestLicense(
             _dbContext,
             driver.Id,
             _aesService,
@@ -147,7 +169,7 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
 
         var handler = new ApproveLicense.Handler(_dbContext, _currentUser);
-        var command = new ApproveLicense.Command(license.Id, isApproved, rejectReason);
+        var command = new ApproveLicense.Command(user.Id, isApproved, rejectReason);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -156,17 +178,18 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Contains($"Đã {expectedMessage} giấy phép lái xe thành công", result.SuccessMessage);
 
-        var updatedLicense = await _dbContext.Licenses.FindAsync(license.Id);
-        Assert.NotNull(updatedLicense);
-        Assert.Equal(isApproved, updatedLicense.IsApprove);
-        Assert.Equal(rejectReason, updatedLicense.RejectReason);
+        var createdUser = await _dbContext.Users.FindAsync(user.Id);
+        Assert.NotNull(createdUser);
+        Assert.NotEmpty(createdUser.EncryptedLicenseNumber);
+        Assert.Equal(isApproved, createdUser.LicenseIsApproved!.Value);
+        Assert.Equal(rejectReason, createdUser.LicenseRejectReason);
         if (isApproved)
         {
-            Assert.NotNull(updatedLicense.ApprovedAt);
+            Assert.NotNull(createdUser.LicenseApprovedAt);
         }
         else
         {
-            Assert.Null(updatedLicense.ApprovedAt);
+            Assert.Null(createdUser.LicenseApprovedAt);
         }
     }
 
@@ -175,14 +198,13 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
     {
         // Arrange
         var validator = new ApproveLicense.Validator();
-        var command = new ApproveLicense.Command(Guid.Empty, false); // Empty ID and no reject reason
+        var command = new ApproveLicense.Command(Guid.Empty, false); //no reject reason
 
         // Act
         var result = validator.Validate(command);
 
         // Assert
         Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == "LicenseId");
         Assert.Contains(result.Errors, e => e.PropertyName == "RejectReason");
     }
 }

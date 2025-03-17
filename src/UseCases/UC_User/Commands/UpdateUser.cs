@@ -45,10 +45,9 @@ public static class UpdateUser
             CancellationToken cancellationToken
         )
         {
-            var user = await _context.Users.FirstOrDefaultAsync(
-                x => x.Id == request.Id && !x.IsDeleted,
-                cancellationToken
-            );
+            var user = await _context
+                .Users.Include(u => u.EncryptionKey)
+                .FirstOrDefaultAsync(x => x.Id == request.Id && !x.IsDeleted, cancellationToken);
 
             if (user is null)
                 return Result.NotFound(ResponseMessages.UserNotFound);
