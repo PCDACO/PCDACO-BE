@@ -1,10 +1,7 @@
 using System.Linq.Expressions;
-
 using Domain.Entities;
 using Domain.Shared;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 
 namespace Persistance.Data;

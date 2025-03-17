@@ -10,6 +10,8 @@ using MediatR;
 
 using Microsoft.EntityFrameworkCore;
 
+using NetTopologySuite.Geometries;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -29,7 +31,10 @@ public sealed class UpdateCar
         string Description,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        decimal Price
+        decimal Price,
+        decimal PickupLatitude,
+        decimal PickupLongitude,
+        string PickupAddress
     ) : IRequest<Result<Response>>;
 
     public record Response(Guid Id);
@@ -39,7 +44,8 @@ public sealed class UpdateCar
         CurrentUser currentUser,
         IAesEncryptionService aesEncryptionService,
         EncryptionSettings encryptionSettings,
-        IKeyManagementService keyManagementService
+        IKeyManagementService keyManagementService,
+        GeometryFactory geometryFactory
     ) : IRequestHandler<Commamnd, Result<Response>>
     {
         public async Task<Result<Response>> Handle(Commamnd request, CancellationToken cancellationToken)
@@ -100,6 +106,11 @@ public sealed class UpdateCar
                 decryptedKey,
                 checkingCar.EncryptionKey.IV
             );
+            // Create current location point
+            var currentLocation = geometryFactory.CreatePoint(
+                new Coordinate((double)request.PickupLongitude, (double)request.PickupLatitude)
+            );
+            currentLocation.SRID = 4326; // Set SRID for GPS coordinates
             // Update car
             checkingCar.ModelId = request.ModelId;
             checkingCar.EncryptedLicensePlate = encryptedLicensePlate;
@@ -111,6 +122,8 @@ public sealed class UpdateCar
             checkingCar.FuelConsumption = request.FuelConsumption;
             checkingCar.RequiresCollateral = request.RequiresCollateral;
             checkingCar.Price = request.Price;
+            checkingCar.PickupLocation = currentLocation;
+            checkingCar.PickupAddress = request.PickupAddress;
             checkingCar.UpdatedAt = DateTimeOffset.UtcNow;
             // Save changes
             await context.SaveChangesAsync(cancellationToken);

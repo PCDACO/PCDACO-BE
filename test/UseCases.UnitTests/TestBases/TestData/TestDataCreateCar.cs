@@ -1,18 +1,25 @@
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared;
-
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite;
+using NetTopologySuite.Geometries;
 using Persistance.Data;
-
 using UseCases.Abstractions;
-
 using UUIDNext;
 
 namespace UseCases.UnitTests.TestBases.TestData;
 
 public static class TestDataCreateCar
 {
+    private static readonly GeometryFactory GeometryFactory =
+        NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
+
+    // Default test location (example: Ho Chi Minh City center)
+    private const double DEFAULT_LATITUDE = 10.7756587;
+    private const double DEFAULT_LONGITUDE = 106.7004238;
+    private const string DEFAULT_ADDRESS = "268 Nam Kỳ Khởi Nghĩa, Phường 8, Quận 3, TP.HCM";
+
     private static Car CreateCar(
         Guid ownerId,
         Guid modelId,
@@ -20,9 +27,16 @@ public static class TestDataCreateCar
         TransmissionType transmissionType,
         FuelType fuelType,
         CarStatusEnum carStatus,
-        bool isDeleted = false
-    ) =>
-        new()
+        bool isDeleted = false,
+        double latitude = DEFAULT_LATITUDE,
+        double longitude = DEFAULT_LONGITUDE,
+        string address = DEFAULT_ADDRESS
+    )
+    {
+        var pickupLocation = GeometryFactory.CreatePoint(new Coordinate(longitude, latitude));
+        pickupLocation.SRID = 4326;
+
+        return new()
         {
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             OwnerId = ownerId,
@@ -36,8 +50,11 @@ public static class TestDataCreateCar
             Seat = 4,
             FuelConsumption = 7.5m,
             Price = 100m,
+            PickupLocation = pickupLocation,
+            PickupAddress = address,
             IsDeleted = isDeleted,
         };
+    }
 
     public static async Task<Car> CreateTestCar(
         AppDBContext dBContext,
@@ -46,7 +63,10 @@ public static class TestDataCreateCar
         TransmissionType transmissionType,
         FuelType fuelType,
         CarStatusEnum carStatus,
-        bool isDeleted = false
+        bool isDeleted = false,
+        double latitude = DEFAULT_LATITUDE,
+        double longitude = DEFAULT_LONGITUDE,
+        string address = DEFAULT_ADDRESS
     )
     {
         var encryptionKey = await TestDataCreateEncryptionKey.CreateTestEncryptionKey(dBContext);
@@ -57,7 +77,10 @@ public static class TestDataCreateCar
             transmissionType: transmissionType,
             fuelType: fuelType,
             carStatus: carStatus,
-            isDeleted: isDeleted
+            isDeleted: isDeleted,
+            latitude: latitude,
+            longitude: longitude,
+            address: address
         );
 
         var carStatistic = new CarStatistic { CarId = car.Id };
@@ -80,7 +103,10 @@ public static class TestDataCreateCar
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings,
-        bool isDeleted = false
+        bool isDeleted = false,
+        double latitude = DEFAULT_LATITUDE,
+        double longitude = DEFAULT_LONGITUDE,
+        string address = DEFAULT_ADDRESS
     )
     {
         var car = await CreateTestCarHasValidEncryption(
@@ -93,7 +119,10 @@ public static class TestDataCreateCar
             aesEncryptionService,
             keyManagementService,
             encryptionSettings,
-            isDeleted
+            isDeleted,
+            latitude,
+            longitude,
+            address
         );
 
         var imageType = await GetOrCreateCarImageType(dBContext);
@@ -126,7 +155,10 @@ public static class TestDataCreateCar
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings,
-        bool isDeleted = false
+        bool isDeleted = false,
+        double latitude = DEFAULT_LATITUDE,
+        double longitude = DEFAULT_LONGITUDE,
+        string address = DEFAULT_ADDRESS
     )
     {
         // Generate encryption key and encrypt license plate
@@ -145,6 +177,10 @@ public static class TestDataCreateCar
         await dBContext.EncryptionKeys.AddAsync(newEncryptionKey);
         await dBContext.SaveChangesAsync();
 
+        // Create pickup location point
+        var pickupLocation = GeometryFactory.CreatePoint(new Coordinate(longitude, latitude));
+        pickupLocation.SRID = 4326;
+
         // Create car with proper encryption
         Guid carId = Uuid.NewDatabaseFriendly(Database.PostgreSql);
         var car = new Car
@@ -161,6 +197,8 @@ public static class TestDataCreateCar
             Seat = 4,
             FuelConsumption = 7.5m,
             Price = 100m,
+            PickupLocation = pickupLocation,
+            PickupAddress = address,
             IsDeleted = isDeleted,
         };
 

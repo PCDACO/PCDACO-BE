@@ -11,6 +11,8 @@ using MediatR;
 
 using Microsoft.EntityFrameworkCore;
 
+using NetTopologySuite.Geometries;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -32,7 +34,10 @@ public sealed class CreateCar
         decimal FuelConsumption,
         bool RequiresCollateral,
         decimal Price,
-        string Terms
+        string Terms,
+        decimal PickupLatitude,
+        decimal PickupLongitude,
+        string PickupAddress
     ) : IRequest<Result<Response>>;
 
     public sealed record Response(Guid Id)
@@ -45,7 +50,8 @@ public sealed class CreateCar
         CurrentUser currentUser,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
-        EncryptionSettings encryptionSettings
+        EncryptionSettings encryptionSettings,
+        GeometryFactory geometryFactory
     ) : IRequestHandler<Command, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
@@ -102,6 +108,11 @@ public sealed class CreateCar
             string encryptedKey = keyManagementService.EncryptKey(key, encryptionSettings.Key);
             EncryptionKey newEncryptionKey = new() { EncryptedKey = encryptedKey, IV = iv };
             context.EncryptionKeys.Add(newEncryptionKey);
+            // Create current location point
+            var currentLocation = geometryFactory.CreatePoint(
+                new Coordinate((double)request.PickupLongitude, (double)request.PickupLatitude)
+            );
+            currentLocation.SRID = 4326; // Set SRID for GPS coordinates
             Guid carId = Uuid.NewDatabaseFriendly(Database.PostgreSql);
             Car newCar = new()
             {
@@ -119,6 +130,8 @@ public sealed class CreateCar
                 RequiresCollateral = request.RequiresCollateral,
                 Price = request.Price,
                 Terms = request.Terms,
+                PickupLocation = currentLocation,
+                PickupAddress = request.PickupAddress,
                 CarStatistic = new() { CarId = carId },
                 CarAmenities =
                 [
