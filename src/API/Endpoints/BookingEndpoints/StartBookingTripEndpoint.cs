@@ -17,9 +17,17 @@ public class StartBookingTripEndpoint : ICarterModule
             .RequireAuthorization();
     }
 
-    private static async Task<IResult> Handle(ISender sender, Guid id)
+    private static async Task<IResult> Handle(
+        ISender sender,
+        Guid id,
+        StartBookingTripRequest request
+    )
     {
-        Result result = await sender.Send(new StartBookingTrip.Command(id));
+        Result result = await sender.Send(
+            new StartBookingTrip.Command(id, request.Latitude, request.Longitude)
+        );
         return result.MapResult();
     }
+
+    private sealed record StartBookingTripRequest(decimal Latitude, decimal Longitude);
 }
