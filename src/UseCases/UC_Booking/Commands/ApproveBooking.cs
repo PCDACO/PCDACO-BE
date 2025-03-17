@@ -66,9 +66,6 @@ public sealed class ApproveBooking
             {
                 await RejectOverlappingPendingBookingsAsync(booking, cancellationToken);
 
-                // Mark the car as rented.
-                booking.Car.Status = CarStatusEnum.Rented;
-
                 // Update contract with Owner's signature.
                 await UpdateContractForApprovalAsync(booking, cancellationToken);
 
@@ -85,7 +82,6 @@ public sealed class ApproveBooking
             {
                 booking.Status = BookingStatusEnum.Rejected;
                 booking.Note = "Chủ xe từ chối yêu cầu đặt xe";
-                booking.Car.Status = CarStatusEnum.Available;
             }
 
             booking.Status = request.IsApproved
