@@ -16,9 +16,17 @@ public class CompleteBookingEndpoint : ICarterModule
             .RequireAuthorization();
     }
 
-    private static async Task<IResult> Handle(ISender sender, Guid id)
+    private static async Task<IResult> Handle(
+        ISender sender,
+        Guid id,
+        CompleteBookingRequest request
+    )
     {
-        var result = await sender.Send(new CompleteBooking.Command(id));
+        var result = await sender.Send(
+            new CompleteBooking.Command(id, request.CurrentLatitude, request.CurrentLongitude)
+        );
         return result.MapResult();
     }
+
+    private sealed record CompleteBookingRequest(decimal CurrentLatitude, decimal CurrentLongitude);
 }

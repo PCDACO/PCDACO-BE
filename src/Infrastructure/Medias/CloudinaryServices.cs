@@ -1,6 +1,5 @@
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
-
 using UseCases.Abstractions;
 
 namespace Infrastructure.Medias;
@@ -13,14 +12,15 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
         CancellationToken cancellationToken = default
     )
     {
-        ImageUploadParams uploadParams = new()
-        {
-            File = new FileDescription(name, image),
-            Folder = "car",
-            UseFilename = true,
-            UniqueFilename = false,
-            Overwrite = true,
-        };
+        ImageUploadParams uploadParams =
+            new()
+            {
+                File = new FileDescription(name, image),
+                Folder = "car",
+                UseFilename = true,
+                UniqueFilename = false,
+                Overwrite = true,
+            };
         ImageUploadResult uploadResult = await cloudinary.UploadAsync(
             uploadParams,
             cancellationToken
@@ -28,20 +28,22 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
         Console.WriteLine("upload" + uploadResult.Url);
         return uploadResult.Url?.AbsoluteUri ?? throw new Exception("Error uploading image");
     }
+
     public async Task<string> UploadPaperImageAsync(
         string name,
         Stream image,
         CancellationToken cancellationToken = default
     )
     {
-        ImageUploadParams uploadParams = new()
-        {
-            File = new FileDescription(name, image),
-            Folder = "car-paper",
-            UseFilename = true,
-            UniqueFilename = false,
-            Overwrite = true,
-        };
+        ImageUploadParams uploadParams =
+            new()
+            {
+                File = new FileDescription(name, image),
+                Folder = "car-paper",
+                UseFilename = true,
+                UniqueFilename = false,
+                Overwrite = true,
+            };
         ImageUploadResult uploadResult = await cloudinary.UploadAsync(
             uploadParams,
             cancellationToken
@@ -55,14 +57,15 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
         CancellationToken cancellationToken = default
     )
     {
-        ImageUploadParams uploadParams = new()
-        {
-            File = new FileDescription(name, image),
-            Folder = "report",
-            UseFilename = true,
-            UniqueFilename = false,
-            Overwrite = true,
-        };
+        ImageUploadParams uploadParams =
+            new()
+            {
+                File = new FileDescription(name, image),
+                Folder = "report",
+                UseFilename = true,
+                UniqueFilename = false,
+                Overwrite = true,
+            };
         ImageUploadResult uploadResult = await cloudinary.UploadAsync(
             uploadParams,
             cancellationToken
@@ -76,14 +79,15 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
         CancellationToken cancellationToken = default
     )
     {
-        ImageUploadParams uploadParams = new()
-        {
-            File = new FileDescription(name, image),
-            Folder = "user",
-            UseFilename = true,
-            UniqueFilename = false,
-            Overwrite = true,
-        };
+        ImageUploadParams uploadParams =
+            new()
+            {
+                File = new FileDescription(name, image),
+                Folder = "user",
+                UseFilename = true,
+                UniqueFilename = false,
+                Overwrite = true,
+            };
         ImageUploadResult uploadResult = await cloudinary.UploadAsync(
             uploadParams,
             cancellationToken
@@ -97,14 +101,15 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
         CancellationToken cancellationToken = default
     )
     {
-        ImageUploadParams uploadParams = new()
-        {
-            File = new FileDescription(name, image),
-            Folder = "feedback",
-            UseFilename = true,
-            UniqueFilename = false,
-            Overwrite = true,
-        };
+        ImageUploadParams uploadParams =
+            new()
+            {
+                File = new FileDescription(name, image),
+                Folder = "feedback",
+                UseFilename = true,
+                UniqueFilename = false,
+                Overwrite = true,
+            };
         ImageUploadResult uploadResult = await cloudinary.UploadAsync(
             uploadParams,
             cancellationToken
@@ -123,14 +128,15 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             throw new ArgumentNullException(nameof(image));
         }
 
-        ImageUploadParams uploadParams = new()
-        {
-            File = new FileDescription(name, image),
-            Folder = "driver-licenses",
-            UseFilename = true,
-            UniqueFilename = false,
-            Overwrite = true,
-        };
+        ImageUploadParams uploadParams =
+            new()
+            {
+                File = new FileDescription(name, image),
+                Folder = "driver-licenses",
+                UseFilename = true,
+                UniqueFilename = false,
+                Overwrite = true,
+            };
 
         try
         {
@@ -152,18 +158,43 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
         CancellationToken cancellationToken = default
     )
     {
-        ImageUploadParams uploadParams = new()
-        {
-            File = new FileDescription(name, image),
-            Folder = "amenity-icon",
-            UseFilename = true,
-            UniqueFilename = false,
-            Overwrite = true,
-        };
+        ImageUploadParams uploadParams =
+            new()
+            {
+                File = new FileDescription(name, image),
+                Folder = "amenity-icon",
+                UseFilename = true,
+                UniqueFilename = false,
+                Overwrite = true,
+            };
         ImageUploadResult uploadResult = await cloudinary.UploadAsync(
             uploadParams,
             cancellationToken
         );
+        return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
+    }
+
+    public async Task<string> UploadBookingInspectionImageAsync(
+        string name,
+        Stream image,
+        CancellationToken cancellationToken = default
+    )
+    {
+        ImageUploadParams uploadParams =
+            new()
+            {
+                File = new FileDescription(name, image),
+                Folder = "booking-inspection",
+                UseFilename = true,
+                UniqueFilename = false,
+                Overwrite = true,
+            };
+
+        ImageUploadResult uploadResult = await cloudinary.UploadAsync(
+            uploadParams,
+            cancellationToken
+        );
+
         return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
     }
 }

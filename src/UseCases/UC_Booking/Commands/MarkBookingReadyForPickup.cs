@@ -23,6 +23,7 @@ public sealed class MarkBookingReadyForPickup
 
             var booking = await context
                 .Bookings.Include(x => x.Car)
+                .Include(x => x.CarInspections)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
@@ -36,6 +37,9 @@ public sealed class MarkBookingReadyForPickup
                     "Bạn không có quyền thực hiện chức năng này với booking này!"
                 );
             }
+
+            if (!booking.CarInspections.Any())
+                return Result.Error("Chưa có hình ảnh kiểm tra cho booking này!");
 
             // Ensure the booking is in a valid state
             if (booking.Status != BookingStatusEnum.Approved)
@@ -56,6 +60,7 @@ public sealed class MarkBookingReadyForPickup
             }
 
             booking.Status = BookingStatusEnum.ReadyForPickup;
+            booking.UpdatedAt = DateTimeOffset.UtcNow;
             await context.SaveChangesAsync(cancellationToken);
 
             // TODO: Send notification to driver that car is ready for pickup

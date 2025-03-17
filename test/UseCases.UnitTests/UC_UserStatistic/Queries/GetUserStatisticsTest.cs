@@ -6,6 +6,8 @@ using Domain.Enums;
 using Domain.Shared;
 using Infrastructure.Encryption;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite;
+using NetTopologySuite.Geometries;
 using Persistance.Data;
 using UseCases.DTOs;
 using UseCases.UC_UserStatistic.Queries;
@@ -488,6 +490,11 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         EncryptionKey newEncryptionKey = new() { EncryptedKey = encryptedKey, IV = iv };
         context.EncryptionKeys.Add(newEncryptionKey);
 
+        // Create pickup location point
+        var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
+        var pickupLocation = geometryFactory.CreatePoint(new Coordinate(106.7004238, 10.7756587));
+        pickupLocation.SRID = 4326;
+
         var car = new Car
         {
             OwnerId = ownerId,
@@ -504,6 +511,8 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
             RequiresCollateral = false,
             Description = "Test car description",
             Terms = "Standard terms",
+            PickupLocation = pickupLocation,
+            PickupAddress = "268 Nam Kỳ Khởi Nghĩa, Phường 8, Quận 3, TP.HCM"
         };
 
         await _dbContext.Cars.AddAsync(car);

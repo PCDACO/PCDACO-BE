@@ -1,8 +1,7 @@
 using System.ComponentModel.DataAnnotations.Schema;
-
-using Domain.Shared;
 using Domain.Enums;
-
+using Domain.Shared;
+using NetTopologySuite.Geometries;
 
 namespace Domain.Entities;
 
@@ -25,6 +24,9 @@ public class Car : BaseEntity
     public string Terms { get; set; } = string.Empty;
     public int TotalRented { get; set; } = 0;
     public decimal TotalEarning { get; set; } = 0;
+
+    public required Point PickupLocation { get; set; }
+    public required string PickupAddress { get; set; }
 
     // Navigation Properties
     [ForeignKey(nameof(OwnerId))]

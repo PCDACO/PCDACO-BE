@@ -8,7 +8,6 @@ using Persistance.Data;
 using UseCases.Abstractions;
 using UseCases.BackgroundServices.Bookings;
 using UseCases.DTOs;
-using UseCases.Services.PayOSService;
 using UseCases.UC_Booking.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
