@@ -23,7 +23,7 @@ public class TrackTripLocationEndpoint : ICarterModule
         TrackTripLocationRequest request
     )
     {
-        Result result = await sender.Send(
+        Result<TrackTripLocation.Response> result = await sender.Send(
             new TrackTripLocation.Command(id, request.Latitude, request.Longitude)
         );
 

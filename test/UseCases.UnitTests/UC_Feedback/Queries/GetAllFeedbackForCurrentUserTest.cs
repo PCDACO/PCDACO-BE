@@ -2,6 +2,8 @@ using Ardalis.Result;
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
+using NetTopologySuite;
+using NetTopologySuite.Geometries;
 using Persistance.Data;
 using UseCases.DTOs;
 using UseCases.UC_Feedback.Queries;
@@ -426,6 +428,11 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
         var transmissionTypeId = await CreateTestTransmissionType();
         var encryptionKeyId = await CreateTestEncryptionKey();
 
+        // Create pickup location point
+        var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
+        var pickupLocation = geometryFactory.CreatePoint(new Coordinate(106.7004238, 10.7756587));
+        pickupLocation.SRID = 4326;
+
         // Create car
         var car = new Car
         {
@@ -440,6 +447,8 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
             Seat = 4,
             FuelConsumption = 7.5m,
             Price = 50.0m,
+            PickupLocation = pickupLocation,
+            PickupAddress = "268 Nam Kỳ Khởi Nghĩa, Phường 8, Quận 3, TP.HCM"
         };
 
         _dbContext.Cars.Add(car);

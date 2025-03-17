@@ -2,6 +2,7 @@ using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Geometries;
 using Persistance.Data;
 using UseCases.DTOs;
 using UseCases.UC_Booking.Commands;
@@ -14,8 +15,12 @@ namespace UseCases.UnitTests.UC_Booking.Commands;
 public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
+    private readonly GeometryFactory _geometryFactory = new();
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
+
+    private readonly decimal _latitude = 0;
+    private readonly decimal _longitude = 0;
 
     public Task InitializeAsync() => Task.CompletedTask;
 
@@ -29,8 +34,8 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new StartBookingTrip.Handler(_dbContext, _currentUser);
-        var command = new StartBookingTrip.Command(Guid.NewGuid());
+        var handler = new StartBookingTrip.Handler(_dbContext, _geometryFactory, _currentUser);
+        var command = new StartBookingTrip.Command(Guid.NewGuid(), _latitude, _longitude);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -48,8 +53,8 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new StartBookingTrip.Handler(_dbContext, _currentUser);
-        var command = new StartBookingTrip.Command(Guid.NewGuid());
+        var handler = new StartBookingTrip.Handler(_dbContext, _geometryFactory, _currentUser);
+        var command = new StartBookingTrip.Command(Guid.NewGuid(), _latitude, _longitude);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -104,8 +109,8 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
             status
         );
 
-        var handler = new StartBookingTrip.Handler(_dbContext, _currentUser);
-        var command = new StartBookingTrip.Command(booking.Id);
+        var handler = new StartBookingTrip.Handler(_dbContext, _geometryFactory, _currentUser);
+        var command = new StartBookingTrip.Command(booking.Id, _latitude, _longitude);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -155,8 +160,8 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
             BookingStatusEnum.ReadyForPickup
         );
 
-        var handler = new StartBookingTrip.Handler(_dbContext, _currentUser);
-        var command = new StartBookingTrip.Command(booking.Id);
+        var handler = new StartBookingTrip.Handler(_dbContext, _geometryFactory, _currentUser);
+        var command = new StartBookingTrip.Command(booking.Id, _latitude, _longitude);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -165,9 +170,7 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Contains("Đã bắt đầu chuyến đi", result.SuccessMessage);
 
-        var updatedBooking = await _dbContext
-            .Bookings
-            .FirstAsync(b => b.Id == booking.Id);
+        var updatedBooking = await _dbContext.Bookings.FirstAsync(b => b.Id == booking.Id);
 
         Assert.Equal(BookingStatusEnum.Ongoing, updatedBooking.Status);
     }
@@ -210,8 +213,8 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
     //         BookingStatusEnum.Ongoing
     //     );
     //
-    //     var handler = new StartBookingTrip.Handler(_dbContext, _currentUser);
-    //     var command = new StartBookingTrip.Command(booking.Id);
+    //     var handler = new StartBookingTrip.Handler(_dbContext, _geometryFactory, _currentUser);
+    //     var command = new StartBookingTrip.Command(booking.Id, _latitude, _longitude);
     //
     //     // Act
     //     var result = await handler.Handle(command, CancellationToken.None);

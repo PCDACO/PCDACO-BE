@@ -1,12 +1,10 @@
 using Domain.Data;
 using Domain.Entities;
 using Domain.Shared;
-
 using Microsoft.EntityFrameworkCore;
-
+using NetTopologySuite;
 using Persistance.Bogus;
 using Persistance.Data;
-
 using UseCases.Abstractions;
 using UseCases.Utils;
 
@@ -23,8 +21,13 @@ public class UpdateDatabase
         using var context = scope.ServiceProvider.GetService<AppDBContext>();
         var encryptionSettings = scope.ServiceProvider.GetRequiredService<EncryptionSettings>();
         var tokenService = scope.ServiceProvider.GetRequiredService<TokenService>();
-        var aesEncryptionService = scope.ServiceProvider.GetRequiredService<IAesEncryptionService>();
+        var aesEncryptionService =
+            scope.ServiceProvider.GetRequiredService<IAesEncryptionService>();
         var keyManageService = scope.ServiceProvider.GetRequiredService<IKeyManagementService>();
+
+        // Create geometry factory for spatial data
+        var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
+
         if (context is null)
             throw new ArgumentNullException(nameof(context));
         context.Database.EnsureDeleted();
@@ -53,7 +56,8 @@ public class UpdateDatabase
             encryptionSettings,
             aesEncryptionService,
             keyManageService,
-            tokenService
+            tokenService,
+            geometryFactory
         );
         // Generate inspection schedules
         InspectionSchedule[] inspectionSchedules = InspectionScheduleGenerator.Execute(

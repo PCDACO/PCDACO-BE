@@ -16,23 +16,27 @@ namespace UseCases.UC_Booking.Commands;
 public sealed class TrackTripLocation
 {
     public sealed record Command(Guid BookingId, decimal Latitude, decimal Longitude)
-        : IRequest<Result>;
+        : IRequest<Result<Response>>;
+
+    public sealed record Response(decimal Distance, decimal CumulativeDistance);
 
     internal sealed class Handler(
         IAppDBContext context,
         CurrentUser currentUser,
         GeometryFactory geometryFactory,
         IHubContext<LocationHub> hubContext
-    ) : IRequestHandler<Command, Result>
+    ) : IRequestHandler<Command, Result<Response>>
     {
-        public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
+        public async Task<Result<Response>> Handle(
+            Command request,
+            CancellationToken cancellationToken
+        )
         {
             if (!currentUser.User!.IsDriver())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này!");
 
             var booking = await context
-                .Bookings
-                .Include(b => b.TripTrackings)
+                .Bookings.Include(b => b.TripTrackings)
                 .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
@@ -88,7 +92,10 @@ public sealed class TrackTripLocation
                 cancellationToken: cancellationToken
             );
 
-            return Result.Success();
+            return Result.Success(
+                new Response(distance, cumulativeDistance),
+                "Cập nhật vị trí thành công"
+            );
         }
     }
 

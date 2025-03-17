@@ -8,6 +8,8 @@ using Infrastructure.Encryption;
 
 using Microsoft.EntityFrameworkCore;
 
+using NetTopologySuite.Geometries;
+
 using Persistance.Data;
 
 using UseCases.Abstractions;
@@ -28,6 +30,7 @@ public class CreateCarTests : IAsyncLifetime
     private readonly EncryptionSettings _encryptionSettings;
     private readonly IAesEncryptionService _aesService;
     private readonly IKeyManagementService _keyService;
+    private readonly GeometryFactory _geometryFactory = new();
 
     public CreateCarTests(DatabaseTestBase fixture)
     {
@@ -62,7 +65,11 @@ public class CreateCarTests : IAsyncLifetime
             FuelConsumption: 7.5m,
             RequiresCollateral: true,
             Price: 500m,
-            Terms: ""
+            Terms: "",
+            PickupLatitude: 0,
+            PickupLongitude: 0,
+            PickupAddress: ""
+
         );
 
     [Fact]
@@ -81,7 +88,8 @@ public class CreateCarTests : IAsyncLifetime
             _currentUser,
             _aesService,
             _keyService,
-            _encryptionSettings
+            _encryptionSettings,
+            _geometryFactory
         );
 
         var command = CreateValidCommand(transmissionType: transmissionType, fuelType: fuelType);
@@ -114,7 +122,8 @@ public class CreateCarTests : IAsyncLifetime
             _currentUser,
             _aesService,
             _keyService,
-            _encryptionSettings
+            _encryptionSettings,
+            _geometryFactory
         );
 
         var command = CreateValidCommand(
@@ -150,7 +159,8 @@ public class CreateCarTests : IAsyncLifetime
             _currentUser,
             _aesService,
             _keyService,
-            _encryptionSettings
+            _encryptionSettings,
+            _geometryFactory
         );
 
         var command = CreateValidCommand(
@@ -196,7 +206,10 @@ public class CreateCarTests : IAsyncLifetime
             FuelConsumption: 0,
             RequiresCollateral: true,
             Price: 0,
-            Terms: ""
+            Terms: "",
+            PickupLatitude: 0,
+            PickupLongitude: 0,
+            PickupAddress: ""
         );
 
         // Act
@@ -231,7 +244,8 @@ public class CreateCarTests : IAsyncLifetime
             _currentUser,
             _aesService,
             _keyService,
-            _encryptionSettings
+            _encryptionSettings,
+            _geometryFactory
         );
 
         var command = CreateValidCommand(

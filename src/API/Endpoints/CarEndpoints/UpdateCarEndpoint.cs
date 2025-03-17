@@ -37,7 +37,10 @@ public class UpdateCarEndpoint : ICarterModule
                 Description: request.Description,
                 Price: request.Price,
                 FuelConsumption: request.FuelConsumption,
-                RequiresCollateral: request.RequiresCollateral
+                RequiresCollateral: request.RequiresCollateral,
+                PickupLatitude: request.PickupLatitude,
+                PickupLongitude : request.PickupLongitude,
+                PickupAddress: request.PickupAddress
             )
         );
         return result.MapResult();
@@ -54,6 +57,9 @@ public class UpdateCarEndpoint : ICarterModule
         string Description,
         decimal FuelConsumption,
         bool RequiresCollateral,
-        decimal Price
+        decimal Price,
+        decimal PickupLatitude,
+        decimal PickupLongitude,
+        string PickupAddress
     );
 }
