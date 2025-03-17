@@ -181,7 +181,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _currentUser
         );
-        var command = new CompleteBooking.Command(booking.Id, _latitude, _longitude);
+        var command = new CompleteBooking.Command(booking.Id, 10.7756587m, 106.7004238m);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);

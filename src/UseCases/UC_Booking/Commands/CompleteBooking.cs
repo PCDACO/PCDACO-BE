@@ -116,7 +116,7 @@ public sealed class CompleteBooking
             decimal unusedDays = 0;
 
             // Early Return Case
-            if (actualDays < (totalBookingDays / 2))
+            if (actualDays < (totalBookingDays / 2) && actualDays >= 1)
             {
                 unusedDays = totalBookingDays - actualDays;
                 refundAmount = dailyRate * unusedDays * EARLY_RETURN_REFUND_PERCENTAGE;
