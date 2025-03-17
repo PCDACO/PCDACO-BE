@@ -60,6 +60,7 @@ public sealed class MarkBookingReadyForPickup
             }
 
             booking.Status = BookingStatusEnum.ReadyForPickup;
+            booking.UpdatedAt = DateTimeOffset.UtcNow;
             await context.SaveChangesAsync(cancellationToken);
 
             // TODO: Send notification to driver that car is ready for pickup

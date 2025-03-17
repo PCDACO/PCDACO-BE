@@ -84,6 +84,7 @@ public sealed class ApproveBooking
                 booking.Note = "Chủ xe từ chối yêu cầu đặt xe";
             }
 
+            booking.UpdatedAt = DateTimeOffset.UtcNow;
             booking.Status = request.IsApproved
                 ? BookingStatusEnum.Approved
                 : BookingStatusEnum.Rejected;
