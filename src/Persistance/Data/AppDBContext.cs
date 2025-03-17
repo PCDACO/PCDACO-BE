@@ -1,7 +1,10 @@
 using System.Linq.Expressions;
+
 using Domain.Entities;
 using Domain.Shared;
+
 using Microsoft.EntityFrameworkCore;
+
 using UseCases.Abstractions;
 
 namespace Persistance.Data;
@@ -16,7 +19,6 @@ public class AppDBContext(DbContextOptions context) : DbContext(context), IAppDB
     public DbSet<CarAmenity> CarAmenities => Set<CarAmenity>();
     public DbSet<CarReport> CarReports => Set<CarReport>();
     public DbSet<CarStatistic> CarStatistics => Set<CarStatistic>();
-    public DbSet<License> Licenses => Set<License>();
     public DbSet<EncryptionKey> EncryptionKeys => Set<EncryptionKey>();
     public DbSet<Feedback> Feedbacks => Set<Feedback>();
     public DbSet<ImageCar> ImageCars => Set<ImageCar>();

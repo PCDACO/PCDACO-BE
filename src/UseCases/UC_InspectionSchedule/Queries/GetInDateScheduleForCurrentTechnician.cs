@@ -27,17 +27,18 @@ namespace UseCases.UC_InspectionSchedule.Queries
         )
         {
             public static async Task<Response> FromEntity(
+                string technicianName,
+                DateTimeOffset InspectionDate,
                 IEnumerable<InspectionSchedule> schedules,
                 string masterKey,
                 IAesEncryptionService aesEncryptionService,
                 IKeyManagementService keyManagementService
             )
             {
-                if (!schedules.Any()) return null!;
                 return new Response(
-                    TechnicianName: schedules.First().Technician.Name,
-                    InspectionDate: DateTimeOffset.UtcNow,
-                    Cars: await Task.WhenAll(schedules.Select(async schedule =>
+                    TechnicianName: technicianName,
+                    InspectionDate: InspectionDate,
+                    Cars: await Task.WhenAll(schedules.Any() ? schedules.Select(async schedule =>
                     {
                         string decryptedKey = keyManagementService.DecryptKey(
                             schedule.Car.EncryptionKey.EncryptedKey,
@@ -75,7 +76,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
                             ),
                             InspectionAddress: schedule.InspectionAddress
                         );
-                    }))
+                    }) : [])
                 );
             }
         }
@@ -120,7 +121,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
                 if (!currentUser.User!.IsTechnician())
                     return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
-                var today = DateTimeOffset.UtcNow.Date;
+                var today = DateTimeOffset.UtcNow;
                 IEnumerable<InspectionSchedule> schedules = await context
                     .InspectionSchedules
                     .AsNoTracking()
@@ -138,13 +139,15 @@ namespace UseCases.UC_InspectionSchedule.Queries
                     .Where(s =>
                         s.TechnicianId == currentUser.User.Id
                         && !s.IsDeleted
-                        && s.InspectionDate.Date == today
+                        && s.InspectionDate.Date == today.Date
                     )
                     .OrderBy(s => s.Id)
                     .ToListAsync(cancellationToken);
 
                 return Result.Success(
                     await Response.FromEntity(
+                        currentUser.User.Name,
+                        today,
                         schedules,
                         encryptionSettings.Key,
                         aesEncryptionService,

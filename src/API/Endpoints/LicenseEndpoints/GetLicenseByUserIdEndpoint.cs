@@ -7,19 +7,21 @@ using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.LicenseEndpoints;
 
-public class GetLicenseByIdEndpoint : ICarterModule
+public class GetLicenseByUserIdEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/licenses/{id:guid}", Handle)
-            .WithSummary("Get license details by id")
+        app.MapGet("/api/users/{id:guid}/license", Handle)
+            .WithSummary("Get license details by user id")
             .WithTags("Licenses")
             .RequireAuthorization();
     }
 
     private static async Task<IResult> Handle(ISender sender, Guid id)
     {
-        Result<GetLicenseById.Response> result = await sender.Send(new GetLicenseById.Query(id));
+        Result<GetLicenseByUserId.Response> result = await sender.Send(
+            new GetLicenseByUserId.Query(id)
+        );
         return result.MapResult();
     }
 }

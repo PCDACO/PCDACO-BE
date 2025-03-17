@@ -54,7 +54,7 @@ public class GetAllOwners
                 decryptedPhone,
                 user.Role.Name,
                 GetTimestampFromUuid.Execute(user.Id),
-                user.License?.IsApprove
+                user.LicenseIsApproved
             );
         }
     }
@@ -80,7 +80,6 @@ public class GetAllOwners
             IQueryable<User> query = context
                 .Users.AsNoTracking()
                 .Include(u => u.Role)
-                .Include(u => u.License)
                 .Include(u => u.EncryptionKey)
                 .Where(u =>
                     u.Role != null && EF.Functions.ILike(u.Role.Name, "%Owner%") && !u.IsDeleted

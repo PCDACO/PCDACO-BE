@@ -11,18 +11,17 @@ public class UpdateUserLicenseEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPut("/api/users/licenses/{id:guid}/information", Handle)
+        app.MapPut("/api/users/license", Handle)
             .WithName("UpdateUserLicense")
             .WithSummary("Update User license information")
             .WithTags("Licenses")
             .RequireAuthorization();
     }
 
-    private async Task<IResult> Handle(ISender sender, Guid id, UpdateUserLicenseRequest request)
+    private async Task<IResult> Handle(ISender sender, UpdateUserLicenseRequest request)
     {
         Result<UpdateUserLicense.Response> result = await sender.Send(
             new UpdateUserLicense.Command(
-                LicenseId: id,
                 LicenseNumber: request.LicenseNumber,
                 ExpirationDate: request.ExpirationDate
             )

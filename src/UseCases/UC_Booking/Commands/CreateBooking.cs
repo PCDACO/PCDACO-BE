@@ -39,8 +39,8 @@ public sealed class CreateBooking
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
             // Verify driver license first
-            var license = await context.Licenses.FirstOrDefaultAsync(
-                l => l.UserId == currentUser.User.Id && l.IsApprove == true
+            var license = await context.Users.FirstOrDefaultAsync(
+                u => u.Id == currentUser.User.Id && u.LicenseIsApproved == true
                 // && l.ExpiryDate > request.EndTime
                 ,
                 cancellationToken

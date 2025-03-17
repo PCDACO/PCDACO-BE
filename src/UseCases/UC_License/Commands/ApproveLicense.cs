@@ -10,14 +10,14 @@ namespace UseCases.UC_License.Commands;
 
 public sealed class ApproveLicense
 {
-    public sealed record Command(Guid LicenseId, bool IsApproved, string? RejectReason = null)
+    public sealed record Command(Guid UserId, bool IsApproved, string? RejectReason = null)
         : IRequest<Result<Response>>;
 
-    public sealed record Response(Guid LicenseId)
+    public sealed record Response(Guid UserId, bool IsApproved, string? RejectReason)
     {
-        public static Response FromEntity(License license)
+        public static Response FromEntity(User user)
         {
-            return new(license.Id);
+            return new(user.Id, user.LicenseIsApproved!.Value, user.LicenseRejectReason);
         }
     };
 
@@ -35,30 +35,33 @@ public sealed class ApproveLicense
             if (!_currentUser.User!.IsAdmin())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
 
-            var license = await _context.Licenses.FirstOrDefaultAsync(
-                l => l.Id == request.LicenseId && !l.IsDeleted,
+            var user = await _context.Users.FirstOrDefaultAsync(
+                u => u.Id == request.UserId && !u.IsDeleted,
                 cancellationToken
             );
 
-            if (license == null)
+            if (user is null)
+                return Result.Error("Người dùng không tồn tại");
+
+            if (string.IsNullOrEmpty(user.EncryptedLicenseNumber))
                 return Result.NotFound("Không tìm thấy giấy phép lái xe");
 
-            if (license.IsApprove != null)
+            if (user.LicenseIsApproved != null)
                 return Result.Conflict("Giấy phép này đã được xử lý");
 
             // If rejecting, require a reason
             if (!request.IsApproved && string.IsNullOrWhiteSpace(request.RejectReason))
                 return Result.Error("Phải cung cấp lý do từ chối giấy phép");
 
-            license.IsApprove = request.IsApproved;
-            license.ApprovedAt = !request.IsApproved ? null : DateTimeOffset.UtcNow;
-            license.RejectReason = !request.IsApproved ? request.RejectReason : null;
+            user.LicenseIsApproved = request.IsApproved;
+            user.LicenseApprovedAt = !request.IsApproved ? null : DateTimeOffset.UtcNow;
+            user.LicenseRejectReason = !request.IsApproved ? request.RejectReason : null;
 
             await _context.SaveChangesAsync(cancellationToken);
 
             string message = request.IsApproved ? "phê duyệt" : "từ chối";
             return Result.Success(
-                Response.FromEntity(license),
+                Response.FromEntity(user),
                 $"Đã {message} giấy phép lái xe thành công"
             );
         }
@@ -68,8 +71,6 @@ public sealed class ApproveLicense
     {
         public Validator()
         {
-            RuleFor(x => x.LicenseId).NotEmpty().WithMessage("ID giấy phép không được để trống");
-
             RuleFor(x => x.IsApproved)
                 .NotNull()
                 .WithMessage("Trạng thái phê duyệt không được để trống");

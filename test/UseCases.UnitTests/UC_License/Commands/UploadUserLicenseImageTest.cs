@@ -22,13 +22,12 @@ public class UploadUserLicenseImageTest(DatabaseTestBase fixture) : IAsyncLifeti
 
     public async Task DisposeAsync() => await _resetDatabase();
 
-    private UploadUserLicenseImage.Command CreateValidCommand(Guid licenseId)
+    private UploadUserLicenseImage.Command CreateValidCommand()
     {
         var frontImageStream = new MemoryStream(new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 }); // Valid JPEG signature
         var backImageStream = new MemoryStream(new byte[] { 0xFF, 0xD8, 0xFF, 0xE0 }); // Valid JPEG signature
 
         return new UploadUserLicenseImage.Command(
-            LicenseId: licenseId,
             LicenseImageFrontUrl: frontImageStream,
             LicenseImageBackUrl: backImageStream
         );
@@ -48,7 +47,7 @@ public class UploadUserLicenseImageTest(DatabaseTestBase fixture) : IAsyncLifeti
             _cloudinaryServices.Object
         );
 
-        var command = CreateValidCommand(Guid.NewGuid());
+        var command = CreateValidCommand();
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -72,7 +71,7 @@ public class UploadUserLicenseImageTest(DatabaseTestBase fixture) : IAsyncLifeti
             _cloudinaryServices.Object
         );
 
-        var command = CreateValidCommand(Guid.NewGuid());
+        var command = CreateValidCommand();
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -92,17 +91,12 @@ public class UploadUserLicenseImageTest(DatabaseTestBase fixture) : IAsyncLifeti
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, role);
         _currentUser.SetUser(testUser);
 
-        var encryptionKey = await TestDataCreateEncryptionKey.CreateTestEncryptionKey(_dbContext);
+        var updateUser = await _dbContext.Users.FindAsync(testUser.Id);
+        updateUser!.EncryptedLicenseNumber = "NTjmhIE3YJtqsqXCZYbjzA==";
+        updateUser!.LicenseImageFrontUrl = "old-front-url";
+        updateUser.LicenseImageBackUrl = "old-back-url";
+        updateUser.LicenseExpiryDate = DateTimeOffset.UtcNow.AddDays(1);
 
-        var license = new License
-        {
-            UserId = testUser.Id,
-            EncryptionKeyId = encryptionKey.Id,
-            LicenseImageFrontUrl = "old-front-url",
-            LicenseImageBackUrl = "old-back-url",
-            ExpiryDate = DateTimeOffset.UtcNow.AddDays(1),
-        };
-        await _dbContext.Licenses.AddAsync(license);
         await _dbContext.SaveChangesAsync();
 
         _cloudinaryServices
@@ -131,7 +125,7 @@ public class UploadUserLicenseImageTest(DatabaseTestBase fixture) : IAsyncLifeti
             _cloudinaryServices.Object
         );
 
-        var command = CreateValidCommand(license.Id);
+        var command = CreateValidCommand();
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -140,10 +134,11 @@ public class UploadUserLicenseImageTest(DatabaseTestBase fixture) : IAsyncLifeti
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Equal("Cập nhật ảnh giấy phép lái xe thành công", result.SuccessMessage);
 
-        var updatedLicense = await _dbContext.Licenses.FindAsync(license.Id);
-        Assert.NotNull(updatedLicense);
-        Assert.Equal("new-front-url", updatedLicense.LicenseImageFrontUrl);
-        Assert.Equal("new-back-url", updatedLicense.LicenseImageBackUrl);
+        var userUploadedLicenseImage = await _dbContext.Users.FindAsync(testUser.Id);
+        Assert.NotNull(userUploadedLicenseImage);
+        Assert.NotEmpty(userUploadedLicenseImage.EncryptedLicenseNumber);
+        Assert.Equal("new-front-url", userUploadedLicenseImage.LicenseImageFrontUrl);
+        Assert.Equal("new-back-url", userUploadedLicenseImage.LicenseImageBackUrl);
     }
 
     [Fact]
@@ -152,7 +147,6 @@ public class UploadUserLicenseImageTest(DatabaseTestBase fixture) : IAsyncLifeti
         // Arrange
         var validator = new UploadUserLicenseImage.Validator();
         var command = new UploadUserLicenseImage.Command(
-            LicenseId: Guid.Empty,
             LicenseImageFrontUrl: null!,
             LicenseImageBackUrl: null!
         );
@@ -162,7 +156,6 @@ public class UploadUserLicenseImageTest(DatabaseTestBase fixture) : IAsyncLifeti
 
         // Assert
         Assert.False(result.IsValid);
-        Assert.Contains(result.Errors, e => e.PropertyName == "LicenseId");
         Assert.Contains(result.Errors, e => e.PropertyName == "LicenseImageFrontUrl");
         Assert.Contains(result.Errors, e => e.PropertyName == "LicenseImageBackUrl");
     }
