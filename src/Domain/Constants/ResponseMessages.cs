@@ -80,4 +80,7 @@ public class ResponseMessages
 
     // Bank Info
     public const string BankInfoNotFound = "Không tìm thấy thông tin ngân hàng";
+
+    // Bank Account
+    public const string BankAccountNotFound = "Không tìm thấy tài khoản ngân hàng";
 }
