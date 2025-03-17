@@ -72,4 +72,9 @@ public class ResponseMessages
     public const string InProgressStatusNotAvailable =
         "Trạng thái kiểm định đang tiến hành không có sẵn";
     public const string PendingStatusNotAvailable = "Trạng thái kiểm định chờ duyệt không có sẵn";
+
+    // BOOKING
+    public const string BookingNotFound = "Không tìm thấy booking";
+    public const string OnlyCreatorCanAccessBooking =
+        "Bạn không có quyền thực hiện chức năng này với booking này!";
 }
