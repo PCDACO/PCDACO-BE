@@ -20,8 +20,7 @@ public sealed class GenerateWithdrawalQRCode
         string AccountName,
         string AccountNumber,
         decimal Amount,
-        string Description,
-        string WithdrawalCode
+        string Description
     )
     {
         public static async Task<Response> FromEntity(
@@ -44,7 +43,7 @@ public sealed class GenerateWithdrawalQRCode
             );
 
             // Generate description that includes withdrawal code for tracking
-            var description = $"Rut tien {withdrawal.WithdrawalCode}";
+            var description = $"Free driver rut tien";
 
             // Generate VietQR URL
             var qrUrl =
@@ -53,14 +52,16 @@ public sealed class GenerateWithdrawalQRCode
                 + $"&addInfo={Uri.EscapeDataString(description)}"
                 + $"&accountName={Uri.EscapeDataString(withdrawal.BankAccount.BankAccountName)}";
 
+            var bankName =
+                $"{withdrawal.BankAccount.BankInfo.ShortName} - {withdrawal.BankAccount.BankInfo.Name}";
+
             return new(
                 qrUrl,
-                withdrawal.BankAccount.BankInfo.Name,
+                bankName,
                 withdrawal.BankAccount.BankAccountName,
                 decryptedAccountNumber,
                 withdrawal.Amount,
-                description,
-                withdrawal.WithdrawalCode
+                description
             );
         }
     }
