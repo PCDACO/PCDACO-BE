@@ -35,7 +35,9 @@ public class User : BaseEntity
     [ForeignKey(nameof(RoleId))]
     public UserRole Role { get; set; } = null!;
     public UserStatistic UserStatistic { get; set; } = null!;
-    public WithdrawalRequest WithdrawalRequest { get; set; } = null!;
+
+    [InverseProperty(nameof(WithdrawalRequest.User))]
+    public ICollection<WithdrawalRequest> WithdrawalRequests { get; set; } = [];
     public ICollection<Booking> Bookings { get; set; } = [];
     public ICollection<BankAccount> BankAccounts { get; set; } = [];
     public ICollection<Car> Cars { get; set; } = [];
