@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations.Schema;
+
 using Domain.Enums;
 using Domain.Shared;
 
@@ -15,7 +16,6 @@ public class Transaction : BaseEntity
     public decimal Amount { get; set; } = 0;
     public string Description { get; set; } = string.Empty;
     public decimal BalanceAfter { get; set; } = 0;
-    public string ProofUrl { get; set; } = string.Empty;
 
     // Navigation properties
     [ForeignKey(nameof(FromUserId))]

@@ -12,9 +12,10 @@ public class WithdrawalRequest : BaseEntity
     public required decimal Amount { get; set; }
     public string RejectReason { get; set; } = string.Empty;
     public Guid? TransactionId { get; set; }
-    public DateTimeOffset? ProcessedAt { get; set; }
+    public DateTime? ProcessedAt { get; set; }
     public Guid? ProcessedByAdminId { get; set; }
     public string? AdminNote { get; set; }
+    public string WithdrawalCode { get; set; } = string.Empty;
 
     // Navigation properties
     [ForeignKey(nameof(UserId))]

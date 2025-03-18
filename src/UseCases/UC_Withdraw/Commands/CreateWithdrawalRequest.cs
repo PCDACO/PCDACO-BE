@@ -14,9 +14,10 @@ public sealed class CreateWithdrawalRequest
 {
     public record Command(Guid BankAccountId, decimal Amount) : IRequest<Result<Response>>;
 
-    public record Response(Guid Id)
+    public record Response(Guid Id, string WithdrawalCode)
     {
-        public static Response FromEntity(WithdrawalRequest request) => new(request.Id);
+        public static Response FromEntity(WithdrawalRequest request) =>
+            new(request.Id, request.WithdrawalCode);
     };
 
     public class Handler(IAppDBContext context, CurrentUser currentUser)

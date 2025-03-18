@@ -1053,10 +1053,6 @@ namespace Persistance.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("ProofUrl")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<int>("Status")
                         .HasColumnType("integer");
 
@@ -1359,7 +1355,7 @@ namespace Persistance.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
 
-                    b.Property<DateTimeOffset?>("ProcessedAt")
+                    b.Property<DateTime?>("ProcessedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<Guid?>("ProcessedByAdminId")
@@ -1380,6 +1376,10 @@ namespace Persistance.Migrations
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
+
+                    b.Property<string>("WithdrawalCode")
+                        .IsRequired()
+                        .HasColumnType("text");
 
                     b.HasKey("Id");
 

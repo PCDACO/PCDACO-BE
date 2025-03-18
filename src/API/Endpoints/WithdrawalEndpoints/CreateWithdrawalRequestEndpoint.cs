@@ -12,7 +12,7 @@ public class CreateWithdrawalRequestEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/withdrawals", Handle)
+        app.MapPost("/api/withdrawal", Handle)
             .WithSummary("Create a withdrawal request")
             .WithTags("Transactions")
             .AddEndpointFilter<IdempotencyFilter>()

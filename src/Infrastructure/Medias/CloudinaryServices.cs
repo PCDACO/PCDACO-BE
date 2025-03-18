@@ -197,29 +197,4 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
 
         return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
     }
-
-    public async Task<string> UploadTransactionProofAsync(
-        string name,
-        Stream image,
-        CancellationToken cancellationToken = default
-    )
-    {
-        ImageUploadParams uploadParams =
-            new()
-            {
-                File = new FileDescription(name, image),
-                Folder = "transaction-proofs",
-                UseFilename = true,
-                UniqueFilename = false,
-                Overwrite = true,
-            };
-
-        ImageUploadResult uploadResult = await cloudinary.UploadAsync(
-            uploadParams,
-            cancellationToken
-        );
-
-        return uploadResult.Url.AbsoluteUri
-            ?? throw new Exception("Error uploading transaction proof");
-    }
 }
