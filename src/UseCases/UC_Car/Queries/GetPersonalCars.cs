@@ -91,7 +91,8 @@ public class GetPersonalCars
                 Images: [.. car.ImageCars?.Select(i => new ImageDetail(
                     i.Id,
                     i.Url,
-                    i.Type.Name
+                    i.Type.Name,
+                    i.Name
                 )) ?? []],
                 Amenities: [
                     .. car.CarAmenities.Select(a => new AmenityDetail(
@@ -123,7 +124,8 @@ public class GetPersonalCars
     public record ImageDetail(
         Guid Id,
         string Url,
-        string Type
+        string Type,
+        string Name
     );
 
     public record AmenityDetail(

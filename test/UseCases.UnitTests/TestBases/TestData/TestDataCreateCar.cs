@@ -128,6 +128,7 @@ public static class TestDataCreateCar
         var imageType = await GetOrCreateCarImageType(dBContext);
 
         // Create and add images
+        int i = 0;
         var carImages = imageUrls
             .Select(url => new ImageCar
             {
@@ -135,6 +136,7 @@ public static class TestDataCreateCar
                 CarId = car.Id,
                 TypeId = imageType.Id,
                 Url = url,
+                Name = $"Car-{car.Id}-Image-{url}-{i++}",
                 IsDeleted = false,
             })
             .ToList();

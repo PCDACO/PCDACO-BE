@@ -19,6 +19,7 @@ public class ResponseMessages
     public const string EmailAddressIsExisted = "Email đã tồn tại";
     public const string PhoneNumberIsExisted = "Số điện thoại đã tồn tại";
     public const string TechnicianNotFound = "Không tìm thấy kiểm định viên";
+    public const string NewPasswordIsSameAsOld = "Mật khẩu mới không được trùng với mật khẩu cũ";
 
     // USER ROLE
     public const string MustBeConsultantOrTechnician = "Vai trò phải là consultant hoặc technician";

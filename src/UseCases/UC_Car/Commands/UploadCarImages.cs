@@ -19,22 +19,29 @@ public sealed class UploadCarImages
 {
     public record Command(
         Guid CarId,
-        Stream[] CarImages
+        ImageFile[] CarImages
     ) : IRequest<Result<Response>>;
+
+    public record ImageFile
+    {
+        public required Stream Content { get; set; }
+        public required string FileName { get; set; }
+    }
 
     public record Response(ImageDetail[] Images)
     {
-        public static Response FromEntity(Guid id, string[] urls)
+        public static Response FromEntity(Guid id, ImageCar[] files)
         {
             return new Response(
-                [.. urls.Select(i => new ImageDetail(id, i))]
+                [.. files.Select(f => new ImageDetail(id, f.Url, f.Name))]
             );
         }
     };
 
     public record ImageDetail(
         Guid Id,
-        string Url
+        string Url,
+        string Name
     );
     public class Handler(
         IAppDBContext context,
@@ -72,23 +79,24 @@ public sealed class UploadCarImages
             int carIndex = 0;
             foreach (var image in request.CarImages)
             {
-                carTasks.Add(cloudinaryServices.UploadCarImageAsync($"Car-{car.Id}-Image-{++carIndex}", image, cancellationToken));
+                carTasks.Add(cloudinaryServices.UploadCarImageAsync($"Car-{car.Id}-Image-{++carIndex}", image.Content, cancellationToken));
             }
             string[] carImageUrls = await Task.WhenAll(carTasks);
             ImageCar[] images =
             [
-                .. carImageUrls
-                    .Select(url => new ImageCar
+                .. Enumerable.Range(0, carImageUrls.Length)
+                    .Select(i => new ImageCar
                     {
                         CarId = car.Id,
-                        Url = url,
-                        TypeId = carImageType.Id
+                        Url = carImageUrls[i],
+                        TypeId = carImageType.Id,
+                        Name = request.CarImages[i].FileName,
                     }),
             ];
             // Save new images
             await context.ImageCars.AddRangeAsync(images, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
-            return Result.Success(Response.FromEntity(car.Id, carImageUrls), ResponseMessages.Updated);
+            return Result.Success(Response.FromEntity(car.Id, images), ResponseMessages.Updated);
         }
     }
 

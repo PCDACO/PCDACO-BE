@@ -15,6 +15,7 @@ using Infrastructure;
 using Infrastructure.Encryption;
 using Infrastructure.Medias;
 using Infrastructure.PdfService;
+using Infrastructure.Services;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -149,6 +150,8 @@ public static class BuilderConfig
         // add pdf
         services.AddSingleton<IPdfService, PdfService>();
         services.AddSingleton<IConverter, SynchronizedConverter>(_ => new SynchronizedConverter(new PdfTools()));
+        // add OTP
+        services.AddSingleton<IOtpService, OtpService>();
         // add channels
         services.AddSingleton(_ => Channel.CreateUnbounded<CreateInspectionScheduleChannel>());
         // Add background services
