@@ -11,6 +11,7 @@ public class ImageCar : BaseEntity
     public required Guid CarId { get; set; }
     public required Guid TypeId { get; set; }
     public required string Url { get; set; }
+    public required string Name { get; set; }
     // Navigation Properties
     [ForeignKey(nameof(CarId))]
     public Car Car { get; set; } = null!;

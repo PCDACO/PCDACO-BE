@@ -1,14 +1,8 @@
 using API.Utils;
-
 using Ardalis.Result;
-
 using Carter;
-
 using MediatR;
-
 using UseCases.UC_Car.Commands;
-
-
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.CarEndpoints;
@@ -24,15 +18,19 @@ public class UploadPaperImagesEndpoint : ICarterModule
             .DisableAntiforgery();
     }
 
-    private async Task<IResult> Handle(
-        ISender sender,
-        Guid carId,
-        IFormFileCollection images
-        )
+    private async Task<IResult> Handle(ISender sender, Guid carId, IFormFileCollection images)
     {
-        Stream[] carStreams = [.. images.Select(i => i.OpenReadStream())];
-        Result<UploadPaperImages.Response> result = await sender.Send(new UploadPaperImages.Command(carId, carStreams));
+        UploadPaperImages.ImageFile[] imageFiles =
+        [
+            .. images.Select(file => new UploadPaperImages.ImageFile
+            {
+                Content = file.OpenReadStream(),
+                FileName = file.FileName,
+            }),
+        ];
+        Result<UploadPaperImages.Response> result = await sender.Send(
+            new UploadPaperImages.Command(carId, imageFiles)
+        );
         return result.MapResult();
     }
-
 }

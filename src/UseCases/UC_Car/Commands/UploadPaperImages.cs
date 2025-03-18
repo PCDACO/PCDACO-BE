@@ -19,22 +19,29 @@ public sealed class UploadPaperImages
 {
     public record Command(
         Guid CarId,
-        Stream[] PaperImages
+        ImageFile[] PaperImages
     ) : IRequest<Result<Response>>;
+
+    public class ImageFile
+    {
+        public required Stream Content { get; set; }
+        public required string FileName { get; set; }
+    }
 
     public record Response(ImageDetail[] Images)
     {
-        public static Response FromEntity(Guid carId, string[] urls)
+        public static Response FromEntity(Guid carId, ImageCar[] files)
         {
             return new Response(
-                [.. urls.Select(i => new ImageDetail(carId, i))]
+                [.. files.Select(f => new ImageDetail(carId, f.Url, f.Name))]
             );
         }
     };
 
     public record ImageDetail(
         Guid Id,
-        string Url
+        string Url,
+        string Name
     );
     public class Handler(
         IAppDBContext context,
@@ -72,23 +79,24 @@ public sealed class UploadPaperImages
             int carIndex = 0;
             foreach (var image in request.PaperImages)
             {
-                carTasks.Add(cloudinaryServices.UploadCarImageAsync($"Car-{car.Id}-Image-{++carIndex}", image, cancellationToken));
+                carTasks.Add(cloudinaryServices.UploadCarImageAsync($"Car-{car.Id}-Image-{++carIndex}", image.Content, cancellationToken));
             }
             string[] paperImageUrls = await Task.WhenAll(carTasks);
             ImageCar[] images =
             [
-                .. paperImageUrls
-                    .Select(url => new ImageCar
+                .. Enumerable.Range(0, paperImageUrls.Length)
+                    .Select(i => new ImageCar
                     {
                         CarId = car.Id,
-                        Url = url,
-                        TypeId = paperImageType.Id
+                        Url = paperImageUrls[i],
+                        TypeId = paperImageType.Id,
+                        Name = request.PaperImages[i].FileName 
                     }),
             ];
             // Save new images
             await context.ImageCars.AddRangeAsync(images, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
-            return Result.Success(Response.FromEntity(car.Id, paperImageUrls), ResponseMessages.Updated);
+            return Result.Success(Response.FromEntity(car.Id, images), ResponseMessages.Updated);
         }
     }
 

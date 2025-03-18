@@ -29,8 +29,13 @@ public class UploadCarImagesEndpoint : ICarterModule
         IFormFileCollection images
         )
     {
-        Stream[] carStreams = [.. images.Select(i => i.OpenReadStream())];
-        Result<UploadCarImages.Response> result = await sender.Send(new UploadCarImages.Command(carId, carStreams));
+        UploadCarImages.ImageFile[] carFiles = [.. images.Select(file => new UploadCarImages.ImageFile
+            {
+                Content = file.OpenReadStream(),
+                FileName = file.FileName,
+            }),
+        ];
+        Result<UploadCarImages.Response> result = await sender.Send(new UploadCarImages.Command(carId, carFiles));
         return result.MapResult();
     }
 
