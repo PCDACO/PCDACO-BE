@@ -14,6 +14,8 @@ public class Transaction : BaseEntity
     public required Guid TypeId { get; set; }
     public TransactionStatusEnum Status { get; set; } = TransactionStatusEnum.Pending;
     public decimal Amount { get; set; } = 0;
+    public string Description { get; set; } = string.Empty;
+    public decimal BalanceAfter { get; set; } = 0;
 
     // Navigation properties
     [ForeignKey(nameof(FromUserId))]
