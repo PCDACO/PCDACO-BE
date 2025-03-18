@@ -28,7 +28,8 @@ public sealed class GetTransactionHistory
         string Description,
         DateTimeOffset CreatedAt,
         string Status,
-        TransactionDetailsDto Details
+        TransactionDetailsDto Details,
+        string ProoUrl
     )
     {
         public static Response FromEntity(Transaction transaction) =>
@@ -44,7 +45,8 @@ public sealed class GetTransactionHistory
                     transaction.Booking?.Id,
                     transaction.BankAccount?.BankInfo.Name,
                     transaction.BankAccount?.BankAccountName
-                )
+                ),
+                transaction.ProofUrl
             );
     }
 
