@@ -94,7 +94,7 @@ public class GetCars
                 AverageRating: car.CarStatistic.AverageRating,
                 Location: car.GPS == null ? null : new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
                 Manufacturer: new ManufacturerDetail(car.Model.Manufacturer.Id, car.Model.Manufacturer.Name),
-                Images: [.. car.ImageCars?.Select(i => new ImageDetail(i.Id, i.Url, i.Type.Name)) ?? []],
+                Images: [.. car.ImageCars?.Select(i => new ImageDetail(i.Id, i.Url, i.Type.Name, i.Name)) ?? []],
                 Amenities: [
                     ..car.CarAmenities.Select(a => new AmenityDetail(
                         a.Id,
@@ -111,7 +111,7 @@ public class GetCars
 
     public record ManufacturerDetail(Guid Id, string Name);
 
-    public record ImageDetail(Guid Id, string Url, string Type);
+    public record ImageDetail(Guid Id, string Url, string Type, string Name);
 
     public record AmenityDetail(Guid Id, string Name, string Description, string Icon);
 
