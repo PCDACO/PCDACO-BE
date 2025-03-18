@@ -49,6 +49,11 @@ public static class ChangePassword
                 return Result.Error(ResponseMessages.OldPasswordIsInvalid);
             }
 
+            if (user.Password == request.NewPassword.HashString())
+            {
+                return Result.Error(ResponseMessages.NewPasswordIsSameAsOld);
+            }
+
             user.Password = request.NewPassword.HashString();
             user.UpdatedAt = DateTimeOffset.UtcNow;
             await _context.SaveChangesAsync(cancellationToken);
