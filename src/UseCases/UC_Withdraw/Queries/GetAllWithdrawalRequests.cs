@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
+using Domain.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -23,7 +24,6 @@ public sealed class GetAllWithdrawalRequests
 
     public sealed record Response(
         Guid Id,
-        string WithdrawalCode,
         UserDto User,
         BankAccountDto BankAccount,
         decimal Amount,
@@ -32,21 +32,50 @@ public sealed class GetAllWithdrawalRequests
         ProcessedInfoDto? ProcessedInfo
     )
     {
-        public static Response FromEntity(WithdrawalRequest request) =>
-            new(
+        public static async Task<Response> FromEntity(
+            WithdrawalRequest request,
+            string masterKey,
+            IAesEncryptionService aesEncryptionService,
+            IKeyManagementService keyManagementService
+        )
+        {
+            // Decrypt phone number
+            string userDecryptedKey = keyManagementService.DecryptKey(
+                request.User.EncryptionKey.EncryptedKey,
+                masterKey
+            );
+            string decryptedPhone = await aesEncryptionService.Decrypt(
+                request.User.Phone,
+                userDecryptedKey,
+                request.User.EncryptionKey.IV
+            );
+
+            // Decrypt bank account number
+            string bankDecryptedKey = keyManagementService.DecryptKey(
+                request.BankAccount.EncryptionKey.EncryptedKey,
+                masterKey
+            );
+            string decryptedAccountNumber = await aesEncryptionService.Decrypt(
+                request.BankAccount.EncryptedBankAccount,
+                bankDecryptedKey,
+                request.BankAccount.EncryptionKey.IV
+            );
+
+            return new(
                 request.Id,
-                request.WithdrawalCode,
                 new UserDto(
                     request.User.Id,
                     request.User.Name,
                     request.User.Email,
-                    request.User.Phone,
+                    decryptedPhone,
                     request.User.Balance
                 ),
                 new BankAccountDto(
                     request.BankAccount.Id,
                     request.BankAccount.BankInfo.Name,
-                    request.BankAccount.BankAccountName
+                    request.BankAccount.BankInfo.Code,
+                    request.BankAccount.BankAccountName,
+                    decryptedAccountNumber
                 ),
                 request.Amount,
                 request.Status.ToString(),
@@ -61,11 +90,18 @@ public sealed class GetAllWithdrawalRequests
                     )
                     : null
             );
+        }
     }
 
     public record UserDto(Guid Id, string Name, string Email, string Phone, decimal Balance);
 
-    public record BankAccountDto(Guid Id, string BankName, string AccountName);
+    public record BankAccountDto(
+        Guid Id,
+        string BankName,
+        string BankCode,
+        string AccountName,
+        string AccountNumber
+    );
 
     public record ProcessedInfoDto(
         DateTimeOffset ProcessedAt,
@@ -75,8 +111,13 @@ public sealed class GetAllWithdrawalRequests
         Guid? TransactionId
     );
 
-    internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
-        : IRequestHandler<Query, Result<CursorPaginatedResponse<Response>>>
+    internal sealed class Handler(
+        IAppDBContext context,
+        CurrentUser currentUser,
+        IAesEncryptionService aesEncryptionService,
+        IKeyManagementService keyManagementService,
+        EncryptionSettings encryptionSettings
+    ) : IRequestHandler<Query, Result<CursorPaginatedResponse<Response>>>
     {
         public async Task<Result<CursorPaginatedResponse<Response>>> Handle(
             Query request,
@@ -88,8 +129,11 @@ public sealed class GetAllWithdrawalRequests
 
             var query = context
                 .WithdrawalRequests.Include(w => w.User)
+                .ThenInclude(u => u.EncryptionKey)
                 .Include(w => w.BankAccount)
                 .ThenInclude(b => b.BankInfo)
+                .Include(w => w.BankAccount)
+                .ThenInclude(b => b.EncryptionKey)
                 .Include(w => w.ProcessedByAdmin)
                 .Include(w => w.Transaction)
                 .AsQueryable();
@@ -117,10 +161,8 @@ public sealed class GetAllWithdrawalRequests
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
                 query = query.Where(w =>
-                    EF.Functions.ILike(w.WithdrawalCode, $"%{request.SearchTerm}%")
-                    || EF.Functions.ILike(w.User.Name, $"%{request.SearchTerm}%")
+                    EF.Functions.ILike(w.User.Name, $"%{request.SearchTerm}%")
                     || EF.Functions.ILike(w.User.Email, $"%{request.SearchTerm}%")
-                    || EF.Functions.ILike(w.User.Phone, $"%{request.SearchTerm}%")
                     || EF.Functions.ILike(w.BankAccount.BankAccountName, $"%{request.SearchTerm}%")
                 );
             }
@@ -140,12 +182,25 @@ public sealed class GetAllWithdrawalRequests
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
 
+            var responses = new List<Response>();
+            foreach (var withdrawal in withdrawals)
+            {
+                responses.Add(
+                    await Response.FromEntity(
+                        withdrawal,
+                        encryptionSettings.Key,
+                        aesEncryptionService,
+                        keyManagementService
+                    )
+                );
+            }
+
             var hasMore = withdrawals.Count == request.Limit;
             var lastId = withdrawals.LastOrDefault()?.Id;
 
             return Result.Success(
                 new CursorPaginatedResponse<Response>(
-                    withdrawals.Select(Response.FromEntity),
+                    responses,
                     totalCount,
                     request.Limit,
                     lastId,
