@@ -27,4 +27,6 @@ public class InspectionSchedule : BaseEntity
     [InverseProperty(nameof(User.ConsultantInspectionSchedules))]
     [ForeignKey(nameof(CreatedBy))]
     public User Consultant { get; set; } = null!;
+
+    public ICollection<InspectionPhoto> Photos { get; set; } = [];
 }

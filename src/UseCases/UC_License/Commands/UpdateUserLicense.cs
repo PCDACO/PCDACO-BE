@@ -14,10 +14,9 @@ public sealed class UpdateUserLicense
     public sealed record Command(string LicenseNumber, DateTimeOffset ExpirationDate)
         : IRequest<Result<Response>>;
 
-    public sealed record Response(Guid UserId, string LicenseNumber, DateTimeOffset ExpirationDate)
+    public sealed record Response(Guid UserId, DateTimeOffset ExpirationDate)
     {
-        public static Response FromEntity(User user) =>
-            new(user.Id, user.EncryptedLicenseNumber, user.LicenseExpiryDate!.Value);
+        public static Response FromEntity(User user) => new(user.Id, user.LicenseExpiryDate!.Value);
     }
 
     public sealed class Handler(
