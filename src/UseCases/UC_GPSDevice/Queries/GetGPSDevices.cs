@@ -46,7 +46,6 @@ public class GetGPSDevices
         {
             IQueryable<GPSDevice> gpsQuery = context.GPSDevices
                 .AsNoTracking()
-                .Include(gps => gps.Status)
                 .Where(gps => !gps.IsDeleted)
                 .Where(gps => EF.Functions.ILike(gps.Name, $"%{request.Keyword}%"))
                 .OrderByDescending(gps => gps.Id);
