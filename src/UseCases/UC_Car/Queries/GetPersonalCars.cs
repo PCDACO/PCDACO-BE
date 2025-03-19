@@ -1,8 +1,8 @@
 using Ardalis.Result;
 
 using Domain.Constants;
-using Domain.Constants.EntityNames;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Shared;
 
 using MediatR;
@@ -23,7 +23,7 @@ public class GetPersonalCars
         Guid? TransmissionTypes,
         Guid? LastCarId,
         int Limit,
-        string? StatusName = CarStatusNames.Available
+       CarStatusEnum Status = CarStatusEnum.Available
     ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
@@ -161,7 +161,7 @@ public class GetPersonalCars
                 .Include(c => c.GPS)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .Where(c => !c.IsDeleted)
-                .Where(c => EF.Functions.ILike(c.Status.ToString(), $"%{request.StatusName}%"))
+                .Where(c => c.Status == request.Status)
                 .Where(c => c.OwnerId == currentUser.User!.Id)
                 .Where(c => request.Model == null || c.ModelId == request.Model)
                 .Where(c =>
