@@ -4,6 +4,8 @@ using Ardalis.Result;
 
 using Carter;
 
+using Domain.Enums;
+
 using MediatR;
 
 using Microsoft.AspNetCore.Mvc;
@@ -32,7 +34,7 @@ public class GetPersonalCarsEndpoint : ICarterModule
         [FromQuery(Name = "fuel")] Guid? fuel,
         [FromQuery(Name = "transmission")] Guid? transmission,
         [FromQuery(Name = "limit")] int? limit = 10,
-        [FromQuery(Name = "status")] string? statusName = ""
+        [FromQuery(Name = "status")] CarStatusEnum status = CarStatusEnum.Available
     )
     {
         Result<OffsetPaginatedResponse<GetPersonalCars.Response>> result = await sender.Send(new GetPersonalCars.Query(
@@ -42,7 +44,7 @@ public class GetPersonalCarsEndpoint : ICarterModule
             transmission,
             lastCarId,
             limit!.Value,
-            statusName!
+            status
         ));
         return result.MapResult();
     }
