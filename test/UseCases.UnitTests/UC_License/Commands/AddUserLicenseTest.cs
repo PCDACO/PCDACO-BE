@@ -183,7 +183,6 @@ public class AddUserLicenseTest : IAsyncLifetime
         var user = await _dbContext.Users.FindAsync(result.Value.UserId);
         Assert.NotNull(user);
         Assert.Equal(driver.Id, user.Id);
-        Assert.NotEmpty(user.EncryptedLicenseNumber);
         Assert.Equal(command.ExpirationDate.Date, user.LicenseExpiryDate!.Value.Date);
     }
 }

@@ -1,3 +1,4 @@
+using System.Text;
 using Ardalis.Result;
 using Domain.Entities;
 using FluentValidation;
@@ -88,6 +89,9 @@ public sealed class UploadUserLicenseImage
             ".bmp",
             ".tiff",
             ".webp",
+            ".svg",
+            ".heic",
+            ".heif",
         };
 
         public Validator()
@@ -139,17 +143,44 @@ public sealed class UploadUserLicenseImage
             if (fileBytes.Length < 4)
                 return false;
 
-            // Check file signatures
-            if (fileBytes[0] == 0xFF && fileBytes[1] == 0xD8)
-                return true; // JPEG
-            if (fileBytes[0] == 0x89 && fileBytes[1] == 0x50)
-                return true; // PNG
-            if (fileBytes[0] == 0x47 && fileBytes[1] == 0x49)
-                return true; // GIF
-            if (fileBytes[0] == 0x42 && fileBytes[1] == 0x4D)
-                return true; // BMP
-
-            return false;
+            return fileBytes[..2].SequenceEqual(new byte[] { 0xFF, 0xD8 })
+                || // JPEG and JPG
+                fileBytes[..4].SequenceEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47 })
+                || // PNG
+                fileBytes[..3].SequenceEqual(new byte[] { 0x47, 0x49, 0x46 })
+                || // GIF
+                fileBytes[..2].SequenceEqual(new byte[] { 0x42, 0x4D })
+                || // BMP
+                fileBytes[..4].SequenceEqual(new byte[] { 0x52, 0x49, 0x46, 0x46 })
+                || // WebP
+                fileBytes[..4].SequenceEqual(new byte[] { 0x49, 0x49, 0x2A, 0x00 })
+                || // TIFF (Little-endian)
+                fileBytes[..4].SequenceEqual(new byte[] { 0x4D, 0x4D, 0x00, 0x2A })
+                || // TIFF (Big-endian)
+                Encoding.UTF8.GetString(fileBytes).Contains("<svg")
+                || // SVG
+                (
+                    fileBytes.Length >= 12
+                    && fileBytes[4] == 0x66
+                    && fileBytes[5] == 0x74
+                    && fileBytes[6] == 0x79
+                    && fileBytes[7] == 0x70
+                    && (
+                        (
+                            fileBytes[8] == 0x68
+                            && fileBytes[9] == 0x65
+                            && fileBytes[10] == 0x69
+                            && fileBytes[11] == 0x63
+                        )
+                        || // HEIC
+                        (
+                            fileBytes[8] == 0x68
+                            && fileBytes[9] == 0x65
+                            && fileBytes[10] == 0x69
+                            && fileBytes[11] == 0x66
+                        )
+                    )
+                ); // HEIF
         }
     }
 }
