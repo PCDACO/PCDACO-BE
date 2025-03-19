@@ -6,8 +6,8 @@ public static class OwnerCreateBookingTemplate
         string ownerName,
         string carName,
         string customerName,
-        DateTime startTime,
-        DateTime endTime,
+        DateTimeOffset startTime,
+        DateTimeOffset endTime,
         decimal totalAmount
     )
     {

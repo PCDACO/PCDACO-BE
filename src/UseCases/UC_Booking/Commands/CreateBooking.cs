@@ -17,8 +17,11 @@ namespace UseCases.UC_Booking.Commands;
 
 public sealed class CreateBooking
 {
-    public sealed record CreateBookingCommand(Guid CarId, DateTime StartTime, DateTime EndTime)
-        : IRequest<Result<Response>>;
+    public sealed record CreateBookingCommand(
+        Guid CarId,
+        DateTimeOffset StartTime,
+        DateTimeOffset EndTime
+    ) : IRequest<Result<Response>>;
 
     public sealed record Response(Guid Id);
 
@@ -233,8 +236,8 @@ public sealed class CreateBooking
         }
 
         public async Task SendEmail(
-            DateTime startTime,
-            DateTime endTime,
+            DateTimeOffset startTime,
+            DateTimeOffset endTime,
             decimal totalAmount,
             string driverName,
             string driverEmail,

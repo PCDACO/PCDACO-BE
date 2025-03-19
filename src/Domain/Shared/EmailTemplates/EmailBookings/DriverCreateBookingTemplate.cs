@@ -5,8 +5,8 @@ public static class DriverCreateBookingTemplate
     public static string Template(
         string customerName,
         string carName,
-        DateTime startTime,
-        DateTime endTime,
+        DateTimeOffset startTime,
+        DateTimeOffset endTime,
         decimal totalAmount
     )
     {

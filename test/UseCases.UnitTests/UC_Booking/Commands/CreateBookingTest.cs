@@ -55,8 +55,8 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         );
         var command = new CreateBooking.CreateBookingCommand(
             CarId: Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            StartTime: DateTime.UtcNow,
-            EndTime: DateTime.UtcNow.AddDays(1)
+            StartTime: DateTimeOffset.UtcNow,
+            EndTime: DateTimeOffset.UtcNow.AddDays(1)
         );
 
         // Act
@@ -101,8 +101,8 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         );
         var command = new CreateBooking.CreateBookingCommand(
             CarId: Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            StartTime: DateTime.UtcNow,
-            EndTime: DateTime.UtcNow.AddDays(1)
+            StartTime: DateTimeOffset.UtcNow,
+            EndTime: DateTimeOffset.UtcNow.AddDays(1)
         );
 
         // Act
@@ -132,8 +132,8 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             fuelType: fuelType,
             carStatus: CarStatusEnum.Available
         );
-        var startTime = DateTime.UtcNow;
-        var endTime = DateTime.UtcNow.AddDays(3);
+        var startTime = DateTimeOffset.UtcNow;
+        var endTime = DateTimeOffset.UtcNow.AddDays(3);
 
         // Create an already processed license
         await TestDataCreateLicense.CreateTestLicense(
@@ -188,8 +188,8 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var validator = new CreateBooking.Validator();
         var command = new CreateBooking.CreateBookingCommand(
             Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            DateTime.UtcNow,
-            DateTime.UtcNow.AddDays(-1)
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow.AddDays(-1)
         );
 
         // Act
@@ -238,15 +238,15 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         // Create overlapping booking
         var command1 = new CreateBooking.CreateBookingCommand(
             CarId: testCar.Id,
-            StartTime: DateTime.UtcNow.AddHours(1),
-            EndTime: DateTime.UtcNow.AddHours(3)
+            StartTime: DateTimeOffset.UtcNow.AddHours(1),
+            EndTime: DateTimeOffset.UtcNow.AddHours(3)
         );
 
         // Overlapping booking
         var command2 = new CreateBooking.CreateBookingCommand(
             CarId: testCar.Id,
-            StartTime: DateTime.UtcNow.AddHours(2), // Overlaps
-            EndTime: DateTime.UtcNow.AddHours(4)
+            StartTime: DateTimeOffset.UtcNow.AddHours(2), // Overlaps
+            EndTime: DateTimeOffset.UtcNow.AddHours(4)
         );
 
         var bookingReminderJob = new BookingReminderJob(
@@ -338,8 +338,8 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         );
         var command1 = new CreateBooking.CreateBookingCommand(
             CarId: testCar.Id,
-            StartTime: DateTime.UtcNow.AddHours(1),
-            EndTime: DateTime.UtcNow.AddHours(3)
+            StartTime: DateTimeOffset.UtcNow.AddHours(1),
+            EndTime: DateTimeOffset.UtcNow.AddHours(3)
         );
 
         // Act for User 1
@@ -357,8 +357,8 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         );
         var command2 = new CreateBooking.CreateBookingCommand(
             CarId: testCar.Id,
-            StartTime: DateTime.UtcNow.AddHours(2), // Overlaps
-            EndTime: DateTime.UtcNow.AddHours(4)
+            StartTime: DateTimeOffset.UtcNow.AddHours(2), // Overlaps
+            EndTime: DateTimeOffset.UtcNow.AddHours(4)
         );
 
         // Act for User 2
@@ -400,8 +400,8 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         );
         var command = new CreateBooking.CreateBookingCommand(
             CarId: Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            StartTime: DateTime.UtcNow,
-            EndTime: DateTime.UtcNow.AddDays(1)
+            StartTime: DateTimeOffset.UtcNow,
+            EndTime: DateTimeOffset.UtcNow.AddDays(1)
         );
 
         // Act
