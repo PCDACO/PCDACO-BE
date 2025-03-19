@@ -1,0 +1,194 @@
+using API.Utils;
+using Carter;
+using Domain.Enums;
+using MediatR;
+using UseCases.UC_Booking.Commands;
+using IResult = Microsoft.AspNetCore.Http.IResult;
+
+namespace API.Endpoints.BookingEndpoints;
+
+public class PostInspectionImagesEndpoint : ICarterModule
+{
+    private const int MaxFileSizeInMb = 10;
+    private const int MaxImagesPerType = 5;
+    private static readonly string[] AllowedExtensions = [".jpg", ".jpeg", ".png"];
+
+    private const string FUEL_GAUGE_PHOTOS = "fuelGaugeFinalPhotos";
+    private const string SCRATCHES_PHOTOS = "scratchesPhotos";
+    private const string CLEANLINESS_PHOTOS = "cleanlinessPhotos";
+    private const string TOLL_FEES_PHOTOS = "tollFeesPhotos";
+
+    private const string FUEL_GAUGE_NOTE = "fuelGaugeFinalNote";
+    private const string SCRATCHES_NOTE = "scratchesNote";
+    private const string CLEANLINESS_NOTE = "cleanlinessNote";
+    private const string TOLL_FEES_NOTE = "tollFeesNote";
+
+    public void AddRoutes(IEndpointRouteBuilder app)
+    {
+        app.MapPost("/api/bookings/{bookingId}/post-inspection", Handle)
+            .WithSummary("Submit post-booking inspection images")
+            .WithTags("Bookings")
+            .RequireAuthorization()
+            .DisableAntiforgery();
+    }
+
+    private async Task<IResult> Handle(
+        ISender sender,
+        Guid bookingId,
+        HttpContext httpContext,
+        CancellationToken cancellationToken
+    )
+    {
+        var form = await httpContext.Request.ReadFormAsync(cancellationToken);
+        var photos = new List<PostInspectionImages.PhotoRequest>();
+
+        // Validate all required photo types are present
+        ValidateRequiredPhotoTypes(form);
+
+        ProcessPhotos(form, photos);
+
+        var command = new PostInspectionImages.Command(bookingId, photos);
+
+        var result = await sender.Send(command, cancellationToken);
+
+        return result.MapResult();
+    }
+
+    private static void ProcessPhotos(
+        IFormCollection form,
+        List<PostInspectionImages.PhotoRequest> photos
+    )
+    {
+        // Process required photos
+        AddPhotoRequest(
+            form,
+            FUEL_GAUGE_PHOTOS,
+            FUEL_GAUGE_NOTE,
+            InspectionPhotoType.FuelGaugeFinal,
+            photos
+        );
+        AddPhotoRequest(
+            form,
+            CLEANLINESS_PHOTOS,
+            CLEANLINESS_NOTE,
+            InspectionPhotoType.Cleanliness,
+            photos
+        );
+
+        // Process optional photos if provided
+        if (form.Files.GetFiles(SCRATCHES_PHOTOS).Any())
+        {
+            AddPhotoRequest(
+                form,
+                SCRATCHES_PHOTOS,
+                SCRATCHES_NOTE,
+                InspectionPhotoType.Scratches,
+                photos
+            );
+        }
+
+        if (form.Files.GetFiles(TOLL_FEES_PHOTOS).Any())
+        {
+            AddPhotoRequest(
+                form,
+                TOLL_FEES_PHOTOS,
+                TOLL_FEES_NOTE,
+                InspectionPhotoType.TollFees,
+                photos
+            );
+        }
+    }
+
+    private static void AddPhotoRequest(
+        IFormCollection form,
+        string photoField,
+        string noteField,
+        InspectionPhotoType photoType,
+        List<PostInspectionImages.PhotoRequest> photos
+    )
+    {
+        var files = form.Files.GetFiles(photoField);
+        ValidateFiles(photoField, files);
+
+        photos.Add(
+            new PostInspectionImages.PhotoRequest(photoType, [.. files], form[noteField].ToString())
+        );
+    }
+
+    private static void ValidateRequiredPhotoTypes(IFormCollection form)
+    {
+        var requiredPhotoTypes = new[]
+        {
+            (FUEL_GAUGE_PHOTOS, "hình ảnh mức xăng cuối"),
+            (CLEANLINESS_PHOTOS, "hình ảnh vệ sinh xe")
+        };
+
+        var missingTypes = requiredPhotoTypes
+            .Where(type => !form.Files.GetFiles(type.Item1).Any())
+            .Select(type => type.Item2)
+            .ToList();
+
+        if (missingTypes.Any())
+        {
+            throw new InvalidOperationException(
+                $"Thiếu hình ảnh bắt buộc: {string.Join(", ", missingTypes)}"
+            );
+        }
+    }
+
+    private static void ValidateFiles(string category, IEnumerable<IFormFile> files)
+    {
+        if (!files.Any())
+        {
+            throw new InvalidOperationException(
+                $"Yêu cầu ít nhất một hình ảnh cho {GetCategoryDisplayName(category)}"
+            );
+        }
+
+        if (files.Count() > MaxImagesPerType)
+        {
+            throw new InvalidOperationException(
+                $"Không được tải lên quá {MaxImagesPerType} ảnh cho {GetCategoryDisplayName(category)}"
+            );
+        }
+
+        foreach (var file in files)
+        {
+            if (!ValidateFile(file, out string error))
+            {
+                throw new InvalidOperationException(error);
+            }
+        }
+    }
+
+    private static string GetCategoryDisplayName(string category) =>
+        category switch
+        {
+            FUEL_GAUGE_PHOTOS => "hình ảnh mức xăng cuối",
+            SCRATCHES_PHOTOS => "hình ảnh vết xước",
+            CLEANLINESS_PHOTOS => "hình ảnh vệ sinh xe",
+            TOLL_FEES_PHOTOS => "hình ảnh phí cầu đường",
+            _ => category
+        };
+
+    private static bool ValidateFile(IFormFile file, out string error)
+    {
+        error = string.Empty;
+
+        if (file.Length > MaxFileSizeInMb * 1024 * 1024)
+        {
+            error = $"File {file.FileName} vượt quá {MaxFileSizeInMb}MB";
+            return false;
+        }
+
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        if (!AllowedExtensions.Contains(extension))
+        {
+            error =
+                $"File {file.FileName} không đúng định dạng. Chỉ chấp nhận {string.Join(", ", AllowedExtensions)}";
+            return false;
+        }
+
+        return true;
+    }
+}
