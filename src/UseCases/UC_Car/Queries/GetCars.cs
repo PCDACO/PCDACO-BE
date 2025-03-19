@@ -2,6 +2,7 @@ using Ardalis.Result;
 
 using Domain.Constants;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Shared;
 
 using MediatR;
@@ -27,7 +28,9 @@ public class GetCars
         Guid? TransmissionTypes,
         Guid? LastCarId,
         int Limit,
-        string Keyword
+        string Keyword,
+        DateTimeOffset? StartTime,
+        DateTimeOffset? EndTime
     ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
@@ -133,6 +136,13 @@ public class GetCars
                 .AsNoTracking()
                 .Include(c => c.Owner).ThenInclude(o => o.Feedbacks)
                 .Include(c => c.Model).ThenInclude(o => o.Manufacturer)
+                .Include(c =>
+                    c.Bookings.Where(b =>
+                        b.Status != BookingStatusEnum.Cancelled
+                        && b.Status != BookingStatusEnum.Rejected
+                        && b.Status != BookingStatusEnum.Expired
+                    )
+                )
                 .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars).ThenInclude(ic => ic.Type)
                 .Include(c => c.CarStatistic)
@@ -155,6 +165,15 @@ public class GetCars
                     request.TransmissionTypes == null
                     || c.TransmissionTypeId == request.TransmissionTypes
                 );
+            if (request.StartTime.HasValue && request.EndTime.HasValue)
+            {
+                var startDate = request.StartTime.Value.Date;
+                var endDate = request.EndTime.Value.Date;
+
+                gettingCarQuery = gettingCarQuery.Where(c =>
+                    !c.Bookings.Any(b => b.StartTime.Date <= endDate && b.EndTime.Date >= startDate)
+                );
+            }
             if (request.Longtitude is not null && request.Latitude is not null)
             {
                 Point userLocation = geometryFactory.CreatePoint(
@@ -170,11 +189,33 @@ public class GetCars
                 .ThenByDescending(c => c.Id);
             int count = await gettingCarQuery.CountAsync(cancellationToken);
             List<Car> carResult = await gettingCarQuery.Take(request.Limit).ToListAsync(cancellationToken);
+            var processedCars = carResult
+                .Select(car =>
+                {
+                    if (request.StartTime.HasValue && request.EndTime.HasValue)
+                    {
+                        var hasConflict = car.Bookings.Any(b =>
+                            IsDateConflict(
+                                request.StartTime.Value,
+                                request.EndTime.Value,
+                                b.StartTime,
+                                b.EndTime
+                            )
+                        );
+
+                        if (hasConflict)
+                        {
+                            car.Status = Domain.Enums.CarStatusEnum.Rented;
+                        }
+                    }
+                    return car;
+                })
+                .ToList();
             return Result.Success(
                 OffsetPaginatedResponse<Response>.Map(
                     (
                         await Task.WhenAll(
-                            carResult.Select(async c =>
+                            processedCars.Select(async c =>
                                 await Response.FromEntity(
                                     c,
                                     encryptionSettings.Key,
@@ -190,6 +231,21 @@ public class GetCars
                 ),
                 ResponseMessages.Fetched
             );
+        }
+        private static bool IsDateConflict(
+            DateTimeOffset requestStart,
+            DateTimeOffset requestEnd,
+            DateTimeOffset bookingStart,
+            DateTimeOffset bookingEnd
+        )
+        {
+            var requestStartDate = requestStart.Date;
+            var requestEndDate = requestEnd.Date;
+            var bookingStartDate = bookingStart.Date;
+            var bookingEndDate = bookingEnd.Date;
+
+            return (requestStartDate <= bookingEndDate.AddDays(1))
+                && (requestEndDate >= bookingStartDate.AddDays(-1));
         }
     }
 }

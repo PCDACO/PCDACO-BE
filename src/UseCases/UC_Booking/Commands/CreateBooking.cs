@@ -80,23 +80,27 @@ public sealed class CreateBooking
             if (car == null)
                 return Result<Response>.NotFound("Không tìm thấy xe phù hợp");
 
-            bool hasOverlap = await context
+            // Check for same-day booking conflicts
+            bool hasConflict = await context
                 .Bookings.AsNoTracking()
                 .AnyAsync(
                     b =>
-                        b.UserId == currentUser.User.Id
-                        && b.StartTime < request.EndTime
-                        && b.ActualReturnTime > request.StartTime
-                        && b.Status != BookingStatusEnum.Rejected // Exclude rejected bookings
-                        && b.Status != BookingStatusEnum.Cancelled // Exclude cancelled bookings
-                        && b.Status != BookingStatusEnum.Expired, // Exclude expired bookings
+                        b.CarId == request.CarId
+                        && b.Status != BookingStatusEnum.Cancelled
+                        && b.Status != BookingStatusEnum.Rejected
+                        && b.Status != BookingStatusEnum.Expired
+                        && (
+                            // Check if any dates overlap, ignoring times
+                            b.StartTime.Date <= request.EndTime.Date
+                            && b.EndTime.Date >= request.StartTime.Date
+                        ),
                     cancellationToken
                 );
 
-            if (hasOverlap)
+            if (hasConflict)
             {
-                return Result.Conflict(
-                    "Bạn đã có đơn đặt xe trong khoảng thời gian này. Vui lòng kiểm tra lại lịch đặt xe của bạn."
+                return Result.Error(
+                    "Xe đã được đặt trong khoảng thời gian này. Vui lòng chọn ngày khác."
                 );
             }
 
