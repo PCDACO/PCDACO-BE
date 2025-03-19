@@ -204,74 +204,6 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Handle_SameUserOverlappingBooking_ReturnsConflict()
-    {
-        // Arrange
-        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-
-        TransmissionType transmissionType =
-            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
-        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
-        var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
-        var testModel = await TestDataCreateModel.CreateTestModel(_dbContext, testManufacturer.Id);
-        var testCar = await TestDataCreateCar.CreateTestCar(
-            dBContext: _dbContext,
-            ownerId: testUser.Id,
-            modelId: testModel.Id,
-            transmissionType: transmissionType,
-            fuelType: fuelType,
-            carStatus: CarStatusEnum.Available
-        );
-        _currentUser.SetUser(testUser);
-
-        await TestDataCreateLicense.CreateTestLicense(
-            _dbContext,
-            testUser.Id,
-            _aesService,
-            _keyService,
-            _encryptionSettings,
-            isApproved: true
-        );
-
-        // Create overlapping booking
-        var command1 = new CreateBooking.CreateBookingCommand(
-            CarId: testCar.Id,
-            StartTime: DateTimeOffset.UtcNow.AddHours(1),
-            EndTime: DateTimeOffset.UtcNow.AddHours(3)
-        );
-
-        // Overlapping booking
-        var command2 = new CreateBooking.CreateBookingCommand(
-            CarId: testCar.Id,
-            StartTime: DateTimeOffset.UtcNow.AddHours(2), // Overlaps
-            EndTime: DateTimeOffset.UtcNow.AddHours(4)
-        );
-
-        var bookingReminderJob = new BookingReminderJob(
-            _dbContext,
-            _emailService,
-            _backgroundJobClient
-        );
-
-        var handler = new CreateBooking.Handler(
-            _dbContext,
-            _emailService,
-            _backgroundJobClient,
-            bookingReminderJob,
-            _currentUser
-        );
-
-        // Act
-        var result1 = await handler.Handle(command1, CancellationToken.None);
-        var result2 = await handler.Handle(command2, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Conflict, result2.Status);
-    }
-
-    [Fact]
     public async Task Handle_DifferentUserOverlappingBooking_CreatesSuccessfully()
     {
         // Arrange
@@ -413,5 +345,151 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             "Bằng lái xe của bạn không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật thông tin bằng lái xe trước khi đặt xe.",
             result.Errors
         );
+    }
+
+    [Fact]
+    public async Task Handle_MultiplePendingBookings_ShouldBeAllowed()
+    {
+        // Arrange
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testModel = await TestDataCreateModel.CreateTestModel(_dbContext, testManufacturer.Id);
+        var testCar = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: testUser.Id,
+            modelId: testModel.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: CarStatusEnum.Available
+        );
+        _currentUser.SetUser(testUser);
+
+        await TestDataCreateLicense.CreateTestLicense(
+            _dbContext,
+            testUser.Id,
+            _aesService,
+            _keyService,
+            _encryptionSettings,
+            isApproved: true
+        );
+
+        // Create overlapping booking requests
+        var command1 = new CreateBooking.CreateBookingCommand(
+            CarId: testCar.Id,
+            StartTime: DateTimeOffset.UtcNow.AddHours(2),
+            EndTime: DateTimeOffset.UtcNow.AddHours(4)
+        );
+
+        var command2 = new CreateBooking.CreateBookingCommand(
+            CarId: testCar.Id,
+            StartTime: DateTimeOffset.UtcNow.AddHours(3), // Overlaps
+            EndTime: DateTimeOffset.UtcNow.AddHours(5)
+        );
+
+        var bookingReminderJob = new BookingReminderJob(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient
+        );
+
+        var handler = new CreateBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            bookingReminderJob,
+            _currentUser
+        );
+
+        // Act
+        var result1 = await handler.Handle(command1, CancellationToken.None);
+        var result2 = await handler.Handle(command2, CancellationToken.None);
+
+        // Assert
+        Assert.True(result1.IsSuccess);
+        Assert.True(result2.IsSuccess);
+    }
+
+    [Fact]
+    public async Task Handle_ConflictWithApprovedBooking_ReturnsConflict()
+    {
+        // Arrange
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        var testManufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var testModel = await TestDataCreateModel.CreateTestModel(_dbContext, testManufacturer.Id);
+        var testCar = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: testUser.Id,
+            modelId: testModel.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: CarStatusEnum.Available
+        );
+        _currentUser.SetUser(testUser);
+
+        await TestDataCreateLicense.CreateTestLicense(
+            _dbContext,
+            testUser.Id,
+            _aesService,
+            _keyService,
+            _encryptionSettings,
+            isApproved: true
+        );
+
+        // Create and save an approved booking
+        var existingBooking = new Booking
+        {
+            Id = Guid.NewGuid(),
+            UserId = testUser.Id,
+            CarId = testCar.Id,
+            Status = BookingStatusEnum.Approved,
+            StartTime = DateTimeOffset.UtcNow.AddHours(2),
+            EndTime = DateTimeOffset.UtcNow.AddHours(4),
+            ActualReturnTime = DateTimeOffset.UtcNow.AddHours(4),
+            BasePrice = 100,
+            PlatformFee = 10,
+            ExcessDay = 0,
+            ExcessDayFee = 0,
+            TotalAmount = 110,
+            Note = string.Empty
+        };
+        _dbContext.Bookings.Add(existingBooking);
+        await _dbContext.SaveChangesAsync();
+
+        // Try to create an overlapping booking
+        var command = new CreateBooking.CreateBookingCommand(
+            CarId: testCar.Id,
+            StartTime: DateTimeOffset.UtcNow.AddHours(3), // Overlaps with approved booking
+            EndTime: DateTimeOffset.UtcNow.AddHours(5)
+        );
+
+        var bookingReminderJob = new BookingReminderJob(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient
+        );
+
+        var handler = new CreateBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            bookingReminderJob,
+            _currentUser
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Conflict, result.Status);
     }
 }
