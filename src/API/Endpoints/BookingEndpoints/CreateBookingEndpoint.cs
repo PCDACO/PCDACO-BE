@@ -32,5 +32,9 @@ public class CreateBookingEndpoint : ICarterModule
         return result.MapResult();
     }
 
-    private sealed record CreateBookingRequest(Guid CarId, DateTime StartTime, DateTime EndTime);
+    private sealed record CreateBookingRequest(
+        Guid CarId,
+        DateTimeOffset StartTime,
+        DateTimeOffset EndTime
+    );
 }

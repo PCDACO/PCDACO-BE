@@ -17,8 +17,11 @@ namespace UseCases.UC_Booking.Commands;
 
 public sealed class CreateBooking
 {
-    public sealed record CreateBookingCommand(Guid CarId, DateTime StartTime, DateTime EndTime)
-        : IRequest<Result<Response>>;
+    public sealed record CreateBookingCommand(
+        Guid CarId,
+        DateTimeOffset StartTime,
+        DateTimeOffset EndTime
+    ) : IRequest<Result<Response>>;
 
     public sealed record Response(Guid Id);
 
@@ -80,23 +83,29 @@ public sealed class CreateBooking
             if (car == null)
                 return Result<Response>.NotFound("Không tìm thấy xe phù hợp");
 
-            bool hasOverlap = await context
+            // Check for booking conflicts with already approved/active bookings only
+            bool hasConflict = await context
                 .Bookings.AsNoTracking()
                 .AnyAsync(
                     b =>
-                        b.UserId == currentUser.User.Id
-                        && b.StartTime < request.EndTime
-                        && b.ActualReturnTime > request.StartTime
-                        && b.Status != BookingStatusEnum.Rejected // Exclude rejected bookings
-                        && b.Status != BookingStatusEnum.Cancelled // Exclude cancelled bookings
-                        && b.Status != BookingStatusEnum.Expired, // Exclude expired bookings
+                        b.CarId == request.CarId
+                        && (
+                            b.Status == BookingStatusEnum.Approved
+                            || b.Status == BookingStatusEnum.ReadyForPickup
+                            || b.Status == BookingStatusEnum.Ongoing
+                        )
+                        && (
+                            // Check if any dates overlap
+                            b.StartTime.Date <= request.EndTime.Date
+                            && b.EndTime.Date >= request.StartTime.Date
+                        ),
                     cancellationToken
                 );
 
-            if (hasOverlap)
+            if (hasConflict)
             {
                 return Result.Conflict(
-                    "Bạn đã có đơn đặt xe trong khoảng thời gian này. Vui lòng kiểm tra lại lịch đặt xe của bạn."
+                    "Xe đã được đặt trong khoảng thời gian này. Vui lòng chọn ngày khác."
                 );
             }
 
@@ -229,8 +238,8 @@ public sealed class CreateBooking
         }
 
         public async Task SendEmail(
-            DateTime startTime,
-            DateTime endTime,
+            DateTimeOffset startTime,
+            DateTimeOffset endTime,
             decimal totalAmount,
             string driverName,
             string driverEmail,

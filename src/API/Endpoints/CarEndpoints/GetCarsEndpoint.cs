@@ -34,6 +34,8 @@ public class GetCarsEndpoint : ICarterModule
         [FromQuery(Name = "amenities")] Guid[]? amenities,
         [FromQuery(Name = "fuel")] Guid? fuel,
         [FromQuery(Name = "transmission")] Guid? transmission,
+        [FromQuery(Name = "startTime")] DateTimeOffset? startTime,
+        [FromQuery(Name = "endTime")] DateTimeOffset? endTime,
         [FromQuery(Name = "limit")] int? limit = 10,
         [FromQuery(Name = "keyword")] string? keyword = ""
     )
@@ -48,7 +50,9 @@ public class GetCarsEndpoint : ICarterModule
             transmission,
             lastCarId,
             limit!.Value,
-            keyword ?? ""
+            keyword ?? "",
+            startTime,
+            endTime
         ));
         return result.MapResult();
     }

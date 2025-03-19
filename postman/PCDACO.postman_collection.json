@@ -1107,17 +1107,112 @@
 					]
 				},
 				{
-					"name": "BankInfo",
+					"name": "Bank Accounts",
 					"item": [
 						{
-							"name": "New Request",
+							"name": "Create Bank Account",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// Get bank info\r",
+											"const getBankInfos = {\r",
+											"    url: `${pm.environment.get(\"baseUrl\")}/api/bank-info?search=vietcombank`,\r",
+											"    method: 'GET',\r",
+											"    header: {\r",
+											"        'Content-Type': 'application/json',\r",
+											"        'Authorization': `Bearer ${pm.environment.get(\"ownerToken\")}`\r",
+											"    }\r",
+											"};\r",
+											"\r",
+											"pm.sendRequest(getBankInfos, (err, response) => {\r",
+											"    if (err) {\r",
+											"        console.error(\"Get Bank Info failed:\", err);\r",
+											"        throw err;\r",
+											"    }\r",
+											"    \r",
+											"    if (response.code === 200) {\r",
+											"        const getBankInfo = response.json().value[0].id;\r",
+											"        pm.environment.set(\"bankInfoId\", getBankInfo);\r",
+											"        console.log(\"bank info ID:\", getBankInfo);\r",
+											"    } else {\r",
+											"        console.error(\"Failed to get bank info:\", response.json());\r",
+											"        throw new Error(\"Pre-request setup failed\");\r",
+											"    }\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const jsonData = pm.response.json();\r",
+											"pm.environment.set(\"bankAccountId\", jsonData.value.id);"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
 							"request": {
 								"auth": {
 									"type": "bearer",
 									"bearer": [
 										{
 											"key": "token",
-											"value": "{{driverToken}}",
+											"value": "{{ownerToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Idempotence-Key",
+										"value": "{{$guid}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"bankInfoId\": \"{{bankInfoId}}\",\r\n  \"accountNumber\": \"0401001493928\",\r\n  \"accountName\": \"MA NGOC LONG BAO\",\r\n  \"isPrimary\": true\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/bank-accounts",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"bank-accounts"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "BankInfo",
+					"item": [
+						{
+							"name": "Get All Bank Info",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{ownerToken}}",
 											"type": "string"
 										}
 									]
@@ -1125,13 +1220,19 @@
 								"method": "GET",
 								"header": [],
 								"url": {
-									"raw": "{{baseUrl}}/api/bank-info",
+									"raw": "{{baseUrl}}/api/bank-info?search=vcb",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"api",
 										"bank-info"
+									],
+									"query": [
+										{
+											"key": "search",
+											"value": "vcb"
+										}
 									]
 								}
 							},
@@ -1377,7 +1478,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"carId\": \"{{carId}}\",\r\n  \"startTime\": \"2025-03-17T09:59:38.502Z\",\r\n  \"endTime\": \"2025-03-18T09:59:38.502Z\"\r\n}",
+									"raw": "{\r\n  \"carId\": \"{{carId}}\",\r\n  \"startTime\": \"2025-03-20T09:59:38.502Z\",\r\n  \"endTime\": \"2025-03-21T09:59:38.502Z\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1460,7 +1561,7 @@
 							"response": []
 						},
 						{
-							"name": "Inspect Booking",
+							"name": "Pre-Inspect Booking",
 							"request": {
 								"auth": {
 									"type": "bearer",
@@ -1472,7 +1573,7 @@
 										}
 									]
 								},
-								"method": "PATCH",
+								"method": "POST",
 								"header": [
 									{
 										"key": "Content-Type",
@@ -1484,17 +1585,37 @@
 									"mode": "formdata",
 									"formdata": [
 										{
-											"key": "images",
+											"key": "exteriorPhotos",
 											"type": "file",
 											"src": [
-												"/D:/Picture/b64be7f149a73119a95bd4066d1666a1.jpg",
-												"/D:/Picture/e8453111f9c8fd9867eccf0cc6bce3db.jpg"
+												"/D:/Picture/350be82a-2a22-4f45-9e32-8c7eea05e820_671x372.jpg",
+												"/D:/Picture/446192465_443604858287878_2789737694761021638_n.jpg"
 											]
+										},
+										{
+											"key": "fuelGaugePhotos",
+											"type": "file",
+											"src": "/D:/Picture/446220120_3612351175762314_5812113030619385094_n.jpg"
+										},
+										{
+											"key": "carKeyPhotos",
+											"type": "file",
+											"src": "/D:/Picture/446254490_953132719844666_6268334298289454769_n.jpg"
+										},
+										{
+											"key": "trunkPhotos",
+											"type": "file",
+											"src": "/D:/Picture/461896399_122149608668316121_4005523233581953540_n.jpg"
+										},
+										{
+											"key": "parkingLocationPhotos",
+											"type": "file",
+											"src": "/D:/Picture/b64be7f149a73119a95bd4066d1666a1.jpg"
 										}
 									]
 								},
 								"url": {
-									"raw": "{{baseUrl}}/api/bookings/{{bookingId}}/inspection?inspectionType=1&inspectionPhotoType=0",
+									"raw": "{{baseUrl}}/api/bookings/{{bookingId}}/pre-inspection",
 									"host": [
 										"{{baseUrl}}"
 									],
@@ -1502,17 +1623,68 @@
 										"api",
 										"bookings",
 										"{{bookingId}}",
-										"inspection"
-									],
-									"query": [
+										"pre-inspection"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Post-Inspect Booking",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
 										{
-											"key": "inspectionType",
-											"value": "1"
+											"key": "token",
+											"value": "{{ownerToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "multipart/form-data",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "fuelGaugeFinalPhotos",
+											"type": "file",
+											"src": "/D:/Picture/GPjXTt3XcAEMswd.jpg"
 										},
 										{
-											"key": "inspectionPhotoType",
-											"value": "0"
+											"key": "cleanlinessPhotos",
+											"type": "file",
+											"src": "/D:/Picture/e8453111f9c8fd9867eccf0cc6bce3db.jpg"
+										},
+										{
+											"key": "scratchesPhotos",
+											"value": "",
+											"type": "file"
+										},
+										{
+											"key": "tollFeesPhotos",
+											"value": "",
+											"type": "file"
 										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/bookings/{{bookingId}}/post-inspection",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"bookings",
+										"{{bookingId}}",
+										"post-inspection"
 									]
 								}
 							},
@@ -1574,7 +1746,7 @@
 								"header": [],
 								"body": {
 									"mode": "raw",
-									"raw": "",
+									"raw": "{\r\n  \"latitude\": 10.841416800000001,\r\n  \"longitude\": 106.81007447258705\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2007,13 +2179,14 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/api/licenses",
+									"raw": "{{baseUrl}}/api/users/license",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"api",
-										"licenses"
+										"users",
+										"license"
 									]
 								}
 							},
@@ -2073,13 +2246,14 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/api/licenses",
+									"raw": "{{baseUrl}}/api/users/license",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"api",
-										"licenses"
+										"users",
+										"license"
 									]
 								}
 							},
@@ -2110,14 +2284,15 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/api/licenses/{{licenseId}}/approve",
+									"raw": "{{baseUrl}}/api/users/0195ac5d-f1af-706e-a867-c0086c649f5f/license/approve",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"api",
-										"licenses",
-										"{{licenseId}}",
+										"users",
+										"0195ac5d-f1af-706e-a867-c0086c649f5f",
+										"license",
 										"approve"
 									]
 								}
@@ -2211,6 +2386,135 @@
 									"path": [
 										"api",
 										"models"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Transactions",
+					"item": [
+						{
+							"name": "Create Withdrawal Request",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const jsonData = pm.response.json();\r",
+											"pm.environment.set(\"withdrawalId\", jsonData.value.id);"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{ownerToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Idempotence-Key",
+										"value": "{{$guid}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"bankAccountId\": \"{{bankAccountId}}\",\r\n  \"amount\": 1000000\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/withdrawal",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"withdrawal"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Generate QR Code",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/withdrawals/{{withdrawalId}}/qr",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"withdrawals",
+										"{{withdrawalId}}",
+										"qr"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get All Withdrawal Requests",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/withdrawals",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"withdrawals"
 									]
 								}
 							},
