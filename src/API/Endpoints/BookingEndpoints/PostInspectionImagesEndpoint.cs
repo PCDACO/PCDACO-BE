@@ -2,6 +2,7 @@ using API.Utils;
 using Carter;
 using Domain.Enums;
 using MediatR;
+using Microsoft.OpenApi.Any;
 using UseCases.UC_Booking.Commands;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
@@ -29,7 +30,75 @@ public class PostInspectionImagesEndpoint : ICarterModule
             .WithSummary("Submit post-booking inspection images")
             .WithTags("Bookings")
             .RequireAuthorization()
-            .DisableAntiforgery();
+            .DisableAntiforgery()
+            .WithOpenApi(operation =>
+                new(operation)
+                {
+                    Description = """
+                    Submit post-booking inspection images and notes.
+
+                    Required fields:
+                    - fuelGaugeFinalPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
+                    - cleanlinessPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
+                    - fuelGaugeFinalNote: string
+                    - cleanlinessNote: string
+
+                    Optional fields:
+                    - scratchesPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
+                    - scratchesNote: string
+                    - tollFeesPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
+                    - tollFeesNote: string
+                    """,
+
+                    Responses =
+                    {
+                        ["200"] = new()
+                        {
+                            Description = "Success",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["value"] = new OpenApiObject
+                                        {
+                                            ["inspectionId"] = new OpenApiString(
+                                                "0195ae47-6b29-74a1-abed-3134fee8d179"
+                                            ),
+                                            ["photos"] = new OpenApiArray
+                                            {
+                                                new OpenApiObject
+                                                {
+                                                    ["type"] = new OpenApiInteger(5),
+                                                    ["urls"] = new OpenApiArray
+                                                    {
+                                                        new OpenApiString(
+                                                            "http://example.com/fuelGaugeFinal.jpg"
+                                                        )
+                                                    }
+                                                },
+                                                new OpenApiObject
+                                                {
+                                                    ["type"] = new OpenApiInteger(7),
+                                                    ["urls"] = new OpenApiArray
+                                                    {
+                                                        new OpenApiString(
+                                                            "http://example.com/cleanliness.jpg"
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        ["isSuccess"] = new OpenApiBoolean(true),
+                                        ["message"] = new OpenApiString("")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            );
     }
 
     private async Task<IResult> Handle(

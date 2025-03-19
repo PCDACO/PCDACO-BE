@@ -2,6 +2,7 @@ using API.Utils;
 using Carter;
 using Domain.Enums;
 using MediatR;
+using Microsoft.OpenApi.Any;
 using UseCases.UC_Booking.Commands;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
@@ -25,7 +26,75 @@ public class PreInspectionImagesEndpoint : ICarterModule
             .WithSummary("Submit pre-booking inspection images")
             .WithTags("Bookings")
             .RequireAuthorization()
-            .DisableAntiforgery();
+            .DisableAntiforgery()
+            .WithOpenApi(operation =>
+                new(operation)
+                {
+                    Description = """
+                    Submit pre-booking inspection images and notes.
+
+                    Required fields:
+                    - exteriorPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
+                    - fuelGaugePhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
+                    - carKeyPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
+                    - trunkPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
+                    - exteriorNote: string
+                    - fuelGaugeNote: string
+                    - carKeyNote: string
+                    - trunkNote: string
+
+                    Optional fields:
+                    - parkingLocationPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
+                    - parkingLocationNote: string
+                    """,
+
+                    Responses =
+                    {
+                        ["200"] = new()
+                        {
+                            Description = "Success",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["value"] = new OpenApiObject
+                                        {
+                                            ["inspectionId"] = new OpenApiString("guid"),
+                                            ["photos"] = new OpenApiArray
+                                            {
+                                                new OpenApiObject
+                                                {
+                                                    ["type"] = new OpenApiInteger(1),
+                                                    ["urls"] = new OpenApiArray
+                                                    {
+                                                        new OpenApiString(
+                                                            "http://example.com/photo1.jpg"
+                                                        )
+                                                    }
+                                                },
+                                                new OpenApiObject
+                                                {
+                                                    ["type"] = new OpenApiInteger(2),
+                                                    ["urls"] = new OpenApiArray
+                                                    {
+                                                        new OpenApiString(
+                                                            "http://example.com/photo2.jpg"
+                                                        )
+                                                    }
+                                                }
+                                            }
+                                        },
+                                        ["isSuccess"] = new OpenApiBoolean(true),
+                                        ["message"] = new OpenApiString("")
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            );
     }
 
     private async Task<IResult> Handle(
