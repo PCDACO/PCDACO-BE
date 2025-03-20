@@ -33,8 +33,8 @@ public class GetPersonalCarsEndpoint : ICarterModule
         [FromQuery(Name = "amenities")] Guid[]? amenities,
         [FromQuery(Name = "fuel")] Guid? fuel,
         [FromQuery(Name = "transmission")] Guid? transmission,
-        [FromQuery(Name = "limit")] int? limit = 10,
-        [FromQuery(Name = "status")] CarStatusEnum status = CarStatusEnum.Available
+        [FromQuery(Name = "status")] CarStatusEnum? status,
+        [FromQuery(Name = "limit")] int? limit = 10
     )
     {
         Result<OffsetPaginatedResponse<GetPersonalCars.Response>> result = await sender.Send(new GetPersonalCars.Query(
