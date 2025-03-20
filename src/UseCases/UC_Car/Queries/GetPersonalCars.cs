@@ -23,7 +23,7 @@ public class GetPersonalCars
         Guid? TransmissionTypes,
         Guid? LastCarId,
         int Limit,
-       CarStatusEnum Status = CarStatusEnum.Available
+       CarStatusEnum? Status
     ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
@@ -161,7 +161,7 @@ public class GetPersonalCars
                 .Include(c => c.GPS)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .Where(c => !c.IsDeleted)
-                .Where(c => c.Status == request.Status)
+                .Where(c => request.Status != null ? c.Status == request.Status : true)
                 .Where(c => c.OwnerId == currentUser.User!.Id)
                 .Where(c => request.Model == null || c.ModelId == request.Model)
                 .Where(c =>
