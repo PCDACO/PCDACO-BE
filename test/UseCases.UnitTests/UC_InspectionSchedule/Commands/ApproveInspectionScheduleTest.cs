@@ -69,75 +69,8 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         Assert.Contains(ResponseMessages.InspectionScheduleNotFound, result.Errors);
     }
 
-    // [Theory]
-    // [InlineData(true, ResponseMessages.ApproveStatusNotFound)]
-    // [InlineData(false, ResponseMessages.RejectStatusNotFound)]
-    // public async Task Handle_ApproveStatusNotFound_ReturnsError(
-    //     bool isApproved,
-    //     string expectedErrorMessage
-    // )
-    // {
-    //     // Arrange
-    //     var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
-    //         _dbContext,
-    //         "Consultant"
-    //     );
-    //     var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
-    //     var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
-    //         _dbContext,
-    //         "Technician"
-    //     );
-    //     var technician = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
-    //     _currentUser.SetUser(technician);
-    //
-    //     // Create car
-    //     var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-    //     var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-    //     var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
-    //     var carModel = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
-    //     var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
-    //         _dbContext,
-    //         "Automatic"
-    //     );
-    //     var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-    //     var car = await TestDataCreateCar.CreateTestCar(
-    //         _dbContext,
-    //         owner.Id,
-    //         carModel.Id,
-    //         transmissionType,
-    //         fuelType,
-    //         Domain.Enums.CarStatusEnum.Pending
-    //     );
-    //
-    //     var schedule = new InspectionSchedule
-    //     {
-    //         TechnicianId = technician.Id,
-    //         CarId = car.Id,
-    //         Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
-    //         InspectionAddress = "123 Main St 1",
-    //         InspectionDate = DateTimeOffset.UtcNow.AddDays(5),
-    //         CreatedBy = consultant.Id,
-    //     };
-    //     await _dbContext.InspectionSchedules.AddAsync(schedule);
-    //     await _dbContext.SaveChangesAsync();
-    //
-    //     var handler = new ApproveInspectionSchedule.Handler(_dbContext, _currentUser);
-    //     var command = new ApproveInspectionSchedule.Command(
-    //         Id: schedule.Id,
-    //         Note: "Test note",
-    //         IsApproved: isApproved
-    //     );
-    //
-    //     // Act
-    //     var result = await handler.Handle(command, CancellationToken.None);
-    //
-    //     // Assert
-    //     Assert.Equal(ResultStatus.Error, result.Status);
-    //     Assert.Contains(expectedErrorMessage, result.Errors);
-    // }
-
     [Fact]
-    public async Task Handle_ScheduleNotInPending_ReturnsError()
+    public async Task Handle_ScheduleNotInProgress_ReturnsError()
     {
         // Arrange
         var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
@@ -196,7 +129,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
 
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains(ResponseMessages.OnlyUpdatePendingInspectionSchedule, result.Errors);
+        Assert.Contains(ResponseMessages.OnlyUpdateInProgressInspectionSchedule, result.Errors);
     }
 
     [Theory]
@@ -240,7 +173,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
+            Status = Domain.Enums.InspectionScheduleStatusEnum.InProgress,
             InspectionAddress = "123 Main St 1",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(4),
             CreatedBy = consultant.Id,
@@ -266,7 +199,9 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         var updatedSchedule = await _dbContext.InspectionSchedules.FindAsync(schedule.Id);
         Assert.NotNull(updatedSchedule);
         Assert.Equal(
-            isApproved ? Domain.Enums.InspectionScheduleStatusEnum.Approved : Domain.Enums.InspectionScheduleStatusEnum.Rejected,
+            isApproved
+                ? Domain.Enums.InspectionScheduleStatusEnum.Approved
+                : Domain.Enums.InspectionScheduleStatusEnum.Rejected,
             updatedSchedule.Status
         );
         Assert.Equal("Test note", updatedSchedule.Note);
