@@ -5,5 +5,6 @@ public enum InspectionScheduleStatusEnum
     Pending,
     Approved,
     Rejected,
-    InProgress
+    InProgress,
+    Expired,
 }

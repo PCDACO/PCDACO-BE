@@ -61,8 +61,7 @@ public sealed class GetAllInspectionSchedules
                 .Include(s => s.Technician)
                 .Include(s => s.Car)
                 .ThenInclude(c => c.Owner)
-                .Where(s => !s.IsDeleted)
-                .Where(s => s.Status == InspectionScheduleStatusEnum.Pending);
+                .Where(s => !s.IsDeleted);
 
             // Filter by technician if provided
             if (request.TechnicianId != null)

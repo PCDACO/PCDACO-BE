@@ -2,7 +2,6 @@ using Ardalis.Result;
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
-
 using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
 using UseCases.DTOs;
@@ -46,33 +45,6 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         Assert.Equal(ResultStatus.Forbidden, result.Status);
         Assert.Contains(ResponseMessages.ForbiddenAudit, result.Errors);
     }
-
-    // [Fact]
-    // public async Task Handle_PendingStatusNotFound_ReturnsError()
-    // {
-    //     // Arrange
-    //     var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
-    //         _dbContext,
-    //         "Consultant"
-    //     );
-    //     var user = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
-    //     _currentUser.SetUser(user);
-    //
-    //     var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
-    //     var command = new CreateInspectionSchedule.Command(
-    //         TechnicianId: Guid.NewGuid(),
-    //         CarId: Guid.NewGuid(),
-    //         InspectionAddress: "123 Main St",
-    //         InspectionDate: DateTimeOffset.UtcNow.AddDays(1)
-    //     );
-    //
-    //     // Act
-    //     var result = await handler.Handle(command, CancellationToken.None);
-    //
-    //     // Assert
-    //     Assert.Equal(ResultStatus.Error, result.Status);
-    //     Assert.Contains(ResponseMessages.PendingStatusNotAvailable, result.Errors);
-    // }
 
     [Fact]
     public async Task Handle_CarNotFound_ReturnsError()
@@ -266,6 +238,329 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         Assert.Equal(inspectionDate, schedule.InspectionDate);
         Assert.Equal("123 Main St", schedule.InspectionAddress);
         Assert.Equal(consultant.Id, schedule.CreatedBy);
+    }
+
+    [Fact]
+    public async Task Handle_CarHasActiveSchedule_ReturnsError()
+    {
+        // Arrange
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+        _currentUser.SetUser(consultant);
+
+        // Create technician
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@test.com"
+        );
+
+        // Create car in pending status
+        var owner = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
+        );
+        var car = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
+
+        // Create an existing active schedule for the car
+        var existingSchedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car.Id,
+            Status = InspectionScheduleStatusEnum.Pending, // Active status
+            InspectionAddress = "456 Existing St",
+            InspectionDate = DateTimeOffset.UtcNow.AddDays(2),
+            CreatedBy = consultant.Id,
+        };
+        await _dbContext.InspectionSchedules.AddAsync(existingSchedule);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
+        var command = new CreateInspectionSchedule.Command(
+            TechnicianId: technician.Id,
+            CarId: car.Id,
+            InspectionAddress: "123 Main St",
+            InspectionDate: DateTimeOffset.UtcNow.AddDays(1)
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(ResponseMessages.CarHadInspectionSchedule, result.Errors);
+    }
+
+    [Fact]
+    public async Task Handle_CarHasExpiredScheduleWithSameTechnician_ReturnsError()
+    {
+        // Arrange
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+        _currentUser.SetUser(consultant);
+
+        // Create technician
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@test.com"
+        );
+
+        // Create car in pending status
+        var owner = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
+        );
+        var car = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
+
+        // Create an expired schedule for the car with the same technician
+        var expiredSchedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car.Id,
+            Status = InspectionScheduleStatusEnum.Expired,
+            InspectionAddress = "456 Expired St",
+            InspectionDate = DateTimeOffset.UtcNow.AddDays(-2),
+            CreatedBy = consultant.Id,
+        };
+        await _dbContext.InspectionSchedules.AddAsync(expiredSchedule);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
+        var command = new CreateInspectionSchedule.Command(
+            TechnicianId: technician.Id,
+            CarId: car.Id,
+            InspectionAddress: "123 Main St",
+            InspectionDate: DateTimeOffset.UtcNow.AddDays(1)
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(
+            ResponseMessages.CarHadExpiredInspectionScheduleWithThisTechnician,
+            result.Errors
+        );
+    }
+
+    [Fact]
+    public async Task Handle_TechnicianHasScheduleWithinOneHour_ReturnsError()
+    {
+        // Arrange
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+        _currentUser.SetUser(consultant);
+
+        // Create technician
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@test.com"
+        );
+
+        // Create two cars in pending status
+        var owner = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
+        );
+        var car1 = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
+        var car2 = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
+
+        // Set up a specific inspection time
+        var inspectionTime = DateTimeOffset.UtcNow.AddDays(1).AddHours(10); // 10 AM tomorrow
+
+        // Create an existing schedule for the technician that's 30 minutes away from proposed time
+        var existingSchedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car1.Id,
+            Status = InspectionScheduleStatusEnum.Pending,
+            InspectionAddress = "456 Existing St",
+            InspectionDate = inspectionTime.AddMinutes(30), // 30 minutes after proposed time
+            CreatedBy = consultant.Id,
+        };
+        await _dbContext.InspectionSchedules.AddAsync(existingSchedule);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
+        var command = new CreateInspectionSchedule.Command(
+            TechnicianId: technician.Id,
+            CarId: car2.Id,
+            InspectionAddress: "123 Main St",
+            InspectionDate: inspectionTime
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(
+            ResponseMessages.TechnicianHasInspectionScheduleWithinOneHour,
+            result.Errors
+        );
+    }
+
+    [Fact]
+    public async Task Handle_CarHasRejectedSchedule_AllowsNewSchedule()
+    {
+        // Arrange
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+        _currentUser.SetUser(consultant);
+
+        // Create technician
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@test.com"
+        );
+
+        // Create car in pending status
+        var owner = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
+        );
+        var car = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
+
+        // Create a rejected schedule for the car (can be same technician)
+        var rejectedSchedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car.Id,
+            Status = InspectionScheduleStatusEnum.Rejected,
+            InspectionAddress = "456 Rejected St",
+            InspectionDate = DateTimeOffset.UtcNow.AddDays(-1),
+            CreatedBy = consultant.Id,
+        };
+        await _dbContext.InspectionSchedules.AddAsync(rejectedSchedule);
+        await _dbContext.SaveChangesAsync();
+
+        var inspectionDate = DateTimeOffset.UtcNow.AddDays(1);
+        var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
+        var command = new CreateInspectionSchedule.Command(
+            TechnicianId: technician.Id,
+            CarId: car.Id,
+            InspectionAddress: "123 Main St",
+            InspectionDate: inspectionDate
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+
+        // Verify schedule was created
+        var schedule = await _dbContext.InspectionSchedules.FirstOrDefaultAsync(s =>
+            s.Id == result.Value.Id
+        );
+
+        Assert.NotNull(schedule);
+        Assert.Equal(technician.Id, schedule.TechnicianId);
+        Assert.Equal(car.Id, schedule.CarId);
+    }
+
+    [Fact]
+    public async Task Handle_CarHasExpiredScheduleWithDifferentTechnician_AllowsNewSchedule()
+    {
+        // Arrange
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+        _currentUser.SetUser(consultant);
+
+        // Create two technicians
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician1 = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech1@test.com"
+        );
+        var technician2 = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech2@test.com"
+        );
+
+        // Create car in pending status
+        var owner = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
+        );
+        var car = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
+
+        // Create an expired schedule for the car with technician1
+        var expiredSchedule = new InspectionSchedule
+        {
+            TechnicianId = technician1.Id,
+            CarId = car.Id,
+            Status = InspectionScheduleStatusEnum.Expired,
+            InspectionAddress = "456 Expired St",
+            InspectionDate = DateTimeOffset.UtcNow.AddDays(-2),
+            CreatedBy = consultant.Id,
+        };
+        await _dbContext.InspectionSchedules.AddAsync(expiredSchedule);
+        await _dbContext.SaveChangesAsync();
+
+        var inspectionDate = DateTimeOffset.UtcNow.AddDays(1);
+        var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
+        var command = new CreateInspectionSchedule.Command(
+            TechnicianId: technician2.Id, // Different technician
+            CarId: car.Id,
+            InspectionAddress: "123 Main St",
+            InspectionDate: inspectionDate
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+
+        // Verify schedule was created
+        var schedule = await _dbContext.InspectionSchedules.FirstOrDefaultAsync(s =>
+            s.Id == result.Value.Id
+        );
+
+        Assert.NotNull(schedule);
+        Assert.Equal(technician2.Id, schedule.TechnicianId);
+        Assert.Equal(car.Id, schedule.CarId);
     }
 
     private async Task<Car> CreateTestCar(Guid ownerId, CarStatusEnum status)
