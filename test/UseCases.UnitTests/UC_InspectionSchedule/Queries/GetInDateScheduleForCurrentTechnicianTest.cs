@@ -153,6 +153,17 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
                 };
                 schedules.Add(schedule);
             }
+            schedules.Add(
+                new InspectionSchedule
+                {
+                    TechnicianId = technician.Id,
+                    CarId = car.Id,
+                    Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
+                    InspectionAddress = "123 Main St 6",
+                    InspectionDate = today.AddDays(-10),
+                    CreatedBy = consultant.Id,
+                }
+            );
             await _dbContext.InspectionSchedules.AddRangeAsync(schedules);
 
             // Create a schedule for tomorrow (should be excluded)
@@ -177,15 +188,24 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
                 _encryptionSettings
             );
             var query = new GetInDateScheduleForCurrentTechnician.Query();
+            var query2 = new GetInDateScheduleForCurrentTechnician.Query(
+                DateTimeOffset.UtcNow.AddDays(-10)
+            );
 
             // Act
             var result = await handler.Handle(query, CancellationToken.None);
+            var result2 = await handler.Handle(query2, CancellationToken.None);
 
             // Assert
             Assert.Equal(ResultStatus.Ok, result.Status);
             Assert.Equal(5, result.Value.Cars.Length);
             Assert.Equal("John Doe", result.Value.TechnicianName);
             Assert.Equal(today.Date, result.Value.InspectionDate.Date);
+            //Assert for query2
+            Assert.Equal(ResultStatus.Ok, result2.Status);
+            Assert.Single(result2.Value.Cars);
+            Assert.Equal("John Doe", result2.Value.TechnicianName);
+            Assert.Equal(today.AddDays(-10).Date, result2.Value.InspectionDate.Date);
 
             // Verify car details
             var carDetail = result.Value.Cars.First();
