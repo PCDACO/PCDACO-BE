@@ -43,9 +43,10 @@ public sealed class CreateBooking
 
             // Verify driver license first
             var license = await context.Users.FirstOrDefaultAsync(
-                u => u.Id == currentUser.User.Id && u.LicenseIsApproved == true
-                // && l.ExpiryDate > request.EndTime
-                ,
+                u =>
+                    u.Id == currentUser.User.Id
+                    && u.LicenseIsApproved == true
+                    && u.LicenseExpiryDate > request.EndTime.AddDays(7),
                 cancellationToken
             );
 
