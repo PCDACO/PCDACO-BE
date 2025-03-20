@@ -183,7 +183,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
             {
                 TechnicianId = technician.Id,
                 CarId = car.Id,
-                Status = InspectionScheduleStatusEnum.Pending,
+                Status = InspectionScheduleStatusEnum.Approved,
                 InspectionAddress = "456 February St",
                 InspectionDate = februaryDate,
                 Note = "February 2023 schedule",
@@ -193,7 +193,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
             {
                 TechnicianId = technician.Id,
                 CarId = car.Id,
-                Status = InspectionScheduleStatusEnum.Pending,
+                Status = InspectionScheduleStatusEnum.Rejected,
                 InspectionAddress = "789 January Next Year St",
                 InspectionDate = nextYearDate,
                 Note = "January 2024 schedule",
@@ -263,7 +263,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
             {
                 TechnicianId = technician.Id,
                 CarId = car.Id,
-                Status = InspectionScheduleStatusEnum.Pending,
+                Status = InspectionScheduleStatusEnum.InProgress,
                 InspectionAddress = "123 Current Year St",
                 InspectionDate = currentYearDate,
                 Note = "Current year schedule",
@@ -273,7 +273,7 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
             {
                 TechnicianId = technician.Id,
                 CarId = car.Id,
-                Status = InspectionScheduleStatusEnum.Pending,
+                Status = InspectionScheduleStatusEnum.Expired,
                 InspectionAddress = "456 Last Year St",
                 InspectionDate = lastYearDate,
                 Note = "Last year schedule",
