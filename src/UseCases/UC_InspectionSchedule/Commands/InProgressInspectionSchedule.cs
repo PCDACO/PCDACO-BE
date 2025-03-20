@@ -44,6 +44,10 @@ public sealed class InProgressInspectionSchedule
             if (schedule.Status != InspectionScheduleStatusEnum.Pending)
                 return Result.Error(ResponseMessages.OnlyUpdatePendingInspectionSchedule);
 
+            // Check if datetimeoffset.utcnow is greater than schedule.InspectionDate above 15 minutes
+            if (DateTimeOffset.UtcNow > schedule.InspectionDate.AddMinutes(15))
+                return Result.Error(ResponseMessages.InspectionScheduleExpired);
+
             // Update schedule
             schedule.Status = InspectionScheduleStatusEnum.InProgress;
             schedule.UpdatedAt = DateTimeOffset.UtcNow;

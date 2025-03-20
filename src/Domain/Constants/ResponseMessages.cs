@@ -65,7 +65,8 @@ public class ResponseMessages
         "Chỉ có thể xóa lịch kiểm định đang chờ duyệt";
     public const string CannotDeleteScheduleHasInspectionDateLessThen1DayFromNow =
         "Không thể xóa lịch kiểm định có ngày kiểm định cách ngày hiện tại ít hơn 1 ngày";
-    public const string InspectionScheduleExpired = "Lịch kiểm định đã hết hạn";
+    public const string InspectionScheduleExpired =
+        "Chỉ được thực hiện kiểm định trong khoảng 15 phút sau thời gian kiểm định";
 
     // Inspection Statuses
     public const string InspectionStatusNotFound = "Không tìm thấy trạng thái kiểm định";
