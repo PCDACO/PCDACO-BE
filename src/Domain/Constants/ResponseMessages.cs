@@ -51,6 +51,7 @@ public class ResponseMessages
     // CAR
     public const string CarNotFound = "Không tìm thấy xe";
     public const string CarIsNotInPending = "Xe không ở trạng thái chờ duyệt";
+    public const string CarHadInspectionSchedule = "Xe đã có lịch kiểm định";
 
     // MODEL
     public const string ModelNotFound = "Không tìm thấy dòng xe";
@@ -67,6 +68,10 @@ public class ResponseMessages
         "Không thể xóa lịch kiểm định có ngày kiểm định cách ngày hiện tại ít hơn 1 ngày";
     public const string InspectionScheduleExpired =
         "Chỉ được thực hiện kiểm định trong khoảng 15 phút sau thời gian kiểm định";
+    public const string TechnicianHasInspectionScheduleWithinOneHour =
+        "Không thể tạo lịch kiểm định có thời gian kiểm định cách nhau ít hơn 1 giờ so với lịch kiểm định khác";
+    public const string CarHadExpiredInspectionScheduleWithThisTechnician =
+        "Không thể tạo lịch kiểm định với cùng 1 kỹ thuật viên sau khi lịch kiểm định quá hạn. Vui lòng chọn kỹ thuật viên khác";
 
     // Inspection Statuses
     public const string InspectionStatusNotFound = "Không tìm thấy trạng thái kiểm định";
