@@ -45,7 +45,7 @@ public sealed class PreInspectionImages
                 return Result.Forbidden(ResponseMessages.UnauthourizeAccess);
 
             var booking = await context
-                .Bookings.AsNoTracking()
+                .Bookings.Include(b => b.Car)
                 .Include(b => b.CarInspections.Where(i => i.Type == InspectionType.PreBooking))
                 .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken);
 
@@ -54,6 +54,11 @@ public sealed class PreInspectionImages
 
             if (booking.Status != BookingStatusEnum.Approved)
                 return Result.Error("Không thể tìm thấy đặt xe hoặc đặt xe không hợp lệ!");
+
+            if (booking.Car.OwnerId != currentUser.User.Id)
+                return Result.Forbidden(
+                    "Bạn không có quyền thực hiện chức năng này với booking này!"
+                );
 
             if (booking.StartTime > DateTime.Now.AddHours(24))
                 return Result.Error(
@@ -135,6 +140,16 @@ public sealed class PreInspectionImages
             );
 
             inspection!.IsComplete = HasAllRequiredPhotos(request.Photos.Select(p => p.Type));
+
+            // After successfully processing photos and saving inspection
+            if (inspection!.IsComplete)
+            {
+                // Update booking status to ReadyForPickup
+                booking.Status = BookingStatusEnum.ReadyForPickup;
+                booking.UpdatedAt = DateTimeOffset.UtcNow;
+
+                // TODO: Send notification to driver that car is ready for pickup
+            }
 
             await context.SaveChangesAsync(cancellationToken);
 
