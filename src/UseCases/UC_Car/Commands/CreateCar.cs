@@ -3,6 +3,7 @@ using Ardalis.Result;
 using Domain.Constants;
 using Domain.Constants.EntityNames;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Shared;
 
 using FluentValidation;
@@ -143,9 +144,17 @@ public sealed class CreateCar
                 ],
             };
 
+             var carContract = new CarContract
+            {
+                CarId = carId,
+                OwnerSignatureDate = DateTimeOffset.UtcNow, // Owner signs when creating car
+                Status = CarContractStatusEnum.OwnerSigned
+            };
+
             CarStatistic newCarStatistic = new() { CarId = carId };
 
             await context.Cars.AddAsync(newCar, cancellationToken);
+            await context.CarContracts.AddAsync(carContract, cancellationToken);
             await context.CarStatistics.AddAsync(newCarStatistic, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
             return Result.Success(
