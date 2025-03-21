@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using Domain.Constants;
 using Domain.Entities;
+using Domain.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -44,7 +45,7 @@ public sealed class CreateInspectionSchedule
             if (car is null)
                 return Result.Error(ResponseMessages.CarNotFound);
 
-            if (car.Status != Domain.Enums.CarStatusEnum.Pending)
+            if (car.Status != CarStatusEnum.Pending)
                 return Result.Error(ResponseMessages.CarIsNotInPending);
 
             // Verify user exists and is a technician
@@ -57,6 +58,55 @@ public sealed class CreateInspectionSchedule
 
             if (technician is null || !technician.IsTechnician())
                 return Result.Error(ResponseMessages.TechnicianNotFound);
+
+            // Check for existing active schedules for the car
+            var existingActiveSchedule = await context
+                .InspectionSchedules.AsNoTracking()
+                .Where(s => s.CarId == request.CarId)
+                .Where(s => !s.IsDeleted)
+                .Where(s =>
+                    s.Status != InspectionScheduleStatusEnum.Expired
+                    && s.Status != InspectionScheduleStatusEnum.Rejected
+                )
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (existingActiveSchedule != null)
+                return Result.Error(ResponseMessages.CarHadInspectionSchedule);
+
+            // Check for expired schedules with the same technician
+            var existingExpiredSchedule = await context
+                .InspectionSchedules.AsNoTracking()
+                .Where(s => s.CarId == request.CarId)
+                .Where(s => !s.IsDeleted)
+                .Where(s => s.Status == InspectionScheduleStatusEnum.Expired)
+                .Where(s => s.TechnicianId == request.TechnicianId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (existingExpiredSchedule != null)
+                return Result.Error(
+                    ResponseMessages.CarHadExpiredInspectionScheduleWithThisTechnician
+                );
+
+            // Get technician's existing inspection schedules that are not expired or rejected
+            var technicianSchedules = await context
+                .InspectionSchedules.AsNoTracking()
+                .Where(s => s.TechnicianId == request.TechnicianId)
+                .Where(s => !s.IsDeleted)
+                .Where(s =>
+                    s.Status != InspectionScheduleStatusEnum.Expired
+                    && s.Status != InspectionScheduleStatusEnum.Rejected
+                )
+                .Select(s => s.InspectionDate)
+                .ToListAsync(cancellationToken);
+
+            // Check if any existing schedule is within 1 hour of the requested time
+            var requestedTime = request.InspectionDate;
+            var tooCloseSchedule = technicianSchedules.Any(existingTime =>
+                Math.Abs((existingTime - requestedTime).TotalMinutes) < 60
+            );
+
+            if (tooCloseSchedule)
+                return Result.Error(ResponseMessages.TechnicianHasInspectionScheduleWithinOneHour);
 
             // Create inspection schedule
             var schedule = new InspectionSchedule

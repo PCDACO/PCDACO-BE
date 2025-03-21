@@ -60,6 +60,28 @@ public sealed class UpdateInspectionSchedule
             if (technician is null || !technician.IsTechnician())
                 return Result.Error(ResponseMessages.TechnicianNotFound);
 
+            // Get technician's existing inspection schedules that are not expired or rejected
+            var technicianSchedules = await context
+                .InspectionSchedules.AsNoTracking()
+                .Where(s => s.TechnicianId == request.TechnicianId)
+                .Where(s => s.Id != request.Id) // Exclude the current schedule being updated
+                .Where(s => !s.IsDeleted)
+                .Where(s =>
+                    s.Status != Domain.Enums.InspectionScheduleStatusEnum.Expired
+                    && s.Status != Domain.Enums.InspectionScheduleStatusEnum.Rejected
+                )
+                .Select(s => s.InspectionDate)
+                .ToListAsync(cancellationToken);
+
+            // Check if any existing schedule is within 1 hour of the requested time
+            var requestedTime = request.InspectionDate;
+            var tooCloseSchedule = technicianSchedules.Any(existingTime =>
+                Math.Abs((existingTime - requestedTime).TotalMinutes) < 60
+            );
+
+            if (tooCloseSchedule)
+                return Result.Error(ResponseMessages.TechnicianHasInspectionScheduleWithinOneHour);
+
             // Update schedule
             schedule.TechnicianId = request.TechnicianId;
             schedule.InspectionAddress = request.InspectionAddress;

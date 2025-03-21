@@ -1,13 +1,9 @@
 using Ardalis.Result;
-
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Shared;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -16,7 +12,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
     public sealed class GetInDateScheduleForCurrentTechnician
     {
         // Query remains the same
-        public sealed record Query()
+        public sealed record Query(DateTimeOffset? InspectionDate = null)
             : IRequest<Result<Response>>;
 
         // Updated response records
@@ -28,7 +24,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
         {
             public static async Task<Response> FromEntity(
                 string technicianName,
-                DateTimeOffset InspectionDate,
+                DateTimeOffset inspectionDate,
                 IEnumerable<InspectionSchedule> schedules,
                 string masterKey,
                 IAesEncryptionService aesEncryptionService,
@@ -37,46 +33,53 @@ namespace UseCases.UC_InspectionSchedule.Queries
             {
                 return new Response(
                     TechnicianName: technicianName,
-                    InspectionDate: InspectionDate,
-                    Cars: await Task.WhenAll(schedules.Any() ? schedules.Select(async schedule =>
-                    {
-                        string decryptedKey = keyManagementService.DecryptKey(
-                            schedule.Car.EncryptionKey.EncryptedKey,
-                            masterKey
-                        );
-                        string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                            schedule.Car.EncryptedLicensePlate,
-                            decryptedKey,
-                            schedule.Car.EncryptionKey.IV
-                        );
-                        return new CarDetail(
-                            Id: schedule.CarId,
-                            ModelId: schedule.Car.ModelId,
-                            InspectionScheduleId: schedule.Id,
-                            ModelName: schedule.Car.Model.Name,
-                            ManufacturerName: schedule.Car.Model.Manufacturer.Name,
-                            LicensePlate: decryptedLicensePlate,
-                            Color: schedule.Car.Color,
-                            Seat: schedule.Car.Seat,
-                            Description: schedule.Car.Description,
-                            TransmissionType: schedule.Car.TransmissionType.Name,
-                            FuelType: schedule.Car.FuelType.Name,
-                            FuelConsumption: schedule.Car.FuelConsumption,
-                            RequiresCollateral: schedule.Car.RequiresCollateral,
-                            Price: schedule.Car.Price,
-                            Images: [..schedule.Car.ImageCars.Select(image => new ImageDetail(
-                                Id: image.Id,
-                                Url: image.Url,
-                                ImageTypeName: image.Type.Name
-                            ))],
-                            Owner: new(
-                                Id: schedule.Car.Owner.Id,
-                                Name: schedule.Car.Owner.Name,
-                                AvatarUrl: schedule.Car.Owner.AvatarUrl
-                            ),
-                            InspectionAddress: schedule.InspectionAddress
-                        );
-                    }) : [])
+                    InspectionDate: inspectionDate,
+                    Cars: await Task.WhenAll(
+                        schedules.Any()
+                            ? schedules.Select(async schedule =>
+                            {
+                                string decryptedKey = keyManagementService.DecryptKey(
+                                    schedule.Car.EncryptionKey.EncryptedKey,
+                                    masterKey
+                                );
+                                string decryptedLicensePlate = await aesEncryptionService.Decrypt(
+                                    schedule.Car.EncryptedLicensePlate,
+                                    decryptedKey,
+                                    schedule.Car.EncryptionKey.IV
+                                );
+                                return new CarDetail(
+                                    Id: schedule.CarId,
+                                    ModelId: schedule.Car.ModelId,
+                                    InspectionScheduleId: schedule.Id,
+                                    ModelName: schedule.Car.Model.Name,
+                                    ManufacturerName: schedule.Car.Model.Manufacturer.Name,
+                                    LicensePlate: decryptedLicensePlate,
+                                    Color: schedule.Car.Color,
+                                    Seat: schedule.Car.Seat,
+                                    Description: schedule.Car.Description,
+                                    TransmissionType: schedule.Car.TransmissionType.Name,
+                                    FuelType: schedule.Car.FuelType.Name,
+                                    FuelConsumption: schedule.Car.FuelConsumption,
+                                    RequiresCollateral: schedule.Car.RequiresCollateral,
+                                    Price: schedule.Car.Price,
+                                    Images:
+                                    [
+                                        .. schedule.Car.ImageCars.Select(image => new ImageDetail(
+                                            Id: image.Id,
+                                            Url: image.Url,
+                                            ImageTypeName: image.Type.Name
+                                        )),
+                                    ],
+                                    Owner: new(
+                                        Id: schedule.Car.Owner.Id,
+                                        Name: schedule.Car.Owner.Name,
+                                        AvatarUrl: schedule.Car.Owner.AvatarUrl
+                                    ),
+                                    InspectionAddress: schedule.InspectionAddress
+                                );
+                            })
+                            : []
+                    )
                 );
             }
         }
@@ -120,17 +123,25 @@ namespace UseCases.UC_InspectionSchedule.Queries
             {
                 if (!currentUser.User!.IsTechnician())
                     return Result.Forbidden(ResponseMessages.ForbiddenAudit);
-
-                var today = DateTimeOffset.UtcNow;
+                var inspectionDate = request.InspectionDate switch
+                {
+                    not null => request.InspectionDate!.Value,
+                    _ => DateTimeOffset.UtcNow,
+                };
                 IEnumerable<InspectionSchedule> schedules = await context
-                    .InspectionSchedules
-                    .AsNoTracking()
+                    .InspectionSchedules.AsNoTracking()
                     .AsSplitQuery()
                     .Include(s => s.Technician)
-                    .Include(s => s.Car).ThenInclude(c => c.Model).ThenInclude(m => m.Manufacturer)
-                    .Include(s => s.Car).ThenInclude(c => c.ImageCars).ThenInclude(i => i.Type)
-                    .Include(s => s.Car).ThenInclude(c => c.Owner)
-                    .Include(s => s.Car).ThenInclude(c => c.EncryptionKey)
+                    .Include(s => s.Car)
+                    .ThenInclude(c => c.Model)
+                    .ThenInclude(m => m.Manufacturer)
+                    .Include(s => s.Car)
+                    .ThenInclude(c => c.ImageCars)
+                    .ThenInclude(i => i.Type)
+                    .Include(s => s.Car)
+                    .ThenInclude(c => c.Owner)
+                    .Include(s => s.Car)
+                    .ThenInclude(c => c.EncryptionKey)
                     .Include(s => s.Car)
                     .ThenInclude(c => c.TransmissionType)
                     .Include(s => s.Car)
@@ -139,7 +150,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
                     .Where(s =>
                         s.TechnicianId == currentUser.User.Id
                         && !s.IsDeleted
-                        && s.InspectionDate.Date == today.Date
+                        && s.InspectionDate.Date == inspectionDate.Date
                     )
                     .OrderBy(s => s.Id)
                     .ToListAsync(cancellationToken);
@@ -147,7 +158,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
                 return Result.Success(
                     await Response.FromEntity(
                         currentUser.User.Name,
-                        today,
+                        inspectionDate,
                         schedules,
                         encryptionSettings.Key,
                         aesEncryptionService,

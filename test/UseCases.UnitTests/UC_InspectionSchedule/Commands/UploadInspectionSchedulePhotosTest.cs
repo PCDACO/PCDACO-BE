@@ -89,6 +89,152 @@ public class UploadInspectionSchedulePhotosTest(DatabaseTestBase fixture) : IAsy
     }
 
     [Fact]
+    public async Task Handle_ScheduleInPendingStatus_ReturnsError()
+    {
+        // Arrange
+        // Create technician user
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
+        _currentUser.SetUser(technician);
+
+        // Create prerequisites for inspection schedule
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+
+        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+        var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
+            _dbContext,
+            "Automatic"
+        );
+        var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        // Create car
+        var car = await TestDataCreateCar.CreateTestCar(
+            _dbContext,
+            owner.Id,
+            model.Id,
+            transmissionType,
+            fuelType,
+            Domain.Enums.CarStatusEnum.Pending
+        );
+
+        // Create inspection schedule with Pending status
+        var schedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car.Id,
+            Status = InspectionScheduleStatusEnum.Pending,
+            InspectionAddress = "123 Test St",
+            InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
+            CreatedBy = consultant.Id,
+        };
+
+        await _dbContext.InspectionSchedules.AddAsync(schedule);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new UploadInspectionSchedulePhotos.Handler(
+            _dbContext,
+            _currentUser,
+            _cloudinaryServices.Object
+        );
+
+        var command = CreateValidCommand(schedule.Id);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(
+            "Chỉ có thể tải lên ảnh kiểm định sau khi đã bắt đầu kiểm định và trước khi bị quá hạn kiểm định",
+            result.Errors
+        );
+    }
+
+    [Fact]
+    public async Task Handle_ScheduleInExpiredStatus_ReturnsError()
+    {
+        // Arrange
+        // Create technician user
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
+        _currentUser.SetUser(technician);
+
+        // Create prerequisites for inspection schedule
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+
+        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+        var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
+            _dbContext,
+            "Automatic"
+        );
+        var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        // Create car
+        var car = await TestDataCreateCar.CreateTestCar(
+            _dbContext,
+            owner.Id,
+            model.Id,
+            transmissionType,
+            fuelType,
+            Domain.Enums.CarStatusEnum.Pending
+        );
+
+        // Create inspection schedule with Expired status
+        var schedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car.Id,
+            Status = InspectionScheduleStatusEnum.Expired,
+            InspectionAddress = "123 Test St",
+            InspectionDate = DateTimeOffset.UtcNow.AddDays(-1),
+            CreatedBy = consultant.Id,
+        };
+
+        await _dbContext.InspectionSchedules.AddAsync(schedule);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new UploadInspectionSchedulePhotos.Handler(
+            _dbContext,
+            _currentUser,
+            _cloudinaryServices.Object
+        );
+
+        var command = CreateValidCommand(schedule.Id);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(
+            "Chỉ có thể tải lên ảnh kiểm định sau khi đã bắt đầu kiểm định và trước khi bị quá hạn kiểm định",
+            result.Errors
+        );
+    }
+
+    [Fact]
     public async Task Handle_ValidRequest_UploadsPhotosSuccessfully()
     {
         // Arrange
@@ -133,7 +279,7 @@ public class UploadInspectionSchedulePhotosTest(DatabaseTestBase fixture) : IAsy
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            Status = InspectionScheduleStatusEnum.Pending,
+            Status = InspectionScheduleStatusEnum.InProgress,
             InspectionAddress = "123 Test St",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
             CreatedBy = consultant.Id,

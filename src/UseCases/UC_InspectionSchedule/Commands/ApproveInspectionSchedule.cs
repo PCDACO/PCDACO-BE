@@ -1,14 +1,9 @@
 using Ardalis.Result;
-
 using Domain.Constants;
 using Domain.Entities;
-
 using FluentValidation;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -37,31 +32,34 @@ public sealed class ApproveInspectionSchedule
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             // Get the existing schedule
-            var schedule = await context
-                .InspectionSchedules
-                .FirstOrDefaultAsync(s => s.Id == request.Id && !s.IsDeleted, cancellationToken);
+            var schedule = await context.InspectionSchedules.FirstOrDefaultAsync(
+                s => s.Id == request.Id && !s.IsDeleted,
+                cancellationToken
+            );
 
             if (schedule is null)
                 return Result.Error(ResponseMessages.InspectionScheduleNotFound);
 
             // Check if schedule can be updated
-            if (schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.Pending)
-                return Result.Error(ResponseMessages.OnlyUpdatePendingInspectionSchedule);
+            if (schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.InProgress)
+                return Result.Error(ResponseMessages.OnlyUpdateInProgressInspectionSchedule);
 
             // Update schedule
             schedule.Note = request.Note;
-            schedule.Status = request.IsApproved ? Domain.Enums.InspectionScheduleStatusEnum.Approved
+            schedule.Status = request.IsApproved
+                ? Domain.Enums.InspectionScheduleStatusEnum.Approved
                 : Domain.Enums.InspectionScheduleStatusEnum.Rejected;
             schedule.UpdatedAt = DateTimeOffset.UtcNow;
             // Set Car Status into enabled
             if (request.IsApproved)
             {
-                await context.Cars
-                    .Where(c => !c.IsDeleted)
+                await context
+                    .Cars.Where(c => !c.IsDeleted)
                     .Where(c => c.Id == schedule.CarId)
-                    .ExecuteUpdateAsync(c => c.SetProperty(
-                                c => c.Status, Domain.Enums.CarStatusEnum.Available
-                    ));
+                    .ExecuteUpdateAsync(
+                        c => c.SetProperty(c => c.Status, Domain.Enums.CarStatusEnum.Available),
+                        cancellationToken: cancellationToken
+                    );
             }
             await context.SaveChangesAsync(cancellationToken);
             return Result.Success(Response.FromEntity(schedule), ResponseMessages.Updated);

@@ -53,6 +53,17 @@ public sealed class UploadInspectionSchedulePhotos
             if (inspectionSchedule is null)
                 return Result.NotFound("Không tìm thấy thông tin kiểm định xe");
 
+            // Check if the inspection schedule is in a valid status for uploading photos
+            if (
+                inspectionSchedule.Status == InspectionScheduleStatusEnum.Pending
+                || inspectionSchedule.Status == InspectionScheduleStatusEnum.Expired
+            )
+            {
+                return Result.Error(
+                    "Chỉ có thể tải lên ảnh kiểm định sau khi đã bắt đầu kiểm định và trước khi bị quá hạn kiểm định"
+                );
+            }
+
             // Upload new images
             List<Task<string>> uploadTasks = [];
 
