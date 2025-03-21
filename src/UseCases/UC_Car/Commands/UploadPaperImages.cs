@@ -79,7 +79,7 @@ public sealed class UploadPaperImages
             int carIndex = 0;
             foreach (var image in request.PaperImages)
             {
-                carTasks.Add(cloudinaryServices.UploadCarImageAsync($"Car-{car.Id}-Image-{++carIndex}", image.Content, cancellationToken));
+                carTasks.Add(cloudinaryServices.UploadCarImageAsync($"Car-{car.Id}-PaperImage-{++carIndex}", image.Content, cancellationToken));
             }
             string[] paperImageUrls = await Task.WhenAll(carTasks);
             ImageCar[] images =
@@ -90,7 +90,7 @@ public sealed class UploadPaperImages
                         CarId = car.Id,
                         Url = paperImageUrls[i],
                         TypeId = paperImageType.Id,
-                        Name = request.PaperImages[i].FileName 
+                        Name = request.PaperImages[i].FileName
                     }),
             ];
             // Save new images

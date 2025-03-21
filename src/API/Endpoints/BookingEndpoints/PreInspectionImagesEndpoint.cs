@@ -31,21 +31,32 @@ public class PreInspectionImagesEndpoint : ICarterModule
                 new(operation)
                 {
                     Description = """
-                    Submit pre-booking inspection images and notes.
+                    Submit pre-booking inspection images and notes for a car before rental pickup.
 
-                    Required fields:
-                    - exteriorPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
-                    - fuelGaugePhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
-                    - carKeyPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
-                    - trunkPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
-                    - exteriorNote: string
-                    - fuelGaugeNote: string
-                    - carKeyNote: string
-                    - trunkNote: string
+                    Access Control:
+                    - Requires authentication
+                    - Only car owners can submit inspection images
+                    - Can only be submitted within 24 hours before booking start time
 
-                    Optional fields:
-                    - parkingLocationPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
-                    - parkingLocationNote: string
+                    Required Photo Categories:
+                    1. Exterior Car Photos (exteriorPhotos)
+                    2. Fuel Gauge Photos (fuelGaugePhotos)
+                    3. Car Key Photos (carKeyPhotos)
+                    4. Trunk Space Photos (trunkPhotos)
+
+                    Optional Photo Categories:
+                    - Parking Location Photos (parkingLocationPhotos)
+
+                    File Requirements:
+                    - Maximum 5 images per category
+                    - Maximum file size: 10MB per image
+                    - Allowed formats: .jpg, .jpeg, .png
+
+                    Notes:
+                    - Each category can include an optional text note
+                    - Inspection is marked complete only when all required photos are uploaded
+                    - Booking status updates to ReadyForPickup when inspection is complete
+                    - Can only be updated once per booking
                     """,
 
                     Responses =
@@ -88,6 +99,57 @@ public class PreInspectionImagesEndpoint : ICarterModule
                                         },
                                         ["isSuccess"] = new OpenApiBoolean(true),
                                         ["message"] = new OpenApiString("")
+                                    }
+                                }
+                            }
+                        },
+                        ["400"] = new()
+                        {
+                            Description = "Bad Request - Validation errors",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["message"] = new OpenApiString(
+                                            "Thiếu hình ảnh bắt buộc: hình ảnh ngoại thất xe"
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        ["401"] = new() { Description = "Unauthorized - User not authenticated" },
+                        ["403"] = new()
+                        {
+                            Description =
+                                "Forbidden - User is not the car owner or booking is not in valid state",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["message"] = new OpenApiString(
+                                            "Bạn không có quyền thực hiện chức năng này với booking này!"
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        ["404"] = new()
+                        {
+                            Description = "Not Found - Booking doesn't exist",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["message"] = new OpenApiString("Không tìm thấy đặt xe")
                                     }
                                 }
                             }
