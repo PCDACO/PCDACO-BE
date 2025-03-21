@@ -185,8 +185,8 @@ public sealed class CreateCar
                 .LessThan(50)
                 .WithMessage("Số chỗ ngồi không được quá 50 !");
             RuleFor(x => x.Description)
-                .MaximumLength(500)
-                .WithMessage("Mô tả không được quá 500 ký tự !");
+                .MaximumLength(1000)
+                .WithMessage("Mô tả không được quá 1000 ký tự !");
             RuleFor(x => x.FuelConsumption)
                 .NotEmpty()
                 .WithMessage("Mức tiêu hao nhiên liệu không được để trống !")

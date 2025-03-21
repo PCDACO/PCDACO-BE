@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Shared;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -55,6 +56,15 @@ public sealed class UploadUserAvatar
             await context.SaveChangesAsync(cancellationToken);
 
             return Result.Success(Response.FromEntity(user), "Cập nhật ảnh đại diện thành công");
+        }
+    }
+
+    public sealed class Validator : AbstractValidator<Command>
+    {
+        public Validator()
+        {
+            RuleFor(c => c.UserId).NotEmpty().WithMessage("Id người dùng không được để trống");
+            RuleFor(c => c.Avatar).NotNull().WithMessage("Ảnh đại diện không được để trống");
         }
     }
 }
