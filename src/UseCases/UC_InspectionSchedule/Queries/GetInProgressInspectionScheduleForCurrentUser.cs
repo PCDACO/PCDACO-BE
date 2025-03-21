@@ -6,7 +6,6 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
 using UseCases.DTOs;
-using UseCases.Utils;
 
 namespace UseCases.UC_InspectionSchedule.Queries;
 
@@ -17,12 +16,9 @@ public class GetInProgressInspectionScheduleForCurrentUser
     public record Response(
             Guid Id,
             DateTimeOffset Date,
+            string OwnerName,
             string Address,
-            string Notes,
-            TechnicianDetail Technician,
-            OwnerDetail Owner,
-            CarDetail Car,
-            DateTimeOffset CreatedAt
+            string LicensePlate
         )
     {
         public static async Task<Response> FromEntity(
@@ -33,73 +29,23 @@ public class GetInProgressInspectionScheduleForCurrentUser
                 )
         {
             string decryptedKey = keyManagementService.DecryptKey(
-                inspectionSchedule.Car.Owner.EncryptionKey.EncryptedKey,
+                inspectionSchedule.Car.EncryptionKey.EncryptedKey,
                 masterKey
             );
-            string decryptedPhone = await aesEncryptionService.Decrypt(
-                inspectionSchedule.Car.Owner.Phone,
+            string decryptedLicensePlate = await aesEncryptionService.Decrypt(
+                inspectionSchedule.Car.EncryptedLicensePlate,
                 decryptedKey,
-                inspectionSchedule.Car.Owner.EncryptionKey.IV
+                inspectionSchedule.Car.EncryptionKey.IV
             );
             return new(
-                    Id: inspectionSchedule.Id,
-                    Date: inspectionSchedule.InspectionDate,
-                    Address: inspectionSchedule.InspectionAddress,
-                    Notes: inspectionSchedule.Note,
-                    Technician: new(
-                        Id: inspectionSchedule.Technician.Id,
-                        Name: inspectionSchedule.Technician.Name
-                        ),
-                    Owner: new(
-                        Id: inspectionSchedule.Car.Owner.Id,
-                        Name: inspectionSchedule.Car.Owner.Name,
-                        AvatarUrl: inspectionSchedule.Car.Owner.AvatarUrl,
-                        Phone: decryptedPhone
-                        ),
-                    Car: new CarDetail(
-                        Id: inspectionSchedule.Car.Id,
-                        ModelId: inspectionSchedule.Car.Model.Id,
-                        ModelName: inspectionSchedule.Car.Model.Name,
-                        FuelType: inspectionSchedule.Car.FuelType.Name,
-                        TransmissionType: inspectionSchedule.Car.TransmissionType.Name,
-                        Amenities: inspectionSchedule.Car.CarAmenities
-                            .Select(ca => new AmenityDetail(
-                                Id: ca.Amenity.Id,
-                                Name: ca.Amenity.Name,
-                                IconUrl: ca.Amenity.IconUrl
-                            )).ToArray()
-                    ),
-                    CreatedAt: GetTimestampFromUuid.Execute(inspectionSchedule.Id)
+             Id: inspectionSchedule.Id,
+             Date: inspectionSchedule.InspectionDate,
+             OwnerName: inspectionSchedule.Car.Owner.Name,
+             Address: inspectionSchedule.InspectionAddress,
+             LicensePlate: decryptedLicensePlate
                   );
         }
     };
-
-    public record CarDetail(
-            Guid Id,
-            Guid ModelId,
-            string ModelName,
-            string FuelType,
-            string TransmissionType,
-            AmenityDetail[] Amenities
-            );
-
-    public record TechnicianDetail(
-            Guid Id,
-            string Name
-            );
-
-    public record OwnerDetail(
-            Guid Id,
-            string Name,
-            string AvatarUrl,
-            string Phone
-            );
-
-    public record AmenityDetail(
-            Guid Id,
-            string Name,
-            string IconUrl
-    );
 
     internal sealed class Handler(
         IAppDBContext context,
@@ -118,7 +64,8 @@ public class GetInProgressInspectionScheduleForCurrentUser
             InspectionSchedule? result = await context.InspectionSchedules
                .AsNoTracking()
                .AsSplitQuery()
-               .Include(i => i.Car).ThenInclude(c => c.Owner).ThenInclude(o => o.EncryptionKey)
+               .Include(i => i.Car).ThenInclude(c => c.Owner)
+               .Include(i => i.Car).ThenInclude(c => c.EncryptionKey)
                .Include(i => i.Car).ThenInclude(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                .Include(i => i.Car).ThenInclude(c => c.FuelType)
                .Include(i => i.Car).ThenInclude(c => c.TransmissionType)
@@ -130,7 +77,7 @@ public class GetInProgressInspectionScheduleForCurrentUser
                .FirstOrDefaultAsync(cancellationToken);
             if (result is null)
             {
-                return Result.Error(ResponseMessages.InspectionScheduleNotFound);
+                return Result.NotFound(ResponseMessages.InspectionScheduleNotFound);
             }
             return Result.Success(await Response.FromEntity(
             result,
