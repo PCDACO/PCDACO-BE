@@ -25,6 +25,7 @@ public class UploadInspectionPhotosEndpoint : ICarterModule
         InspectionPhotoType photoType,
         IFormFileCollection photos,
         string description = "",
+        DateTimeOffset? expiryDate = null,
         CancellationToken cancellationToken = default
     )
     {
@@ -32,7 +33,7 @@ public class UploadInspectionPhotosEndpoint : ICarterModule
         Stream[] streams = [.. photos.Select(p => p.OpenReadStream())];
 
         var result = await sender.Send(
-            new UploadInspectionSchedulePhotos.Command(id, photoType, streams, description),
+            new UploadInspectionSchedulePhotos.Command(id, photoType, streams, description, expiryDate),
             cancellationToken
         );
 

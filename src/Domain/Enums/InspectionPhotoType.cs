@@ -14,4 +14,7 @@ public enum InspectionPhotoType
     Scratches, // Photo of scratches
     Cleanliness, // Photo of the car cleanliness
     TollFees, // Photo of toll fees
+
+    // Vehicle inspection certificate
+    VehicleInspectionCertificate,
 }

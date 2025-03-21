@@ -16,7 +16,8 @@ public sealed class UploadInspectionSchedulePhotos
         Guid InspectionScheduleId,
         InspectionPhotoType PhotoType,
         Stream[] PhotoFiles,
-        string Description = ""
+        string Description = "",
+        DateTimeOffset? ExpiryDate = null
     ) : IRequest<Result<Response>>;
 
     public sealed record Response(ImageDetail[] Images)
@@ -91,6 +92,10 @@ public sealed class UploadInspectionSchedulePhotos
                     Type = request.PhotoType,
                     PhotoUrl = url,
                     Description = request.Description,
+                    InspectionCertificateExpiryDate =
+                        request.PhotoType == InspectionPhotoType.VehicleInspectionCertificate
+                            ? request.ExpiryDate
+                            : null,
                 }),
             ];
 
@@ -136,6 +141,18 @@ public sealed class UploadInspectionSchedulePhotos
                 .WithMessage(
                     $"Chỉ chấp nhận các định dạng: {string.Join(", ", allowedExtensions)}"
                 );
+
+            When(
+                x => x.PhotoType == InspectionPhotoType.VehicleInspectionCertificate,
+                () =>
+                    RuleFor(x => x.ExpiryDate)
+                        .NotEmpty()
+                        .WithMessage("Ngày hết hạn giấy kiểm định không được để trống")
+                        .Must(date => date >= DateTimeOffset.UtcNow)
+                        .WithMessage(
+                            "Ngày hết hạn giấy kiểm định phải lớn hơn hoặc bằng thời điểm hiện tại"
+                        )
+            );
         }
 
         private bool ValidateFileSize(Stream file)
