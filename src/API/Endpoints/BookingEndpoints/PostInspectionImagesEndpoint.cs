@@ -35,19 +35,35 @@ public class PostInspectionImagesEndpoint : ICarterModule
                 new(operation)
                 {
                     Description = """
-                    Submit post-booking inspection images and notes.
+                    Submit post-booking inspection images and notes after rental completion.
 
-                    Required fields:
-                    - fuelGaugeFinalPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
-                    - cleanlinessPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
-                    - fuelGaugeFinalNote: string
-                    - cleanlinessNote: string
+                    Access Control:
+                    - Requires authentication
+                    - Only car owners can submit inspection images
+                    - Only available for completed bookings
 
-                    Optional fields:
-                    - scratchesPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
-                    - scratchesNote: string
-                    - tollFeesPhotos: Up to 5 images (jpg, jpeg, png) max 10MB each
-                    - tollFeesNote: string
+                    Required Photo Categories:
+                    1. Final Fuel Gauge Photos (fuelGaugeFinalPhotos)
+                       - Shows final fuel level after rental
+                    2. Cleanliness Photos (cleanlinessPhotos)
+                       - Documents car cleanliness condition
+
+                    Optional Photo Categories:
+                    1. Scratches Photos (scratchesPhotos)
+                       - Any damage or scratches found
+                    2. Toll Fees Photos (tollFeesPhotos)
+                       - Evidence of unpaid toll fees
+
+                    File Requirements:
+                    - Maximum 5 images per category
+                    - Maximum file size: 10MB per image
+                    - Allowed formats: .jpg, .jpeg, .png
+
+                    Process Effects:
+                    - Marks inspection as complete
+                    - Automatically confirms car return
+                    - Can only be submitted once
+                    - Updates booking timestamps
                     """,
 
                     Responses =
@@ -92,6 +108,57 @@ public class PostInspectionImagesEndpoint : ICarterModule
                                         },
                                         ["isSuccess"] = new OpenApiBoolean(true),
                                         ["message"] = new OpenApiString("")
+                                    }
+                                }
+                            }
+                        },
+                        ["400"] = new()
+                        {
+                            Description = "Bad Request - Validation errors",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["message"] = new OpenApiString(
+                                            "Thiếu hình ảnh bắt buộc: hình ảnh mức xăng cuối, hình ảnh vệ sinh xe"
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        ["401"] = new() { Description = "Unauthorized - User not authenticated" },
+                        ["403"] = new()
+                        {
+                            Description =
+                                "Forbidden - User is not the car owner or booking is not completed",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["message"] = new OpenApiString(
+                                            "Bạn không có quyền phê duyệt booking cho xe này!"
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                        ["404"] = new()
+                        {
+                            Description = "Not Found - Booking doesn't exist",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["message"] = new OpenApiString("Không tìm thấy đặt xe")
                                     }
                                 }
                             }

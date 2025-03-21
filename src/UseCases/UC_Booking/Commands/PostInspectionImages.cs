@@ -42,12 +42,15 @@ public sealed class PostInspectionImages
                 return Result.Forbidden(ResponseMessages.UnauthourizeAccess);
 
             var booking = await context
-                .Bookings.AsNoTracking()
+                .Bookings.Include(b => b.Car)
                 .Include(b => b.CarInspections.Where(i => i.Type == InspectionType.PostBooking))
                 .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
                 return Result.NotFound(ResponseMessages.BookingNotFound);
+
+            if (booking.Car.OwnerId != currentUser.User.Id)
+                return Result.Forbidden("Bạn không có quyền phê duyệt booking cho xe này!");
 
             if (booking.Status != BookingStatusEnum.Completed)
                 return Result.Error("Chỉ có thể kiểm tra xe sau khi kết thúc thuê xe!");
@@ -128,6 +131,14 @@ public sealed class PostInspectionImages
 
             // Check if all required photos are uploaded and mark inspection as complete
             existingInspection.IsComplete = true;
+
+            // After successfully processing photos and saving inspection
+            if (existingInspection.IsComplete)
+            {
+                // Automatically confirm car return
+                booking.IsCarReturned = true;
+                booking.UpdatedAt = DateTimeOffset.UtcNow;
+            }
 
             await context.SaveChangesAsync(cancellationToken);
 
