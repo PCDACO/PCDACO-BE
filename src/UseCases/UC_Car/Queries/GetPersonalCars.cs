@@ -1,14 +1,10 @@
 using Ardalis.Result;
-
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -48,14 +44,16 @@ public class GetPersonalCars
         LocationDetail? Location,
         ManufacturerDetail Manufacturer,
         ImageDetail[] Images,
-        AmenityDetail[] Amenities
+        AmenityDetail[] Amenities,
+        ContractDetail? Contract
     )
     {
         public static async Task<Response> FromEntity(
             Car car,
             string masterKey,
             IAesEncryptionService aesEncryptionService,
-            IKeyManagementService keyManagementService
+            IKeyManagementService keyManagementService,
+            bool includeContract = false
         )
         {
             string decryptedKey = keyManagementService.DecryptKey(
@@ -67,6 +65,21 @@ public class GetPersonalCars
                 decryptedKey,
                 car.EncryptionKey.IV
             );
+
+            ContractDetail? contractDetail = null;
+            if (includeContract && car.Contract != null)
+            {
+                contractDetail = new ContractDetail(
+                    car.Contract.Id,
+                    car.Contract.Terms,
+                    car.Contract.Status.ToString(),
+                    car.Contract.OwnerSignatureDate,
+                    car.Contract.TechnicianSignatureDate,
+                    car.Contract.InspectionResults,
+                    car.Contract.GPSDeviceId
+                );
+            }
+
             return new(
                 Id: car.Id,
                 ModelId: car.Model.Id,
@@ -101,7 +114,8 @@ public class GetPersonalCars
                         a.Amenity.Description,
                         a.Amenity.IconUrl
                     )),
-                ]
+                ],
+                Contract: contractDetail
             );
         }
     };
@@ -128,11 +142,16 @@ public class GetPersonalCars
         string Name
     );
 
-    public record AmenityDetail(
+    public record AmenityDetail(Guid Id, string Name, string Description, string Icon);
+
+    public record ContractDetail(
         Guid Id,
-        string Name,
-        string Description,
-        string Icon
+        string Terms,
+        string Status,
+        DateTimeOffset? OwnerSignatureDate,
+        DateTimeOffset? TechnicianSignatureDate,
+        string? InspectionResults,
+        Guid? GPSDeviceId
     );
 
     public class Handler(
@@ -148,6 +167,13 @@ public class GetPersonalCars
             CancellationToken cancellationToken
         )
         {
+            // Check if user has permission to view contracts
+            bool canViewContract =
+                currentUser.User!.IsAdmin()
+                || currentUser.User.IsConsultant()
+                || currentUser.User.IsTechnician()
+                || currentUser.User.IsOwner();
+
             IQueryable<Car> gettingCarQuery = context
                 .Cars
                 .AsNoTracking()
@@ -160,6 +186,7 @@ public class GetPersonalCars
                 .Include(c => c.FuelType)
                 .Include(c => c.GPS)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
+                .Include(c => c.Contract)
                 .Where(c => !c.IsDeleted)
                 .Where(c => request.Status != null ? c.Status == request.Status : true)
                 .Where(c => c.OwnerId == currentUser.User!.Id)
@@ -190,7 +217,8 @@ public class GetPersonalCars
                                     c,
                                     encryptionSettings.Key,
                                     aesEncryptionService,
-                                    keyManagementService
+                                    keyManagementService,
+                                    includeContract: canViewContract
                                 )
                             )
                         )

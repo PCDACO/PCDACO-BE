@@ -42,6 +42,7 @@ public class User : BaseEntity
     public ICollection<BankAccount> BankAccounts { get; set; } = [];
     public ICollection<Car> Cars { get; set; } = [];
     public ICollection<Feedback> Feedbacks { get; set; } = [];
+    public ICollection<CarContract> CarContracts { get; set; } = [];
 
     [InverseProperty(nameof(Transaction.FromUser))]
     public ICollection<Transaction> SentTransactions { get; set; } = [];

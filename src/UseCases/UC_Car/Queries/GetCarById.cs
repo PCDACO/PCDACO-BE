@@ -6,6 +6,7 @@ using Domain.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
+using UseCases.DTOs;
 
 namespace UseCases.UC_Car.Queries;
 
@@ -36,14 +37,16 @@ public class GetCarById
         ManufacturerDetail Manufacturer,
         ImageDetail[] Images,
         AmenityDetail[] Amenities,
-        BookingSchedule[] Bookings
+        BookingSchedule[] Bookings,
+        ContractDetail? Contract
     )
     {
         public static async Task<Response> FromEntity(
             Car car,
             string masterKey,
             IAesEncryptionService aesEncryptionService,
-            IKeyManagementService keyManagementService
+            IKeyManagementService keyManagementService,
+            bool includeContract = false
         )
         {
             string decryptedKey = keyManagementService.DecryptKey(
@@ -55,6 +58,21 @@ public class GetCarById
                 decryptedKey,
                 car.EncryptionKey.IV
             );
+
+            ContractDetail? contractDetail = null;
+            if (includeContract && car.Contract != null)
+            {
+                contractDetail = new ContractDetail(
+                    car.Contract.Id,
+                    car.Contract.Terms,
+                    car.Contract.Status.ToString(),
+                    car.Contract.OwnerSignatureDate,
+                    car.Contract.TechnicianSignatureDate,
+                    car.Contract.InspectionResults,
+                    car.Contract.GPSDeviceId
+                );
+            }
+
             return new(
                 car.Id,
                 car.Model.Id,
@@ -85,7 +103,8 @@ public class GetCarById
                         a.Amenity.IconUrl
                     )),
                 ],
-                [.. car.Bookings.Select(b => new BookingSchedule(b.StartTime, b.EndTime))]
+                [.. car.Bookings.Select(b => new BookingSchedule(b.StartTime, b.EndTime))],
+                contractDetail
             );
         }
     };
@@ -100,11 +119,22 @@ public class GetCarById
 
     public record BookingSchedule(DateTimeOffset StartTime, DateTimeOffset EndTime);
 
+    public record ContractDetail(
+        Guid Id,
+        string Terms,
+        string Status,
+        DateTimeOffset? OwnerSignatureDate,
+        DateTimeOffset? TechnicianSignatureDate,
+        string? InspectionResults,
+        Guid? GPSDeviceId
+    );
+
     private sealed class Handler(
         IAppDBContext context,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
-        EncryptionSettings encryptionSettings
+        EncryptionSettings encryptionSettings,
+        CurrentUser currentUser
     ) : IRequestHandler<Query, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
@@ -113,8 +143,7 @@ public class GetCarById
         )
         {
             Car? gettingCar = await context
-                .Cars
-                .Include(c =>
+                .Cars.Include(c =>
                     c.Bookings.Where(b =>
                         b.StartTime > DateTimeOffset.UtcNow
                         && b.EndTime > DateTimeOffset.UtcNow.AddMonths(3)
@@ -123,25 +152,39 @@ public class GetCarById
                         && b.Status != BookingStatusEnum.Expired
                     )
                 )
-                .Include(c => c.Owner).ThenInclude(o => o.Feedbacks)
-                .Include(c => c.Model).ThenInclude(o => o.Manufacturer)
+                .Include(c => c.Owner)
+                .ThenInclude(o => o.Feedbacks)
+                .Include(c => c.Model)
+                .ThenInclude(o => o.Manufacturer)
                 .Include(c => c.EncryptionKey)
-                .Include(c => c.ImageCars).ThenInclude(ic => ic.Type)
+                .Include(c => c.ImageCars)
+                .ThenInclude(ic => ic.Type)
                 .Include(c => c.CarStatistic)
                 .Include(c => c.TransmissionType)
                 .Include(c => c.FuelType)
                 .Include(c => c.GPS)
-                .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
+                .Include(c => c.CarAmenities)
+                .ThenInclude(ca => ca.Amenity)
+                .Include(c => c.Contract)
                 .Where(c => c.Id == request.Id)
                 .FirstOrDefaultAsync(cancellationToken);
             if (gettingCar is null)
                 return Result.NotFound(ResponseMessages.CarNotFound);
+
+            // Check if user has permission to view contract
+            bool canViewContract =
+                currentUser.User!.IsAdmin()
+                || currentUser.User.IsConsultant()
+                || currentUser.User.IsTechnician()
+                || gettingCar.OwnerId == currentUser.User.Id;
+
             return Result<Response>.Success(
                 await Response.FromEntity(
                     gettingCar,
                     encryptionSettings.Key,
                     aesEncryptionService,
-                    keyManagementService
+                    keyManagementService,
+                    includeContract: canViewContract
                 ),
                 ResponseMessages.Fetched
             );
