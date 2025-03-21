@@ -1,14 +1,9 @@
-
 using Ardalis.Result;
-
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Shared;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Utils;
@@ -26,6 +21,7 @@ public class GetInProgressInspectionScheduleForCurrentUser
             string Notes,
             TechnicianDetail Technician,
             OwnerDetail Owner,
+            CarDetail Car,
             DateTimeOffset CreatedAt
         )
     {
@@ -60,6 +56,19 @@ public class GetInProgressInspectionScheduleForCurrentUser
                         AvatarUrl: inspectionSchedule.Car.Owner.AvatarUrl,
                         Phone: decryptedPhone
                         ),
+                    Car: new CarDetail(
+                        Id: inspectionSchedule.Car.Id,
+                        ModelId: inspectionSchedule.Car.Model.Id,
+                        ModelName: inspectionSchedule.Car.Model.Name,
+                        FuelType: inspectionSchedule.Car.FuelType.Name,
+                        TransmissionType: inspectionSchedule.Car.TransmissionType.Name,
+                        Amenities: inspectionSchedule.Car.CarAmenities
+                            .Select(ca => new AmenityDetail(
+                                Id: ca.Amenity.Id,
+                                Name: ca.Amenity.Name,
+                                IconUrl: ca.Amenity.IconUrl
+                            )).ToArray()
+                    ),
                     CreatedAt: GetTimestampFromUuid.Execute(inspectionSchedule.Id)
                   );
         }
@@ -71,7 +80,7 @@ public class GetInProgressInspectionScheduleForCurrentUser
             string ModelName,
             string FuelType,
             string TransmissionType,
-            AmenityDetail Amenities
+            AmenityDetail[] Amenities
             );
 
     public record TechnicianDetail(
@@ -111,6 +120,9 @@ public class GetInProgressInspectionScheduleForCurrentUser
                .AsSplitQuery()
                .Include(i => i.Car).ThenInclude(c => c.Owner).ThenInclude(o => o.EncryptionKey)
                .Include(i => i.Car).ThenInclude(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
+               .Include(i => i.Car).ThenInclude(c => c.FuelType)
+               .Include(i => i.Car).ThenInclude(c => c.TransmissionType)
+               .Include(i => i.Car).ThenInclude(c => c.Model)
                .Include(i => i.Technician)
                .Where(i => !i.IsDeleted)
                .Where(i => i.Status == Domain.Enums.InspectionScheduleStatusEnum.InProgress)
