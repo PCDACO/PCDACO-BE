@@ -34,6 +34,7 @@ public class GetCarById
         int TotalRented,
         decimal AverageRating,
         LocationDetail? Location,
+        PickupLocationDetail PickupLocation,
         ManufacturerDetail Manufacturer,
         ImageDetail[] Images,
         AmenityDetail[] Amenities,
@@ -93,6 +94,11 @@ public class GetCarById
                 car.CarStatistic.TotalBooking,
                 car.CarStatistic.AverageRating,
                 car.GPS == null ? null : new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
+                new PickupLocationDetail(
+                    car.PickupLocation.X,
+                    car.PickupLocation.Y,
+                    car.PickupAddress
+                ),
                 new ManufacturerDetail(car.Model.Manufacturer.Id, car.Model.Manufacturer.Name),
                 [.. car.ImageCars.Select(i => new ImageDetail(i.Id, i.Url, i.Type.Name, i.Name))],
                 [
@@ -128,6 +134,8 @@ public class GetCarById
         string? InspectionResults,
         Guid? GPSDeviceId
     );
+
+    public record PickupLocationDetail(double Longitude, double Latitude, string Address);
 
     private sealed class Handler(
         IAppDBContext context,
