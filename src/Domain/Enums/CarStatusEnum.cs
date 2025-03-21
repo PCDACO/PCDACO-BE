@@ -6,5 +6,6 @@ public enum CarStatusEnum
     Pending,
     Available,
     Rented,
-    Maintain
+    Maintain,
+    Rejected
 }
