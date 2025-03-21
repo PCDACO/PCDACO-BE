@@ -295,7 +295,7 @@ public sealed class CreateBooking
                 .Must(
                     (command, endTime) =>
                     {
-                        var duration = (endTime - command.StartTime).TotalDays;
+                        var duration = (int)(endTime - command.StartTime).TotalDays;
                         return duration > 0 && duration <= MAX_BOOKING_DAYS;
                     }
                 )

@@ -42,6 +42,8 @@ public sealed class CompleteBooking
         private const decimal MAX_ALLOWED_DISTANCE_METERS = 100;
         private const decimal EARLY_RETURN_REFUND_PERCENTAGE = 0.5m; // 50% refund for unused days if less than half of total days
         private const decimal LATE_RETURN_PENALTY_MULTIPLIER = 1.2m; // 120% of daily rate for late days
+        private const int GRACE_PERIOD_HOURS = 3; // Grace period of 3 hours
+        private const double LATE_DAY_THRESHOLD = 0.25; // 6 hours (0.25 days) threshold for counting as a new day
 
         public async Task<Result<Response>> Handle(
             Command request,
@@ -105,15 +107,17 @@ public sealed class CompleteBooking
             var totalBookingDays = Math.Ceiling(
                 (decimal)(booking.EndTime - booking.StartTime).TotalDays
             );
-            var actualDays = Math.Ceiling(
-                (decimal)(actualReturnTime - booking.StartTime).TotalDays
-            );
-            var dailyRate = booking.BasePrice / totalBookingDays;
+
+            // Calculate the time difference in hours
+            var overtimeHours = (actualReturnTime - booking.EndTime).TotalHours;
+            var actualDays = (decimal)(actualReturnTime - booking.StartTime).TotalDays;
 
             decimal refundAmount = 0;
             decimal excessDays = 0;
             decimal excessFee = 0;
             decimal unusedDays = 0;
+
+            var dailyRate = booking.BasePrice / totalBookingDays;
 
             // Early Return Case
             if (actualDays < (totalBookingDays / 2) && actualDays >= 1)
@@ -122,10 +126,15 @@ public sealed class CompleteBooking
                 refundAmount = dailyRate * unusedDays * EARLY_RETURN_REFUND_PERCENTAGE;
             }
             // Late Return Case
-            else if (actualDays > totalBookingDays)
+            else if (overtimeHours > GRACE_PERIOD_HOURS)
             {
-                excessDays = actualDays - totalBookingDays;
-                excessFee = dailyRate * excessDays * LATE_RETURN_PENALTY_MULTIPLIER;
+                var overtimeDays = overtimeHours / 24.0;
+
+                if (overtimeDays > LATE_DAY_THRESHOLD)
+                {
+                    excessDays = Math.Ceiling((decimal)overtimeDays);
+                    excessFee = dailyRate * excessDays * LATE_RETURN_PENALTY_MULTIPLIER;
+                }
             }
 
             // Calculate final amount
