@@ -47,4 +47,9 @@ public interface ICloudinaryServices
         Stream image,
         CancellationToken cancellationToken = default
     );
+    Task<string> UploadManufacturerLogoAsync(
+        string name,
+        Stream image,
+        CancellationToken cancellationToken = default
+    );
 }

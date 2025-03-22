@@ -1,6 +1,7 @@
 using Hangfire;
 using Hangfire.PostgreSql;
 using UseCases.BackgroundServices.Bookings;
+using UseCases.BackgroundServices.InspectionSchedule;
 using UseCases.BackgroundServices.Statistics;
 
 namespace API.Utils;
@@ -45,6 +46,11 @@ public static class HangfireConfig
             "expire-bookings-automatically",
             job => job.ExpireBookingsAutomatically(),
             Cron.Daily
+        );
+        RecurringJob.AddOrUpdate<InspectionScheduleExpiredJob>(
+            "expire-inspection-schedules-automatically",
+            job => job.ExpireInspectionSchedulesAutomatically(),
+            Cron.Minutely
         );
     }
 }

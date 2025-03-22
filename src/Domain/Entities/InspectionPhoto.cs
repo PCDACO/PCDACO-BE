@@ -11,6 +11,7 @@ public class InspectionPhoto : BaseEntity
     public required InspectionPhotoType Type { get; set; }
     public required string PhotoUrl { get; set; }
     public string Description { get; set; } = string.Empty;
+    public DateTimeOffset? InspectionCertificateExpiryDate { get; set; }
 
     [ForeignKey(nameof(InspectionId))]
     public CarInspection? Inspection { get; set; }

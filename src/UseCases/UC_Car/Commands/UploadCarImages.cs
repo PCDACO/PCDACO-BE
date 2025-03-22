@@ -1,13 +1,8 @@
-
 using Ardalis.Result;
-
 using Domain.Constants;
 using Domain.Entities;
-
 using FluentValidation;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
 
 using UseCases.Abstractions;
@@ -79,7 +74,7 @@ public sealed class UploadCarImages
             int carIndex = 0;
             foreach (var image in request.CarImages)
             {
-                carTasks.Add(cloudinaryServices.UploadCarImageAsync($"Car-{car.Id}-Image-{++carIndex}", image.Content, cancellationToken));
+                carTasks.Add(cloudinaryServices.UploadCarImageAsync($"Car-{car.Id}-CarImage-{++carIndex}", image.Content, cancellationToken));
             }
             string[] carImageUrls = await Task.WhenAll(carTasks);
             ImageCar[] images =

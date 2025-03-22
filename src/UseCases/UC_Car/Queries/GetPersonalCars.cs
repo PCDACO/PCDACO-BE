@@ -113,7 +113,7 @@ public class GetPersonalCars
                 )) ?? []],
                 Amenities: [
                     .. car.CarAmenities.Select(a => new AmenityDetail(
-                        a.Id,
+                        a.Amenity.Id,
                         a.Amenity.Name,
                         a.Amenity.Description,
                         a.Amenity.IconUrl

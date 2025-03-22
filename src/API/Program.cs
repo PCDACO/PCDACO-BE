@@ -78,6 +78,7 @@ app.UseSerilogRequestLogging();
 app.UseHttpsRedirection();
 
 app.MapHub<LocationHub>("location-hub");
+app.MapHub<ScheduleHub>("schedule-hub");
 
 app.UseHangfireDashboard();
 HangfireConfig.RegisterRecurringJob();
