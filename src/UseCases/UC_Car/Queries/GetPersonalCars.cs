@@ -32,7 +32,9 @@ public class GetPersonalCars
         string Color,
         int Seat,
         string Description,
+        Guid TransmissionId,
         string TransmissionType,
+        Guid FuelTypeId,
         string FuelType,
         decimal FuelConsumption,
         bool RequiresCollateral,
@@ -90,7 +92,9 @@ public class GetPersonalCars
                 Color: car.Color,
                 Seat: car.Seat,
                 Description: car.Description,
+                TransmissionId: car.TransmissionType.Id,
                 TransmissionType: car.TransmissionType.Name ?? string.Empty,
+                FuelTypeId: car.FuelType.Id,
                 FuelType: car.FuelType.Name ?? string.Empty,
                 FuelConsumption: car.FuelConsumption,
                 RequiresCollateral: car.RequiresCollateral,
@@ -109,7 +113,7 @@ public class GetPersonalCars
                 )) ?? []],
                 Amenities: [
                     .. car.CarAmenities.Select(a => new AmenityDetail(
-                        a.Id,
+                        a.Amenity.Id,
                         a.Amenity.Name,
                         a.Amenity.Description,
                         a.Amenity.IconUrl
