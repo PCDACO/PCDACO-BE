@@ -12,7 +12,7 @@ public class UpdateCarEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPut("/cars/{id:guid}", Handle)
+        app.MapPut("/api/cars/{id:guid}", Handle)
             .WithSummary("Update car details")
             .WithTags("Cars")
             .RequireAuthorization()
