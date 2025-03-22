@@ -24,7 +24,9 @@ public class GetCarById
         string Color,
         int Seat,
         string Description,
+        Guid TransmissionId,
         string TransmissionType,
+        Guid FuelTypeId,
         string FuelType,
         decimal FuelConsumption,
         bool RequiresCollateral,
@@ -84,7 +86,9 @@ public class GetCarById
                 car.Color,
                 car.Seat,
                 car.Description,
+                car.TransmissionType.Id,
                 car.TransmissionType?.Name.ToString() ?? "",
+                car.FuelType.Id,
                 car.FuelType?.Name.ToString() ?? "",
                 car.FuelConsumption,
                 car.RequiresCollateral,
@@ -103,7 +107,7 @@ public class GetCarById
                 [.. car.ImageCars.Select(i => new ImageDetail(i.Id, i.Url, i.Type.Name, i.Name))],
                 [
                     .. car.CarAmenities.Select(a => new AmenityDetail(
-                        a.Id,
+                        a.Amenity.Id,
                         a.Amenity.Name,
                         a.Amenity.Description,
                         a.Amenity.IconUrl
