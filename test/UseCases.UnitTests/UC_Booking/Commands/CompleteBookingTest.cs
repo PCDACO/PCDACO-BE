@@ -20,9 +20,6 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
 
-    private readonly decimal _latitude = 0;
-    private readonly decimal _longitude = 0;
-
     public Task InitializeAsync() => Task.CompletedTask;
 
     public async Task DisposeAsync() => await _resetDatabase();
@@ -41,7 +38,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _currentUser
         );
-        var command = new CompleteBooking.Command(Guid.NewGuid(), _latitude, _longitude);
+        var command = new CompleteBooking.Command(Guid.NewGuid());
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -65,7 +62,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _currentUser
         );
-        var command = new CompleteBooking.Command(Guid.NewGuid(), _latitude, _longitude);
+        var command = new CompleteBooking.Command(Guid.NewGuid());
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -125,7 +122,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _currentUser
         );
-        var command = new CompleteBooking.Command(booking.Id, _latitude, _longitude);
+        var command = new CompleteBooking.Command(booking.Id);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -181,7 +178,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _currentUser
         );
-        var command = new CompleteBooking.Command(booking.Id, 10.7756587m, 106.7004238m);
+        var command = new CompleteBooking.Command(booking.Id);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -241,7 +238,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     //     );
     //
     //     var handler = new CompleteBooking.Handler(_dbContext, _backgroundJobClient, _emailService, _currentUser);
-    //     var command = new CompleteBooking.Command(booking.Id, _latitude, _longitude););
+    //     var command = new CompleteBooking.Command(booking.Id););
     //
     //     // Act
     //     var result = await handler.Handle(command, CancellationToken.None);
