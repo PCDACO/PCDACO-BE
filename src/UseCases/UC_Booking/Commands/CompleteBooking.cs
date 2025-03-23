@@ -15,8 +15,7 @@ namespace UseCases.UC_Booking.Commands;
 
 public sealed class CompleteBooking
 {
-    public sealed record Command(Guid BookingId, decimal ReturnLatitude, decimal ReturnLongitude)
-        : IRequest<Result<Response>>;
+    public sealed record Command(Guid BookingId) : IRequest<Result<Response>>;
 
     public sealed record Response(
         decimal TotalDistance,
@@ -58,6 +57,8 @@ public sealed class CompleteBooking
                 .ThenInclude(x => x.Model)
                 .Include(x => x.Car)
                 .ThenInclude(x => x.Owner)
+                .Include(x => x.Car)
+                .ThenInclude(x => x.GPS)
                 .Include(x => x.User)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
@@ -77,20 +78,17 @@ public sealed class CompleteBooking
                 );
             }
 
-            // Create return location point
-            var returnLocation = GeometryFactory.CreatePoint(
-                new Coordinate((double)request.ReturnLongitude, (double)request.ReturnLatitude)
-            );
-            returnLocation.SRID = SRID;
+            if (booking.Car.GPS == null || booking.Car.GPS.Location == null)
+                return Result.Error("Không thể xác định vị trí hiện tại của xe");
 
             // Calculate distance from car's pickup location
             var distanceInMeters =
-                (decimal)booking.Car.PickupLocation.Distance(returnLocation) * 111320m; // Convert degrees to meters
+                (decimal)booking.Car.PickupLocation.Distance(booking.Car.GPS.Location) * 111320m;
 
             if (distanceInMeters > MAX_ALLOWED_DISTANCE_METERS)
             {
                 return Result.Error(
-                    $"Bạn phải trả xe tại địa điểm đã đón xe: {booking.Car.PickupAddress}. "
+                    $"Xe phải được trả tại địa điểm đã đón: {booking.Car.PickupAddress}. "
                         + $"Vui lòng di chuyển đến trong phạm vi {MAX_ALLOWED_DISTANCE_METERS} mét so với vị trí đón xe!"
                 );
             }

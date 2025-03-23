@@ -23,15 +23,18 @@ public class CompleteBookingEndpoint : ICarterModule
                     Allow driver to complete their booking and calculate final payment.
 
                     Return Location Rules:
-                    - Must return car within 100 meters of the original pickup location
-                    - Current GPS coordinates required for validation
+                    - System uses car's current GPS location
+                    - Car must be within 100 meters of the original pickup location
+                    - Location is automatically validated using car's GPS tracker
 
                     Early Return Policy:
                     - If returned before half of the booking duration
                     - 50% refund for unused days
 
                     Late Return Policy:
+                    - Grace period of 3 hours
                     - Additional fee of 120% of daily rate for excess days
+                    - Minimum 6 hours (0.25 days) threshold for counting as a new day
 
                     Final Amount Calculation:
                     - Base Price: Original booking amount
@@ -43,8 +46,9 @@ public class CompleteBookingEndpoint : ICarterModule
                     Notes:
                     - Only the booking driver can complete their booking
                     - Booking must be in 'Ongoing' status
-                    - Total distance traveled will be calculated
-                    - Email notifications will be sent to both driver and owner
+                    - Total distance traveled is calculated from trip tracking records
+                    - Email notifications are sent to both driver and owner
+                    - Car's GPS must be active and reporting location
                     """,
 
                     Responses =
@@ -77,7 +81,7 @@ public class CompleteBookingEndpoint : ICarterModule
                         },
                         ["400"] = new()
                         {
-                            Description = "Bad Request - Invalid location",
+                            Description = "Bad Request - Car not at return location",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -86,7 +90,7 @@ public class CompleteBookingEndpoint : ICarterModule
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
-                                            "Bạn phải trả xe tại địa điểm đã đón xe: 123 ABC Street. Vui lòng di chuyển đến trong phạm vi 100 mét so với vị trí đón xe!"
+                                            "Xe phải được trả tại địa điểm đã đón: 123 ABC Street. Vui lòng di chuyển đến trong phạm vi 100 mét so với vị trí đón xe!"
                                         )
                                     }
                                 }
@@ -112,7 +116,8 @@ public class CompleteBookingEndpoint : ICarterModule
                         },
                         ["404"] = new()
                         {
-                            Description = "Not Found - Booking doesn't exist",
+                            Description =
+                                "Not Found - Booking doesn't exist or GPS location unavailable",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -120,7 +125,9 @@ public class CompleteBookingEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString("Không tìm thấy booking")
+                                        ["message"] = new OpenApiString(
+                                            "Không thể xác định vị trí hiện tại của xe"
+                                        )
                                     }
                                 }
                             }
@@ -147,17 +154,9 @@ public class CompleteBookingEndpoint : ICarterModule
             );
     }
 
-    private static async Task<IResult> Handle(
-        ISender sender,
-        Guid id,
-        CompleteBookingRequest request
-    )
+    private static async Task<IResult> Handle(ISender sender, Guid id)
     {
-        var result = await sender.Send(
-            new CompleteBooking.Command(id, request.CurrentLatitude, request.CurrentLongitude)
-        );
+        var result = await sender.Send(new CompleteBooking.Command(id));
         return result.MapResult();
     }
-
-    private sealed record CompleteBookingRequest(decimal CurrentLatitude, decimal CurrentLongitude);
 }
