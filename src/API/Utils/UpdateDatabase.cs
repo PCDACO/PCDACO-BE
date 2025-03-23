@@ -30,7 +30,7 @@ public class UpdateDatabase
 
         if (context is null)
             throw new ArgumentNullException(nameof(context));
-        context.Database.EnsureDeleted();
+        //context.Database.EnsureDeleted();
         context.Database.Migrate();
         // Seed data
         Amenity[] amenities = AmenityGenerator.Execute();
