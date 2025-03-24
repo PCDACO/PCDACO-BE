@@ -91,4 +91,7 @@ public class ResponseMessages
 
     // Bank Account
     public const string BankAccountNotFound = "Không tìm thấy tài khoản ngân hàng";
+
+    // Report
+    public const string ReportNotFound = "Không tìm thấy báo cáo";
 }

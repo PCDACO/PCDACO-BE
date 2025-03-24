@@ -1,5 +1,4 @@
 using Domain.Entities;
-
 using Microsoft.EntityFrameworkCore;
 
 namespace UseCases.Abstractions;
@@ -13,7 +12,7 @@ public interface IAppDBContext : IDisposable
     DbSet<Booking> Bookings { get; }
     DbSet<Car> Cars { get; }
     DbSet<CarAmenity> CarAmenities { get; }
-    DbSet<CarReport> CarReports { get; }
+    DbSet<BookingReport> BookingReports { get; }
     DbSet<CarStatistic> CarStatistics { get; }
     DbSet<Compensation> Compensations { get; }
     DbSet<Contract> Contracts { get; }

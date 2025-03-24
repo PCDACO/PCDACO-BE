@@ -53,13 +53,6 @@ public sealed class DeleteCar
                 .SetProperty(i => i.IsDeleted, true)
                 .SetProperty(i => i.UpdatedAt, DateTime.UtcNow
                 ), cancellationToken);
-            // Soft delete car reports
-            await context.CarReports.Where(cr => cr.CarId == deletingCar.Id)
-                .ExecuteUpdateAsync(cr =>
-                cr.SetProperty(i => i.DeletedAt, DateTime.UtcNow)
-                .SetProperty(i => i.IsDeleted, true)
-                .SetProperty(i => i.UpdatedAt, DateTime.UtcNow
-                ), cancellationToken);
             // Soft delete car encrypted key
             await context.EncryptionKeys.Where(cek => cek.Id == deletingCar.EncryptionKeyId)
                 .ExecuteUpdateAsync(cek =>

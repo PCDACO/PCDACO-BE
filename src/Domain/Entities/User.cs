@@ -26,6 +26,7 @@ public class User : BaseEntity
     public DateTimeOffset? LicenseImageUploadedAt { get; set; }
     public DateTimeOffset? LicenseApprovedAt { get; set; }
     public bool IsBanned { get; set; } = false;
+    public string BannedReason { get; set; } = string.Empty;
 
     [Range(1, 5)]
     // Navigation Properties
