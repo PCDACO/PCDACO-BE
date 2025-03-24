@@ -109,7 +109,14 @@ public class GetCarById
                         a.Amenity.IconUrl
                     )),
                 ],
-                [.. car.Bookings.Select(b => new BookingSchedule(b.StartTime, b.EndTime))],
+                [
+                    .. car.Bookings.Select(b => new BookingSchedule(
+                        b.User.Id,
+                        b.User.Name,
+                        b.StartTime,
+                        b.EndTime
+                    ))
+                ],
                 contractDetail
             );
         }
@@ -123,7 +130,12 @@ public class GetCarById
 
     public record AmenityDetail(Guid Id, string Name, string Description, string Icon);
 
-    public record BookingSchedule(DateTimeOffset StartTime, DateTimeOffset EndTime);
+    public record BookingSchedule(
+        Guid DriverId,
+        string DriverName,
+        DateTimeOffset StartTime,
+        DateTimeOffset EndTime
+    );
 
     public record ContractDetail(
         Guid Id,
@@ -160,6 +172,7 @@ public class GetCarById
                         && b.Status != BookingStatusEnum.Expired
                     )
                 )
+                .ThenInclude(b => b.User)
                 .Include(c => c.Owner)
                 .ThenInclude(o => o.Feedbacks)
                 .Include(c => c.Model)

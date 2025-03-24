@@ -51,19 +51,22 @@ public sealed class GetBookingById
                     booking.Car.Color,
                     booking.Car.Seat,
                     booking.Car.TransmissionType.Name,
-                    booking.Car.FuelType.Name
+                    booking.Car.FuelType.Name,
+                    booking.Car.ImageCars.Select(i => i.Url).FirstOrDefault() ?? string.Empty
                 ),
                 new UserDetail(
                     booking.User.Id,
                     booking.User.Name,
                     booking.User.Phone,
-                    booking.User.Email
+                    booking.User.Email,
+                    booking.User.AvatarUrl
                 ),
                 new UserDetail(
                     booking.Car.Owner.Id,
                     booking.Car.Owner.Name,
                     booking.Car.Owner.Phone,
-                    booking.Car.Owner.Email
+                    booking.Car.Owner.Email,
+                    booking.Car.Owner.AvatarUrl
                 ),
                 new BookingDetail(
                     booking.StartTime,
@@ -108,10 +111,11 @@ public sealed class GetBookingById
         string Color,
         int Seat,
         string TransmissionType,
-        string FuelType
+        string FuelType,
+        string CarImageUrl
     );
 
-    public record UserDetail(Guid Id, string Name, string Phone, string Email);
+    public record UserDetail(Guid Id, string Name, string Phone, string Email, string AvatarUrl);
 
     public record BookingDetail(
         DateTimeOffset StartTime,
