@@ -56,6 +56,32 @@ public static class TestDataCreateCar
         };
     }
 
+    private static async Task<CarGPS> CreateCarGPS(
+        AppDBContext dBContext,
+        Guid carId,
+        double latitude = DEFAULT_LATITUDE,
+        double longitude = DEFAULT_LONGITUDE
+    )
+    {
+        var gpsDevice = await TestDataGPSDevice.CreateTestGPSDevice(dBContext);
+        var location = GeometryFactory.CreatePoint(new Coordinate(longitude, latitude));
+        location.SRID = 4326;
+
+        var carGPS = new CarGPS
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            DeviceId = gpsDevice.Id,
+            CarId = carId,
+            Location = location,
+            IsDeleted = false
+        };
+
+        await dBContext.CarGPSes.AddAsync(carGPS);
+        await dBContext.SaveChangesAsync();
+
+        return carGPS;
+    }
+
     public static async Task<Car> CreateTestCar(
         AppDBContext dBContext,
         Guid ownerId,
@@ -88,6 +114,9 @@ public static class TestDataCreateCar
         await dBContext.Cars.AddAsync(car);
         await dBContext.CarStatistics.AddAsync(carStatistic);
         await dBContext.SaveChangesAsync();
+
+        // Create GPS data for the car
+        await CreateCarGPS(dBContext, car.Id, latitude, longitude);
 
         return car;
     }

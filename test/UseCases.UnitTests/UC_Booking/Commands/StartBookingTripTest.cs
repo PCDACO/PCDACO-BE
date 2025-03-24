@@ -19,8 +19,8 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
 
-    private readonly decimal _latitude = 0;
-    private readonly decimal _longitude = 0;
+    private readonly decimal _latitude = 10.7756587m;
+    private readonly decimal _longitude = 106.7004238m;
 
     public Task InitializeAsync() => Task.CompletedTask;
 
