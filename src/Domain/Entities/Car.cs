@@ -49,7 +49,6 @@ public class Car : BaseEntity
     public CarContract Contract { get; set; } = null!;
     public ICollection<CarAmenity> CarAmenities { get; set; } = [];
     public ICollection<ImageCar> ImageCars { get; set; } = [];
-    public ICollection<CarReport> CarReports { get; set; } = [];
     public ICollection<Booking> Bookings { get; set; } = [];
     public ICollection<InspectionSchedule> InspectionSchedules { get; set; } = [];
 }
