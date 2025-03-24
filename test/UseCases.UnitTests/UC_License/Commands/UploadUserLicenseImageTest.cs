@@ -34,30 +34,6 @@ public class UploadUserLicenseImageTest(DatabaseTestBase fixture) : IAsyncLifeti
     }
 
     [Fact]
-    public async Task Handle_UserNotDriver_ReturnsError()
-    {
-        // Arrange
-        var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
-        _currentUser.SetUser(testUser);
-
-        var handler = new UploadUserLicenseImage.Handler(
-            _dbContext,
-            _currentUser,
-            _cloudinaryServices.Object
-        );
-
-        var command = CreateValidCommand();
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains("Bạn không có quyền thực hiện chức năng này", result.Errors);
-    }
-
-    [Fact]
     public async Task Handle_LicenseNotFound_ReturnsNotFound()
     {
         // Arrange

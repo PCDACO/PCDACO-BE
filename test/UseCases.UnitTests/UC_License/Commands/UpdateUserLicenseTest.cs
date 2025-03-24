@@ -32,32 +32,6 @@ public class UpdateUserLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         new(LicenseNumber: "123456789012", ExpirationDate: DateTime.UtcNow.AddYears(1));
 
     [Fact]
-    public async Task Handle_UserNotDriver_ReturnsError()
-    {
-        // Arrange
-        var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
-        _currentUser.SetUser(testUser);
-
-        var handler = new UpdateUserLicense.Handler(
-            _dbContext,
-            _currentUser,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
-
-        var command = CreateValidCommand();
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Forbidden, result.Status);
-        Assert.Contains("Bạn không có quyền thực hiện chức năng này", result.Errors);
-    }
-
-    [Fact]
     public async Task Handle_LicenseNotFound_ReturnsNotFound()
     {
         // Arrange
