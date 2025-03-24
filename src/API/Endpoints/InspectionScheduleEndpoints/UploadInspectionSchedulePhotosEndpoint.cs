@@ -2,6 +2,7 @@ using API.Utils;
 using Carter;
 using Domain.Enums;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using UseCases.UC_InspectionSchedule.Commands;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
@@ -22,10 +23,10 @@ public class UploadInspectionPhotosEndpoint : ICarterModule
     private async Task<IResult> Handle(
         ISender sender,
         Guid id,
-        InspectionPhotoType photoType,
-        IFormFileCollection photos,
-        string description = "",
-        DateTimeOffset? expiryDate = null,
+        [FromForm] InspectionPhotoType photoType,
+        [FromForm] IFormFileCollection photos,
+        [FromForm] string description = "",
+        [FromForm] DateTimeOffset? expiryDate = null,
         CancellationToken cancellationToken = default
     )
     {
@@ -33,7 +34,13 @@ public class UploadInspectionPhotosEndpoint : ICarterModule
         Stream[] streams = [.. photos.Select(p => p.OpenReadStream())];
 
         var result = await sender.Send(
-            new UploadInspectionSchedulePhotos.Command(id, photoType, streams, description, expiryDate),
+            new UploadInspectionSchedulePhotos.Command(
+                id,
+                photoType,
+                streams,
+                description,
+                expiryDate
+            ),
             cancellationToken
         );
 
