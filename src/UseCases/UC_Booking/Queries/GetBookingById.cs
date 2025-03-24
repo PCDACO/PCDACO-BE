@@ -52,7 +52,7 @@ public sealed class GetBookingById
                     booking.Car.Seat,
                     booking.Car.TransmissionType.Name,
                     booking.Car.FuelType.Name,
-                    booking.Car.ImageCars.Select(i => i.Url).FirstOrDefault() ?? string.Empty
+                    [.. booking.Car.ImageCars.Select(ic => ic.Url)]
                 ),
                 new UserDetail(
                     booking.User.Id,
@@ -112,7 +112,7 @@ public sealed class GetBookingById
         int Seat,
         string TransmissionType,
         string FuelType,
-        string CarImageUrl
+        string[] CarImageUrl
     );
 
     public record UserDetail(Guid Id, string Name, string Phone, string Email, string AvatarUrl);

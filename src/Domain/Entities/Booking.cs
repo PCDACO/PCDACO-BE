@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations.Schema;
-
 using Domain.Enums;
 using Domain.Shared;
 
@@ -34,7 +33,7 @@ public class Booking : BaseEntity
     public Car Car { get; set; } = null!;
     public Contract Contract { get; set; } = null!;
     public ICollection<Compensation> Compensations { get; set; } = [];
-    public ICollection<CarReport> CarReports { get; set; } = [];
+    public ICollection<BookingReport> BookingReports { get; set; } = [];
     public ICollection<TripTracking> TripTrackings { get; set; } = [];
     public ICollection<Feedback> Feedbacks { get; set; } = [];
     public ICollection<Transaction> Transactions { get; set; } = [];

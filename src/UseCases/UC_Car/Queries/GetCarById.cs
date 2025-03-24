@@ -115,8 +115,10 @@ public class GetCarById
                 ],
                 [
                     .. car.Bookings.Select(b => new BookingSchedule(
+                        b.Id,
                         b.User.Id,
                         b.User.Name,
+                        b.User.AvatarUrl,
                         b.StartTime,
                         b.EndTime
                     ))
@@ -135,8 +137,10 @@ public class GetCarById
     public record AmenityDetail(Guid Id, string Name, string Description, string Icon);
 
     public record BookingSchedule(
+        Guid BookingId,
         Guid DriverId,
         string DriverName,
+        string AvatarUrl,
         DateTimeOffset StartTime,
         DateTimeOffset EndTime
     );
