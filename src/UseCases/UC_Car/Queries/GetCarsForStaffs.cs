@@ -2,6 +2,7 @@ using Ardalis.Result;
 
 using Domain.Constants;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Shared;
 
 using MediatR;
@@ -15,7 +16,7 @@ namespace UseCases.UC_Car.Queries;
 
 public class GetCarsForStaffs
 {
-    public record Query(int PageNumber, int PageSize, string Keyword, string StatusName)
+    public record Query(int PageNumber, int PageSize, string Keyword, CarStatusEnum? Status)
         : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
@@ -119,7 +120,7 @@ public class GetCarsForStaffs
                 .Include(c => c.GPS)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .Where(c => !c.IsDeleted)
-                .Where(c => c.Status == Domain.Enums.CarStatusEnum.Available)
+                .Where(c => request.Status == null ? true : request.Status == c.Status)
                 .OrderByDescending(c => c.Id);
             int count = await gettingQuery.CountAsync(cancellationToken);
             List<Car> cars = await gettingQuery
