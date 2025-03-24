@@ -120,7 +120,7 @@ public class GetAllBookingsEndpoint : ICarterModule
         [FromQuery(Name = "limit")] int? limit,
         [FromQuery(Name = "lastId")] Guid? lastId,
         [FromQuery(Name = "search")] string? searchTerm,
-        [FromQuery(Name = "status")] string? status,
+        [FromQuery(Name = "status")] string[]? status,
         [FromQuery(Name = "isPaid")] bool? isPaid,
         CancellationToken cancellationToken
     )

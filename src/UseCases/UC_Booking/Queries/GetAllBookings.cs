@@ -1,7 +1,6 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
-
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -15,7 +14,7 @@ public sealed class GetAllBookings
         int Limit,
         Guid? LastId,
         string? SearchTerm = null,
-        string? bookingStatus = "",
+        string[]? BookingStatuses = null,
         bool? IsPaid = null
     ) : IRequest<Result<CursorPaginatedResponse<Response>>>;
 
@@ -58,8 +57,7 @@ public sealed class GetAllBookings
         )
         {
             var query = context
-                .Bookings
-                .Include(b => b.Car)
+                .Bookings.Include(b => b.Car)
                 .ThenInclude(c => c.Model)
                 .Include(b => b.Car)
                 .ThenInclude(c => c.Owner)
@@ -74,8 +72,15 @@ public sealed class GetAllBookings
                 query = query.Where(b => b.Car.OwnerId == currentUser.User.Id);
 
             // Apply filters
-            if (request.bookingStatus != null && request.bookingStatus != "")
-                query = query.Where(b => b.Status == (BookingStatusEnum)Enum.Parse(typeof(BookingStatusEnum), request.bookingStatus));
+            if (request.BookingStatuses != null && request.BookingStatuses.Length > 0)
+            {
+                var statuses = request
+                    .BookingStatuses.Select(s =>
+                        (BookingStatusEnum)Enum.Parse(typeof(BookingStatusEnum), s)
+                    )
+                    .ToList();
+                query = query.Where(b => statuses.Contains(b.Status));
+            }
 
             if (request.IsPaid.HasValue)
                 query = query.Where(b => b.IsPaid == request.IsPaid.Value);
