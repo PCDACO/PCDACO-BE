@@ -154,7 +154,7 @@ public class GetCarById
                 .Cars.Include(c =>
                     c.Bookings.Where(b =>
                         b.StartTime > DateTimeOffset.UtcNow
-                        && b.EndTime > DateTimeOffset.UtcNow.AddMonths(3)
+                        && b.EndTime < DateTimeOffset.UtcNow.AddMonths(3)
                         && b.Status != BookingStatusEnum.Cancelled
                         && b.Status != BookingStatusEnum.Rejected
                         && b.Status != BookingStatusEnum.Expired
