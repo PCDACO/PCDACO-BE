@@ -154,24 +154,26 @@ public class GetPersonalCarsEndpoint : ICarterModule
 
     private async Task<IResult> Handle(
         ISender sender,
-        [FromQuery(Name = "model")] Guid? model,
+        [FromQuery(Name = "manufacturerId")] Guid? manufacturerId,
         [FromQuery(Name = "lastId")] Guid? lastCarId,
         [FromQuery(Name = "amenities")] Guid[]? amenities,
         [FromQuery(Name = "fuel")] Guid? fuel,
         [FromQuery(Name = "transmission")] Guid? transmission,
         [FromQuery(Name = "status")] CarStatusEnum? status,
+        [FromQuery(Name = "keyword")] string? keyword = "",
         [FromQuery(Name = "limit")] int? limit = 10
     )
     {
         Result<OffsetPaginatedResponse<GetPersonalCars.Response>> result = await sender.Send(
             new GetPersonalCars.Query(
-                model,
-                amenities,
-                fuel,
-                transmission,
-                lastCarId,
-                limit!.Value,
-                status
+                ManufacturerId: manufacturerId,
+                Amenities: amenities,
+                FuelTypes: fuel,
+                TransmissionTypes: transmission,
+                LastCarId: lastCarId,
+                Limit: limit!.Value,
+                Status: status,
+                Keyword: keyword
             )
         );
         return result.MapResult();
