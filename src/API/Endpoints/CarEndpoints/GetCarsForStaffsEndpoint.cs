@@ -1,6 +1,9 @@
 using API.Utils;
 using Ardalis.Result;
 using Carter;
+
+using Domain.Enums;
+
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Any;
@@ -140,14 +143,18 @@ public class GetCarForStaffsEndpoint : ICarterModule
 
     private async Task<IResult> Handle(
         ISender sender,
+        [FromQuery(Name = "status")] CarStatusEnum? status,
         [FromQuery(Name = "index")] int pageNumber = 1,
         [FromQuery(Name = "size")] int pageSize = 10,
-        [FromQuery(Name = "keyword")] string? keyword = "",
-        [FromQuery(Name = "status")] string? statusName = ""
+        [FromQuery(Name = "keyword")] string? keyword = ""
     )
     {
         Result<OffsetPaginatedResponse<GetCarsForStaffs.Response>> result = await sender.Send(
-            new GetCarsForStaffs.Query(pageNumber, pageSize, keyword!, statusName!)
+            new GetCarsForStaffs.Query(
+                pageNumber,
+                pageSize,
+                keyword!,
+                status)
         );
         return result.MapResult();
     }
