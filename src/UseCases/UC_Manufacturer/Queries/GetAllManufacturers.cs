@@ -2,7 +2,6 @@ using Ardalis.Result;
 using Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Utils;
@@ -14,10 +13,15 @@ public class GetAllManufacturers
     public sealed record Query(int PageNumber = 1, int PageSize = 10, string keyword = "")
         : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
-    public sealed record Response(Guid Id, string Name, DateTimeOffset CreatedAt)
+    public sealed record Response(Guid Id, string Name, string LogoUrl, DateTimeOffset CreatedAt)
     {
         public static Response FromEntity(Manufacturer manufacturer) =>
-            new(manufacturer.Id, manufacturer.Name, GetTimestampFromUuid.Execute(manufacturer.Id));
+            new(
+                manufacturer.Id,
+                manufacturer.Name,
+                manufacturer.LogoUrl,
+                GetTimestampFromUuid.Execute(manufacturer.Id)
+            );
     };
 
     public sealed class Handler(IAppDBContext context)
