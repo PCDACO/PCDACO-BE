@@ -34,12 +34,14 @@ public static class ContractTemplateGenerator
                         Bên A đồng ý cho Bên B thuê xe với các thông tin như đã mô tả ở phần thông tin xe thuê.
                     </p>
                 </div>
+
                 <div class='clause'>
                     <strong>Điều 2: Thời hạn hợp đồng</strong>
                     <p>
                         Hợp đồng có hiệu lực từ {contractTemplate.StartDate:dd/MM/yyyy} đến {contractTemplate.EndDate:dd/MM/yyyy}. Thời hạn thuê: {contractTemplate.RentalPeriod} ngày.
                     </p>
                 </div>
+
                 <div class='clause'>
                     <strong>Điều 3: Giá thuê và phương thức thanh toán</strong>
                     <p>
@@ -47,6 +49,7 @@ public static class ContractTemplateGenerator
                         Phương thức thanh toán được thỏa thuận giữa hai bên.
                     </p>
                 </div>
+
                 <div class='clause'>
                     <strong>Điều 4: Quyền và nghĩa vụ của Bên A (Chủ xe)</strong>
                     <p>
@@ -55,6 +58,7 @@ public static class ContractTemplateGenerator
                         c) Nếu xảy ra tranh chấp về quyền sở hữu hoặc sử dụng xe, Bên A chịu trách nhiệm giải quyết theo pháp luật.
                     </p>
                 </div>
+
                 <div class='clause'>
                     <strong>Điều 5: Quyền và nghĩa vụ của Bên B (Người thuê xe)</strong>
                     <p>
@@ -63,6 +67,7 @@ public static class ContractTemplateGenerator
                         c) Trong trường hợp Bên B vi phạm quy định giao thông, gây ra tai nạn, hoặc không tuân thủ các điều khoản bảo quản xe, Bên B phải chịu phạt và bồi thường thiệt hại cho Bên A theo quy định của pháp luật.
                     </p>
                 </div>
+
                 <div class='clause'>
                     <strong>Điều 6: Phạt vi phạm và xử lý sự cố</strong>
                     <p>
@@ -71,12 +76,65 @@ public static class ContractTemplateGenerator
                         c) Nếu sự cố không được thông báo đúng thời hạn, Bên A có quyền đơn phương chấm dứt hợp đồng.
                     </p>
                 </div>
+
                 <div class='clause'>
                     <strong>Điều 7: Điều khoản chung</strong>
                     <p>
                         a) Hai bên cam kết thực hiện đầy đủ các điều khoản của hợp đồng này. <br/>
                         b) Mọi tranh chấp phát sinh từ hợp đồng sẽ được thương lượng giải quyết; nếu không đạt được thỏa thuận, tranh chấp sẽ được giải quyết tại Tòa án có thẩm quyền. <br/>
                         c) Hợp đồng được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản.
+                    </p>
+                </div>
+
+                <div class='clause'>
+                    <strong>Điều 8: Điều khoản về thế chấp và xử lý phạt nguội</strong>
+                    <p>
+                        a) Trước khi nhận xe, Bên B (Người thuê xe) phải nộp tiền thế chấp tối thiểu là 15.000.000 VNĐ bằng tiền mặt.
+                        <br/>
+                        b) Số tiền thế chấp sẽ được giữ bởi Bên A (Chủ xe) trong vòng 1 tháng sau khi kết thúc chuyến đi.
+                        <br/>
+                        c) Trong thời gian 1 tháng, nếu có phạt nguội (ví dụ vi phạm giao thông như vượt đèn đỏ, xử phạt nguội, v.v.),
+                        Bên A có quyền trừ số tiền phạt vào số tiền thế chấp. Trong trường hợp tiền thế chấp không đủ,
+                        Bên B phải thanh toán khoản chênh lệch trong vòng 5 ngày kể từ khi nhận thông báo.
+                        <br/>
+                        d) Sau 1 tháng, nếu không còn phạt phát sinh hoặc sau khi đã trừ hết phạt,
+                        Bên A bắt buộc hoàn trả lại số tiền thế chấp còn lại cho Bên B.
+                        <br/>
+                        e) Nếu sau 1 tháng, giấy phạt mới được gửi về, Bên A sẽ báo cáo lại hệ thống,
+                        và theo đó Bên B phải thanh toán số tiền phạt phát sinh theo chính sách của nền tảng.
+                        <br/>
+                        f) Nếu Bên B không thanh toán số tiền phát sinh (bao gồm khoản chênh lệch từ tiền thế chấp hoặc phạt mới)
+                        và không cung cấp biên lai xác nhận thanh toán trong thời gian quy định, thì Bên B sẽ không được phép đặt đơn thuê xe mới
+                        cho đến khi các khoản nợ được thanh toán đầy đủ và có biên lai chứng từ hợp lệ.
+                    </p>
+                </div>
+
+                <div class='clause'>
+                    <strong>Điều 9: Quy định về vi phạm và hạn chế quyền đặt xe</strong>
+                    <p>
+                        a) Hệ thống sẽ theo dõi và ghi nhận các hành vi vi phạm, bao gồm số lần hủy đơn và các vi phạm giao thông,
+                        từ phía Bên B (Người thuê xe).
+                        <br/>
+                        b) Nếu Bên B có số lần hủy đơn vượt quá giới hạn (ví dụ: ≥5 lần trong 30 ngày) hoặc có vi phạm lặp lại,
+                        hệ thống sẽ áp dụng hạn chế tự động đối với quyền đặt xe của Bên B.
+                        <br/>
+                        c) Bên B sẽ nhận thông báo về hạn chế này và hướng dẫn liên hệ với bộ phận chăm sóc khách hàng để giải quyết,
+                        hoặc nộp đơn khiếu nại nếu có trường hợp đặc biệt.
+                    </p>
+                </div>
+
+                <div class='clause'>
+                    <strong>Điều 10: Giải quyết tranh chấp và khiếu nại</strong>
+                    <p>
+                        a) Trong trường hợp có tranh chấp liên quan đến việc trả xe, phạt nguội, hoặc thiệt hại hiệu quả, cả hai bên
+                        có trách nhiệm cung cấp đầy đủ bằng chứng như hình ảnh kiểm định, biên lai thanh toán, báo cáo vi phạm, v.v.
+                        <br/>
+                        b) Hệ thống sẽ chuyển thông tin tranh chấp tới Ban quản trị để xem xét và đưa ra quyết định cuối cùng,
+                        dựa trên các chính sách đã được công bố.
+                        <br/>
+                        c) Kết quả giải quyết tranh chấp sẽ được thông báo tới cả Bên A và Bên B thông qua hệ thống và email.
+                        <br/>
+                        d) Nếu không đạt được thỏa thuận, tranh chấp sẽ được giải quyết tại Tòa án có thẩm quyền.
                     </p>
                 </div>";
 
@@ -100,85 +158,85 @@ public static class ContractTemplateGenerator
                                     margin: 2cm;
                                 }}
                                 body {{
-                                font-family: 'Roboto', sans-serif;
-                                background-color: #f4f4f4;
-                                margin: 0;
-                                padding: 20px;
-                                color: #333;
-                                line-height: 1.6;
+                                    font-family: 'Roboto', sans-serif;
+                                    background-color: #f4f4f4;
+                                    margin: 0;
+                                    padding: 20px;
+                                    color: #333;
+                                    line-height: 1.6;
                                 }}
                                 .container {{
-                                max-width: 900px;
-                                background: #fff;
-                                margin: auto;
-                                padding: 40px;
-                                border-radius: 8px;
-                                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                                    max-width: 900px;
+                                    background: #fff;
+                                    margin: auto;
+                                    padding: 40px;
+                                    border-radius: 8px;
+                                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
                                 }}
                                 .header {{
-                                text-align: center;
-                                margin-bottom: 30px;
+                                    text-align: center;
+                                    margin-bottom: 30px;
                                 }}
                                 .header h1 {{
-                                margin: 0;
-                                font-size: 28px;
-                                color: #000;
+                                    margin: 0;
+                                    font-size: 28px;
+                                    color: #000;
                                 }}
                                 .header p {{
-                                margin: 5px 0;
-                                font-size: 14px;
-                                color: #555;
+                                    margin: 5px 0;
+                                    font-size: 14px;
+                                    color: #555;
                                 }}
                                 .divider {{
-                                border: none;
-                                border-top: 3px solid #000;
-                                margin: 20px auto;
-                                width: 50%;
+                                    border: none;
+                                    border-top: 3px solid #000;
+                                    margin: 20px auto;
+                                    width: 50%;
                                 }}
                                 .section {{
-                                margin-bottom: 25px;
+                                    margin-bottom: 25px;
                                 }}
                                 .section-title {{
-                                font-size: 18px;
-                                font-weight: 500;
-                                color: #000;
-                                border-bottom: 1px solid #ddd;
-                                padding-bottom: 5px;
-                                text-transform: uppercase;
-                                margin-bottom: 15px;
+                                    font-size: 18px;
+                                    font-weight: 500;
+                                    color: #000;
+                                    border-bottom: 1px solid #ddd;
+                                    padding-bottom: 5px;
+                                    text-transform: uppercase;
+                                    margin-bottom: 15px;
                                 }}
                                 .content p {{
-                                margin: 8px 0;
-                                text-align: justify;
+                                    margin: 8px 0;
+                                    text-align: justify;
                                 }}
                                 .clause {{
-                                margin-bottom: 15px;
+                                    margin-bottom: 15px;
                                 }}
                                 .clause strong {{
-                                display: block;
-                                margin-bottom: 5px;
-                                color: #000;
+                                    display: block;
+                                    margin-bottom: 5px;
+                                    color: #000;
                                 }}
                                 .signature-block {{
-                                margin-top: 40px;
-                                display: flex;
-                                justify-content: space-between;
+                                    margin-top: 40px;
+                                    display: flex;
+                                    justify-content: space-between;
                                 }}
                                 .signature {{
-                                width: 40%;
-                                text-align: center;
+                                    width: 40%;
+                                    text-align: center;
                                 }}
                                 .signature p {{
-                                border-top: 1px solid #333;
-                                padding-top: 10px;
-                                margin-top: 60px;
-                                font-weight: 500;
+                                    border-top: 1px solid #333;
+                                    padding-top: 10px;
+                                    margin-top: 60px;
+                                    font-weight: 500;
                                 }}
                                 .footer {{
-                                text-align: center;
-                                font-size: 13px;
-                                color: #777;
-                                margin-top: 30px;
+                                    text-align: center;
+                                    font-size: 13px;
+                                    color: #777;
+                                    margin-top: 30px;
                                 }}
                             </style>
                         </head>
@@ -245,7 +303,7 @@ public static class ContractTemplateGenerator
 
                                 <!-- Footer Section -->
                                 <div class='footer'>
-                                <p>Hợp đồng được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản.</p>
+                                    <p>Hợp đồng được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản.</p>
                                 </div>
                             </div>
                         </body>

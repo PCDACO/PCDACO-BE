@@ -2,12 +2,15 @@ using Ardalis.Result;
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
+using Domain.Shared.EmailTemplates.EmailBookings;
 using FluentValidation;
+using Hangfire;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
 using UseCases.DTOs;
+using UseCases.Services.EmailService;
 using UUIDNext;
 
 namespace UseCases.UC_Booking.Commands;
@@ -33,6 +36,8 @@ public sealed class PreInspectionImages
     internal sealed class Handler(
         IAppDBContext context,
         ICloudinaryServices cloudinaryServices,
+        IEmailService emailService,
+        IBackgroundJobClient backgroundJobClient,
         CurrentUser currentUser
     ) : IRequestHandler<Command, Result<Response>>
     {
@@ -148,7 +153,18 @@ public sealed class PreInspectionImages
                 booking.Status = BookingStatusEnum.ReadyForPickup;
                 booking.UpdatedAt = DateTimeOffset.UtcNow;
 
-                // TODO: Send notification to driver that car is ready for pickup
+                // Send notification to driver
+                backgroundJobClient.Enqueue(
+                    () =>
+                        SendEmail(
+                            booking.User.Name,
+                            booking.User.Email,
+                            booking.Car.Model.Name,
+                            booking.StartTime,
+                            booking.EndTime,
+                            booking.Car.PickupAddress
+                        )
+                );
             }
 
             await context.SaveChangesAsync(cancellationToken);
@@ -167,6 +183,26 @@ public sealed class PreInspectionImages
             };
 
             return requiredTypes.All(rt => providedTypes.Contains(rt));
+        }
+
+        public async Task SendEmail(
+            string driverName,
+            string driverEmail,
+            string carName,
+            DateTimeOffset startTime,
+            DateTimeOffset endTime,
+            string pickupAddress
+        )
+        {
+            var emailTemplate = DriverPreInspectionReadyTemplate.Template(
+                driverName,
+                carName,
+                startTime,
+                endTime,
+                pickupAddress
+            );
+
+            await emailService.SendEmailAsync(driverEmail, "Xe Sẵn Sàng Để Nhận", emailTemplate);
         }
     }
 
