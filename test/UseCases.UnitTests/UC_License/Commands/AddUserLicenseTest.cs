@@ -38,35 +38,6 @@ public class AddUserLicenseTest : IAsyncLifetime
     private AddUserLicense.Command CreateValidCommand() =>
         new(LicenseNumber: "123456789012", ExpirationDate: DateTime.UtcNow.AddYears(1));
 
-    [Theory]
-    [InlineData("Admin")]
-    [InlineData("Consultant")]
-    [InlineData("Technician")]
-    public async Task Handle_UserNotDriverOrOwner_ReturnsForbidden(string roleName)
-    {
-        // Arrange
-        var role = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, roleName);
-        var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, role);
-        _currentUser.SetUser(testUser);
-
-        var handler = new AddUserLicense.Handler(
-            _dbContext,
-            _currentUser,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
-
-        var command = CreateValidCommand();
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Forbidden, result.Status);
-        Assert.Contains("Bạn không có quyền thực hiện chức năng này", result.Errors);
-    }
-
     [Fact]
     public async Task Handle_AlreadyHasLicense_ReturnsError()
     {

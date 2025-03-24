@@ -35,13 +35,9 @@ public sealed class UploadUserLicenseImage
             CancellationToken cancellationToken
         )
         {
-            //check if user is not driver or owner
-            if (!currentUser.User!.IsDriver() && !currentUser.User!.IsOwner())
-                return Result.Error("Bạn không có quyền thực hiện chức năng này");
-
             //check if license exists
             var user = await context.Users.FirstOrDefaultAsync(
-                u => u.Id == currentUser.User.Id && !u.IsDeleted,
+                u => u.Id == currentUser.User!.Id && !u.IsDeleted,
                 cancellationToken
             );
 

@@ -29,8 +29,7 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
     {
         // Find all ReadyForPickup bookings that started more than 24 hours ago
         var expiredBookings = await context
-            .Bookings.Include(b => b.Status)
-            .Include(b => b.Car)
+            .Bookings.Include(b => b.Car)
             .ThenInclude(c => c.Owner)
             .Include(b => b.User)
             .Where(b =>
@@ -78,8 +77,7 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
     {
         // Find all ReadyForPickup bookings that started more than 24 hours ago
         var expiredBookings = await context
-            .Bookings.Include(b => b.Status)
-            .Include(b => b.Car)
+            .Bookings.Include(b => b.Car)
             .ThenInclude(c => c.Owner)
             .Include(b => b.User)
             .Where(b =>
@@ -163,8 +161,7 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
     public async Task ExpireUnpaidApprovedBooking(Guid bookingId)
     {
         var booking = await context
-            .Bookings.Include(b => b.Status)
-            .Include(b => b.Car)
+            .Bookings.Include(b => b.Car)
             .ThenInclude(c => c.Owner)
             .Include(b => b.User)
             .FirstOrDefaultAsync(b =>

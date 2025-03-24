@@ -21,11 +21,14 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
 
     public async Task DisposeAsync() => await _resetDatabase();
 
-    [Fact]
-    public async Task Handle_UserNotConsultant_ReturnsForbidden()
+    [Theory]
+    [InlineData("Admin")]
+    [InlineData("Driver")]
+    [InlineData("Owner")]
+    public async Task Handle_UserNotConsultantAndTechnician_ReturnsForbidden(string roleName)
     {
         // Arrange
-        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, roleName);
         var user = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(user);
 

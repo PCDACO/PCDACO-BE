@@ -53,7 +53,7 @@ public sealed class GetAllInspectionSchedules
             CancellationToken cancellationToken
         )
         {
-            if (!currentUser.User!.IsConsultant())
+            if (!currentUser.User!.IsConsultant() && !currentUser.User!.IsTechnician())
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             var query = context

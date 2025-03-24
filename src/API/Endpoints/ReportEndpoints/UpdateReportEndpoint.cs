@@ -25,7 +25,7 @@ public class UpdateReportEndpoint : ICarterModule
         [FromForm] string description,
         [FromForm] BookingReportStatus status,
         [FromForm] string? resolutionComments,
-        IFormFile[]? newImages,
+        [FromForm] IFormFile[]? newImages,
         CancellationToken cancellationToken
     )
     {

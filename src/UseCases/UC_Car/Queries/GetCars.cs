@@ -22,7 +22,7 @@ public class GetCars
         decimal? Latitude,
         decimal? Longtitude,
         decimal? Radius,
-        Guid? Model,
+        Guid? ManufacturerId,
         Guid[]? Amenities,
         Guid? FuelTypes,
         Guid? TransmissionTypes,
@@ -157,7 +157,7 @@ public class GetCars
                 .Where(c => !c.IsDeleted)
                 .Where(c => c.Status == Domain.Enums.CarStatusEnum.Available)
                 .Where(c => EF.Functions.ILike(c.Model.Name, $"%{request.Keyword}%"))
-                .Where(c => request.Model == null || c.ModelId == request.Model)
+                .Where(c => request.ManufacturerId == null || c.Model.ManufacturerId == request.ManufacturerId)
                 .Where(c =>
                     request.Amenities == null || request.Amenities.Length == 0
                     || request.Amenities.All(a =>

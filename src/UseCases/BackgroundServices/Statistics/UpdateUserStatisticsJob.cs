@@ -59,7 +59,6 @@ public class UpdateUserStatisticsJob(IAppDBContext context)
                             .Where(b =>
                                 b.Car.Owner.Id == us.UserId
                                 && b.Status == BookingStatusEnum.Completed
-                                && us.User.Role.Name == UserRoleNames.Owner
                             )
                             .Sum(b => (decimal?)b.BasePrice) ?? 0
                 )

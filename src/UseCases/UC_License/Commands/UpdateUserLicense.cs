@@ -32,15 +32,11 @@ public sealed class UpdateUserLicense
             CancellationToken cancellationToken
         )
         {
-            // Check if user is driver or owner
-            if (!currentUser.User!.IsDriver() && !currentUser.User!.IsOwner())
-                return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
-
             // Get license
             var user = await context
                 .Users.Include(u => u.EncryptionKey)
                 .FirstOrDefaultAsync(
-                    u => u.Id == currentUser.User.Id && !u.IsDeleted,
+                    u => u.Id == currentUser.User!.Id && !u.IsDeleted,
                     cancellationToken
                 );
 

@@ -32,11 +32,6 @@ public sealed class AddUserLicense
             CancellationToken cancellationToken
         )
         {
-            //check if user is not driver or owner
-
-            if (!currentUser.User!.IsDriver() && !currentUser.User!.IsOwner())
-                return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
-
             //check if user is exist
             var user = await context
                 .Users.Include(u => u.EncryptionKey)

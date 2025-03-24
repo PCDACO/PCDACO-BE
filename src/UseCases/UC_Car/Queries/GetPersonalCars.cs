@@ -13,13 +13,14 @@ namespace UseCases.UC_Car.Queries;
 public class GetPersonalCars
 {
     public record Query(
-        Guid? Model,
+        Guid? ManufacturerId,
         Guid[]? Amenities,
         Guid? FuelTypes,
         Guid? TransmissionTypes,
         Guid? LastCarId,
         int Limit,
-       CarStatusEnum? Status
+        CarStatusEnum? Status,
+        string? Keyword = ""
     ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
@@ -194,7 +195,7 @@ public class GetPersonalCars
                 .Where(c => !c.IsDeleted)
                 .Where(c => request.Status != null ? c.Status == request.Status : true)
                 .Where(c => c.OwnerId == currentUser.User!.Id)
-                .Where(c => request.Model == null || c.ModelId == request.Model)
+                .Where(c => request.ManufacturerId == null || c.Model.ManufacturerId == request.ManufacturerId)
                 .Where(c =>
                     request.Amenities == null || request.Amenities.Length == 0
                     || request.Amenities.All(a =>
@@ -210,6 +211,13 @@ public class GetPersonalCars
                 .Where(c => request.LastCarId == null || request.LastCarId > c.Id)
                 .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point))
                 .ThenByDescending(c => c.Id);
+
+            if (!string.IsNullOrEmpty(request.Keyword))
+            {
+                gettingCarQuery = gettingCarQuery.Where(c =>
+                    EF.Functions.Like(c.Model.Name, $"%{request.Keyword}%")
+                );
+            }
             int count = await gettingCarQuery.CountAsync(cancellationToken);
             List<Car> carResult = await gettingCarQuery.ToListAsync(cancellationToken);
             return Result.Success(
