@@ -68,8 +68,6 @@ public static class GetLicenseByCurrentUser
             CancellationToken cancellationToken
         )
         {
-            if (!currentUser.User!.IsDriver() && !currentUser.User.IsOwner())
-                return Result.Forbidden("Bạn không có quyền thực hiện chức năng này");
             var user = await context
                 .Users.AsNoTracking()
                 .Include(u => u.EncryptionKey)
