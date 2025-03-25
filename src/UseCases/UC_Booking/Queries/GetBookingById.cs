@@ -31,15 +31,18 @@ public sealed class GetBookingById
             IKeyManagementService keyManagementService
         )
         {
-            string decryptedKey = keyManagementService.DecryptKey(
-                booking.Car.EncryptionKey.EncryptedKey,
-                masterKey
+            string decryptedLicensePlate = await DecryptLicensePlate(
+                booking,
+                masterKey,
+                aesEncryptionService,
+                keyManagementService
             );
 
-            string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                booking.Car.EncryptedLicensePlate,
-                decryptedKey,
-                booking.Car.EncryptionKey.IV
+            var decryptedPhone = await DecryptedUserPhone(
+                booking,
+                masterKey,
+                aesEncryptionService,
+                keyManagementService
             );
 
             return new(
@@ -57,14 +60,14 @@ public sealed class GetBookingById
                 new UserDetail(
                     booking.User.Id,
                     booking.User.Name,
-                    booking.User.Phone,
+                    decryptedPhone.Item1, // Driver phone
                     booking.User.Email,
                     booking.User.AvatarUrl
                 ),
                 new UserDetail(
                     booking.Car.Owner.Id,
                     booking.Car.Owner.Name,
-                    booking.Car.Owner.Phone,
+                    decryptedPhone.Item2, // Owner phone
                     booking.Car.Owner.Email,
                     booking.Car.Owner.AvatarUrl
                 ),
@@ -100,6 +103,61 @@ public sealed class GetBookingById
                     ))
                 ]
             );
+        }
+
+        private static async Task<(string, string)> DecryptedUserPhone(
+            Booking booking,
+            string masterKey,
+            IAesEncryptionService aesEncryptionService,
+            IKeyManagementService keyManagementService
+        )
+        {
+            // Driver
+            string decryptedDriverPhoneKey = keyManagementService.DecryptKey(
+                booking.User.EncryptionKey.EncryptedKey,
+                masterKey
+            );
+
+            string decryptedDriverPhone = await aesEncryptionService.Decrypt(
+                booking.User.Phone,
+                decryptedDriverPhoneKey,
+                booking.User.EncryptionKey.IV
+            );
+
+            // Owner
+            string decryptedOwnerPhoneKey = keyManagementService.DecryptKey(
+                booking.Car.Owner.EncryptionKey.EncryptedKey,
+                masterKey
+            );
+
+            string decryptedOwnerPhone = await aesEncryptionService.Decrypt(
+                booking.Car.Owner.Phone,
+                decryptedOwnerPhoneKey,
+                booking.Car.Owner.EncryptionKey.IV
+            );
+
+            return (decryptedDriverPhone, decryptedOwnerPhone);
+        }
+
+        private static async Task<string> DecryptLicensePlate(
+            Booking booking,
+            string masterKey,
+            IAesEncryptionService aesEncryptionService,
+            IKeyManagementService keyManagementService
+        )
+        {
+            string decryptedKey = keyManagementService.DecryptKey(
+                booking.Car.EncryptionKey.EncryptedKey,
+                masterKey
+            );
+
+            string decryptedLicensePlate = await aesEncryptionService.Decrypt(
+                booking.Car.EncryptedLicensePlate,
+                decryptedKey,
+                booking.Car.EncryptionKey.IV
+            );
+
+            return decryptedLicensePlate;
         }
     }
 
@@ -169,7 +227,9 @@ public sealed class GetBookingById
                 .ThenInclude(c => c.EncryptionKey)
                 .Include(b => b.Car)
                 .ThenInclude(c => c.Owner)
+                .ThenInclude(owner => owner.EncryptionKey)
                 .Include(b => b.User)
+                .ThenInclude(driver => driver.EncryptionKey)
                 .Include(b => b.TripTrackings)
                 .Include(b => b.Feedbacks)
                 .ThenInclude(f => f.User)
