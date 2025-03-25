@@ -29,8 +29,8 @@ public class GetAllWithdrawalRequestsEndpoint : ICarterModule
     {
         var result = await sender.Send(
             new GetAllWithdrawalRequests.Query(
-                request.Limit,
-                request.LastId,
+                request.PageNumber,
+                request.PageSize,
                 request.SearchTerm,
                 request.Status,
                 request.FromDate,
@@ -42,11 +42,11 @@ public class GetAllWithdrawalRequestsEndpoint : ICarterModule
     }
 
     public record GetAllWithdrawalRequestsRequest(
-        [FromQuery] int Limit = 10,
-        [FromQuery] Guid? LastId = null,
-        [FromQuery] string? SearchTerm = null,
-        [FromQuery] WithdrawRequestStatusEnum? Status = null,
-        [FromQuery] DateTimeOffset? FromDate = null,
-        [FromQuery] DateTimeOffset? ToDate = null
+        [FromQuery(Name = "index")] int PageNumber = 1,
+        [FromQuery(Name = "size")] int PageSize = 10,
+        [FromQuery(Name = "keyword")] string? SearchTerm = "",
+        [FromQuery(Name = "status")] WithdrawRequestStatusEnum? Status = null,
+        [FromQuery(Name = "from-date")] DateTimeOffset? FromDate = null,
+        [FromQuery(Name = "to-date")] DateTimeOffset? ToDate = null
     );
 }
