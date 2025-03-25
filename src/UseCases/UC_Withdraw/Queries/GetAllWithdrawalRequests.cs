@@ -14,13 +14,13 @@ namespace UseCases.UC_Withdraw.Queries;
 public sealed class GetAllWithdrawalRequests
 {
     public sealed record Query(
-        int Limit,
-        Guid? LastId,
-        string? SearchTerm = null,
+        int PageNumber = 1,
+        int PageSize = 10,
+        string? SearchTerm = "",
         WithdrawRequestStatusEnum? Status = null,
         DateTimeOffset? FromDate = null,
         DateTimeOffset? ToDate = null
-    ) : IRequest<Result<CursorPaginatedResponse<Response>>>;
+    ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public sealed record Response(
         Guid Id,
@@ -68,7 +68,8 @@ public sealed class GetAllWithdrawalRequests
                     request.User.Name,
                     request.User.Email,
                     decryptedPhone,
-                    request.User.Balance
+                    request.User.Balance,
+                    request.User.AvatarUrl
                 ),
                 new BankAccountDto(
                     request.BankAccount.Id,
@@ -93,7 +94,14 @@ public sealed class GetAllWithdrawalRequests
         }
     }
 
-    public record UserDto(Guid Id, string Name, string Email, string Phone, decimal Balance);
+    public record UserDto(
+        Guid Id,
+        string Name,
+        string Email,
+        string Phone,
+        decimal Balance,
+        string AvatarUrl
+    );
 
     public record BankAccountDto(
         Guid Id,
@@ -117,9 +125,9 @@ public sealed class GetAllWithdrawalRequests
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings
-    ) : IRequestHandler<Query, Result<CursorPaginatedResponse<Response>>>
+    ) : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
     {
-        public async Task<Result<CursorPaginatedResponse<Response>>> Handle(
+        public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(
             Query request,
             CancellationToken cancellationToken
         )
@@ -167,45 +175,40 @@ public sealed class GetAllWithdrawalRequests
                 );
             }
 
-            // Apply cursor pagination
-            if (request.LastId.HasValue)
-            {
-                query = query.Where(w => w.Id.CompareTo(request.LastId.Value) < 0);
-            }
-
             // Order by Id descending (newest first since using UUID v7)
             query = query.OrderByDescending(w => w.Id);
 
             var totalCount = await query.CountAsync(cancellationToken);
-            var withdrawals = await query
-                .Take(request.Limit)
-                .AsNoTracking()
-                .ToListAsync(cancellationToken);
 
-            var responses = new List<Response>();
-            foreach (var withdrawal in withdrawals)
-            {
-                responses.Add(
-                    await Response.FromEntity(
+            var withdrawalTasks = await query
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .AsNoTracking()
+                .Select(withdrawal =>
+                    Response.FromEntity(
                         withdrawal,
                         encryptionSettings.Key,
                         aesEncryptionService,
                         keyManagementService
                     )
-                );
-            }
+                )
+                .ToListAsync(cancellationToken);
 
-            var hasMore = withdrawals.Count == request.Limit;
-            var lastId = withdrawals.LastOrDefault()?.Id;
+            var withdrawals = await Task.WhenAll(withdrawalTasks);
+
+            var hasNext = await query
+                .Skip(request.PageSize * request.PageNumber)
+                .AnyAsync(cancellationToken: cancellationToken);
 
             return Result.Success(
-                new CursorPaginatedResponse<Response>(
-                    responses,
+                OffsetPaginatedResponse<Response>.Map(
+                    withdrawals,
                     totalCount,
-                    request.Limit,
-                    lastId,
-                    hasMore
-                )
+                    request.PageSize,
+                    request.PageNumber,
+                    hasNext
+                ),
+                "Lấy danh sách yêu cầu rút tiền thành công"
             );
         }
     }

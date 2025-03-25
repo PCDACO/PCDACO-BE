@@ -45,6 +45,16 @@ public sealed class CreateWithdrawalRequest
                     $"Số dư không đủ. Số dư hiện tại: {currentUser.User.Balance:N0} VND, Số tiền cần rút: {request.Amount:N0} VND"
                 );
 
+            var withdrawRequest = await context.WithdrawalRequests.FirstOrDefaultAsync(
+                w =>
+                    w.UserId == currentUser.User.Id
+                    && w.Status == WithdrawRequestStatusEnum.Pending,
+                cancellationToken
+            );
+
+            if (withdrawRequest != null)
+                return Result.Error("Bạn đã có yêu cầu rút tiền đang chờ xử lý");
+
             var withdrawalRequest = new WithdrawalRequest
             {
                 UserId = currentUser.User.Id,
