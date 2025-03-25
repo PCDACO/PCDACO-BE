@@ -1,11 +1,8 @@
 using Ardalis.Result;
-using Domain.Constants;
 using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared;
-using Infrastructure.Encryption;
-using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
 using UseCases.Abstractions;
 using UseCases.DTOs;
