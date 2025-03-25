@@ -22,8 +22,10 @@ public static class HangfireConfig
         // Register the job service
         services.AddScoped<BookingExpiredJob>();
         services.AddScoped<BookingReminderJob>();
+        services.AddScoped<BookingOverdueJob>();
         services.AddScoped<UpdateCarStatisticsJob>();
         services.AddScoped<UpdateUserStatisticsJob>();
+        services.AddScoped<InspectionScheduleExpiredJob>();
 
         return services;
     }
@@ -47,6 +49,13 @@ public static class HangfireConfig
             job => job.ExpireBookingsAutomatically(),
             Cron.Daily
         );
+
+        RecurringJob.AddOrUpdate<BookingOverdueJob>(
+            "handle-overdue-bookings",
+            job => job.HandleOverdueBookings(),
+            "*/15 * * * *" // Run every 15 minutes
+        );
+
         RecurringJob.AddOrUpdate<InspectionScheduleExpiredJob>(
             "expire-inspection-schedules-automatically",
             job => job.ExpireInspectionSchedulesAutomatically(),
