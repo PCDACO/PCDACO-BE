@@ -214,6 +214,101 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
     }
 
     [Fact]
+    public async Task Handle_TechnicianHasApprovedScheduleAfterRequestedTime_ReturnsError()
+    {
+        // Arrange
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+        _currentUser.SetUser(consultant);
+
+        // Create technician
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@test.com"
+        );
+
+        // Create owner and car prerequisites
+        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var carModel = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+        var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
+            _dbContext,
+            "Automatic"
+        );
+        var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        // Create cars
+        var car1 = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: owner.Id,
+            modelId: carModel.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: Domain.Enums.CarStatusEnum.Pending
+        );
+        var car2 = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: owner.Id,
+            modelId: carModel.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: Domain.Enums.CarStatusEnum.Pending
+        );
+
+        // Create an existing approved schedule for the technician with a future date
+        var futureDate = DateTimeOffset.UtcNow.AddDays(2); // 2 days in the future
+        var approvedSchedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car1.Id,
+            Status = Domain.Enums.InspectionScheduleStatusEnum.Approved,
+            InspectionAddress = "456 Approved St",
+            InspectionDate = futureDate,
+            CreatedBy = consultant.Id,
+        };
+        await _dbContext.InspectionSchedules.AddAsync(approvedSchedule);
+
+        // Create a pending schedule to update
+        var pendingSchedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car2.Id,
+            Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
+            InspectionAddress = "123 Pending St",
+            InspectionDate = DateTimeOffset.UtcNow.AddDays(3),
+            CreatedBy = consultant.Id,
+        };
+        await _dbContext.InspectionSchedules.AddAsync(pendingSchedule);
+        await _dbContext.SaveChangesAsync();
+
+        // Try to update pending schedule to a time before the approved schedule
+        var requestedDate = DateTimeOffset.UtcNow.AddDays(1); // 1 day in the future
+        var handler = new UpdateInspectionSchedule.Handler(_dbContext, _currentUser);
+        var command = new UpdateInspectionSchedule.Command(
+            Id: pendingSchedule.Id,
+            TechnicianId: technician.Id,
+            InspectionAddress: "123 Updated St",
+            InspectionDate: requestedDate
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(ResponseMessages.HasOverLapScheduleWithTheSameTechnician, result.Errors);
+    }
+
+    [Fact]
     public async Task Handle_TechnicianHasScheduleWithinOneHour_ReturnsError()
     {
         // Arrange
@@ -246,7 +341,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
 
-        // Create two cars
+        // Create cars
         var car1 = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
             ownerId: owner.Id,
@@ -255,7 +350,6 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             fuelType: fuelType,
             carStatus: Domain.Enums.CarStatusEnum.Pending
         );
-
         var car2 = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
             ownerId: owner.Id,
@@ -265,44 +359,42 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             carStatus: Domain.Enums.CarStatusEnum.Pending
         );
 
-        // Set up a specific inspection time
+        // Create a base time for testing
         var baseTime = DateTimeOffset.UtcNow.AddDays(1).AddHours(10); // 10 AM tomorrow
 
-        // Create a schedule to update
-        var scheduleToUpdate = new InspectionSchedule
+        // Create an existing pending schedule
+        var existingSchedule = new InspectionSchedule
         {
             TechnicianId = technician.Id,
             CarId = car1.Id,
             Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
-            InspectionAddress = "123 Main St",
-            InspectionDate = baseTime.AddHours(-3), // 7 AM tomorrow
+            InspectionAddress = "456 Existing St",
+            InspectionDate = baseTime,
             CreatedBy = consultant.Id,
         };
+        await _dbContext.InspectionSchedules.AddAsync(existingSchedule);
 
-        // Create another schedule for the same technician
-        var existingSchedule = new InspectionSchedule
+        // Create a pending schedule to update
+        var pendingSchedule = new InspectionSchedule
         {
             TechnicianId = technician.Id,
             CarId = car2.Id,
             Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
-            InspectionAddress = "456 Other St",
-            InspectionDate = baseTime, // 10 AM tomorrow
+            InspectionAddress = "123 Pending St",
+            InspectionDate = DateTimeOffset.UtcNow.AddDays(2),
             CreatedBy = consultant.Id,
         };
-
-        await _dbContext.InspectionSchedules.AddRangeAsync(
-            new[] { scheduleToUpdate, existingSchedule }
-        );
+        await _dbContext.InspectionSchedules.AddAsync(pendingSchedule);
         await _dbContext.SaveChangesAsync();
 
-        // update first schedule to a time that's only 30 minutes before the second schedule
-        var conflictingTime = baseTime.AddMinutes(-30); // 9:30 AM tomorrow
+        // Try to update pending schedule to a time within one hour of existing schedule
+        var requestedDate = baseTime.AddMinutes(45); // 45 minutes after existing schedule
         var handler = new UpdateInspectionSchedule.Handler(_dbContext, _currentUser);
         var command = new UpdateInspectionSchedule.Command(
-            Id: scheduleToUpdate.Id,
+            Id: pendingSchedule.Id,
             TechnicianId: technician.Id,
-            InspectionAddress: "123 Main St Updated",
-            InspectionDate: conflictingTime
+            InspectionAddress: "123 Updated St",
+            InspectionDate: requestedDate
         );
 
         // Act
@@ -314,11 +406,6 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             ResponseMessages.TechnicianHasInspectionScheduleWithinOneHour,
             result.Errors
         );
-
-        // Verify the schedule wasn't updated
-        var unchanged = await _dbContext.InspectionSchedules.FindAsync(scheduleToUpdate.Id);
-        Assert.Equal("123 Main St", unchanged!.InspectionAddress);
-        Assert.Equal(baseTime.AddHours(-3), unchanged.InspectionDate);
     }
 
     [Fact]

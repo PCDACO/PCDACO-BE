@@ -70,16 +70,26 @@ public sealed class UpdateInspectionSchedule
                     s.Status != Domain.Enums.InspectionScheduleStatusEnum.Expired
                     && s.Status != Domain.Enums.InspectionScheduleStatusEnum.Rejected
                 )
-                .Select(s => s.InspectionDate)
+                .Select(s => new { s.InspectionDate, s.Status })
                 .ToListAsync(cancellationToken);
 
-            // Check if any existing schedule is within 1 hour of the requested time
             var requestedTime = request.InspectionDate;
-            var tooCloseSchedule = technicianSchedules.Any(existingTime =>
-                Math.Abs((existingTime - requestedTime).TotalMinutes) < 60
+            // check conflicts with approved schedules
+            var hasApprovedScheduleConflict = technicianSchedules.Any(schedule =>
+                schedule.Status == Domain.Enums.InspectionScheduleStatusEnum.Approved
+                && requestedTime <= schedule.InspectionDate
             );
 
-            if (tooCloseSchedule)
+            if (hasApprovedScheduleConflict)
+                return Result.Error(ResponseMessages.HasOverLapScheduleWithTheSameTechnician);
+
+            // check conflicts with pending or in progress schedules
+            var hasActiveScheduleConflict = technicianSchedules.Any(schedule =>
+                schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.Approved
+                && Math.Abs((schedule.InspectionDate - requestedTime).TotalMinutes) < 60
+            );
+
+            if (hasActiveScheduleConflict)
                 return Result.Error(ResponseMessages.TechnicianHasInspectionScheduleWithinOneHour);
 
             // Update schedule
