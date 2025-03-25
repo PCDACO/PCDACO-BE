@@ -56,6 +56,9 @@ public sealed class StartBookingTrip
             if (carGPS == null)
                 return Result.NotFound("Không tìm thấy vị trí GPS của xe");
 
+            // if (!booking.IsPaid)
+            //     return Result.Error("Cần thanh toán trước khi bắt đầu chuyến đi");
+
             // Create driver's location point
             var driverLocation = geometryFactory.CreatePoint(
                 new Coordinate((double)request.Longitude, (double)request.Latitude)

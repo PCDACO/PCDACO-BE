@@ -50,7 +50,9 @@ public sealed class PreInspectionImages
                 return Result.Forbidden(ResponseMessages.UnauthourizeAccess);
 
             var booking = await context
-                .Bookings.Include(b => b.Car)
+                .Bookings.Include(b => b.User)
+                .Include(b => b.Car)
+                .ThenInclude(c => c.Model)
                 .Include(b => b.CarInspections.Where(i => i.Type == InspectionType.PreBooking))
                 .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken);
 
