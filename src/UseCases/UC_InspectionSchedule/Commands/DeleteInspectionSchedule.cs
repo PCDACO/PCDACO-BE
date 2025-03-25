@@ -21,9 +21,10 @@ public sealed class DeleteInspectionSchedule
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             // Get the existing schedule
-            var schedule = await context
-                .InspectionSchedules
-                .FirstOrDefaultAsync(s => s.Id == request.Id && !s.IsDeleted, cancellationToken);
+            var schedule = await context.InspectionSchedules.FirstOrDefaultAsync(
+                s => s.Id == request.Id && !s.IsDeleted,
+                cancellationToken
+            );
 
             if (schedule is null)
                 return Result.NotFound(ResponseMessages.InspectionScheduleNotFound);

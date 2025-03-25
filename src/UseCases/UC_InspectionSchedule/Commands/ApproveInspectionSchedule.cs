@@ -61,6 +61,16 @@ public sealed class ApproveInspectionSchedule
                         cancellationToken: cancellationToken
                     );
             }
+            if (!request.IsApproved)
+            {
+                await context
+                    .Cars.Where(c => !c.IsDeleted)
+                    .Where(c => c.Id == schedule.CarId)
+                    .ExecuteUpdateAsync(
+                        c => c.SetProperty(c => c.Status, Domain.Enums.CarStatusEnum.Rejected),
+                        cancellationToken: cancellationToken
+                    );
+            }
             await context.SaveChangesAsync(cancellationToken);
             return Result.Success(Response.FromEntity(schedule), ResponseMessages.Updated);
         }
