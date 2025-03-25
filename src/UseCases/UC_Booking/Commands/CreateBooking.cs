@@ -38,7 +38,7 @@ public sealed class CreateBooking
             CancellationToken cancellationToken
         )
         {
-            if (!currentUser.User!.IsDriver())
+            if (!currentUser.User!.IsDriver() && !currentUser.User!.IsOwner())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
             // Verify driver license first
@@ -46,7 +46,7 @@ public sealed class CreateBooking
                 u =>
                     u.Id == currentUser.User.Id
                     && u.LicenseIsApproved == true
-                    && u.LicenseExpiryDate > request.EndTime.AddDays(7),
+                    && u.LicenseExpiryDate > request.EndTime,
                 cancellationToken
             );
 
@@ -66,8 +66,8 @@ public sealed class CreateBooking
                 cancellationToken
             );
 
-            if (activeBookingCount >= 3)
-                return Result.Error("Bạn chỉ có thể đặt tối đa 3 đơn cùng lúc");
+            if (activeBookingCount > 0)
+                return Result.Error("Bạn chỉ có thể đặt tối đa 1 đơn cùng lúc");
 
             // Check if car exists
             var car = await context
@@ -276,6 +276,8 @@ public sealed class CreateBooking
     {
         private const int MAX_BOOKING_DAYS = 30;
         private const double MIN_HOURS_BEFORE_START = 1.5;
+        private const int EARLIST_HOUR = 7;
+        private const int LATEST_HOUR = 22;
 
         public Validator()
         {
@@ -285,7 +287,9 @@ public sealed class CreateBooking
                 .NotEmpty()
                 .WithMessage("Phải chọn thời gian bắt đầu thuê")
                 .GreaterThan(DateTime.UtcNow.AddHours(MIN_HOURS_BEFORE_START))
-                .WithMessage("Thời gian bắt đầu thuê phải sau một tiếng rưỡi");
+                .WithMessage("Thời gian bắt đầu thuê phải sau một tiếng rưỡi")
+                .Must(time => time.Hour >= EARLIST_HOUR && time.Hour <= LATEST_HOUR)
+                .WithMessage($"Thời gian bắt đầu thuê phải từ {EARLIST_HOUR}h đến {LATEST_HOUR}h");
 
             RuleFor(x => x.EndTime)
                 .NotEmpty()
@@ -299,25 +303,9 @@ public sealed class CreateBooking
                         return duration > 0 && duration <= MAX_BOOKING_DAYS;
                     }
                 )
-                .WithMessage($"Thời gian thuê phải từ 1 đến {MAX_BOOKING_DAYS} ngày");
-
-            // Add validation for previous violations
-            // RuleFor(x => x)
-            //     .MustAsync(
-            //         async (command, cancellation) =>
-            //         {
-            //             var violationCount = await context.Bookings.CountAsync(
-            //                 b =>
-            //                     b.UserId == command.UserId
-            //                     && b.Status == BookingStatusEnum.Completed
-            //                     && (b.ExcessDay > 0 || b.HasDamageReport), // Add HasDamageReport to Booking if not exists
-            //                 cancellation
-            //             );
-
-            //             return violationCount < 3; // Maximum 3 violations allowed
-            //         }
-            //     )
-            //     .WithMessage("Bạn đã vi phạm quá nhiều quy định thuê xe");
+                .WithMessage($"Thời gian thuê phải từ 1 đến {MAX_BOOKING_DAYS} ngày")
+                .Must(time => time.Hour >= EARLIST_HOUR && time.Hour <= LATEST_HOUR)
+                .WithMessage($"Thời gian kết thúc thuê phải từ {EARLIST_HOUR}h đến {LATEST_HOUR}h");
         }
     }
 }
