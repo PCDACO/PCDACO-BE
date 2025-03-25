@@ -360,6 +360,68 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
     }
 
     [Fact]
+    public async Task Handle_TechnicianHasApprovedScheduleAfterRequestedTime_ReturnsError()
+    {
+        // Arrange
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+        _currentUser.SetUser(consultant);
+
+        // Create technician
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@test.com"
+        );
+
+        // Create car in pending status
+        var owner = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
+        );
+        var car1 = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
+        var car2 = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
+
+        // Create an existing approved schedule for the technician with a future date
+        var futureDate = DateTimeOffset.UtcNow.AddDays(2); // 2 days in the future
+        var existingSchedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car1.Id,
+            Status = InspectionScheduleStatusEnum.Approved,
+            InspectionAddress = "456 Existing St",
+            InspectionDate = futureDate,
+            CreatedBy = consultant.Id,
+        };
+        await _dbContext.InspectionSchedules.AddAsync(existingSchedule);
+        await _dbContext.SaveChangesAsync();
+
+        // Request a schedule for same technician before the approved schedule
+        var requestedDate = DateTimeOffset.UtcNow.AddDays(1); // 1 day in the future
+        var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
+        var command = new CreateInspectionSchedule.Command(
+            TechnicianId: technician.Id,
+            CarId: car2.Id,
+            InspectionAddress: "123 Main St",
+            InspectionDate: requestedDate
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(ResponseMessages.HasOverLapScheduleWithTheSameTechnician, result.Errors);
+    }
+
+    [Fact]
     public async Task Handle_TechnicianHasScheduleWithinOneHour_ReturnsError()
     {
         // Arrange
@@ -381,7 +443,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             "tech@test.com"
         );
 
-        // Create two cars in pending status
+        // Create car in pending status
         var owner = await TestDataCreateUser.CreateTestUser(
             _dbContext,
             await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
@@ -389,28 +451,30 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var car1 = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
         var car2 = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
 
-        // Set up a specific inspection time
-        var inspectionTime = DateTimeOffset.UtcNow.AddDays(1).AddHours(10); // 10 AM tomorrow
+        // Create a base time for testing
+        var baseTime = DateTimeOffset.UtcNow.AddDays(1).AddHours(10); // 10 AM tomorrow
 
-        // Create an existing schedule for the technician that's 30 minutes away from proposed time
+        // Create an existing pending schedule
         var existingSchedule = new InspectionSchedule
         {
             TechnicianId = technician.Id,
             CarId = car1.Id,
             Status = InspectionScheduleStatusEnum.Pending,
             InspectionAddress = "456 Existing St",
-            InspectionDate = inspectionTime.AddMinutes(30), // 30 minutes after proposed time
+            InspectionDate = baseTime,
             CreatedBy = consultant.Id,
         };
         await _dbContext.InspectionSchedules.AddAsync(existingSchedule);
         await _dbContext.SaveChangesAsync();
 
+        // Request a schedule for same technician within one hour of existing schedule
+        var requestedDate = baseTime.AddMinutes(45); // 45 minutes after existing schedule
         var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
         var command = new CreateInspectionSchedule.Command(
             TechnicianId: technician.Id,
             CarId: car2.Id,
             InspectionAddress: "123 Main St",
-            InspectionDate: inspectionTime
+            InspectionDate: requestedDate
         );
 
         // Act
