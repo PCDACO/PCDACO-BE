@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Shared;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -43,6 +44,18 @@ public sealed class CreateManufacturer
             await context.Manufacturers.AddAsync(manufacturer, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
             return Result.Success(Response.FromEntity(manufacturer), "Tạo hãng xe thành công");
+        }
+    }
+
+    public sealed class Validator : AbstractValidator<Command>
+    {
+        public Validator()
+        {
+            RuleFor(x => x.ManufacturerName)
+                .NotEmpty()
+                .WithMessage("Tên hãng xe không được để trống")
+                .MaximumLength(100)
+                .WithMessage("Tên hãng xe không được vượt quá 100 ký tự");
         }
     }
 }

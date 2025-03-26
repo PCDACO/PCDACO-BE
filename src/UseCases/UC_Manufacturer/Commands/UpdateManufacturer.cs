@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using Domain.Entities;
+using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -44,6 +45,19 @@ public sealed class UpdateManufacturer
                 Response.FromEntity(updatingManufacturer),
                 "Cập nhật hãng xe thành công"
             );
+        }
+    }
+
+    public sealed class Validator : AbstractValidator<Command>
+    {
+        public Validator()
+        {
+            RuleFor(x => x.Id).NotEmpty().WithMessage("Id không được để trống");
+            RuleFor(x => x.ManufacturerName)
+                .NotEmpty()
+                .WithMessage("Tên hãng xe không được để trống")
+                .MaximumLength(100)
+                .WithMessage("Tên hãng xe không được vượt quá 100 ký tự");
         }
     }
 }
