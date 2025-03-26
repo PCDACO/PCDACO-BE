@@ -179,7 +179,7 @@ public class GetBankAccountByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal("1234567890", result.Value.AccountNumber); // The decrypted account number
         Assert.Equal("My Primary Account", result.Value.AccountName);
         Assert.True(result.Value.IsPrimary);
-        Assert.Equal(bankInfo.LogoUrl, result.Value.BankLogoUrl);
+        Assert.Equal(bankInfo.IconUrl, result.Value.BankIconUrl);
     }
 
     [Fact]
