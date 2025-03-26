@@ -1,17 +1,11 @@
 using Ardalis.Result;
-
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Shared;
-
 using Infrastructure.Encryption;
-
 using Microsoft.EntityFrameworkCore;
-
 using NetTopologySuite.Geometries;
-
 using Persistance.Data;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.UC_Car.Commands;
@@ -69,7 +63,6 @@ public class CreateCarTests : IAsyncLifetime
             PickupLatitude: 0,
             PickupLongitude: 0,
             PickupAddress: ""
-
         );
 
     [Fact]
