@@ -11,12 +11,12 @@ namespace UseCases.UC_Report.Queries;
 public class GetAllReports
 {
     public sealed record Query(
-        int Limit,
-        Guid? LastIds,
-        BookingReportStatus? Status,
-        BookingReportType? Type,
-        string? SearchTerm = null
-    ) : IRequest<Result<CursorPaginatedResponse<Response>>>;
+        int PageNumber = 1,
+        int PageSize = 10,
+        string? SearchTerm = "",
+        BookingReportStatus? Status = null,
+        BookingReportType? Type = null
+    ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public sealed record Response(
         Guid Id,
@@ -51,9 +51,9 @@ public class GetAllReports
     }
 
     internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
-        : IRequestHandler<Query, Result<CursorPaginatedResponse<Response>>>
+        : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
     {
-        public async Task<Result<CursorPaginatedResponse<Response>>> Handle(
+        public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(
             Query request,
             CancellationToken cancellationToken
         )
@@ -102,33 +102,28 @@ public class GetAllReports
                 );
             }
 
-            // Apply cursor pagination
-            if (request.LastIds.HasValue)
-            {
-                query = query.Where(r => r.Id.CompareTo(request.LastIds.Value) < 0);
-            }
-
             // Order by Id descending (newest first)
             query = query.OrderByDescending(r => r.Id);
 
-            // Get total count and items
             var totalCount = await query.CountAsync(cancellationToken);
+
             var reports = await query
-                .Take(request.Limit)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
 
-            // Determine if there are more items
-            var hasMore = reports.Count > request.Limit;
-            var lastId = reports.LastOrDefault()?.Id;
+            var hasNext = await query
+                .Skip(request.PageSize * request.PageNumber)
+                .AnyAsync(cancellationToken: cancellationToken);
 
             return Result.Success(
-                new CursorPaginatedResponse<Response>(
+                OffsetPaginatedResponse<Response>.Map(
                     reports.Select(Response.FromEntity),
                     totalCount,
-                    request.Limit,
-                    lastId,
-                    hasMore
+                    request.PageSize,
+                    request.PageNumber,
+                    hasNext
                 ),
                 "Lấy danh sách báo cáo thành công"
             );
