@@ -65,8 +65,8 @@ public class GetRentedCars
                 car.Color,
                 car.Seat,
                 car.Description,
-                car.TransmissionType.ToString() ?? string.Empty,
-                car.FuelType.ToString() ?? string.Empty,
+                car.TransmissionType.Name ?? string.Empty,
+                car.FuelType.Name ?? string.Empty,
                 car.FuelConsumption,
                 car.RequiresCollateral,
                 car.Price,
@@ -124,6 +124,7 @@ public class GetRentedCars
                 .Skip(request.PageSize * (request.PageNumber - 1))
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
+            bool hasNext = query.Skip(request.PageSize * request.PageNumber).Any();
             return Result.Success(
                 OffsetPaginatedResponse<Response>.Map(
                     (
@@ -140,7 +141,8 @@ public class GetRentedCars
                     ).AsEnumerable(),
                     count,
                     request.PageNumber,
-                    request.PageSize
+                    request.PageSize,
+                    hasNext
                 ),
                 ResponseMessages.Fetched
             );

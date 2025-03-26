@@ -157,7 +157,7 @@ public class GetCarById
 
     public record PickupLocationDetail(double Longitude, double Latitude, string Address);
 
-    private sealed class Handler(
+    internal sealed class Handler(
         IAppDBContext context,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,

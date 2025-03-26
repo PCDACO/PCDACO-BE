@@ -68,8 +68,8 @@ public class GetCarsForStaffs
                 car.Seat,
                 car.Status.ToString(),
                 car.Description,
-                car.TransmissionType.ToString() ?? string.Empty,
-                car.FuelType.ToString() ?? string.Empty,
+                car.TransmissionType.Name ?? string.Empty,
+                car.FuelType.Name ?? string.Empty,
                 car.FuelConsumption,
                 car.RequiresCollateral,
                 car.Price,
@@ -122,11 +122,18 @@ public class GetCarsForStaffs
                 .Where(c => !c.IsDeleted)
                 .Where(c => request.Status == null ? true : request.Status == c.Status)
                 .OrderByDescending(c => c.Id);
+            if (!string.IsNullOrWhiteSpace(request.Keyword))
+            {
+                gettingQuery = gettingQuery.Where(c =>
+                    EF.Functions.Like(c.Model.Name, $"%{request.Keyword}%")
+                );
+            }
             int count = await gettingQuery.CountAsync(cancellationToken);
             List<Car> cars = await gettingQuery
                 .Skip(request.PageSize * (request.PageNumber - 1))
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
+            bool hasNext = gettingQuery.Skip(request.PageSize * request.PageNumber).Any();
             return Result.Success(
                 OffsetPaginatedResponse<Response>.Map(
                     (
@@ -143,7 +150,8 @@ public class GetCarsForStaffs
                     ).AsEnumerable(),
                     count,
                     request.PageNumber,
-                    request.PageSize
+                    request.PageSize,
+                    hasNext
                 ),
                 ResponseMessages.Fetched
             );
