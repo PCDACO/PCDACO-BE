@@ -41,6 +41,23 @@ public sealed class CreateBooking
             if (!currentUser.User!.IsDriver() && !currentUser.User!.IsOwner())
                 return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
 
+            if (currentUser.User.IsBanned)
+                return Result.Forbidden("Tài khoản của bạn đã bị cấm sử dụng");
+
+            // Check for unpaid compensation
+            var hasUnpaidCompensation = await context.BookingReports.AnyAsync(
+                r =>
+                    r.CompensationPaidUserId == currentUser.User.Id
+                    && r.CompensationAmount.HasValue
+                    && (!r.IsCompensationPaid.HasValue || !r.IsCompensationPaid.Value),
+                cancellationToken
+            );
+
+            if (hasUnpaidCompensation)
+                return Result.Error(
+                    "Bạn có khoản bồi thường chưa thanh toán. Vui lòng thanh toán trước khi đặt xe mới."
+                );
+
             // Verify driver license first
             var license = await context.Users.FirstOrDefaultAsync(
                 u =>

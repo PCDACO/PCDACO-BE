@@ -52,15 +52,6 @@ public class BookingOverdueJob(IAppDBContext context, IEmailService emailService
             // Calculate compensation for the affected booking
             decimal compensationAmount = affectedBooking.TotalAmount * COMPENSATION_PERCENTAGE;
 
-            // Create compensation record
-            var compensation = new Compensation
-            {
-                BookingId = affectedBooking.Id,
-                Amount = compensationAmount,
-                Reason = $"Bồi thường do chuyến đi trước (ID: {overdueBooking.Id}) trả xe trễ",
-                Status = CompensationStatusEnum.Pending
-            };
-
             // Update affected booking status
             affectedBooking.Status = BookingStatusEnum.Cancelled;
             affectedBooking.Note =
@@ -75,9 +66,6 @@ public class BookingOverdueJob(IAppDBContext context, IEmailService emailService
                 // Return the full amount to the affected driver
                 affectedBooking.User.Balance += affectedBooking.TotalAmount;
             }
-
-            // Add compensation to the database
-            context.Compensations.Add(compensation);
 
             // Send notifications
             await SendOverdueNotification(overdueBooking);

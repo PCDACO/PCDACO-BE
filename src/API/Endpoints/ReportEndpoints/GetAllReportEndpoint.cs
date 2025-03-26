@@ -20,7 +20,7 @@ public class GetAllReportEndpoint : ICarterModule
                 new(operation)
                 {
                     Description = """
-                    Retrieve paginated list of reports with cursor-based pagination.
+                    Retrieve paginated list of reports with offset-based pagination.
 
                     Access Control:
                     - Drivers: Can only view reports they created or reports about their bookings
@@ -33,9 +33,9 @@ public class GetAllReportEndpoint : ICarterModule
                     - Type: Filter by report type (Accident, Damage, Dispute, etc.)
 
                     Pagination:
-                    - Cursor-based pagination using lastId
-                    - Default limit: 10 items per page
-                    - Returns hasMore flag for additional pages
+                    - Offset-based pagination using page number and size
+                    - Default: 10 items per page
+                    - Returns total count and hasNext flag
                     """,
 
                     Responses =
@@ -93,11 +93,9 @@ public class GetAllReportEndpoint : ICarterModule
                                                 }
                                             },
                                             ["totalCount"] = new OpenApiInteger(50),
-                                            ["limit"] = new OpenApiInteger(10),
-                                            ["lastId"] = new OpenApiString(
-                                                "123e4567-e89b-12d3-a456-426614174000"
-                                            ),
-                                            ["hasMore"] = new OpenApiBoolean(true)
+                                            ["pageSize"] = new OpenApiInteger(10),
+                                            ["pageNumber"] = new OpenApiInteger(1),
+                                            ["hasNext"] = new OpenApiBoolean(true)
                                         },
                                         ["isSuccess"] = new OpenApiBoolean(true),
                                         ["message"] = new OpenApiString(
@@ -136,16 +134,16 @@ public class GetAllReportEndpoint : ICarterModule
 
     private static async Task<IResult> Handle(
         ISender sender,
-        [FromQuery(Name = "limit")] int? limit,
-        [FromQuery(Name = "lastId")] Guid? lastId,
-        [FromQuery(Name = "status")] BookingReportStatus? status,
-        [FromQuery(Name = "type")] BookingReportType? type,
-        [FromQuery(Name = "search")] string? searchTerm,
-        CancellationToken cancellationToken
+        [FromQuery(Name = "index")] int pageNumber = 1,
+        [FromQuery(Name = "size")] int pageSize = 10,
+        [FromQuery(Name = "keyword")] string? searchTerm = "",
+        [FromQuery(Name = "status")] BookingReportStatus? status = null,
+        [FromQuery(Name = "type")] BookingReportType? type = null,
+        CancellationToken cancellationToken = default
     )
     {
         var result = await sender.Send(
-            new GetAllReports.Query(limit ?? 10, lastId, status, type, searchTerm),
+            new GetAllReports.Query(pageNumber, pageSize, searchTerm, status, type),
             cancellationToken
         );
 
