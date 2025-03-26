@@ -1103,6 +1103,86 @@
 								}
 							},
 							"response": []
+						},
+						{
+							"name": "Consultant SignIn",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"// Verify login succeeds\r",
+											"pm.test(\"Login - Status 200\", () => pm.response.to.have.status(200));\r",
+											"\r",
+											"pm.test(\"Response has access token\", () => {\r",
+											"  const jsonData = pm.response.json();\r",
+											"  \r",
+											"  // Check nested \"value\" object\r",
+											"  pm.expect(jsonData.value).to.be.an(\"object\");\r",
+											"  pm.expect(jsonData.value.accessToken).to.be.a(\"string\");\r",
+											"  \r",
+											"  // Save tokens to environment variables\r",
+											"  pm.environment.set(\"consultantToken\", jsonData.value.accessToken);\r",
+											"  pm.environment.set(\"consultantRefreshToken\", jsonData.value.refreshToken);\r",
+											"});\r",
+											"\r",
+											"// Optional: Verify success message\r",
+											"pm.test(\"Login successful\", () => {\r",
+											"  const jsonData = pm.response.json();\r",
+											"  pm.expect(jsonData.isSuccess).to.eql(true);\r",
+											"  pm.expect(jsonData.message).to.eql(\"Đăng nhập thành công\");\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "noauth"
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Content-Type",
+										"value": "application/json",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"email\": \"{{consultantEmail}}\",\r\n  \"password\": \"{{consultantPassword}}\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/auth/admin/login",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"auth",
+										"admin",
+										"login"
+									]
+								}
+							},
+							"response": []
 						}
 					]
 				},
@@ -1478,7 +1558,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"carId\": \"{{carId}}\",\r\n  \"startTime\": \"2025-03-20T09:59:38.502Z\",\r\n  \"endTime\": \"2025-03-21T09:59:38.502Z\"\r\n}",
+									"raw": "{\r\n  \"carId\": \"{{carId}}\",\r\n  \"startTime\": \"2025-03-27T09:59:38.502Z\",\r\n  \"endTime\": \"2025-03-28T09:59:38.502Z\"\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -1561,6 +1641,69 @@
 							"response": []
 						},
 						{
+							"name": "Get Booking By Id",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											""
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"protocolProfileBehavior": {
+								"disableBodyPruning": true
+							},
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{ownerToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/bookings/{{bookingId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"bookings",
+										"{{bookingId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
 							"name": "Pre-Inspect Booking",
 							"request": {
 								"auth": {
@@ -1588,8 +1731,8 @@
 											"key": "exteriorPhotos",
 											"type": "file",
 											"src": [
-												"/D:/Picture/350be82a-2a22-4f45-9e32-8c7eea05e820_671x372.jpg",
-												"/D:/Picture/446192465_443604858287878_2789737694761021638_n.jpg"
+												"/D:/Picture/446192465_443604858287878_2789737694761021638_n.jpg",
+												"/D:/Picture/446220120_3612351175762314_5812113030619385094_n.jpg"
 											]
 										},
 										{
@@ -1610,7 +1753,7 @@
 										{
 											"key": "parkingLocationPhotos",
 											"type": "file",
-											"src": "/D:/Picture/b64be7f149a73119a95bd4066d1666a1.jpg"
+											"src": "/D:/Picture/463840599_520554374073713_5969603345266277714_n.jpg"
 										}
 									]
 								},
@@ -1656,12 +1799,12 @@
 										{
 											"key": "fuelGaugeFinalPhotos",
 											"type": "file",
-											"src": "/D:/Picture/GPjXTt3XcAEMswd.jpg"
+											"src": "/D:/Picture/446254490_953132719844666_6268334298289454769_n.jpg"
 										},
 										{
 											"key": "cleanlinessPhotos",
 											"type": "file",
-											"src": "/D:/Picture/e8453111f9c8fd9867eccf0cc6bce3db.jpg"
+											"src": "/D:/Picture/meme-ai-biet-dau-2.jpg"
 										},
 										{
 											"key": "scratchesPhotos",
@@ -2033,14 +2176,244 @@
 									}
 								],
 								"url": {
-									"raw": "{{baseUrl}}/api/cars/01955a25-38ac-721a-9cc7-4b83a23b2f4e",
+									"raw": "{{baseUrl}}/api/car/0195c60e-b8a3-7675-a5c7-b548cbacf239",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"car",
+										"0195c60e-b8a3-7675-a5c7-b548cbacf239"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Upload Car Images",
+							"event": [
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [
+											"// Get 2 amenities\r",
+											"const getAmenities = {\r",
+											"    url: `${pm.environment.get(\"baseUrl\")}/api/amenities?index=1&size=2`,\r",
+											"    method: 'GET',\r",
+											"    header: {\r",
+											"        'Content-Type': 'application/json',\r",
+											"        'Authorization': `Bearer ${pm.environment.get(\"ownerToken\")}`\r",
+											"    }\r",
+											"};\r",
+											"\r",
+											"pm.sendRequest(getAmenities, (err, response) => {\r",
+											"    if (err) {\r",
+											"        console.error(\"Get Amenities failed:\", err);\r",
+											"        throw err;\r",
+											"    }\r",
+											"    \r",
+											"    if (response.code === 200) {\r",
+											"        const getAmenityId1 = response.json().value.items[0].id;\r",
+											"        const getAmenityId2 = response.json().value.items[1].id;\r",
+											"        pm.environment.set(\"amenityId-1\", getAmenityId1);\r",
+											"        pm.environment.set(\"amenityId-2\", getAmenityId2);\r",
+											"        console.log(\"amenity 1 ID:\", getAmenityId1);\r",
+											"        console.log(\"amenity 2 ID:\", getAmenityId2);\r",
+											"    } else {\r",
+											"        console.error(\"Failed to get amenities:\", response.json());\r",
+											"        throw new Error(\"Pre-request setup failed\");\r",
+											"    }\r",
+											"});\r",
+											"\r",
+											"// Get model\r",
+											"const getModels = {\r",
+											"    url: `${pm.environment.get(\"baseUrl\")}/api/models?index=1&size=1`,\r",
+											"    method: 'GET',\r",
+											"    header: {\r",
+											"        'Content-Type': 'application/json',\r",
+											"        'Authorization': `Bearer ${pm.environment.get(\"ownerToken\")}`\r",
+											"    }\r",
+											"};\r",
+											"\r",
+											"pm.sendRequest(getModels, (err, response) => {\r",
+											"    if (err) {\r",
+											"        console.error(\"Get Model failed:\", err);\r",
+											"        throw err;\r",
+											"    }\r",
+											"    \r",
+											"    if (response.code === 200) {\r",
+											"        const getModelId1 = response.json().value.items[0].id;\r",
+											"        pm.environment.set(\"modelId-1\", getModelId1);\r",
+											"        console.log(\"model 1 ID:\", getModelId1);\r",
+											"    } else {\r",
+											"        console.error(\"Failed to get models:\", response.json());\r",
+											"        throw new Error(\"Pre-request setup failed\");\r",
+											"    }\r",
+											"});\r",
+											"\r",
+											"// Get transmission type\r",
+											"const getTransmissionType = {\r",
+											"    url: `${pm.environment.get(\"baseUrl\")}/api/transmission-types?index=1&size=1`,\r",
+											"    method: 'GET',\r",
+											"    header: {\r",
+											"        'Content-Type': 'application/json',\r",
+											"        'Authorization': `Bearer ${pm.environment.get(\"ownerToken\")}`\r",
+											"    }\r",
+											"};\r",
+											"\r",
+											"pm.sendRequest(getTransmissionType, (err, response) => {\r",
+											"    if (err) {\r",
+											"        console.error(\"Get transmission type failed:\", err);\r",
+											"        throw err;\r",
+											"    }\r",
+											"    \r",
+											"    if (response.code === 200) {\r",
+											"        const getTransmissionTypeId1 = response.json().value.items[0].id;\r",
+											"        pm.environment.set(\"transmissionTypeId-1\", getTransmissionTypeId1);\r",
+											"        console.log(\"Transmission Type 1 ID:\", getTransmissionTypeId1);\r",
+											"    } else {\r",
+											"        console.error(\"Failed to get Transmission Type:\", response.json());\r",
+											"        throw new Error(\"Pre-request setup failed\");\r",
+											"    }\r",
+											"});\r",
+											"\r",
+											"// Get fuel type\r",
+											"const getFuelTypes = {\r",
+											"    url: `${pm.environment.get(\"baseUrl\")}/api/fuel-types?index=1&size=1`,\r",
+											"    method: 'GET',\r",
+											"    header: {\r",
+											"        'Content-Type': 'application/json',\r",
+											"        'Authorization': `Bearer ${pm.environment.get(\"ownerToken\")}`\r",
+											"    }\r",
+											"};\r",
+											"\r",
+											"pm.sendRequest(getFuelTypes, (err, response) => {\r",
+											"    if (err) {\r",
+											"        console.error(\"Get fuel type failed:\", err);\r",
+											"        throw err;\r",
+											"    }\r",
+											"    \r",
+											"    if (response.code === 200) {\r",
+											"        const getFuelTypeId1 = response.json().value.items[0].id;\r",
+											"        pm.environment.set(\"fuelTypeId-1\", getFuelTypeId1);\r",
+											"        console.log(\"Fuel Type 1 ID:\", getFuelTypeId1);\r",
+											"    } else {\r",
+											"        console.error(\"Failed to get Fuel Type:\", response.json());\r",
+											"        throw new Error(\"Pre-request setup failed\");\r",
+											"    }\r",
+											"});"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const jsonData = pm.response.json();\r",
+											"pm.environment.set(\"carId\", jsonData.value.id);\r",
+											"\r",
+											"// Tests Script\r",
+											"pm.test(\"Status code is 200\", function () {\r",
+											"    pm.response.to.have.status(200);\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Response has the correct structure\", function () {\r",
+											"    const jsonData = pm.response.json();\r",
+											"    \r",
+											"    pm.expect(jsonData).to.have.property('data');\r",
+											"    pm.expect(jsonData.data).to.have.property('id');\r",
+											"    pm.expect(jsonData).to.have.property('status');\r",
+											"    pm.expect(jsonData.status).to.eql('Ok');\r",
+											"});\r",
+											"\r",
+											"pm.test(\"Car was created with correct ID\", function () {\r",
+											"    const jsonData = pm.response.json();\r",
+											"    pm.expect(jsonData.data.id).to.be.a('string');\r",
+											"    \r",
+											"    // Store the created car ID for potential future requests\r",
+											"    pm.environment.set(\"lastCreatedCarId\", jsonData.data.id);\r",
+											"});\r",
+											"\r",
+											"// Additional validation can be added here based on your needs"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{ownerToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [
+									{
+										"key": "Idempotence-Key",
+										"value": "{{$guid}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "images",
+											"type": "file",
+											"src": [
+												"/D:/Picture/446192465_443604858287878_2789737694761021638_n.jpg",
+												"/D:/Picture/446220120_3612351175762314_5812113030619385094_n.jpg",
+												"/D:/Picture/446254490_953132719844666_6268334298289454769_n.jpg"
+											]
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/cars/{{carId}}/car-images",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"api",
 										"cars",
-										"01955a25-38ac-721a-9cc7-4b83a23b2f4e"
+										"{{carId}}",
+										"car-images"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "New Request",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{adminToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/cars",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"cars"
 									]
 								}
 							},
@@ -2284,14 +2657,14 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/api/users/0195ac5d-f1af-706e-a867-c0086c649f5f/license/approve",
+									"raw": "{{baseUrl}}/api/users/0195c88f-fca9-7676-bea9-4112a3ea0468/license/approve",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"api",
 										"users",
-										"0195ac5d-f1af-706e-a867-c0086c649f5f",
+										"0195c88f-fca9-7676-bea9-4112a3ea0468",
 										"license",
 										"approve"
 									]
@@ -2394,6 +2767,292 @@
 					]
 				},
 				{
+					"name": "Reports",
+					"item": [
+						{
+							"name": "Assign Compensation To User Report",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{consultantToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [
+									{
+										"key": "Idempotence-Key",
+										"value": "{{$guid}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"userId\": \"0195c88f-fca9-7676-bea9-4112a3ea0468\",\r\n  \"compensationReason\": \"string\",\r\n  \"compensationAmount\": 300000\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/reports/{{reportId}}/compensation",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"reports",
+										"{{reportId}}",
+										"compensation"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Create Report",
+							"event": [
+								{
+									"listen": "test",
+									"script": {
+										"exec": [
+											"const jsonData = pm.response.json();\r",
+											"pm.environment.set(\"reportId\", jsonData.value.id);"
+										],
+										"type": "text/javascript",
+										"packages": {}
+									}
+								},
+								{
+									"listen": "prerequest",
+									"script": {
+										"exec": [],
+										"type": "text/javascript"
+									}
+								}
+							],
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{ownerToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [
+									{
+										"key": "Idempotence-Key",
+										"value": "{{$guid}}",
+										"type": "text"
+									}
+								],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"bookingId\": \"{{bookingId}}\",\r\n  \"title\": \"Damage to Front Bumper\",\r\n  \"description\": \"Found scratches and dents on the front bumper after return\",\r\n  \"reportType\": 2\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/reports/",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"reports",
+										""
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get All Reports",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{consultantToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/reports",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"reports"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Get Report By Id",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{consultantToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/reports/{{reportId}}",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"reports",
+										"{{reportId}}"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Provide Compensation Paid Proof",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{driverToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "images",
+											"value": "",
+											"type": "file"
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/reports/{{reportId}}/compensation-proof",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"reports",
+										"{{reportId}}",
+										"compensation-proof"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Mark Report Under Review",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{consultantToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"url": {
+									"raw": "{{baseUrl}}/api/reports/{{reportId}}/review",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"reports",
+										"{{reportId}}",
+										"review"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Upload Report Images",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "{{ownerToken}}",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "formdata",
+									"formdata": [
+										{
+											"key": "images",
+											"type": "file",
+											"src": [
+												"/D:/Picture/350be82a-2a22-4f45-9e32-8c7eea05e820_671x372.jpg",
+												"/D:/Picture/350be82a-2a22-4f45-9e32-8c7eea05e820_671x372.jpg",
+												"/D:/Picture/446192465_443604858287878_2789737694761021638_n.jpg",
+												"/D:/Picture/446220120_3612351175762314_5812113030619385094_n.jpg"
+											]
+										}
+									]
+								},
+								"url": {
+									"raw": "{{baseUrl}}/api/reports/{{reportId}}/images",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"api",
+										"reports",
+										"{{reportId}}",
+										"images"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
 					"name": "Transactions",
 					"item": [
 						{
@@ -2442,7 +3101,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\r\n  \"bankAccountId\": \"{{bankAccountId}}\",\r\n  \"amount\": 1000000\r\n}",
+									"raw": "{\r\n  \"bankAccountId\": \"{{bankAccountId}}\",\r\n  \"amount\": 500000\r\n}",
 									"options": {
 										"raw": {
 											"language": "json"
@@ -2450,13 +3109,13 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/api/withdrawal",
+									"raw": "{{baseUrl}}/api/withdrawals",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
 										"api",
-										"withdrawal"
+										"withdrawals"
 									]
 								}
 							},
