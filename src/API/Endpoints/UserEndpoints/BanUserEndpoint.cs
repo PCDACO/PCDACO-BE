@@ -1,47 +1,42 @@
 using API.Utils;
+using Ardalis.Result;
 using Carter;
-using Domain.Enums;
-using Infrastructure.Idempotency;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
-using UseCases.UC_Report.Commands;
+using UseCases.UC_User.Commands;
+using IResult = Microsoft.AspNetCore.Http.IResult;
 
-namespace API.Endpoints.ReportEndpoints;
+namespace API.Endpoints.UserEndpoints;
 
-public class CreateReportEndpoint : ICarterModule
+public class BanUserEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/reports", Handle)
-            .WithSummary("Create a new report")
-            .WithTags("Reports")
-            .AddEndpointFilter<IdempotencyFilter>()
+        app.MapPost("/api/users/{userId}/ban", Handle)
+            .WithSummary("Ban a user")
+            .WithTags("Users")
             .RequireAuthorization()
             .WithOpenApi(operation =>
                 new(operation)
                 {
                     Description = """
-                    Create a new report for a booking.
-
-                    Access Control:
-                    - Requires authentication
-                    - Only the driver or car owner involved in the booking can create reports
+                    Ban a user from the system.
 
                     Process:
-                    1. Validates user permissions
-                    2. Creates report with basic details
-                    3. Sets initial status to Pending
+                    1. Validates consultant permissions
+                    2. Sets user's banned status to true
+                    3. Records ban reason
+                    4. Prevents user from accessing the system
 
-                    Note: Images should be uploaded separately using the upload endpoint
+                    Note: Only consultants can ban users
                     """,
 
                     Responses =
                     {
-                        ["201"] = new()
+                        ["200"] = new()
                         {
-                            Description = "Created - Report successfully created",
+                            Description = "Success - User is now banned",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -50,14 +45,16 @@ public class CreateReportEndpoint : ICarterModule
                                     {
                                         ["value"] = new OpenApiObject
                                         {
-                                            ["id"] = new OpenApiString(
+                                            ["userId"] = new OpenApiString(
                                                 "123e4567-e89b-12d3-a456-426614174000"
+                                            ),
+                                            ["isBanned"] = new OpenApiBoolean(true),
+                                            ["bannedReason"] = new OpenApiString(
+                                                "Không thanh toán báo cáo đúng hạn"
                                             )
                                         },
                                         ["isSuccess"] = new OpenApiBoolean(true),
-                                        ["message"] = new OpenApiString(
-                                            "Báo cáo đã được tạo thành công"
-                                        )
+                                        ["message"] = new OpenApiString("Người dùng đã bị cấm")
                                     }
                                 }
                             }
@@ -73,9 +70,7 @@ public class CreateReportEndpoint : ICarterModule
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
-                                            "Validation errors:\n"
-                                                + "- Tiêu đề không được để trống\n"
-                                                + "- Mô tả không được quá 1000 ký tự"
+                                            "Lý do cấm không được để trống"
                                         )
                                     }
                                 }
@@ -84,7 +79,7 @@ public class CreateReportEndpoint : ICarterModule
                         ["401"] = new() { Description = "Unauthorized - User not authenticated" },
                         ["403"] = new()
                         {
-                            Description = "Forbidden - User is not involved in the booking",
+                            Description = "Forbidden - User is not a consultant",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -93,7 +88,7 @@ public class CreateReportEndpoint : ICarterModule
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
-                                            "Bạn không có quyền tạo báo cáo cho đơn đặt xe này"
+                                            "Bạn không có quyền thực hiện hành động này"
                                         )
                                     }
                                 }
@@ -101,7 +96,7 @@ public class CreateReportEndpoint : ICarterModule
                         },
                         ["404"] = new()
                         {
-                            Description = "Not Found - Booking not found",
+                            Description = "Not Found - User not found",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -109,30 +104,23 @@ public class CreateReportEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString("Không tìm thấy đơn đặt xe")
+                                        ["message"] = new OpenApiString("Không tìm thấy người dùng")
                                     }
                                 }
                             }
-                        }
-                    },
-                    RequestBody = new()
-                    {
-                        Description = "Report details",
-                        Required = true,
-                        Content =
+                        },
+                        ["409"] = new()
                         {
-                            ["application/json"] = new()
+                            Description = "Conflict - User already banned",
+                            Content =
                             {
-                                Example = new OpenApiObject
+                                ["application/json"] = new()
                                 {
-                                    ["bookingId"] = new OpenApiString(
-                                        "123e4567-e89b-12d3-a456-426614174000"
-                                    ),
-                                    ["title"] = new OpenApiString("Damage to Front Bumper"),
-                                    ["description"] = new OpenApiString(
-                                        "Found scratches and dents on the front bumper after return"
-                                    ),
-                                    ["reportType"] = new OpenApiString("CarDamage")
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["message"] = new OpenApiString("Người dùng đã bị cấm")
+                                    }
                                 }
                             }
                         }
@@ -141,29 +129,14 @@ public class CreateReportEndpoint : ICarterModule
             );
     }
 
-    private async Task<IResult> Handle(
-        ISender sender,
-        CreateReportRequest request,
-        CancellationToken cancellationToken
-    )
+    private static async Task<IResult> Handle(ISender sender, Guid userId, BanUserRequest request)
     {
-        var result = await sender.Send(
-            new CreateReport.Command(
-                request.BookingId,
-                request.Title,
-                request.Description,
-                request.ReportType
-            ),
-            cancellationToken
+        Result<BanUser.Response> result = await sender.Send(
+            new BanUser.Command(userId, request.BannedReason)
         );
 
         return result.MapResult();
     }
 
-    private sealed record CreateReportRequest(
-        Guid BookingId,
-        string Title,
-        string Description,
-        BookingReportType ReportType
-    );
+    private sealed record BanUserRequest(string BannedReason);
 }

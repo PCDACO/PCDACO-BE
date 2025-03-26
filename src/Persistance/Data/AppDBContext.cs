@@ -28,7 +28,6 @@ public class AppDBContext(DbContextOptions context) : DbContext(context), IAppDB
     public DbSet<User> Users => Set<User>();
     public DbSet<UserStatistic> UserStatistics => Set<UserStatistic>();
     public DbSet<WithdrawalRequest> WithdrawalRequests => Set<WithdrawalRequest>();
-    public DbSet<Compensation> Compensations => Set<Compensation>();
     public DbSet<Contract> Contracts => Set<Contract>();
     public DbSet<FuelType> FuelTypes => Set<FuelType>();
     public DbSet<ImageType> ImageTypes => Set<ImageType>();

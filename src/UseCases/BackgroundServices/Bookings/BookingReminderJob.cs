@@ -128,12 +128,9 @@ public class BookingReminderJob(
     private async Task<Booking?> GetBookingIfPending(Guid bookingId)
     {
         return await context
-            .Bookings.Include(b => b.Status)
-            .Include(b => b.Car)
+            .Bookings.Include(b => b.Car)
             .ThenInclude(c => c.Owner)
             .Include(b => b.User)
-            .FirstOrDefaultAsync(b =>
-                b.Id == bookingId && b.Status == BookingStatusEnum.Pending
-            );
+            .FirstOrDefaultAsync(b => b.Id == bookingId && b.Status == BookingStatusEnum.Pending);
     }
 }

@@ -52,4 +52,9 @@ public interface ICloudinaryServices
         Stream image,
         CancellationToken cancellationToken = default
     );
+    Task<string> UploadCompensationPaidImageAsync(
+        string name,
+        Stream image,
+        CancellationToken cancellationToken = default
+    );
 }

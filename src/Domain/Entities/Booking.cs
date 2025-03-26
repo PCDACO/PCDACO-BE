@@ -32,7 +32,6 @@ public class Booking : BaseEntity
     [ForeignKey(nameof(CarId))]
     public Car Car { get; set; } = null!;
     public Contract Contract { get; set; } = null!;
-    public ICollection<Compensation> Compensations { get; set; } = [];
     public ICollection<BookingReport> BookingReports { get; set; } = [];
     public ICollection<TripTracking> TripTrackings { get; set; } = [];
     public ICollection<Feedback> Feedbacks { get; set; } = [];

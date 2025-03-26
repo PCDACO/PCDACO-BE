@@ -1,47 +1,51 @@
 using API.Utils;
 using Carter;
-using Domain.Enums;
-using Infrastructure.Idempotency;
 using MediatR;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 using UseCases.UC_Report.Commands;
 
 namespace API.Endpoints.ReportEndpoints;
 
-public class CreateReportEndpoint : ICarterModule
+public class UploadReportImagesEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/reports", Handle)
-            .WithSummary("Create a new report")
+        app.MapPatch("/api/reports/{reportId}/images", Handle)
+            .WithSummary("Upload images for a report")
             .WithTags("Reports")
-            .AddEndpointFilter<IdempotencyFilter>()
             .RequireAuthorization()
+            .DisableAntiforgery()
             .WithOpenApi(operation =>
                 new(operation)
                 {
                     Description = """
-                    Create a new report for a booking.
+                    Upload and update images for a specific report.
 
                     Access Control:
                     - Requires authentication
-                    - Only the driver or car owner involved in the booking can create reports
+                    - Only the report creator, driver, or car owner can upload images
 
-                    Process:
-                    1. Validates user permissions
-                    2. Creates report with basic details
-                    3. Sets initial status to Pending
+                    Upload Process:
+                    - Replaces all existing report images
+                    - Uploads images to Cloudinary
+                    - Stores image metadata in database
 
-                    Note: Images should be uploaded separately using the upload endpoint
+                    Image Requirements:
+                    - Maximum size: 10MB per image
+                    - Allowed formats: jpg, jpeg, png
+                    - Multiple images can be uploaded simultaneously
+                    - Unique naming: Report-{reportId}-Image-{uuid}
+
+                    Note: This is a complete replacement operation.
+                    All existing report images will be replaced with the new ones.
                     """,
 
                     Responses =
                     {
-                        ["201"] = new()
+                        ["200"] = new()
                         {
-                            Description = "Created - Report successfully created",
+                            Description = "Success - Images uploaded",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -50,14 +54,30 @@ public class CreateReportEndpoint : ICarterModule
                                     {
                                         ["value"] = new OpenApiObject
                                         {
-                                            ["id"] = new OpenApiString(
-                                                "123e4567-e89b-12d3-a456-426614174000"
-                                            )
+                                            ["images"] = new OpenApiArray
+                                            {
+                                                new OpenApiObject
+                                                {
+                                                    ["id"] = new OpenApiString(
+                                                        "123e4567-e89b-12d3-a456-426614174000"
+                                                    ),
+                                                    ["url"] = new OpenApiString(
+                                                        "https://cloudinary.com/report-123-image-1.jpg"
+                                                    )
+                                                },
+                                                new OpenApiObject
+                                                {
+                                                    ["id"] = new OpenApiString(
+                                                        "123e4567-e89b-12d3-a456-426614174001"
+                                                    ),
+                                                    ["url"] = new OpenApiString(
+                                                        "https://cloudinary.com/report-123-image-2.jpg"
+                                                    )
+                                                }
+                                            }
                                         },
                                         ["isSuccess"] = new OpenApiBoolean(true),
-                                        ["message"] = new OpenApiString(
-                                            "Báo cáo đã được tạo thành công"
-                                        )
+                                        ["message"] = new OpenApiString("Cập nhật ảnh thành công")
                                     }
                                 }
                             }
@@ -73,9 +93,7 @@ public class CreateReportEndpoint : ICarterModule
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
-                                            "Validation errors:\n"
-                                                + "- Tiêu đề không được để trống\n"
-                                                + "- Mô tả không được quá 1000 ký tự"
+                                            "Ảnh không được vượt quá 10MB và chỉ chấp nhận định dạng: jpg, jpeg, png"
                                         )
                                     }
                                 }
@@ -84,7 +102,8 @@ public class CreateReportEndpoint : ICarterModule
                         ["401"] = new() { Description = "Unauthorized - User not authenticated" },
                         ["403"] = new()
                         {
-                            Description = "Forbidden - User is not involved in the booking",
+                            Description =
+                                "Forbidden - User is not authorized to modify this report",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -93,7 +112,7 @@ public class CreateReportEndpoint : ICarterModule
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
-                                            "Bạn không có quyền tạo báo cáo cho đơn đặt xe này"
+                                            "Bạn không có quyền cập nhật ảnh cho báo cáo này"
                                         )
                                     }
                                 }
@@ -101,7 +120,7 @@ public class CreateReportEndpoint : ICarterModule
                         },
                         ["404"] = new()
                         {
-                            Description = "Not Found - Booking not found",
+                            Description = "Not Found - Report not found",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -109,30 +128,8 @@ public class CreateReportEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString("Không tìm thấy đơn đặt xe")
+                                        ["message"] = new OpenApiString("Không tìm thấy báo cáo")
                                     }
-                                }
-                            }
-                        }
-                    },
-                    RequestBody = new()
-                    {
-                        Description = "Report details",
-                        Required = true,
-                        Content =
-                        {
-                            ["application/json"] = new()
-                            {
-                                Example = new OpenApiObject
-                                {
-                                    ["bookingId"] = new OpenApiString(
-                                        "123e4567-e89b-12d3-a456-426614174000"
-                                    ),
-                                    ["title"] = new OpenApiString("Damage to Front Bumper"),
-                                    ["description"] = new OpenApiString(
-                                        "Found scratches and dents on the front bumper after return"
-                                    ),
-                                    ["reportType"] = new OpenApiString("CarDamage")
                                 }
                             }
                         }
@@ -143,27 +140,25 @@ public class CreateReportEndpoint : ICarterModule
 
     private async Task<IResult> Handle(
         ISender sender,
-        CreateReportRequest request,
+        Guid reportId,
+        IFormFileCollection files,
         CancellationToken cancellationToken
     )
     {
+        UploadReportImages.ImageFile[] images =
+        [
+            .. files.Select(file => new UploadReportImages.ImageFile
+            {
+                Content = file.OpenReadStream(),
+                FileName = file.FileName
+            })
+        ];
+
         var result = await sender.Send(
-            new CreateReport.Command(
-                request.BookingId,
-                request.Title,
-                request.Description,
-                request.ReportType
-            ),
+            new UploadReportImages.Command(reportId, images),
             cancellationToken
         );
 
         return result.MapResult();
     }
-
-    private sealed record CreateReportRequest(
-        Guid BookingId,
-        string Title,
-        string Description,
-        BookingReportType ReportType
-    );
 }

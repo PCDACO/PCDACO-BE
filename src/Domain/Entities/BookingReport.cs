@@ -12,6 +12,12 @@ public class BookingReport : BaseEntity
     public BookingReportType ReportType { get; set; }
     public string Description { get; set; } = string.Empty;
     public BookingReportStatus Status { get; set; } = BookingReportStatus.Pending;
+    public Guid? CompensationPaidUserId { get; set; }
+    public string? CompensationReason { get; set; } = string.Empty;
+    public decimal? CompensationAmount { get; set; }
+    public bool? IsCompensationPaid { get; set; }
+    public string? CompensationPaidImageUrl { get; set; }
+    public DateTimeOffset? CompensationPaidAt { get; set; }
     public DateTimeOffset? ResolvedAt { get; set; }
     public Guid? ResolvedById { get; set; }
     public string? ResolutionComments { get; set; }
@@ -23,8 +29,11 @@ public class BookingReport : BaseEntity
     [ForeignKey(nameof(ReportedById))]
     public User ReportedBy { get; set; } = null!;
 
-    /// <summary>
-    /// Attached images or evidences as part of the report.
-    /// </summary>
+    [ForeignKey(nameof(ResolvedById))]
+    public User ResolvedBy { get; set; } = null!;
+
+    [ForeignKey(nameof(CompensationPaidUserId))]
+    public User CompensationPaidUser { get; set; } = null!;
+
     public ICollection<ImageReport> ImageReports { get; set; } = [];
 }
