@@ -18,10 +18,11 @@ public sealed class GetBankAccountById
         Guid BankInfoId,
         string BankName,
         string BankCode,
+        string BankShortName,
         string AccountNumber,
         string AccountName,
         bool IsPrimary,
-        string BankLogoUrl
+        string BankIconUrl
     )
     {
         public static async Task<Response> FromEntity(
@@ -42,14 +43,15 @@ public sealed class GetBankAccountById
             );
 
             return new(
-                bankAccount.Id,
-                bankAccount.BankInfoId,
-                bankAccount.BankInfo.Name,
-                bankAccount.BankInfo.Code,
-                decryptedAccountNumber,
-                bankAccount.BankAccountName,
-                bankAccount.IsPrimary,
-                bankAccount.BankInfo.LogoUrl
+                Id: bankAccount.Id,
+                BankInfoId: bankAccount.BankInfoId,
+                BankName: bankAccount.BankInfo.Name,
+                BankCode: bankAccount.BankInfo.Code,
+                BankShortName: bankAccount.BankInfo.ShortName,
+                AccountNumber: decryptedAccountNumber,
+                AccountName: bankAccount.BankAccountName,
+                IsPrimary: bankAccount.IsPrimary,
+                BankIconUrl: bankAccount.BankInfo.IconUrl
             );
         }
     }

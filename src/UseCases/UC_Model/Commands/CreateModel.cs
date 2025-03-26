@@ -77,7 +77,7 @@ public sealed class CreateModel
             RuleFor(x => x.ReleaseDate)
                 .NotEmpty()
                 .WithMessage("Ngày phát hành không được để trống")
-                .GreaterThanOrEqualTo(DateTimeOffset.UtcNow)
+                .Must(date => date >= DateTimeOffset.UtcNow)
                 .WithMessage("Thời điểm phát hành phải lớn hơn hoặc bằng thời điểm hiện tại");
 
             RuleFor(x => x.ManufacturerId).NotEmpty().WithMessage("hãng xe không được để trống");
