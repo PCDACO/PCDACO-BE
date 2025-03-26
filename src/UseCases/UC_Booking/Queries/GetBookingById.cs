@@ -218,6 +218,8 @@ public sealed class GetBookingById
         {
             var booking = await context
                 .Bookings.Include(b => b.Car)
+                .ThenInclude(c => c.ImageCars)
+                .Include(b => b.Car)
                 .ThenInclude(c => c.Model)
                 .Include(b => b.Car)
                 .ThenInclude(c => c.TransmissionType)

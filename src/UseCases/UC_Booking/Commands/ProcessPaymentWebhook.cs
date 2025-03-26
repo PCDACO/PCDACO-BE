@@ -7,6 +7,7 @@ using Domain.Shared.EmailTemplates.EmailBookings;
 using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Net.payOS.Types;
 using UseCases.Abstractions;
 using UseCases.Services.EmailService;
@@ -18,7 +19,7 @@ public sealed class ProcessPaymentWebhook
 {
     public sealed record Command(WebhookType WebhookType) : IRequest<Result>;
 
-    public class Handler(IAppDBContext context, IEmailService emailService)
+    public class Handler(IAppDBContext context, IEmailService emailService, ILogger<Handler> logger)
         : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -27,11 +28,20 @@ public sealed class ProcessPaymentWebhook
             WebhookData webhookData = request.WebhookType.data;
 
             if (webhookData == null)
+            {
+                logger.LogWarning("Invalid webhook data received");
                 return Result.Error("Dữ liệu webhook không hợp lệ");
+            }
 
             // Extract bookingId from signature
             if (!Guid.TryParse(request.WebhookType.signature, out Guid bookingId))
+            {
+                logger.LogWarning(
+                    "Invalid BookingId received: {Signature}",
+                    request.WebhookType.signature
+                );
                 return Result.Error("BookingId không hợp lệ");
+            }
 
             // Get booking details with related data
             var booking = await context
@@ -41,7 +51,10 @@ public sealed class ProcessPaymentWebhook
                 .FirstOrDefaultAsync(b => b.Id == bookingId, cancellationToken);
 
             if (booking == null)
+            {
+                logger.LogError("Booking not found: {BookingId}", bookingId);
                 return Result.NotFound("Không tìm thấy booking");
+            }
 
             var paymentExists = await context.Transactions.AnyAsync(
                 t => t.BookingId == bookingId && t.Type.Name == TransactionTypeNames.BookingPayment,
@@ -49,7 +62,13 @@ public sealed class ProcessPaymentWebhook
             );
 
             if (paymentExists)
+            {
+                logger.LogWarning(
+                    "Duplicate payment detected for BookingId: {BookingId}",
+                    bookingId
+                );
                 return Result.Conflict("Giao dịch đã được xử lý trước đó");
+            }
 
             var transactionTypes = await context
                 .TransactionTypes.Where(t =>
@@ -71,7 +90,10 @@ public sealed class ProcessPaymentWebhook
             );
 
             if (admin == null)
-                return Result.Error("Không tìm thấy admin");
+            {
+                logger.LogError("Admin user not found");
+                return Result.Error("Không tìm thấy tài khoản admin");
+            }
 
             GeneratePaymentTransactions(
                 booking,
