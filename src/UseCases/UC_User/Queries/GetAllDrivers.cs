@@ -24,7 +24,8 @@ public class GetAllDrivers
         string Phone,
         string Role,
         DateTimeOffset CreatedAt,
-        bool? IsApprovedLicense
+        bool? IsApprovedLicense,
+        bool IsBanned
     )
     {
         public static async Task<Response> FromEntity(
@@ -54,7 +55,8 @@ public class GetAllDrivers
                 decryptedPhone,
                 user.Role.Name,
                 GetTimestampFromUuid.Execute(user.Id),
-                user.LicenseIsApproved
+                user.LicenseIsApproved,
+                user.IsBanned
             );
         }
     }
