@@ -178,7 +178,8 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
 
         // Mark as expired
         booking.Status = BookingStatusEnum.Expired;
-        booking.Note = "Hết hạn tự động do không thanh toán trong thời hạn";
+        booking.Note =
+            "Hết hạn tự động do không thanh toán trong vòng 12 giờ sau khi được phê duyệt";
         booking.Car.Status = CarStatusEnum.Available;
 
         await context.SaveChangesAsync(CancellationToken.None);
@@ -195,7 +196,7 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
             () =>
                 emailService.SendEmailAsync(
                     booking.User.Email,
-                    "Thông báo: Yêu cầu đặt xe của bạn đã hết hạn do không thanh toán",
+                    "Thông báo: Yêu cầu đặt xe của bạn đã hết hạn do không thanh toán trong vòng 12 giờ",
                     driverEmailTemplate
                 )
         );

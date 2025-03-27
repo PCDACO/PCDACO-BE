@@ -21,6 +21,7 @@ public static class ContractTemplateGenerator
         public required string RentalPrice { get; set; }
         public DateTimeOffset StartDate { get; set; }
         public DateTimeOffset EndDate { get; set; }
+        public required string PickupAddress { get; set; }
         public int RentalPeriod => (EndDate - StartDate).Days;
     }
 
@@ -32,6 +33,8 @@ public static class ContractTemplateGenerator
                     <strong>Điều 1: Đối tượng hợp đồng</strong>
                     <p>
                         Bên A đồng ý cho Bên B thuê xe với các thông tin như đã mô tả ở phần thông tin xe thuê.
+                        Việc giao nhận xe phải được thực hiện tại địa điểm đã thỏa thuận: {contractTemplate.PickupAddress}.
+                        Bên B phải sử dụng tính năng 'Bắt đầu chuyến đi' và 'Kết thúc chuyến đi' trên ứng dụng khi giao nhận xe.
                     </p>
                 </div>
 
@@ -45,8 +48,33 @@ public static class ContractTemplateGenerator
                 <div class='clause'>
                     <strong>Điều 3: Giá thuê và phương thức thanh toán</strong>
                     <p>
-                        Giá thuê xe: {contractTemplate.RentalPrice} VNĐ. Giá trên chưa bao gồm các khoản đền bù, VAT và phụ phí (nếu có).
-                        Phương thức thanh toán được thỏa thuận giữa hai bên.
+                        Giá thuê xe: {contractTemplate.RentalPrice} VNĐ/ngày. Giá trên chưa bao gồm các khoản đền bù, VAT và phụ phí (nếu có).
+                        <br/>
+                        Phí dịch vụ (phí nền tảng): 10% tổng giá trị đơn đặt xe.
+                        <br/>
+                        Tổng tiền thanh toán = (Giá thuê xe × Số ngày thuê) + Phí dịch vụ (10%)
+                        <br/>
+                        <br/>
+                        Phương thức thanh toán: Bắt buộc thanh toán qua hệ thống bằng mã QR hoặc chuyển khoản.
+                        <br/>
+                        Thời hạn thanh toán: Trong vòng 12 giờ kể từ khi được chủ xe phê duyệt.
+                        <br/>
+                        Nếu không thanh toán đúng hạn, đơn đặt xe sẽ tự động hết hạn.
+                        <br/>
+                        Chỉ được phép bắt đầu chuyến đi sau khi đã thanh toán đầy đủ.
+                        <br/>
+                        <br/>
+                        Ví dụ minh họa:
+                        <br/>
+                        - Giá thuê xe: {contractTemplate.RentalPrice} VNĐ/ngày
+                        <br/>
+                        - Số ngày thuê: {contractTemplate.RentalPeriod} ngày
+                        <br/>
+                        - Tổng giá thuê: {contractTemplate.RentalPrice} × {contractTemplate.RentalPeriod} = {decimal.Parse(contractTemplate.RentalPrice) * contractTemplate.RentalPeriod:N0} VNĐ
+                        <br/>
+                        - Phí dịch vụ (10%): {decimal.Parse(contractTemplate.RentalPrice) * contractTemplate.RentalPeriod * 0.1m:N0} VNĐ
+                        <br/>
+                        - Tổng tiền thanh toán: {decimal.Parse(contractTemplate.RentalPrice) * contractTemplate.RentalPeriod * 1.1m:N0} VNĐ
                     </p>
                 </div>
 
