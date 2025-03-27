@@ -24,7 +24,7 @@ public class UnBanUser
             CancellationToken cancellationToken
         )
         {
-            if (!currentUser.User!.IsConsultant())
+            if (!currentUser.User!.IsConsultant() && !currentUser.User!.IsAdmin())
                 return Result.Forbidden("Bạn không có quyền thực hiện hành động này");
 
             var user = await context.Users.FirstOrDefaultAsync(
