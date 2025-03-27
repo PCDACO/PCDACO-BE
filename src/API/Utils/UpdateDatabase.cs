@@ -9,6 +9,7 @@ using UseCases.Abstractions;
 using UseCases.Utils;
 
 namespace API.Utils;
+
 public class UpdateDatabase
 {
     public static async Task Execute(IApplicationBuilder app)
@@ -32,7 +33,8 @@ public class UpdateDatabase
             var tokenService = scope.ServiceProvider.GetRequiredService<TokenService>();
             var aesEncryptionService =
                 scope.ServiceProvider.GetRequiredService<IAesEncryptionService>();
-            var keyManageService = scope.ServiceProvider.GetRequiredService<IKeyManagementService>();
+            var keyManageService =
+                scope.ServiceProvider.GetRequiredService<IKeyManagementService>();
             // Create geometry factory for spatial data
             var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
             // Seed data
@@ -68,6 +70,22 @@ public class UpdateDatabase
                 users,
                 userRoles
             );
+            BankAccount[] bankAccounts = await BankAccountGenerator.Execute(
+                users,
+                bankInfos,
+                encryptionSettings,
+                aesEncryptionService,
+                keyManageService
+            );
+            WithdrawalRequest[] withdrawalRequests = WithdrawalRequestGenerator.Execute(
+                users,
+                bankAccounts
+            );
+            Transaction[] transactions = TransactionGenerator.Execute(
+                users,
+                transactionTypes,
+                bankAccounts
+            );
             tasks.Add(context.AddRangeAsync(userRoles));
             tasks.Add(context.AddRangeAsync(amenities));
             tasks.Add(context.AddRangeAsync(bankInfos));
@@ -81,6 +99,9 @@ public class UpdateDatabase
             tasks.Add(context.AddRangeAsync(cars));
             tasks.Add(context.AddRangeAsync(inspectionSchedules));
             tasks.Add(context.AddRangeAsync(gpsDevices));
+            tasks.Add(context.AddRangeAsync(bankAccounts));
+            tasks.Add(context.AddRangeAsync(withdrawalRequests));
+            tasks.Add(context.AddRangeAsync(transactions));
             await Task.WhenAll(tasks);
             await context.SaveChangesAsync();
         }

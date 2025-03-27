@@ -153,25 +153,30 @@ public static class CarContractTemplateGenerator
             <html lang='vi'>
                 <head>
                     <meta charset='UTF-8'>
+                    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
                     <title>Hợp Đồng Đăng Ký Xe – {contractTemplate.ContractNumber}</title>
                     <style>
+                        /* Use Roboto font from Google Fonts */
+                        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
                         @page {{
                             size: A4;
                             margin: 2cm;
                         }}
                         body {{
                             font-family: 'Roboto', sans-serif;
-                            width: 210mm;
-                            height: 297mm;
+                            background-color: #f4f4f4;
                             margin: 0;
-                            padding: 0;
-                            background-color: white;
+                            padding: 20px;
                             color: #333;
                             line-height: 1.6;
                         }}
                         .container {{
-                            padding: 20mm;
-                            box-sizing: border-box;
+                            max-width: 900px;
+                            background: #fff;
+                            margin: auto;
+                            padding: 40px;
+                            border-radius: 8px;
+                            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
                         }}
                         .header {{
                             text-align: center;
@@ -179,25 +184,71 @@ public static class CarContractTemplateGenerator
                         }}
                         .header h1 {{
                             margin: 0;
-                            font-size: 24px;
+                            font-size: 28px;
                             color: #000;
+                        }}
+                        .header p {{
+                            margin: 5px 0;
+                            font-size: 14px;
+                            color: #555;
                         }}
                         .divider {{
                             border: none;
-                            border-top: 2px solid #000;
+                            border-top: 3px solid #000;
                             margin: 20px auto;
                             width: 50%;
                         }}
                         .section {{
-                            margin-bottom: 20px;
+                            margin-bottom: 25px;
                         }}
                         .section-title {{
-                            font-size: 16px;
-                            font-weight: bold;
-                            margin-bottom: 10px;
+                            font-size: 18px;
+                            font-weight: 500;
+                            color: #000;
+                            border-bottom: 1px solid #ddd;
+                            padding-bottom: 5px;
+                            text-transform: uppercase;
+                            margin-bottom: 15px;
+                        }}
+                        .content p {{
+                            margin: 8px 0;
+                            text-align: justify;
                         }}
                         .clause {{
                             margin-bottom: 15px;
+                        }}
+                        .clause strong {{
+                            display: block;
+                            margin-bottom: 5px;
+                            color: #000;
+                        }}
+                        .inspection-details {{
+                            margin: 15px 0;
+                            padding: 15px;
+                            background-color: #f9f9f9;
+                            border-radius: 4px;
+                        }}
+                        .inspection-details ul {{
+                            margin: 10px 0;
+                            padding-left: 20px;
+                        }}
+                        .inspection-details li {{
+                            margin: 5px 0;
+                        }}
+                        .inspection-photos {{
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                            gap: 15px;
+                            margin: 15px 0;
+                        }}
+                        .photo-item {{
+                            text-align: center;
+                        }}
+                        .photo-item img {{
+                            max-width: 100%;
+                            height: auto;
+                            border-radius: 4px;
+                            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
                         }}
                         .signature-block {{
                             margin-top: 40px;
@@ -205,18 +256,26 @@ public static class CarContractTemplateGenerator
                             justify-content: space-between;
                         }}
                         .signature {{
-                            width: 45%;
+                            width: 40%;
                             text-align: center;
+                        }}
+                        .signature p {{
+                            border-top: 1px solid #333;
+                            padding-top: 10px;
+                            margin-top: 60px;
+                            font-weight: 500;
                         }}
                         .footer {{
                             text-align: center;
+                            font-size: 13px;
+                            color: #777;
                             margin-top: 30px;
-                            font-size: 12px;
                         }}
                     </style>
                 </head>
                 <body>
                     <div class='container'>
+                        <!-- Header Section -->
                         <div class='header'>
                             <h1>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h1>
                             <p>Độc lập – Tự do – Hạnh phúc</p>
@@ -224,47 +283,59 @@ public static class CarContractTemplateGenerator
                             <h2>HỢP ĐỒNG ĐĂNG KÝ XE</h2>
                         </div>
 
+                        <!-- Contract Information Section -->
                         <div class='section'>
                             <div class='section-title'>Thông tin hợp đồng</div>
-                            <p><strong>Số hợp đồng:</strong> {contractTemplate.ContractNumber}</p>
-                            <p><strong>Ngày ký:</strong> {contractTemplate.ContractDate:dd/MM/yyyy}</p>
+                            <div class='content'>
+                                <p><strong>Số hợp đồng:</strong> {contractTemplate.ContractNumber}</p>
+                                <p><strong>Ngày ký:</strong> {contractTemplate.ContractDate:dd/MM/yyyy}</p>
+                            </div>
                         </div>
 
+                        <!-- Party Information Section -->
                         <div class='section'>
                             <div class='section-title'>Thông tin các bên</div>
-                            <p><strong>BÊN A (CHỦ XE):</strong> {contractTemplate.OwnerName}</p>
-                            <p>GPLX: {contractTemplate.OwnerLicenseNumber}</p>
-                            <p>Địa chỉ: {contractTemplate.OwnerAddress}</p>
-                            <br/>
-                            <p><strong>ĐẠI DIỆN KIỂM ĐỊNH:</strong> {contractTemplate.TechnicianName}</p>
-                            <p>Số giấy phép: {contractTemplate.TechnicianLicenseNumber}</p>
+                            <div class='content'>
+                                <p><strong>BÊN A (CHỦ XE):</strong> {contractTemplate.OwnerName}</p>
+                                <p>Số giấy phép lái xe: {contractTemplate.OwnerLicenseNumber}</p>
+                                <p>Địa chỉ: {contractTemplate.OwnerAddress}</p>
+                                <br/>
+                                <p><strong>ĐẠI DIỆN KIỂM ĐỊNH:</strong> {contractTemplate.TechnicianName}</p>
+                                <p>Số giấy phép: {contractTemplate.TechnicianLicenseNumber}</p>
+                            </div>
                         </div>
 
+                        <!-- Car Information Section -->
                         <div class='section'>
                             <div class='section-title'>Thông tin xe</div>
-                            <p>Hãng xe: {contractTemplate.CarManufacturer}</p>
-                            <p>Biển số: {contractTemplate.CarLicensePlate}</p>
-                            <p>Loại xe: {contractTemplate.CarSeat} chỗ</p>
-                            <p>Màu sắc: {contractTemplate.CarColor}</p>
-                            <p>Mô tả: {contractTemplate.CarDescription}</p>
+                            <div class='content'>
+                                <p>Nhãn hiệu xe: {contractTemplate.CarManufacturer}</p>
+                                <p>Biển số: {contractTemplate.CarLicensePlate}</p>
+                                <p>Loại xe: {contractTemplate.CarSeat} chỗ</p>
+                                <p>Màu sắc: {contractTemplate.CarColor}</p>
+                                <p>Mô tả: {contractTemplate.CarDescription}</p>
+                            </div>
                         </div>
 
+                        <!-- Contract Terms Section -->
                         <div class='section'>
                             <div class='section-title'>Điều khoản hợp đồng</div>
-                            {fullContractTerms}
-                        </div>
-
-                        <div class='signature-block'>
-                            <div class='signature'>
-                                <p>CHỦ XE</p>
-                                <p>{contractTemplate.OwnerName}</p>
-                            </div>
-                            <div class='signature'>
-                                <p>ĐẠI DIỆN KIỂM ĐỊNH</p>
-                                <p>{contractTemplate.TechnicianName}</p>
+                            <div class='content'>
+                                {fullContractTerms}
                             </div>
                         </div>
 
+                        <!-- Signature Section -->
+                        <div class='section signature-block'>
+                            <div class='signature'>
+                                <p>CHỦ XE<br/>{contractTemplate.OwnerName}</p>
+                            </div>
+                            <div class='signature'>
+                                <p>ĐẠI DIỆN KIỂM ĐỊNH<br/>{contractTemplate.TechnicianName}</p>
+                            </div>
+                        </div>
+
+                        <!-- Footer Section -->
                         <div class='footer'>
                             <p>Hợp đồng được lập thành 02 bản có giá trị pháp lý như nhau, mỗi bên giữ 01 bản.</p>
                         </div>
