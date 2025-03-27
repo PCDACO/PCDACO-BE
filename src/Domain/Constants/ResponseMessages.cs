@@ -52,6 +52,11 @@ public class ResponseMessages
     public const string CarNotFound = "Không tìm thấy xe";
     public const string CarIsNotInPending = "Xe không ở trạng thái chờ duyệt";
     public const string CarHadInspectionSchedule = "Xe đã có lịch kiểm định";
+    public const string CarMustBeAvailableToBeDisabled =
+        "Xe phải đang ở trạng thái có sẵn mới có thể tạm dừng hoạt động";
+    public const string CarHasActiveBookings = "Xe đang có lịch đặt, không thể tạm dừng hoạt động";
+
+    public const string CarDisabledSuccessfully = "Xe đã được tạm dừng hoạt động thành công";
 
     // MODEL
     public const string ModelNotFound = "Không tìm thấy dòng xe";
