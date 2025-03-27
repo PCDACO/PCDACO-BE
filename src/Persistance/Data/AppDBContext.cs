@@ -41,6 +41,7 @@ public class AppDBContext(DbContextOptions context) : DbContext(context), IAppDB
     public DbSet<GPSDevice> GPSDevices => Set<GPSDevice>();
     public DbSet<CarInspection> CarInspections => Set<CarInspection>();
     public DbSet<InspectionPhoto> InspectionPhotos => Set<InspectionPhoto>();
+    public DbSet<CarAvailability> CarAvailabilities => Set<CarAvailability>();
 
     async Task IAppDBContext.SaveChangesAsync(CancellationToken cancellationToken) =>
         await SaveChangesAsync(cancellationToken);
