@@ -33,31 +33,24 @@ public sealed class ProcessPaymentWebhook
                 return Result.Error("Dữ liệu webhook không hợp lệ");
             }
 
-            // Extract bookingId from signature
-            if (!Guid.TryParse(request.WebhookType.signature, out Guid bookingId))
-            {
-                logger.LogWarning(
-                    "Invalid BookingId received: {Signature}",
-                    request.WebhookType.signature
-                );
-                return Result.Error("BookingId không hợp lệ");
-            }
+            long orderCode = webhookData.orderCode;
 
             // Get booking details with related data
             var booking = await context
                 .Bookings.Include(b => b.Car)
                 .ThenInclude(c => c.Owner)
                 .Include(b => b.User)
-                .FirstOrDefaultAsync(b => b.Id == bookingId, cancellationToken);
+                .FirstOrDefaultAsync(b => b.PayOSOrderCode == orderCode, cancellationToken);
 
             if (booking == null)
             {
-                logger.LogError("Booking not found: {BookingId}", bookingId);
+                logger.LogError("Booking not found: {orderCode}", orderCode);
                 return Result.NotFound("Không tìm thấy booking");
             }
 
             var paymentExists = await context.Transactions.AnyAsync(
-                t => t.BookingId == bookingId && t.Type.Name == TransactionTypeNames.BookingPayment,
+                t =>
+                    t.BookingId == booking.Id && t.Type.Name == TransactionTypeNames.BookingPayment,
                 cancellationToken
             );
 
@@ -65,7 +58,7 @@ public sealed class ProcessPaymentWebhook
             {
                 logger.LogWarning(
                     "Duplicate payment detected for BookingId: {BookingId}",
-                    bookingId
+                    booking.Id
                 );
                 return Result.Conflict("Giao dịch đã được xử lý trước đó");
             }
