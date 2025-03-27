@@ -82,7 +82,8 @@ public sealed class GetBookingContract
                 CarTerms = contract.Booking.Car.Terms,
                 RentalPrice = contract.Booking.BasePrice.ToString("N0"),
                 StartDate = contract.StartDate,
-                EndDate = contract.EndDate
+                EndDate = contract.EndDate,
+                PickupAddress = contract.Booking.Car.PickupAddress,
             };
 
             string html = ContractTemplateGenerator.GenerateFullContractHtml(contractTemplate);
