@@ -38,6 +38,8 @@ public sealed class ProcessPaymentWebhook
             // Get booking details with related data
             var booking = await context
                 .Bookings.Include(b => b.Car)
+                .ThenInclude(c => c.Model)
+                .Include(b => b.Car)
                 .ThenInclude(c => c.Owner)
                 .Include(b => b.User)
                 .FirstOrDefaultAsync(b => b.PayOSOrderCode == orderCode, cancellationToken);
