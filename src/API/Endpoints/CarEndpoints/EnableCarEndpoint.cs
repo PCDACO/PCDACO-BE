@@ -8,39 +8,38 @@ using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.CarEndpoints;
 
-public class DisableCarEndpoint : ICarterModule
+public class EnableCarEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/cars/{id:guid}/disable", Handle)
-            .WithSummary("Disable a car")
+        app.MapPost("/api/cars/{id:guid}/enable", Handle)
+            .WithSummary("Enable a car")
             .WithTags("Cars")
             .RequireAuthorization()
             .WithOpenApi(operation =>
                 new(operation)
                 {
                     Description = """
-                    Disable a car listing temporarily.
+                    Re-enable a previously disabled car listing.
 
                     Access Control:
                     - Requires authentication
-                    - Only the car owner can disable their own car
+                    - Only the car owner can enable their own car
 
                     Process:
-                    - Changes car status from Available to Inactive
-                    - Prevents the car from appearing in search results
-                    - Can be re-enabled later by the owner
+                    - Changes car status from Inactive to Available
+                    - Makes the car visible in search results again
+                    - Allows the car to be booked by renters
 
                     Requirements:
-                    - Car must be in Available status
-                    - Car must not have any ongoing bookings
+                    - Car must be in Inactive status
                     """,
 
                     Responses =
                     {
                         ["200"] = new()
                         {
-                            Description = "Success - Car has been disabled",
+                            Description = "Success - Car has been enabled",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -52,11 +51,11 @@ public class DisableCarEndpoint : ICarterModule
                                             ["id"] = new OpenApiString(
                                                 "123e4567-e89b-12d3-a456-426614174000"
                                             ),
-                                            ["status"] = new OpenApiString("Inactive"),
+                                            ["status"] = new OpenApiString("Available"),
                                         },
                                         ["isSuccess"] = new OpenApiBoolean(true),
                                         ["message"] = new OpenApiString(
-                                            "Xe đã được tạm dừng hoạt động thành công"
+                                            "Xe đã được kích hoạt lại thành công"
                                         ),
                                     },
                                 },
@@ -64,7 +63,7 @@ public class DisableCarEndpoint : ICarterModule
                         },
                         ["400"] = new()
                         {
-                            Description = "Bad Request - Car cannot be disabled",
+                            Description = "Bad Request - Car cannot be enabled",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -73,7 +72,7 @@ public class DisableCarEndpoint : ICarterModule
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
-                                            "Xe phải đang ở trạng thái có sẵn mới có thể tạm dừng hoạt động"
+                                            "Xe phải đang ở trạng thái tạm dừng hoạt động mới có thể kích hoạt lại"
                                         ),
                                     },
                                 },
@@ -112,23 +111,6 @@ public class DisableCarEndpoint : ICarterModule
                                 },
                             },
                         },
-                        ["409"] = new()
-                        {
-                            Description = "Conflict - Car has active bookings",
-                            Content =
-                            {
-                                ["application/json"] = new()
-                                {
-                                    Example = new OpenApiObject
-                                    {
-                                        ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString(
-                                            "Xe đang có lịch đặt, không thể tạm dừng hoạt động"
-                                        ),
-                                    },
-                                },
-                            },
-                        },
                     },
                 }
             );
@@ -136,7 +118,7 @@ public class DisableCarEndpoint : ICarterModule
 
     private static async Task<IResult> Handle(ISender sender, Guid id)
     {
-        Result<DisableCar.Response> result = await sender.Send(new DisableCar.Command(id));
+        Result<EnableCar.Response> result = await sender.Send(new EnableCar.Command(id));
         return result.MapResult();
     }
 }

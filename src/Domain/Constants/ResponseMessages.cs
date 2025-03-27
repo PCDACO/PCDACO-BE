@@ -57,6 +57,10 @@ public class ResponseMessages
     public const string CarHasActiveBookings = "Xe đang có lịch đặt, không thể tạm dừng hoạt động";
 
     public const string CarDisabledSuccessfully = "Xe đã được tạm dừng hoạt động thành công";
+    public const string CarEnabledSuccessfully = "Xe đã được kích hoạt lại thành công";
+
+    public const string CarMustBeInactiveToBeEnabled =
+        "Xe phải đang ở trạng thái tạm dừng hoạt động mới có thể kích hoạt lại";
 
     // MODEL
     public const string ModelNotFound = "Không tìm thấy dòng xe";
