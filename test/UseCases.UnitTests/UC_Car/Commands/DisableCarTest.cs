@@ -12,7 +12,7 @@ using UseCases.UnitTests.TestBases.TestData;
 namespace UseCases.UnitTests.UC_Car.Commands;
 
 [Collection("Test Collection")]
-public class EnableCarTest(DatabaseTestBase fixture) : IAsyncLifetime
+public class DisableCarTest(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
@@ -23,7 +23,7 @@ public class EnableCarTest(DatabaseTestBase fixture) : IAsyncLifetime
     public async Task DisposeAsync() => await _resetDatabase();
 
     [Fact]
-    public async Task Handle_ValidRequest_EnablesCarSuccessfully()
+    public async Task Handle_ValidRequest_DisablesCarSuccessfully()
     {
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
@@ -37,18 +37,18 @@ public class EnableCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
 
-        // Create an inactive car
-        var inactiveCar = await TestDataCreateCar.CreateTestCar(
+        // Create an available car
+        var availableCar = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
             ownerId: user.Id,
             modelId: model.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: CarStatusEnum.Inactive
+            carStatus: CarStatusEnum.Available
         );
 
-        var handler = new EnableCar.Handler(_dbContext, _currentUser);
-        var command = new EnableCar.Command(inactiveCar.Id);
+        var handler = new DisableCar.Handler(_dbContext, _currentUser);
+        var command = new DisableCar.Command(availableCar.Id);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -56,15 +56,15 @@ public class EnableCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
 
-        // Verify car status changed to Available
+        // Verify car status changed to Inactive
         var updatedCar = await _dbContext
-            .Cars.Where(c => c.Id == inactiveCar.Id)
+            .Cars.Where(c => c.Id == availableCar.Id)
             .SingleOrDefaultAsync();
 
         Assert.NotNull(updatedCar);
-        Assert.Equal(CarStatusEnum.Available, updatedCar.Status);
-        Assert.Equal(inactiveCar.Id, result.Value.Id);
-        Assert.Equal("Available", result.Value.Status);
+        Assert.Equal(CarStatusEnum.Inactive, updatedCar.Status);
+        Assert.Equal(availableCar.Id, result.Value.Id);
+        Assert.Equal("Inactive", result.Value.Status);
     }
 
     [Fact]
@@ -90,17 +90,17 @@ public class EnableCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
 
-        var inactiveCar = await TestDataCreateCar.CreateTestCar(
+        var availableCar = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
             ownerId: carOwner.Id,
             modelId: model.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: CarStatusEnum.Inactive
+            carStatus: CarStatusEnum.Available
         );
 
-        var handler = new EnableCar.Handler(_dbContext, _currentUser);
-        var command = new EnableCar.Command(inactiveCar.Id);
+        var handler = new DisableCar.Handler(_dbContext, _currentUser);
+        var command = new DisableCar.Command(availableCar.Id);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -120,8 +120,8 @@ public class EnableCarTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         var nonExistentCarId = Guid.NewGuid();
 
-        var handler = new EnableCar.Handler(_dbContext, _currentUser);
-        var command = new EnableCar.Command(nonExistentCarId);
+        var handler = new DisableCar.Handler(_dbContext, _currentUser);
+        var command = new DisableCar.Command(nonExistentCarId);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -154,17 +154,17 @@ public class EnableCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
 
-        var inactiveCar = await TestDataCreateCar.CreateTestCar(
+        var availableCar = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
             ownerId: realOwner.Id, // Car belongs to realOwner, not differentOwner
             modelId: model.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: CarStatusEnum.Inactive
+            carStatus: CarStatusEnum.Available
         );
 
-        var handler = new EnableCar.Handler(_dbContext, _currentUser);
-        var command = new EnableCar.Command(inactiveCar.Id);
+        var handler = new DisableCar.Handler(_dbContext, _currentUser);
+        var command = new DisableCar.Command(availableCar.Id);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -175,7 +175,7 @@ public class EnableCarTest(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Handle_CarNotInInactiveStatus_ReturnsError()
+    public async Task Handle_CarNotInAvailableStatus_ReturnsError()
     {
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
@@ -189,25 +189,95 @@ public class EnableCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
 
-        // Create car with Available status (not Inactive)
-        var availableCar = await TestDataCreateCar.CreateTestCar(
+        // Create car with Pending status (not Available)
+        var pendingCar = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
             ownerId: owner.Id,
             modelId: model.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: CarStatusEnum.Available // Car is already available
+            carStatus: CarStatusEnum.Pending // Car is not in Available status
         );
 
-        var handler = new EnableCar.Handler(_dbContext, _currentUser);
-        var command = new EnableCar.Command(availableCar.Id);
+        var handler = new DisableCar.Handler(_dbContext, _currentUser);
+        var command = new DisableCar.Command(pendingCar.Id);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains(ResponseMessages.CarMustBeInactiveToBeEnabled, result.Errors);
+        Assert.Contains(ResponseMessages.CarMustBeAvailableToBeDisabled, result.Errors);
+
+        // Verify car status remains Pending
+        var unchangedCar = await _dbContext
+            .Cars.Where(c => c.Id == pendingCar.Id)
+            .SingleOrDefaultAsync();
+
+        Assert.NotNull(unchangedCar);
+        Assert.Equal(CarStatusEnum.Pending, unchangedCar.Status);
+    }
+
+    [Fact]
+    public async Task Handle_CarHasActiveBookings_ReturnsConflict()
+    {
+        // Arrange
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var driver = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            driverRole,
+            "driver@example.com"
+        );
+        _currentUser.SetUser(owner);
+
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+
+        var availableCar = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: owner.Id,
+            modelId: model.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: CarStatusEnum.Available
+        );
+
+        // Create an active booking for the car
+        var booking = new Booking
+        {
+            Id = Guid.NewGuid(),
+            CarId = availableCar.Id,
+            UserId = driver.Id,
+            Status = BookingStatusEnum.Pending,
+            StartTime = DateTimeOffset.UtcNow.AddDays(1),
+            EndTime = DateTimeOffset.UtcNow.AddDays(2),
+            ActualReturnTime = DateTimeOffset.UtcNow.AddDays(2),
+            BasePrice = 100m,
+            PlatformFee = 10m,
+            ExcessDay = 0,
+            ExcessDayFee = 0m,
+            TotalAmount = 110m,
+            Note = "Test booking",
+        };
+
+        await _dbContext.Bookings.AddAsync(booking);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new DisableCar.Handler(_dbContext, _currentUser);
+        var command = new DisableCar.Command(availableCar.Id);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Conflict, result.Status);
+        Assert.Contains(ResponseMessages.CarHasActiveBookings, result.Errors);
 
         // Verify car status remains Available
         var unchangedCar = await _dbContext
@@ -219,7 +289,7 @@ public class EnableCarTest(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Handle_UpdatesTimestamp_WhenCarEnabled()
+    public async Task Handle_UpdatesTimestamp_WhenCarDisabled()
     {
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
@@ -233,30 +303,30 @@ public class EnableCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
 
-        var inactiveCar = await TestDataCreateCar.CreateTestCar(
+        var availableCar = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
             ownerId: owner.Id,
             modelId: model.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
-            carStatus: CarStatusEnum.Inactive
+            carStatus: CarStatusEnum.Available
         );
 
         // Record original timestamp
-        var originalTimestamp = inactiveCar.UpdatedAt;
+        var originalTimestamp = availableCar.UpdatedAt;
 
         // Wait a moment to ensure timestamps are different
         await Task.Delay(10);
 
-        var handler = new EnableCar.Handler(_dbContext, _currentUser);
-        var command = new EnableCar.Command(inactiveCar.Id);
+        var handler = new DisableCar.Handler(_dbContext, _currentUser);
+        var command = new DisableCar.Command(availableCar.Id);
 
         // Act
         await handler.Handle(command, CancellationToken.None);
 
         // Assert
         var updatedCar = await _dbContext
-            .Cars.Where(c => c.Id == inactiveCar.Id)
+            .Cars.Where(c => c.Id == availableCar.Id)
             .SingleOrDefaultAsync();
 
         Assert.NotNull(updatedCar);
