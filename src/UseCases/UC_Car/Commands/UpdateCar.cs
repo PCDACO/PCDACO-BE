@@ -39,7 +39,7 @@ public sealed class UpdateCar
 
     public record Response(Guid Id);
 
-    private class Handler(
+    internal sealed class Handler(
         IAppDBContext context,
         CurrentUser currentUser,
         IAesEncryptionService aesEncryptionService,
