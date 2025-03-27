@@ -20,6 +20,7 @@ public class Booking : BaseEntity
     public decimal TotalDistance { get; set; } = 0;
     public required string Note { get; set; }
     public bool IsCarReturned { get; set; } = true;
+    public long? PayOSOrderCode { get; set; }
     public bool IsPaid { get; set; } = false;
     public bool IsRefund { get; set; } = false;
     public decimal? RefundAmount { get; set; } = null;

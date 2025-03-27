@@ -14,6 +14,7 @@ public class TestDataPaymentService : IPaymentService
         return Task.FromResult(
             new PaymentLinkResult(
                 PaymentLinkId: "mock-payment-id",
+                OrderCode: 123456789,
                 CheckoutUrl: "http://mock-checkout-url",
                 QrCode: "mock-qr-code",
                 Status: "pending"

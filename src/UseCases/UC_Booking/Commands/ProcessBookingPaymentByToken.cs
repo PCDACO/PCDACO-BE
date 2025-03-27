@@ -53,6 +53,10 @@ public sealed class ProcessBookingPaymentByToken
                 booking.User.Name
             );
 
+            booking.PayOSOrderCode = paymentResult.OrderCode;
+
+            await context.SaveChangesAsync(cancellationToken);
+
             return Result.Success(
                 new ProcessBookingPayment.Response(
                     TotalDistance: booking.TotalDistance / 1000,

@@ -70,6 +70,10 @@ public sealed class ProcessBookingPayment
                 currentUser.User.Name
             );
 
+            booking.PayOSOrderCode = paymentResult.OrderCode;
+
+            await context.SaveChangesAsync(cancellationToken);
+
             return Result.Success(
                 new Response(
                     TotalDistance: booking.TotalDistance / 1000, // Convert to kilometers

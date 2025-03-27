@@ -36,6 +36,7 @@ public class PayOSService(PayOS payOS, UrlSettings urlSettings) : IPaymentServic
 
         return new PaymentLinkResult(
             result.paymentLinkId,
+            orderCode,
             result.checkoutUrl,
             result.qrCode,
             result.status
