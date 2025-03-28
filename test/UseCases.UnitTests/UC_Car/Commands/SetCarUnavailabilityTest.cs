@@ -24,7 +24,7 @@ public class SetCarUnavailabilityTest(DatabaseTestBase fixture) : IAsyncLifetime
     public async Task DisposeAsync() => await _resetDatabase();
 
     [Fact]
-    public async Task Handle_ValidRequest_CreatesAvailabilityRecord()
+    public async Task Handle_EmptyDatesList_ReturnsError()
     {
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
@@ -48,80 +48,14 @@ public class SetCarUnavailabilityTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
 
         var handler = new SetCarUnavailability.Handler(_dbContext, _currentUser);
-        var date = DateTimeOffset.UtcNow;
-        var command = new SetCarUnavailability.Command(car.Id, date, false);
+        var command = new SetCarUnavailability.Command(car.Id, new List<DateTimeOffset>());
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Ok, result.Status);
-        Assert.Contains(ResponseMessages.Updated, result.SuccessMessage);
-
-        // Verify record was created
-        var availability = await _dbContext
-            .CarAvailabilities.Where(c => c.CarId == car.Id && c.Date.Date == date.Date)
-            .SingleOrDefaultAsync();
-
-        Assert.NotNull(availability);
-        Assert.False(availability.IsAvailable);
-    }
-
-    [Fact]
-    public async Task Handle_ValidRequest_UpdatesExistingAvailabilityRecord()
-    {
-        // Arrange
-        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        TransmissionType transmissionType =
-            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
-        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-
-        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-        _currentUser.SetUser(owner);
-
-        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
-        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
-
-        var car = await TestDataCreateCar.CreateTestCar(
-            dBContext: _dbContext,
-            ownerId: owner.Id,
-            modelId: model.Id,
-            transmissionType: transmissionType,
-            fuelType: fuelType,
-            carStatus: CarStatusEnum.Available
-        );
-
-        // Create initial availability record (unavailable)
-        var date = DateTimeOffset.UtcNow;
-        var existingAvailability = new CarAvailability
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            CarId = car.Id,
-            Date = date,
-            IsAvailable = false,
-        };
-        await _dbContext.CarAvailabilities.AddAsync(existingAvailability);
-        await _dbContext.SaveChangesAsync();
-
-        // Create handler and command to set to available
-        var handler = new SetCarUnavailability.Handler(_dbContext, _currentUser);
-        var command = new SetCarUnavailability.Command(car.Id, date, true);
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Ok, result.Status);
-        Assert.Contains(ResponseMessages.Updated, result.SuccessMessage);
-
-        // Verify record was updated
-        var updatedAvailability = await _dbContext
-            .CarAvailabilities.Where(c => c.CarId == car.Id && c.Date.Date == date.Date)
-            .SingleOrDefaultAsync();
-
-        Assert.NotNull(updatedAvailability);
-        Assert.True(updatedAvailability.IsAvailable); // Should now be available
-        Assert.Equal(existingAvailability.Id, updatedAvailability.Id); // Should be the same record
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains("Ngày không hợp lệ", result.Errors);
     }
 
     [Fact]
@@ -133,10 +67,11 @@ public class SetCarUnavailabilityTest(DatabaseTestBase fixture) : IAsyncLifetime
         _currentUser.SetUser(owner);
 
         var nonExistentCarId = Guid.NewGuid();
-        var date = DateTimeOffset.UtcNow.UtcDateTime;
-
         var handler = new SetCarUnavailability.Handler(_dbContext, _currentUser);
-        var command = new SetCarUnavailability.Command(nonExistentCarId, date, false);
+        var command = new SetCarUnavailability.Command(
+            nonExistentCarId,
+            new List<DateTimeOffset> { DateTimeOffset.UtcNow }
+        );
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -155,33 +90,31 @@ public class SetCarUnavailabilityTest(DatabaseTestBase fixture) : IAsyncLifetime
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
 
-        // Create two different owners
-        var realOwner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-        var differentOwner = await TestDataCreateUser.CreateTestUser(
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var otherUser = await TestDataCreateUser.CreateTestUser(
             _dbContext,
             ownerRole,
-            "different@test.com"
+            "other@example.com"
         );
-
-        // Set current user to differentOwner (not the car owner)
-        _currentUser.SetUser(differentOwner);
+        _currentUser.SetUser(otherUser); // Set current user to someone else
 
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
 
-        // Create car owned by realOwner
         var car = await TestDataCreateCar.CreateTestCar(
             dBContext: _dbContext,
-            ownerId: realOwner.Id, // Car belongs to realOwner, not differentOwner
+            ownerId: owner.Id, // Real owner
             modelId: model.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
             carStatus: CarStatusEnum.Available
         );
 
-        var date = DateTimeOffset.UtcNow.UtcDateTime;
         var handler = new SetCarUnavailability.Handler(_dbContext, _currentUser);
-        var command = new SetCarUnavailability.Command(car.Id, date, false);
+        var command = new SetCarUnavailability.Command(
+            car.Id,
+            new List<DateTimeOffset> { DateTimeOffset.UtcNow }
+        );
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -192,7 +125,7 @@ public class SetCarUnavailabilityTest(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Handle_ExistingBookings_ReturnsConflict()
+    public async Task Handle_DatesWithExistingBookings_ReturnsConflict()
     {
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
@@ -221,21 +154,22 @@ public class SetCarUnavailabilityTest(DatabaseTestBase fixture) : IAsyncLifetime
             carStatus: CarStatusEnum.Available
         );
 
-        // Create a booking that spans the target date
-        var targetDate = DateTimeOffset.UtcNow.UtcDateTime;
+        // Create a booking for tomorrow
+        var bookingStartTime = DateTimeOffset.UtcNow.AddDays(1);
+        var bookingEndTime = bookingStartTime.AddDays(2);
         var booking = new Booking
         {
-            Id = Guid.NewGuid(),
-            CarId = car.Id,
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             UserId = driver.Id,
+            CarId = car.Id,
             Status = BookingStatusEnum.Approved,
-            StartTime = targetDate.AddDays(-1), // Starts before target date
-            EndTime = targetDate.AddDays(1), // Ends after target date
-            ActualReturnTime = targetDate.AddDays(1),
+            StartTime = bookingStartTime,
+            EndTime = bookingEndTime,
+            ActualReturnTime = bookingEndTime,
             BasePrice = 100m,
             PlatformFee = 10m,
             ExcessDay = 0,
-            ExcessDayFee = 0m,
+            ExcessDayFee = 0,
             TotalAmount = 110m,
             Note = "Test booking",
         };
@@ -244,18 +178,22 @@ public class SetCarUnavailabilityTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.SaveChangesAsync();
 
         var handler = new SetCarUnavailability.Handler(_dbContext, _currentUser);
-        var command = new SetCarUnavailability.Command(car.Id, targetDate, false);
+        var command = new SetCarUnavailability.Command(
+            car.Id,
+            new List<DateTimeOffset> { bookingStartTime.AddDays(1) } // Date within booking range
+        );
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
         Assert.Equal(ResultStatus.Conflict, result.Status);
-        Assert.Contains("đã có đơn đặt xe", result.Errors.First()); // The error should mention existing booking
+        Assert.Contains("Không thể thay đổi trạng thái vì ngày", result.Errors.First());
+        Assert.Contains("đã có đơn đặt xe", result.Errors.First());
     }
 
     [Fact]
-    public async Task Handle_UpdatesTimestamp_WhenAvailabilityUpdated()
+    public async Task Handle_CreatesNewAvailabilityRecords_WhenNoneExisting()
     {
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
@@ -278,36 +216,272 @@ public class SetCarUnavailabilityTest(DatabaseTestBase fixture) : IAsyncLifetime
             carStatus: CarStatusEnum.Available
         );
 
-        // Create initial availability record
-        var date = DateTimeOffset.UtcNow.UtcDateTime;
+        var today = DateTimeOffset.UtcNow;
+        var tomorrow = today.AddDays(1);
+        var dayAfter = today.AddDays(2);
+
+        var handler = new SetCarUnavailability.Handler(_dbContext, _currentUser);
+        var command = new SetCarUnavailability.Command(
+            car.Id,
+            new List<DateTimeOffset> { today, tomorrow, dayAfter },
+            false // Mark as unavailable
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+
+        // Verify records were created
+        var createdRecords = await _dbContext
+            .CarAvailabilities.Where(ca => ca.CarId == car.Id && !ca.IsDeleted)
+            .ToListAsync();
+
+        Assert.Equal(3, createdRecords.Count);
+        Assert.Contains(createdRecords, ca => ca.Date.Date == today.Date && !ca.IsAvailable);
+        Assert.Contains(createdRecords, ca => ca.Date.Date == tomorrow.Date && !ca.IsAvailable);
+        Assert.Contains(createdRecords, ca => ca.Date.Date == dayAfter.Date && !ca.IsAvailable);
+    }
+
+    [Fact]
+    public async Task Handle_UpdatesExistingAvailabilityRecords()
+    {
+        // Arrange
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        _currentUser.SetUser(owner);
+
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+
+        var car = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: owner.Id,
+            modelId: model.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: CarStatusEnum.Available
+        );
+
+        var today = DateTimeOffset.UtcNow;
+
+        // Create existing availability record marked as unavailable
         var existingAvailability = new CarAvailability
         {
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             CarId = car.Id,
-            Date = date,
+            Date = today,
             IsAvailable = false,
         };
+
         await _dbContext.CarAvailabilities.AddAsync(existingAvailability);
         await _dbContext.SaveChangesAsync();
 
-        // Record original timestamp
-        var originalTimestamp = existingAvailability.UpdatedAt;
-
-        // Wait a moment to ensure timestamps are different
-        await Task.Delay(10);
-
         var handler = new SetCarUnavailability.Handler(_dbContext, _currentUser);
-        var command = new SetCarUnavailability.Command(car.Id, date, true);
+        var command = new SetCarUnavailability.Command(
+            car.Id,
+            new List<DateTimeOffset> { today },
+            true // Mark as available (change from current false)
+        );
 
         // Act
-        await handler.Handle(command, CancellationToken.None);
+        var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        var updatedAvailability = await _dbContext
-            .CarAvailabilities.Where(c => c.Id == existingAvailability.Id)
-            .SingleOrDefaultAsync();
+        Assert.Equal(ResultStatus.Ok, result.Status);
 
-        Assert.NotNull(updatedAvailability);
-        Assert.NotEqual(originalTimestamp, updatedAvailability.UpdatedAt);
+        // Verify record was updated
+        var updatedRecord = await _dbContext.CarAvailabilities.FirstAsync(ca =>
+            ca.Id == existingAvailability.Id
+        );
+
+        Assert.True(updatedRecord.IsAvailable);
+        Assert.NotNull(updatedRecord.UpdatedAt);
+    }
+
+    [Fact]
+    public async Task Handle_MixOfUpdateAndCreate_HandlesCorrectly()
+    {
+        // Arrange
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        _currentUser.SetUser(owner);
+
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+
+        var car = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: owner.Id,
+            modelId: model.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: CarStatusEnum.Available
+        );
+
+        var today = DateTimeOffset.UtcNow;
+        var tomorrow = today.AddDays(1);
+        var dayAfter = today.AddDays(2);
+
+        // Create one existing availability record
+        var existingAvailability = new CarAvailability
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            CarId = car.Id,
+            Date = today,
+            IsAvailable = true, // Will be changed to false
+        };
+
+        await _dbContext.CarAvailabilities.AddAsync(existingAvailability);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new SetCarUnavailability.Handler(_dbContext, _currentUser);
+        var command = new SetCarUnavailability.Command(
+            car.Id,
+            new List<DateTimeOffset> { today, tomorrow, dayAfter },
+            false // Mark all as unavailable
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+
+        // Verify records
+        var allRecords = await _dbContext
+            .CarAvailabilities.Where(ca => ca.CarId == car.Id && !ca.IsDeleted)
+            .ToListAsync();
+
+        Assert.Equal(3, allRecords.Count);
+
+        // First record should be updated
+        var updatedRecord = allRecords.First(r => r.Date.Date == today.Date);
+        Assert.Equal(existingAvailability.Id, updatedRecord.Id);
+        Assert.False(updatedRecord.IsAvailable);
+
+        // The other two should be new
+        Assert.Contains(allRecords, ca => ca.Date.Date == tomorrow.Date && !ca.IsAvailable);
+        Assert.Contains(allRecords, ca => ca.Date.Date == dayAfter.Date && !ca.IsAvailable);
+    }
+
+    [Fact]
+    public async Task Handle_MakeUnavailableDatesAvailable_Succeeds()
+    {
+        // Arrange
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        _currentUser.SetUser(owner);
+
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+
+        var car = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: owner.Id,
+            modelId: model.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: CarStatusEnum.Available
+        );
+
+        var today = DateTimeOffset.UtcNow;
+        var tomorrow = today.AddDays(1);
+
+        // Create existing unavailable dates
+        var todayAvailability = new CarAvailability
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            CarId = car.Id,
+            Date = today,
+            IsAvailable = false,
+        };
+
+        var tomorrowAvailability = new CarAvailability
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            CarId = car.Id,
+            Date = tomorrow,
+            IsAvailable = false,
+        };
+
+        await _dbContext.CarAvailabilities.AddRangeAsync(todayAvailability, tomorrowAvailability);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new SetCarUnavailability.Handler(_dbContext, _currentUser);
+        var command = new SetCarUnavailability.Command(
+            car.Id,
+            new List<DateTimeOffset> { today, tomorrow },
+            true // Make them available again
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+
+        // Verify both records were updated to available
+        var records = await _dbContext
+            .CarAvailabilities.Where(ca => ca.CarId == car.Id && !ca.IsDeleted)
+            .ToListAsync();
+
+        Assert.Equal(2, records.Count);
+        Assert.All(records, r => Assert.True(r.IsAvailable));
+    }
+
+    [Fact]
+    public async Task Handle_DeletedCar_ReturnsNotFound()
+    {
+        // Arrange
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        _currentUser.SetUser(owner);
+
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+
+        var car = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: owner.Id,
+            modelId: model.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: CarStatusEnum.Available
+        );
+
+        // Mark car as deleted
+        car.IsDeleted = true;
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new SetCarUnavailability.Handler(_dbContext, _currentUser);
+        var command = new SetCarUnavailability.Command(
+            car.Id,
+            new List<DateTimeOffset> { DateTimeOffset.UtcNow }
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(ResponseMessages.CarNotFound, result.Errors);
     }
 }
