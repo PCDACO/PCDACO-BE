@@ -12,13 +12,13 @@ namespace UseCases.UC_Transaction.Queries;
 public sealed class GetTransactionHistory
 {
     public sealed record Query(
-        int Limit,
-        Guid? LastId,
+        int PageNumber = 1,
+        int PageSize = 10,
         string? SearchTerm = null,
         string? TransactionType = null,
         DateTimeOffset? FromDate = null,
         DateTimeOffset? ToDate = null
-    ) : IRequest<Result<CursorPaginatedResponse<Response>>>;
+    ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public sealed record Response(
         Guid Id,
@@ -53,9 +53,9 @@ public sealed class GetTransactionHistory
     public record TransactionDetailsDto(Guid? BookingId, string? BankName, string? BankAccountName);
 
     internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
-        : IRequestHandler<Query, Result<CursorPaginatedResponse<Response>>>
+        : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
     {
-        public async Task<Result<CursorPaginatedResponse<Response>>> Handle(
+        public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(
             Query request,
             CancellationToken cancellationToken
         )
@@ -89,7 +89,7 @@ public sealed class GetTransactionHistory
             {
                 var toId = UuidToolkit.CreateUuidV7FromSpecificDate(
                     request.ToDate.Value.AddDays(1)
-                ); // Add 1 day to include the entire end date
+                );
                 query = query.Where(t => t.Id.CompareTo(toId) < 0);
             }
 
@@ -101,32 +101,30 @@ public sealed class GetTransactionHistory
                 );
             }
 
-            // Apply cursor pagination
-            if (request.LastId.HasValue)
-            {
-                query = query.Where(t => t.Id.CompareTo(request.LastId.Value) < 0);
-            }
-
-            // Order by Id descending since it contains timestamp
+            // Order by Id descending (newest first since using UUID v7)
             query = query.OrderByDescending(t => t.Id);
 
             var totalCount = await query.CountAsync(cancellationToken);
+
             var transactions = await query
-                .Take(request.Limit)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
 
-            var hasMore = transactions.Count == request.Limit;
-            var lastId = transactions.LastOrDefault()?.Id;
+            var hasNext = await query
+                .Skip(request.PageSize * request.PageNumber)
+                .AnyAsync(cancellationToken: cancellationToken);
 
             return Result.Success(
-                new CursorPaginatedResponse<Response>(
+                OffsetPaginatedResponse<Response>.Map(
                     transactions.Select(Response.FromEntity),
                     totalCount,
-                    request.Limit,
-                    lastId,
-                    hasMore
-                )
+                    request.PageSize,
+                    request.PageNumber,
+                    hasNext
+                ),
+                "Lấy lịch sử giao dịch thành công"
             );
         }
     }

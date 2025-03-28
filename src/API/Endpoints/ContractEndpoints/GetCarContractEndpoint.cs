@@ -11,9 +11,9 @@ public class GetCarContractEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/car-contracts/{id:guid}", Handle)
+        app.MapGet("/api/cars/{id:guid}/contract", Handle)
             .WithSummary("Get car inspection contract")
-            .WithTags("Contracts")
+            .WithTags("Cars")
             .RequireAuthorization()
             .WithOpenApi(operation =>
                 new(operation)

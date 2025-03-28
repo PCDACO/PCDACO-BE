@@ -51,7 +51,7 @@ public sealed class GetBookingContract
                 .ThenInclude(b => b.Car)
                 .ThenInclude(car => car.Owner)
                 .ThenInclude(o => o.EncryptionKey)
-                .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
+                .FirstOrDefaultAsync(c => c.BookingId == request.Id, cancellationToken);
 
             if (contract == null)
             {

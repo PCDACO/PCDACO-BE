@@ -1,5 +1,4 @@
 using API.Utils;
-using Ardalis.Result;
 using Carter;
 using Domain.Enums;
 using MediatR;

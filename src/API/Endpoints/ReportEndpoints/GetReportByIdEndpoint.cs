@@ -24,20 +24,23 @@ public class GetReportByIdEndpoint : ICarterModule
 
                     Access Control:
                     - Admin: Can view any report
+                    - Consultant: Can view any report
                     - Driver: Can only view reports related to their bookings
                     - Owner: Can only view reports related to their cars
                     - Reporter: Can view reports they created
 
                     Details Included:
-                    - Report information (title, description, status)
-                    - Reporter details
+                    - Basic report information (ID, title, description, type, status)
+                    - Reporter information
                     - Resolution details (if resolved)
-                    - Related booking information
-                    - Car information
-                    - Driver and owner details
-                    - Report images
+                    - Booking details (times, amounts, driver and owner info)
+                    - Car details (model, manufacturer, color, images)
+                    - Compensation details (if applicable)
+                    - Inspection schedule details (if applicable)
 
-                    Note: Sensitive information like license plates and phone numbers are encrypted and will be decrypted for authorized users
+                    Note:
+                    - Sensitive information (license plates, phone numbers) is encrypted and decrypted for authorized users
+                    - Image URLs are included for report images, car images, and inspection photos
                     """,
 
                     Responses =
@@ -53,78 +56,72 @@ public class GetReportByIdEndpoint : ICarterModule
                                     {
                                         ["value"] = new OpenApiObject
                                         {
-                                            ["id"] = new OpenApiString(
-                                                "123e4567-e89b-12d3-a456-426614174000"
-                                            ),
-                                            ["reporterId"] = new OpenApiString(
-                                                "123e4567-e89b-12d3-a456-426614174001"
-                                            ),
-                                            ["reportedName"] = new OpenApiString("John Doe"),
-                                            ["title"] = new OpenApiString("Issue with Car Return"),
-                                            ["description"] = new OpenApiString(
-                                                "Car was returned with minor scratches"
-                                            ),
+                                            ["id"] = new OpenApiString(Guid.NewGuid().ToString()),
+                                            ["reporterId"] = new OpenApiString(Guid.NewGuid().ToString()),
+                                            ["reportedName"] = new OpenApiString("Nguyễn Văn A"),
+                                            ["title"] = new OpenApiString("Báo cáo hư hỏng xe"),
+                                            ["description"] = new OpenApiString("Xe bị trầy xước nhẹ"),
                                             ["reportType"] = new OpenApiString("CarDamage"),
                                             ["status"] = new OpenApiString("Pending"),
                                             ["resolvedAt"] = new OpenApiNull(),
                                             ["resolvedById"] = new OpenApiNull(),
                                             ["resolutionComments"] = new OpenApiNull(),
-                                            ["imageReports"] = new OpenApiArray
+                                            ["imageUrls"] = new OpenApiArray
                                             {
-                                                new OpenApiObject
-                                                {
-                                                    ["id"] = new OpenApiString(
-                                                        "123e4567-e89b-12d3-a456-426614174002"
-                                                    ),
-                                                    ["url"] = new OpenApiString(
-                                                        "https://example.com/image1.jpg"
-                                                    )
-                                                }
+                                                new OpenApiString("https://example.com/report1.jpg")
                                             },
                                             ["bookingDetail"] = new OpenApiObject
                                             {
-                                                ["id"] = new OpenApiString(
-                                                    "123e4567-e89b-12d3-a456-426614174003"
-                                                ),
-                                                ["driverId"] = new OpenApiString(
-                                                    "123e4567-e89b-12d3-a456-426614174004"
-                                                ),
-                                                ["driverName"] = new OpenApiString("Jane Smith"),
-                                                ["driverAvatar"] = new OpenApiString(
-                                                    "https://example.com/avatar1.jpg"
-                                                ),
+                                                ["id"] = new OpenApiString(Guid.NewGuid().ToString()),
+                                                ["driverId"] = new OpenApiString(Guid.NewGuid().ToString()),
+                                                ["driverName"] = new OpenApiString("Nguyễn Văn B"),
+                                                ["driverAvatar"] = new OpenApiString("https://example.com/avatar1.jpg"),
                                                 ["driverPhone"] = new OpenApiString("0123456789"),
-                                                ["ownerId"] = new OpenApiString(
-                                                    "123e4567-e89b-12d3-a456-426614174005"
-                                                ),
-                                                ["ownerName"] = new OpenApiString("Bob Wilson"),
-                                                ["ownerAvatar"] = new OpenApiString(
-                                                    "https://example.com/avatar2.jpg"
-                                                ),
+                                                ["ownerId"] = new OpenApiString(Guid.NewGuid().ToString()),
+                                                ["ownerName"] = new OpenApiString("Trần Văn C"),
+                                                ["ownerAvatar"] = new OpenApiString("https://example.com/avatar2.jpg"),
                                                 ["ownerPhone"] = new OpenApiString("0987654321"),
-                                                ["startTime"] = new OpenApiString(
-                                                    "2024-03-15T10:00:00Z"
-                                                ),
-                                                ["endTime"] = new OpenApiString(
-                                                    "2024-03-20T10:00:00Z"
-                                                ),
+                                                ["startTime"] = new OpenApiString(DateTime.UtcNow.ToString("o")),
+                                                ["endTime"] = new OpenApiString(DateTime.UtcNow.AddDays(3).ToString("o")),
                                                 ["totalAmount"] = new OpenApiDouble(2200000),
                                                 ["basePrice"] = new OpenApiDouble(2000000)
                                             },
                                             ["carDetail"] = new OpenApiObject
                                             {
-                                                ["id"] = new OpenApiString(
-                                                    "123e4567-e89b-12d3-a456-426614174006"
-                                                ),
+                                                ["id"] = new OpenApiString(Guid.NewGuid().ToString()),
                                                 ["licensePlate"] = new OpenApiString("51G-123.45"),
                                                 ["modelName"] = new OpenApiString("Toyota Camry"),
                                                 ["manufacturerName"] = new OpenApiString("Toyota"),
-                                                ["color"] = new OpenApiString("Black"),
+                                                ["color"] = new OpenApiString("Đen"),
                                                 ["imageUrl"] = new OpenApiArray
                                                 {
-                                                    new OpenApiString(
-                                                        "https://example.com/car1.jpg"
-                                                    )
+                                                    new OpenApiString("https://example.com/car1.jpg")
+                                                }
+                                            },
+                                            ["compensationDetail"] = new OpenApiObject
+                                            {
+                                                ["userId"] = new OpenApiString(Guid.NewGuid().ToString()),
+                                                ["userName"] = new OpenApiString("Nguyễn Văn D"),
+                                                ["userAvatar"] = new OpenApiString("https://example.com/avatar3.jpg"),
+                                                ["compensationReason"] = new OpenApiString("Trầy xước xe"),
+                                                ["compensationAmount"] = new OpenApiDouble(500000),
+                                                ["isPaid"] = new OpenApiBoolean(false),
+                                                ["imageUrl"] = new OpenApiNull(),
+                                                ["paidAt"] = new OpenApiNull()
+                                            },
+                                            ["inspectionScheduleDetail"] = new OpenApiObject
+                                            {
+                                                ["id"] = new OpenApiString(Guid.NewGuid().ToString()),
+                                                ["technicianId"] = new OpenApiString(Guid.NewGuid().ToString()),
+                                                ["technicianName"] = new OpenApiString("Lê Văn E"),
+                                                ["technicianAvatar"] = new OpenApiString("https://example.com/avatar4.jpg"),
+                                                ["status"] = new OpenApiString("Scheduled"),
+                                                ["inspectionAddress"] = new OpenApiString("123 Đường ABC, Quận 1, TP.HCM"),
+                                                ["inspectionDate"] = new OpenApiString(DateTime.UtcNow.AddDays(1).ToString("o")),
+                                                ["note"] = new OpenApiString("Kiểm tra trầy xước"),
+                                                ["photoUrls"] = new OpenApiArray
+                                                {
+                                                    new OpenApiString("https://example.com/inspection1.jpg")
                                                 }
                                             }
                                         },
@@ -145,9 +142,7 @@ public class GetReportByIdEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString(
-                                            "You don't have permission to view this report"
-                                        )
+                                        ["message"] = new OpenApiString("Bạn không có quyền xem báo cáo này")
                                     }
                                 }
                             }
@@ -162,7 +157,7 @@ public class GetReportByIdEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString("Report not found")
+                                        ["message"] = new OpenApiString("Không tìm thấy báo cáo")
                                     }
                                 }
                             }
