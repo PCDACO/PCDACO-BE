@@ -163,8 +163,7 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
         {
             // If owner has insufficient available balance, take from locked balance
             var amountFromLocked = ownerRefundAmount - ownerAvailableBalance;
-            booking.Car.Owner.LockedBalance -= amountFromLocked;
-
+            booking.Car.Owner.LockedBalance = Math.Max(0, booking.Car.Owner.LockedBalance - amountFromLocked);
             // Add a note to the transaction description
             ownerRefundTransaction.Description += " (Hoàn tiền từ số dư bị khóa)";
         }
