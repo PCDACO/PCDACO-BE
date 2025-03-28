@@ -627,6 +627,292 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         Assert.Equal(car.Id, schedule.CarId);
     }
 
+    [Fact]
+    public async Task Handle_ReportNotFound_ReturnsError()
+    {
+        // Arrange
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+        _currentUser.SetUser(consultant);
+
+        // Create technician
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@test.com"
+        );
+
+        // Create car in pending status
+        var owner = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
+        );
+        var car = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
+
+        var nonExistentReportId = Guid.NewGuid();
+        var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
+        var command = new CreateInspectionSchedule.Command(
+            TechnicianId: technician.Id,
+            CarId: car.Id,
+            InspectionAddress: "123 Main St",
+            InspectionDate: DateTimeOffset.UtcNow.AddDays(1),
+            ReportId: nonExistentReportId
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(ResponseMessages.ReportNotFound, result.Errors);
+    }
+
+    [Fact]
+    public async Task Handle_ReportNotUnderReview_ReturnsError()
+    {
+        // Arrange
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+        _currentUser.SetUser(consultant);
+
+        // Create technician
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@test.com"
+        );
+
+        // Create car in pending status
+        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var car = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
+
+        // Create a driver for the booking
+        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var driver = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            driverRole,
+            "driver@test.com"
+        );
+
+        // Create a real booking first
+        var booking = new Booking
+        {
+            UserId = driver.Id,
+            CarId = car.Id,
+            Status = BookingStatusEnum.Completed,
+            StartTime = DateTimeOffset.UtcNow.AddDays(-7),
+            EndTime = DateTimeOffset.UtcNow.AddDays(-6),
+            ActualReturnTime = DateTimeOffset.UtcNow.AddDays(-6),
+            BasePrice = 100.0m,
+            PlatformFee = 10.0m,
+            ExcessDay = 0,
+            ExcessDayFee = 0,
+            TotalAmount = 110.0m,
+            Note = "Test booking for inspection report",
+        };
+        _dbContext.Bookings.Add(booking);
+        await _dbContext.SaveChangesAsync();
+
+        // Create a report with Pending status (not UnderReview)
+        var report = new BookingReport
+        {
+            BookingId = booking.Id,
+            ReportedById = owner.Id,
+            Title = "Test Report",
+            Description = "Test Description",
+            ReportType = BookingReportType.Accident,
+            Status = BookingReportStatus.Pending, // Not UnderReview
+        };
+        await _dbContext.BookingReports.AddAsync(report);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
+        var command = new CreateInspectionSchedule.Command(
+            TechnicianId: technician.Id,
+            CarId: car.Id,
+            InspectionAddress: "123 Main St",
+            InspectionDate: DateTimeOffset.UtcNow.AddDays(1),
+            ReportId: report.Id
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(ResponseMessages.ReportNotUnderReviewed, result.Errors);
+    }
+
+    [Fact]
+    public async Task Handle_ValidReport_CreatesInspectionScheduleWithReport()
+    {
+        // Arrange
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+        _currentUser.SetUser(consultant);
+
+        // Create technician
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@test.com"
+        );
+
+        // Create car in pending status
+        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var car = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
+
+        // Create a driver for the booking
+        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var driver = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            driverRole,
+            "driver@test.com"
+        );
+
+        // Create a real booking first
+        var booking = new Booking
+        {
+            UserId = driver.Id,
+            CarId = car.Id,
+            Status = BookingStatusEnum.Completed,
+            StartTime = DateTimeOffset.UtcNow.AddDays(-7),
+            EndTime = DateTimeOffset.UtcNow.AddDays(-6),
+            ActualReturnTime = DateTimeOffset.UtcNow.AddDays(-6),
+            BasePrice = 100.0m,
+            PlatformFee = 10.0m,
+            ExcessDay = 0,
+            ExcessDayFee = 0,
+            TotalAmount = 110.0m,
+            Note = "Test booking for inspection report",
+        };
+        _dbContext.Bookings.Add(booking);
+        await _dbContext.SaveChangesAsync();
+
+        // Create a report with UnderReview status
+        var report = new BookingReport
+        {
+            BookingId = booking.Id,
+            ReportedById = owner.Id,
+            Title = "Test Report",
+            Description = "Test Description",
+            ReportType = BookingReportType.Accident,
+            Status = BookingReportStatus.UnderReview,
+        };
+        await _dbContext.BookingReports.AddAsync(report);
+        await _dbContext.SaveChangesAsync();
+
+        var inspectionDate = DateTimeOffset.UtcNow.AddDays(1);
+        var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
+        var command = new CreateInspectionSchedule.Command(
+            TechnicianId: technician.Id,
+            CarId: car.Id,
+            InspectionAddress: "123 Main St",
+            InspectionDate: inspectionDate,
+            ReportId: report.Id,
+            IsIncident: true
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+
+        // Verify schedule was created with report
+        var schedule = await _dbContext.InspectionSchedules.FirstOrDefaultAsync(s =>
+            s.Id == result.Value.Id
+        );
+
+        Assert.NotNull(schedule);
+        Assert.Equal(technician.Id, schedule.TechnicianId);
+        Assert.Equal(car.Id, schedule.CarId);
+        Assert.Equal(report.Id, schedule.ReportId);
+        Assert.Equal(InspectionScheduleType.Incident, schedule.Type);
+    }
+
+    [Theory]
+    [InlineData(true, InspectionScheduleType.Incident)]
+    [InlineData(false, InspectionScheduleType.NewCar)]
+    public async Task Handle_IsIncidentFlag_SetsCorrectType(
+        bool isIncident,
+        InspectionScheduleType expectedType
+    )
+    {
+        // Arrange
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+        _currentUser.SetUser(consultant);
+
+        // Create technician
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@test.com"
+        );
+
+        // Create car in pending status
+        var owner = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
+        );
+        var car = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
+
+        var inspectionDate = DateTimeOffset.UtcNow.AddDays(1);
+        var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
+        var command = new CreateInspectionSchedule.Command(
+            TechnicianId: technician.Id,
+            CarId: car.Id,
+            InspectionAddress: "123 Main St",
+            InspectionDate: inspectionDate,
+            IsIncident: isIncident
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+
+        // Verify schedule was created with correct type
+        var schedule = await _dbContext.InspectionSchedules.FirstOrDefaultAsync(s =>
+            s.Id == result.Value.Id
+        );
+
+        Assert.NotNull(schedule);
+        Assert.Equal(expectedType, schedule.Type);
+    }
+
     private async Task<Car> CreateTestCar(Guid ownerId, CarStatusEnum status)
     {
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);

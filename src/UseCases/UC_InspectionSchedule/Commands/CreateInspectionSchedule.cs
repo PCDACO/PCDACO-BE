@@ -16,7 +16,9 @@ public sealed class CreateInspectionSchedule
         Guid TechnicianId,
         Guid CarId,
         string InspectionAddress,
-        DateTimeOffset InspectionDate
+        DateTimeOffset InspectionDate,
+        Guid? ReportId = null,
+        bool IsIncident = false
     ) : IRequest<Result<Response>>;
 
     public sealed record Response(Guid Id)
@@ -58,6 +60,19 @@ public sealed class CreateInspectionSchedule
 
             if (technician is null || !technician.IsTechnician())
                 return Result.Error(ResponseMessages.TechnicianNotFound);
+
+            // Check if the report exists and is not deleted and is under review
+            if (request.ReportId != null)
+            {
+                var report = await context.BookingReports.FirstOrDefaultAsync(
+                    r => r.Id == request.ReportId && !r.IsDeleted,
+                    cancellationToken
+                );
+                if (report is null)
+                    return Result.Error(ResponseMessages.ReportNotFound);
+                if (report.Status != BookingReportStatus.UnderReview)
+                    return Result.Error(ResponseMessages.ReportNotUnderReviewed);
+            }
 
             // Check for existing active schedules for the car
             var existingActiveSchedule = await context
@@ -123,9 +138,13 @@ public sealed class CreateInspectionSchedule
             {
                 TechnicianId = request.TechnicianId,
                 CarId = request.CarId,
+                ReportId = request.ReportId,
                 InspectionAddress = request.InspectionAddress,
                 InspectionDate = request.InspectionDate,
                 CreatedBy = currentUser.User.Id,
+                Type = request.IsIncident
+                    ? InspectionScheduleType.Incident
+                    : InspectionScheduleType.NewCar,
             };
 
             await context.InspectionSchedules.AddAsync(schedule, cancellationToken);
