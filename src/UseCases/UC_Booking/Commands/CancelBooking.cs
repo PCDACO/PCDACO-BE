@@ -1,4 +1,7 @@
 using Ardalis.Result;
+using Domain.Constants;
+using Domain.Constants.EntityNames;
+using Domain.Entities;
 using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +17,8 @@ public sealed class CancelBooking
     internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
         : IRequestHandler<Command, Result>
     {
+        private const decimal ADMIN_REFUND_PERCENTAGE = 0.1m;
+        private const decimal OWNER_REFUND_PERCENTAGE = 0.9m;
         private const decimal REFUND_PERCENTAGE_BEFORE_7_DAYS = 1.0m;
         private const decimal REFUND_PERCENTAGE_BEFORE_5_DAYS = 0.5m;
         private const decimal REFUND_PERCENTAGE_BEFORE_3_DAYS = 0.3m;
@@ -75,8 +80,12 @@ public sealed class CancelBooking
 
             if (booking.IsPaid)
             {
-                booking.IsRefund = true;
-                booking.RefundAmount = booking.TotalAmount * refundPercentage;
+                await HandleRefundTransactions(
+                    booking,
+                    refundPercentage,
+                    $"Hủy đặt xe {request.CancelReason}",
+                    cancellationToken
+                );
             }
 
             booking.Status = BookingStatusEnum.Cancelled;
@@ -99,5 +108,70 @@ public sealed class CancelBooking
                 >= 3 => REFUND_PERCENTAGE_BEFORE_3_DAYS,
                 _ => REFUND_PERCENTAGE_BEFORE_1_DAY,
             };
+
+        private async Task HandleRefundTransactions(
+            Booking booking,
+            decimal refundPercentage,
+            string reason,
+            CancellationToken cancellationToken
+        )
+        {
+            var admin = await context.Users.FirstOrDefaultAsync(
+                u => u.Role.Name == UserRoleNames.Admin,
+                cancellationToken
+            );
+
+            if (admin == null)
+                throw new InvalidOperationException("Admin user not found");
+
+            var refundAmount = booking.TotalAmount * refundPercentage;
+            var adminRefundAmount = refundAmount * ADMIN_REFUND_PERCENTAGE;
+            var ownerRefundAmount = refundAmount * OWNER_REFUND_PERCENTAGE;
+
+            var transactionTypes = await context
+                .TransactionTypes.Where(t => new[] { TransactionTypeNames.Refund }.Contains(t.Name))
+                .ToListAsync(cancellationToken);
+
+            var refundType = transactionTypes.First(t => t.Name == TransactionTypeNames.Refund);
+
+            // Create refund transactions
+            var adminRefundTransaction = new Transaction
+            {
+                FromUserId = admin.Id,
+                ToUserId = booking.UserId,
+                BookingId = booking.Id,
+                BankAccountId = null,
+                TypeId = refundType.Id,
+                Status = TransactionStatusEnum.Completed,
+                Amount = adminRefundAmount,
+                Description = $"Hoàn tiền từ Admin: {reason}",
+                BalanceAfter = booking.User.Balance + adminRefundAmount
+            };
+
+            var ownerRefundTransaction = new Transaction
+            {
+                FromUserId = booking.Car.OwnerId,
+                ToUserId = booking.UserId,
+                BookingId = booking.Id,
+                BankAccountId = null,
+                TypeId = refundType.Id,
+                Status = TransactionStatusEnum.Completed,
+                Amount = ownerRefundAmount,
+                Description = $"Hoàn tiền từ Chủ xe: {reason}",
+                BalanceAfter = booking.User.Balance + refundAmount
+            };
+
+            // Update balances
+            admin.Balance -= adminRefundAmount;
+            booking.Car.Owner.Balance -= ownerRefundAmount;
+            booking.User.Balance += refundAmount;
+
+            // Update booking refund info
+            booking.IsRefund = true;
+            booking.RefundAmount = refundAmount;
+            booking.RefundDate = DateTimeOffset.UtcNow;
+
+            context.Transactions.AddRange(adminRefundTransaction, ownerRefundTransaction);
+        }
     }
 }

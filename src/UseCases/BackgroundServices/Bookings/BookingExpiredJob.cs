@@ -1,3 +1,4 @@
+using Domain.Constants;
 using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
@@ -50,21 +51,17 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
 
         foreach (var booking in expiredBookings)
         {
-            // Mark as expired
             booking.Status = BookingStatusEnum.Expired;
             booking.Note = "Hết hạn tự động do không nhận xe đúng hạn";
 
             if (booking.IsPaid)
             {
-                booking.IsRefund = true;
-                booking.RefundAmount = booking.TotalAmount * HALF_REFUND_PERCENTAGE;
-
-                var adminAmount = booking.RefundAmount * ADMIN_REFUND_PERCENTAGE;
-                var ownerAmount = booking.RefundAmount * OWNER_REFUND_PERCENTAGE;
-
-                admin.Balance -= (decimal)adminAmount;
-                booking.Car.Owner.Balance -= (decimal)ownerAmount;
-                booking.User.Balance += (decimal)booking.RefundAmount;
+                await HandleExpiredBookingRefund(
+                    booking,
+                    admin,
+                    HALF_REFUND_PERCENTAGE,
+                    "Booking hết hạn do không nhận xe đúng hạn"
+                );
             }
 
             await SendExpirationEmail(booking, booking.IsPaid);
@@ -97,21 +94,17 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
 
         foreach (var booking in expiredBookings)
         {
-            // Mark as expired
             booking.Status = BookingStatusEnum.Expired;
-            booking.Note = "Hết hạn tự động do không nhận xe đúng hạn";
+            booking.Note = "Hết hạn tự động do không được phê duyệt";
 
             if (booking.IsPaid)
             {
-                booking.IsRefund = true;
-                booking.RefundAmount = booking.TotalAmount * FULL_REFUND_PERCENTAGE;
-
-                var adminAmount = booking.RefundAmount * ADMIN_REFUND_PERCENTAGE;
-                var ownerAmount = booking.RefundAmount * OWNER_REFUND_PERCENTAGE;
-
-                admin.Balance -= (decimal)adminAmount;
-                booking.Car.Owner.Balance -= (decimal)ownerAmount;
-                booking.User.Balance += (decimal)booking.RefundAmount;
+                await HandleExpiredBookingRefund(
+                    booking,
+                    admin,
+                    FULL_REFUND_PERCENTAGE,
+                    "Booking hết hạn do không được phê duyệt"
+                );
             }
 
             await SendExpirationEmail(booking, booking.IsPaid);
@@ -200,5 +193,62 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
                     driverEmailTemplate
                 )
         );
+    }
+
+    private async Task HandleExpiredBookingRefund(
+        Booking booking,
+        User admin,
+        decimal refundPercentage,
+        string reason
+    )
+    {
+        if (!booking.IsPaid)
+            return;
+
+        var refundAmount = booking.TotalAmount * refundPercentage;
+        var adminRefundAmount = refundAmount * ADMIN_REFUND_PERCENTAGE;
+        var ownerRefundAmount = refundAmount * OWNER_REFUND_PERCENTAGE;
+
+        var refundType = await context.TransactionTypes.FirstAsync(t =>
+            t.Name == TransactionTypeNames.Refund
+        );
+
+        var adminRefundTransaction = new Transaction
+        {
+            FromUserId = admin.Id,
+            ToUserId = booking.UserId,
+            BookingId = booking.Id,
+            BankAccountId = null,
+            TypeId = refundType.Id,
+            Status = TransactionStatusEnum.Completed,
+            Amount = adminRefundAmount,
+            Description = $"Hoàn tiền từ Admin: {reason}",
+            BalanceAfter = booking.User.Balance + adminRefundAmount
+        };
+
+        var ownerRefundTransaction = new Transaction
+        {
+            FromUserId = booking.Car.OwnerId,
+            ToUserId = booking.UserId,
+            BookingId = booking.Id,
+            BankAccountId = null,
+            TypeId = refundType.Id,
+            Status = TransactionStatusEnum.Completed,
+            Amount = ownerRefundAmount,
+            Description = $"Hoàn tiền từ Chủ xe: {reason}",
+            BalanceAfter = booking.User.Balance + refundAmount
+        };
+
+        // Update balances
+        admin.Balance -= adminRefundAmount;
+        booking.Car.Owner.Balance -= ownerRefundAmount;
+        booking.User.Balance += refundAmount;
+
+        // Update booking refund info
+        booking.IsRefund = true;
+        booking.RefundAmount = refundAmount;
+        booking.RefundDate = DateTimeOffset.UtcNow;
+
+        context.Transactions.AddRange(adminRefundTransaction, ownerRefundTransaction);
     }
 }
