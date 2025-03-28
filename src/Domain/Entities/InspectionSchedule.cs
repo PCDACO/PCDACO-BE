@@ -1,5 +1,4 @@
 using System.ComponentModel.DataAnnotations.Schema;
-
 using Domain.Enums;
 using Domain.Shared;
 
@@ -15,6 +14,8 @@ public class InspectionSchedule : BaseEntity
     public required string InspectionAddress { get; set; }
     public required DateTimeOffset InspectionDate { get; set; }
     public required Guid CreatedBy { get; set; }
+    public InspectionScheduleType Type { get; set; } = InspectionScheduleType.NewCar;
+    public Guid? RelatedReportId { get; set; }
 
     // Navigation properties
     [InverseProperty(nameof(User.TechnicianInspectionSchedules))]
@@ -27,6 +28,9 @@ public class InspectionSchedule : BaseEntity
     [InverseProperty(nameof(User.ConsultantInspectionSchedules))]
     [ForeignKey(nameof(CreatedBy))]
     public User Consultant { get; set; } = null!;
+
+    [ForeignKey(nameof(RelatedReportId))]
+    public BookingReport? RelatedReport { get; set; }
 
     public ICollection<InspectionPhoto> Photos { get; set; } = [];
 }

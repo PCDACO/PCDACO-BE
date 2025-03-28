@@ -42,7 +42,7 @@ public sealed class GetCarContract
                 .ThenInclude(car => car.EncryptionKey)
                 .Include(c => c.Technician)
                 .ThenInclude(t => t.EncryptionKey)
-                .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
+                .FirstOrDefaultAsync(c => c.CarId == request.Id, cancellationToken);
 
             if (contract == null)
             {

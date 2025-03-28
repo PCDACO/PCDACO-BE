@@ -144,12 +144,7 @@ public sealed class CreateCar
                 ],
             };
 
-             var carContract = new CarContract
-            {
-                CarId = carId,
-                OwnerSignatureDate = DateTimeOffset.UtcNow, // Owner signs when creating car
-                Status = CarContractStatusEnum.OwnerSigned
-            };
+             var carContract = new CarContract { CarId = carId };
 
             CarStatistic newCarStatistic = new() { CarId = carId };
 

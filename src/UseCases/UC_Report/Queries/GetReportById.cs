@@ -27,7 +27,9 @@ public class GetReportById
         string? ResolutionComments,
         string[] ImageUrls,
         BookingDetail BookingDetail,
-        CarDetail CarDetail
+        CarDetail CarDetail,
+        CompensationDetail? CompensationDetail,
+        InspectionScheduleDetail? InspectionScheduleDetail
     )
     {
         public static async Task<Response> FromEntity(
@@ -84,8 +86,33 @@ public class GetReportById
                     report.Booking.Car.Model.Name,
                     report.Booking.Car.Model.Manufacturer.Name,
                     report.Booking.Car.Color,
-                    report.Booking.Car.ImageCars.Select(i => i.Url).ToArray()
-                )
+                    [.. report.Booking.Car.ImageCars.Select(i => i.Url)]
+                ),
+                report.CompensationPaidUserId != null
+                    ? new CompensationDetail(
+                        report.CompensationPaidUserId,
+                        report.CompensationPaidUser?.Name,
+                        report.CompensationPaidUser?.AvatarUrl,
+                        report.CompensationReason,
+                        report.CompensationAmount,
+                        report.IsCompensationPaid,
+                        report.CompensationPaidImageUrl,
+                        report.CompensationPaidAt
+                    )
+                    : null,
+                report.InspectionSchedule != null
+                    ? new InspectionScheduleDetail(
+                        report.InspectionSchedule.Id,
+                        report.InspectionSchedule.TechnicianId,
+                        report.InspectionSchedule.Technician?.Name,
+                        report.InspectionSchedule.Technician?.AvatarUrl,
+                        report.InspectionSchedule.Status,
+                        report.InspectionSchedule.InspectionAddress,
+                        report.InspectionSchedule.InspectionDate,
+                        report.InspectionSchedule.Note,
+                        [.. report.InspectionSchedule.Photos.Select(p => p.PhotoUrl)]
+                    )
+                    : null
             );
         }
 
@@ -141,6 +168,17 @@ public class GetReportById
         }
     }
 
+    public sealed record CompensationDetail(
+        Guid? UserId,
+        string? UserName,
+        string? UserAvatar,
+        string? CompensationReason,
+        decimal? CompensationAmount,
+        bool? IsPaid,
+        string? ImageUrl,
+        DateTimeOffset? PaidAt
+    );
+
     public sealed record BookingDetail(
         Guid Id,
         Guid DriverId,
@@ -164,6 +202,18 @@ public class GetReportById
         string ManufacturerName,
         string Color,
         string[] ImageUrl
+    );
+
+    public sealed record InspectionScheduleDetail(
+        Guid? Id,
+        Guid? TechnicianId,
+        string? TechnicianName,
+        string? TechnicianAvatar,
+        InspectionScheduleStatusEnum? Status,
+        string? InspectionAddress,
+        DateTimeOffset? InspectionDate,
+        string? Note,
+        string[]? PhotoUrls
     );
 
     private sealed class Handler(
@@ -192,6 +242,10 @@ public class GetReportById
                 .ThenInclude(m => m.Manufacturer)
                 .Include(r => r.Booking.Car.ImageCars)
                 .Include(r => r.Booking.Car.EncryptionKey)
+                .Include(r => r.CompensationPaidUser)
+                .Include(r => r.InspectionSchedule)
+                .ThenInclude(i => i!.Technician)
+                .Include(r => r.InspectionSchedule!.Photos)
                 .FirstOrDefaultAsync(r => r.Id == request.Id, cancellationToken);
 
             if (report is null)

@@ -2,7 +2,6 @@ using API.Utils;
 using Carter;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using UseCases.DTOs;
 using UseCases.UC_Transaction.Queries;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
@@ -15,7 +14,7 @@ public class GetTransactionHistoryEndpoint : ICarterModule
         app.MapGet("/api/transactions", Handle)
             .WithSummary("Get transaction history")
             .WithDescription(
-                "Get paginated list of user's transactions including bookings, withdrawals, etc."
+                "Get paginated list of user's transactions with offset-based pagination"
             )
             .WithTags("Transactions")
             .RequireAuthorization();
@@ -28,8 +27,8 @@ public class GetTransactionHistoryEndpoint : ICarterModule
     {
         var result = await sender.Send(
             new GetTransactionHistory.Query(
-                request.Limit,
-                request.LastId,
+                request.PageNumber,
+                request.PageSize,
                 request.SearchTerm,
                 request.TransactionType,
                 request.FromDate,
@@ -41,11 +40,11 @@ public class GetTransactionHistoryEndpoint : ICarterModule
     }
 
     public record GetTransactionHistoryRequest(
-        [FromQuery] int Limit = 10,
-        [FromQuery] Guid? LastId = null,
-        [FromQuery] string? SearchTerm = null,
-        [FromQuery] string? TransactionType = null,
-        [FromQuery] DateTimeOffset? FromDate = null,
-        [FromQuery] DateTimeOffset? ToDate = null
+        [FromQuery(Name = "index")] int PageNumber = 1,
+        [FromQuery(Name = "size")] int PageSize = 10,
+        [FromQuery(Name = "keyword")] string? SearchTerm = null,
+        [FromQuery(Name = "type")] string? TransactionType = null,
+        [FromQuery(Name = "from-date")] DateTimeOffset? FromDate = null,
+        [FromQuery(Name = "to-date")] DateTimeOffset? ToDate = null
     );
 }
