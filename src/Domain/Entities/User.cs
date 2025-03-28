@@ -17,6 +17,7 @@ public class User : BaseEntity
     public required DateTimeOffset DateOfBirth { get; set; }
     public required string Phone { get; set; }
     public decimal Balance { get; set; } = 0;
+    public decimal LockedBalance { get; set; } = 0;
     public string EncryptedLicenseNumber { get; set; } = string.Empty;
     public string LicenseImageFrontUrl { get; set; } = string.Empty;
     public string LicenseImageBackUrl { get; set; } = string.Empty;

@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Net.payOS.Types;
 using UseCases.Abstractions;
+using UseCases.BackgroundServices.Bookings;
 using UseCases.Services.EmailService;
 using Transaction = Domain.Entities.Transaction;
 
@@ -102,6 +103,7 @@ public sealed class ProcessPaymentWebhook
 
             admin.Balance += booking.PlatformFee;
             booking.Car.Owner.Balance += ownerEarningTransaction.Amount;
+            booking.Car.Owner.LockedBalance += ownerEarningTransaction.Amount;
 
             // Update booking and statistics
             booking.IsPaid = true;
@@ -124,6 +126,13 @@ public sealed class ProcessPaymentWebhook
                         booking.User.Email,
                         booking.Car.Model.Name
                     )
+            );
+
+            // Schedule balance unlock job for 7 days after booking start
+            // (or after the last possible cancellation date)
+            BackgroundJob.Schedule<UnlockOwnerBalanceJob>(
+                job => job.UnlockBalance(booking.Id),
+                booking.StartTime.AddDays(-3) // Schedule for when minimum refund period starts
             );
 
             return Result.Success();

@@ -39,10 +39,11 @@ public sealed class CreateWithdrawalRequest
             if (bankAccount == null)
                 return Result.NotFound("Không tìm thấy tài khoản ngân hàng");
 
-            // Check if user has enough balance
-            if (currentUser.User!.Balance < request.Amount)
+            decimal availableBalance = currentUser.User!.Balance - currentUser.User.LockedBalance;
+
+            if (availableBalance < request.Amount)
                 return Result.Error(
-                    $"Số dư không đủ. Số dư hiện tại: {currentUser.User.Balance:N0} VND, Số tiền cần rút: {request.Amount:N0} VND"
+                    $"Số dư khả dụng không đủ. Số dư khả dụng: {availableBalance:N0} VND, Số dư bị khóa: {currentUser.User.LockedBalance:N0} VND, Số tiền cần rút: {request.Amount:N0} VND"
                 );
 
             var withdrawRequest = await context.WithdrawalRequests.FirstOrDefaultAsync(
