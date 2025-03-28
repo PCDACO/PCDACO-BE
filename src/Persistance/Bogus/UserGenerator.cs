@@ -185,6 +185,103 @@ public class UserGenerator
                 "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
             LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(4),
         },
+        // Approved License Drivers
+        new()
+        {
+            Id = Guid.Parse("01960d1b-a7c9-7e21-d4b3-e8f9c0d1b2a3"),
+            Name = "Driver Approved License 1",
+            Email = "driver.approved1@example.com",
+            Password = "Password123!".HashString(),
+            Phone = "0923456789",
+            Address = "55 Đường Nguyễn Thị Thập, Quận 7, TP.HCM",
+            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
+            LicenseNumber = "79000111222",
+            LicenseImageFrontUrl =
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+            LicenseImageBackUrl =
+                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(3),
+        },
+        new()
+        {
+            Id = Guid.Parse("01960d1b-b8d0-7e32-e5c4-f9a0d1b2c3d4"),
+            Name = "Driver Approved License 2",
+            Email = "driver.approved2@example.com",
+            Password = "Password123!".HashString(),
+            Phone = "0934567890",
+            Address = "123 Đường Võ Văn Tần, Quận 3, TP.HCM",
+            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
+            LicenseNumber = "79000222333",
+            LicenseImageFrontUrl =
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+            LicenseImageBackUrl =
+                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(5),
+        },
+        new()
+        {
+            Id = Guid.Parse("01960d1b-c9e1-7e43-f6d5-a0b1c2d3e4f5"),
+            Name = "Driver Approved License 3",
+            Email = "driver.approved3@example.com",
+            Password = "Password123!".HashString(),
+            Phone = "0945678901",
+            Address = "45 Đường Lý Tự Trọng, Quận 1, TP.HCM",
+            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
+            LicenseNumber = "79000333444",
+            LicenseImageFrontUrl =
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+            LicenseImageBackUrl =
+                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(4),
+        },
+        new()
+        {
+            Id = Guid.Parse("01960d1b-d0f2-7e54-e7d6-b1c2d3e4f5a6"),
+            Name = "Driver Approved License 4",
+            Email = "driver.approved4@example.com",
+            Password = "Password123!".HashString(),
+            Phone = "0956789012",
+            Address = "78 Đường Nguyễn Huệ, Quận 1, TP.HCM",
+            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
+            LicenseNumber = "79000444555",
+            LicenseImageFrontUrl =
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+            LicenseImageBackUrl =
+                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(3),
+        },
+        new()
+        {
+            Id = Guid.Parse("01960d1b-e1a3-7e65-f8e7-c2d3e4f5a6b7"),
+            Name = "Driver Approved License 5",
+            Email = "driver.approved5@example.com",
+            Password = "Password123!".HashString(),
+            Phone = "0967890123",
+            Address = "321 Đường Phan Xích Long, Quận Phú Nhuận, TP.HCM",
+            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
+            LicenseNumber = "79000555666",
+            LicenseImageFrontUrl =
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+            LicenseImageBackUrl =
+                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(5),
+        },
+        new()
+        {
+            Id = Guid.Parse("01960d1b-f2b4-7e76-a9f8-d3e4f5a6b7c8"),
+            Name = "Driver Approved License 6",
+            Email = "driver.approved6@example.com",
+            Password = "Password123!".HashString(),
+            Phone = "0978901234",
+            Address = "156 Đường Cách Mạng Tháng Tám, Quận 3, TP.HCM",
+            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
+            LicenseNumber = "79000666777",
+            LicenseImageFrontUrl =
+                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+            LicenseImageBackUrl =
+                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(4),
+        },
     ];
 
     public static async Task<User[]> Execute(
@@ -232,6 +329,13 @@ public class UserGenerator
                 user.LicenseRejectReason = null;
                 user.LicenseImageUploadedAt = DateTimeOffset.UtcNow;
                 user.LicenseApprovedAt = null;
+            }
+
+            // Set approved status for specific users
+            if (u.Email.Contains("driver.approved"))
+            {
+                user.LicenseIsApproved = true;
+                user.LicenseApprovedAt = DateTimeOffset.UtcNow.AddDays(-15); // Approved 15 days ago
             }
 
             return user;

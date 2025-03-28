@@ -20,20 +20,21 @@ public class SetCarUnavailabilityEndpoint : ICarterModule
                 new(operation)
                 {
                     Description = """
-                    Set a car as unavailable for a specific date.
+                    Set a car as unavailable for specific dates.
 
                     Access Control:
                     - Requires authentication
                     - Only the car owner can modify their car's availability
 
                     Usage:
-                    - Allows car owners to block specific dates when the car shouldn't be available
-                    - Creates or updates a CarAvailability record for the specified date
+                    - Allows car owners to block multiple dates when the car shouldn't be available
+                    - Creates or updates CarAvailability records for the specified dates
                     - Affects the car's availability in search results
 
                     Notes:
-                    - Setting IsAvailable=false blocks the date from being booked
-                    - Setting IsAvailable=true makes the date available again (default availability)
+                    - Setting IsAvailable=false blocks the dates from being booked
+                    - Setting IsAvailable=true makes the dates available again (default availability)
+                    - Multiple dates can be processed in a single request
                     """,
 
                     Responses =
@@ -55,7 +56,7 @@ public class SetCarUnavailabilityEndpoint : ICarterModule
                         },
                         ["400"] = new()
                         {
-                            Description = "Bad Request - Invalid date",
+                            Description = "Bad Request - Invalid dates",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -103,7 +104,7 @@ public class SetCarUnavailabilityEndpoint : ICarterModule
                         },
                         ["409"] = new()
                         {
-                            Description = "Conflict - Existing bookings on the date",
+                            Description = "Conflict - Existing bookings on one or more dates",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -112,7 +113,7 @@ public class SetCarUnavailabilityEndpoint : ICarterModule
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
-                                            "Không thể thay đổi trạng thái ngày này vì đã có đơn đặt xe"
+                                            "Không thể thay đổi trạng thái vì ngày {{date}} đã có đơn đặt xe"
                                         ),
                                     },
                                 },
@@ -128,12 +129,15 @@ public class SetCarUnavailabilityEndpoint : ICarterModule
         Result result = await sender.Send(
             new SetCarUnavailability.Command(
                 CarId: id,
-                Date: request.Date,
+                Dates: request.Dates,
                 IsAvailable: request.IsAvailable
             )
         );
         return result.MapResult();
     }
 
-    private record SetCarUnavailabilityRequest(DateTimeOffset Date, bool IsAvailable = false);
+    private record SetCarUnavailabilityRequest(
+        List<DateTimeOffset> Dates,
+        bool IsAvailable = false
+    );
 }
