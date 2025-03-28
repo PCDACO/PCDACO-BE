@@ -1,3 +1,5 @@
+using Domain.Constants;
+using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
@@ -96,14 +98,42 @@ public class BookingReminderJob(
         if (booking == null)
             return;
 
-        // Mark booking as expired and set refund information
+        var admin = await context.Users.FirstOrDefaultAsync(u =>
+            u.Role.Name == UserRoleNames.Admin
+        );
+        if (admin == null)
+            return;
+
         booking.Status = BookingStatusEnum.Expired;
         booking.Note = "Hết hạn tự động do chủ xe không phản hồi";
 
         if (booking.IsPaid)
         {
+            var refundType = await context.TransactionTypes.FirstAsync(t =>
+                t.Name == TransactionTypeNames.Refund
+            );
+
+            var refundTransaction = new Transaction
+            {
+                FromUserId = admin.Id,
+                ToUserId = booking.UserId,
+                BookingId = booking.Id,
+                BankAccountId = null,
+                TypeId = refundType.Id,
+                Status = TransactionStatusEnum.Completed,
+                Amount = booking.TotalAmount, // Full refund
+                Description = "Hoàn tiền do chủ xe không phản hồi",
+                BalanceAfter = booking.User.Balance + booking.TotalAmount
+            };
+
             booking.IsRefund = true;
-            booking.RefundAmount = booking.TotalAmount; // Provide 100% refund
+            booking.RefundAmount = booking.TotalAmount;
+            booking.RefundDate = DateTimeOffset.UtcNow;
+
+            booking.User.Balance += booking.TotalAmount;
+            admin.Balance -= booking.TotalAmount;
+
+            context.Transactions.Add(refundTransaction);
         }
 
         await context.SaveChangesAsync(CancellationToken.None);
