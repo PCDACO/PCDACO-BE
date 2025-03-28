@@ -313,14 +313,6 @@ public sealed class CreateBooking
                 .WithMessage("Phải chọn thời gian kết thúc thuê")
                 .GreaterThan(x => x.StartTime)
                 .WithMessage("Thời gian kết thúc thuê phải sau thời gian bắt đầu thuê")
-                .Must(
-                    (command, endTime) =>
-                    {
-                        var duration = (int)(endTime - command.StartTime).TotalDays;
-                        return duration > 0 && duration <= MAX_BOOKING_DAYS;
-                    }
-                )
-                .WithMessage($"Thời gian thuê phải từ 1 đến {MAX_BOOKING_DAYS} ngày")
                 .Must(time => time.Hour >= EARLIST_HOUR && time.Hour <= LATEST_HOUR)
                 .WithMessage($"Thời gian kết thúc thuê phải từ {EARLIST_HOUR}h đến {LATEST_HOUR}h");
         }
