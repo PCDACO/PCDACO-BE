@@ -1,7 +1,6 @@
 using Carter;
 using MediatR;
 using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
 using UseCases.UC_Contract.Queries;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
@@ -19,7 +18,7 @@ public class GetCarContractEndpoint : ICarterModule
                 new(operation)
                 {
                     Description = """
-                    Retrieve the car inspection contract in PDF format.
+                    Retrieve the car inspection contract in HTML format.
 
                     Contract includes:
                     - Contract details and date
@@ -30,22 +29,21 @@ public class GetCarContractEndpoint : ICarterModule
                     - GPS device information (if approved)
 
                     Notes:
-                    - Returns PDF file for download
-                    - File name format: HopDongKiemDinh_[timestamp].pdf
-                    - All sensitive information is decrypted in the PDF
+                    - Returns HTML content for display
+                    - All sensitive information is decrypted in the HTML
                     """,
 
                     Responses =
                     {
                         ["200"] = new()
                         {
-                            Description = "Success - Returns PDF file",
+                            Description = "Success - Returns HTML content",
                             Content =
                             {
-                                ["application/pdf"] = new()
+                                ["text/html"] = new()
                                 {
-                                    Schema = new() { Type = "string", Format = "binary" },
-                                    Example = new OpenApiString("PDF file content")
+                                    Schema = new() { Type = "string" },
+                                    Example = new OpenApiString("<html>...</html>")
                                 }
                             }
                         },
@@ -77,6 +75,6 @@ public class GetCarContractEndpoint : ICarterModule
         if (!result.IsSuccess)
             return Results.NotFound(result.Errors);
 
-        return Results.File(result.Value.PdfFile, "application/pdf", result.Value.FileName);
+        return Results.Content(result.Value.HtmlContent, "text/html");
     }
 }

@@ -1,11 +1,9 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Shared;
-using Domain.Shared.ContractTemplates;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
-using UseCases.Services.PdfService;
 using UseCases.Utils;
 using static Domain.Shared.ContractTemplates.CarContractTemplateGenerator;
 
@@ -15,11 +13,10 @@ public sealed class GetCarContract
 {
     public sealed record Query(Guid Id) : IRequest<Result<Response>>;
 
-    public sealed record Response(byte[] PdfFile, string FileName);
+    public sealed record Response(string HtmlContent);
 
     internal sealed class Handler(
         IAppDBContext context,
-        IPdfService pdfService,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings
@@ -64,7 +61,7 @@ public sealed class GetCarContract
                 OwnerName = contract.Car.Owner.Name,
                 OwnerLicenseNumber = decryptedOwnerLicenseNumber,
                 OwnerAddress = contract.Car.Owner.Address,
-                TechnicianName = contract.Technician?.Name,
+                TechnicianName = contract.Technician?.Name ?? string.Empty,
                 TechnicianLicenseNumber = decryptedTechnicianLicenseNumber,
                 CarManufacturer = contract.Car.Model.Name,
                 CarLicensePlate = decryptedCarLicensePlate,
@@ -73,21 +70,14 @@ public sealed class GetCarContract
                 CarDescription = contract.Car.Description,
                 CarPrice = contract.Car.Price,
                 CarTerms = contract.Car.Terms,
-                InspectionResults = contract.InspectionResults,
+                InspectionResults = contract.InspectionResults ?? string.Empty,
                 InspectionPhotos = [],
-                // contract.Photos.ToDictionary(p => p.Type, p => p.PhotoUrl),
-                GPSDeviceId = contract.GPSDeviceId?.ToString()
+                GPSDeviceId = contract.GPSDeviceId?.ToString() ?? string.Empty
             };
 
             string html = GenerateFullContractHtml(contractTemplate);
 
-            var pdfFile = pdfService.ConvertHtmlToPdf(html);
-
-            var contractDateUnixTime = contractDate.ToUnixTimeSeconds();
-
-            string fileName = $"HopDongKiemDinh_{contractDateUnixTime}.pdf";
-
-            return Result.Success(new Response(pdfFile, fileName));
+            return Result.Success(new Response(html));
         }
 
         private async Task<string> DecryptOwnerLicenseNumber(CarContract contract)

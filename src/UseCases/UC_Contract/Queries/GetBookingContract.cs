@@ -5,7 +5,6 @@ using Domain.Shared.ContractTemplates;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
-using UseCases.Services.PdfService;
 using UseCases.Utils;
 
 namespace UseCases.UC_Contract.Queries;
@@ -14,11 +13,10 @@ public sealed class GetBookingContract
 {
     public sealed record Query(Guid Id) : IRequest<Result<Response>>;
 
-    public sealed record Response(byte[] PdfFile, string FileName);
+    public sealed record Response(string HtmlContent);
 
     internal sealed class Handler(
         IAppDBContext context,
-        IPdfService pdfService,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings
@@ -88,13 +86,7 @@ public sealed class GetBookingContract
 
             string html = ContractTemplateGenerator.GenerateFullContractHtml(contractTemplate);
 
-            var pdfFile = pdfService.ConvertHtmlToPdf(html);
-
-            var contractDateUnixTime = contractDate.ToUnixTimeSeconds();
-
-            string fileName = $"HopDongThueXe_{contractDateUnixTime}.pdf";
-
-            return Result.Success(new Response(pdfFile, fileName));
+            return Result.Success(new Response(html));
         }
 
         private async Task<string> DecryptDriverLicenseNumber(Contract contract)
