@@ -8,7 +8,6 @@ public class BookingReport : BaseEntity
 {
     public Guid BookingId { get; set; }
     public Guid ReportedById { get; set; }
-    public Guid? InspectionScheduleId { get; set; }
     public required string Title { get; set; }
     public BookingReportType ReportType { get; set; }
     public string Description { get; set; } = string.Empty;
@@ -36,7 +35,6 @@ public class BookingReport : BaseEntity
     [ForeignKey(nameof(CompensationPaidUserId))]
     public User? CompensationPaidUser { get; set; }
 
-    [ForeignKey(nameof(InspectionScheduleId))]
     public InspectionSchedule? InspectionSchedule { get; set; }
 
     public ICollection<ImageReport> ImageReports { get; set; } = [];
