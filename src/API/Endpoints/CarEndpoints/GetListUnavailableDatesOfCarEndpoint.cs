@@ -2,6 +2,7 @@ using API.Utils;
 using Ardalis.Result;
 using Carter;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Any;
 using UseCases.UC_Car.Queries;
 using IResult = Microsoft.AspNetCore.Http.IResult;
@@ -30,6 +31,12 @@ public class GetListUnavailableDatesOfCarEndpoint : ICarterModule
                     - Used for displaying blocked dates in booking calendars
                     - Shows dates explicitly marked as unavailable by the car owner
                     - Does not include dates that are unavailable due to existing bookings
+                    - Can filter results by month and year
+
+                    Parameters:
+                    - id: Car ID
+                    - month (optional): Filter by month (1-12)
+                    - year (optional): Filter by year (defaults to current year if only month is specified)
 
                     Response:
                     - List of dates when the car is marked as unavailable
@@ -53,16 +60,33 @@ public class GetListUnavailableDatesOfCarEndpoint : ICarterModule
                                                 ["date"] = new OpenApiString(
                                                     "2024-07-15T00:00:00Z"
                                                 ),
+                                                ["isAvailable"] = new OpenApiBoolean(false),
                                             },
                                             new OpenApiObject
                                             {
                                                 ["date"] = new OpenApiString(
                                                     "2024-07-16T00:00:00Z"
                                                 ),
+                                                ["isAvailable"] = new OpenApiBoolean(false),
                                             },
                                         },
                                         ["isSuccess"] = new OpenApiBoolean(true),
                                         ["message"] = new OpenApiString("Lấy dữ liệu thành công"),
+                                    },
+                                },
+                            },
+                        },
+                        ["400"] = new()
+                        {
+                            Description = "Bad Request - Invalid parameters",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["message"] = new OpenApiString("Tháng không hợp lệ"),
                                     },
                                 },
                             },
@@ -88,10 +112,15 @@ public class GetListUnavailableDatesOfCarEndpoint : ICarterModule
             );
     }
 
-    private async Task<IResult> Handle(ISender sender, Guid id)
+    private async Task<IResult> Handle(
+        ISender sender,
+        Guid id,
+        [FromQuery] int? month = null,
+        [FromQuery] int? year = null
+    )
     {
         Result<List<GetListUnavailableDatesOfCar.Response>> result = await sender.Send(
-            new GetListUnavailableDatesOfCar.Query(id)
+            new GetListUnavailableDatesOfCar.Query(id, month, year)
         );
 
         return result.MapResult();
