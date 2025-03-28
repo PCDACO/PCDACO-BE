@@ -125,7 +125,7 @@ public class AssignCompensationUser
                 return;
 
             var report = await context.BookingReports.FirstOrDefaultAsync(
-                r => r.Id == reportId && (bool)r.IsCompensationPaid!,
+                r => r.Id == reportId && (bool)!r.IsCompensationPaid!,
                 cancellationToken
             );
 
