@@ -65,7 +65,7 @@ public class SetCarUnavailability
                 var carAvailability = new CarAvailability
                 {
                     CarId = request.CarId,
-                    Date = request.Date.Date,
+                    Date = request.Date,
                     IsAvailable = request.IsAvailable,
                 };
 
