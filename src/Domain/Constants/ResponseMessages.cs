@@ -105,4 +105,5 @@ public class ResponseMessages
 
     // Report
     public const string ReportNotFound = "Không tìm thấy báo cáo";
+    public const string ReportNotUnderReviewed = "Báo cáo không ở trạng thái đang chờ duyệt";
 }
