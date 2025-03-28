@@ -161,9 +161,15 @@ public sealed class CancelBooking
                 BalanceAfter = booking.User.Balance + refundAmount
             };
 
-            // Update balances
-            admin.Balance -= adminRefundAmount;
+            var ownerAvailableBalance = booking.Car.Owner.Balance - booking.Car.Owner.LockedBalance;
+            if (ownerAvailableBalance < ownerRefundAmount)
+            {
+                // If owner has insufficient available balance, take from locked balance
+                booking.Car.Owner.LockedBalance -= ownerRefundAmount;
+            }
+
             booking.Car.Owner.Balance -= ownerRefundAmount;
+            admin.Balance -= adminRefundAmount;
             booking.User.Balance += refundAmount;
 
             // Update booking refund info
