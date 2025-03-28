@@ -81,11 +81,13 @@ public class UpdateDatabase
                 users,
                 bankAccounts
             );
+            Booking[] bookings = BookingGenerator.Execute(users, cars, userRoles, 20);
             Transaction[] transactions = TransactionGenerator.Execute(
                 users,
                 transactionTypes,
                 bankAccounts
             );
+            BookingReport[] reports = BookingReportGenerator.Execute(bookings, users, cars);
             tasks.Add(context.AddRangeAsync(userRoles));
             tasks.Add(context.AddRangeAsync(amenities));
             tasks.Add(context.AddRangeAsync(bankInfos));
@@ -101,7 +103,9 @@ public class UpdateDatabase
             tasks.Add(context.AddRangeAsync(gpsDevices));
             tasks.Add(context.AddRangeAsync(bankAccounts));
             tasks.Add(context.AddRangeAsync(withdrawalRequests));
+            tasks.Add(context.AddRangeAsync(bookings));
             tasks.Add(context.AddRangeAsync(transactions));
+            tasks.Add(context.AddRangeAsync(reports));
             await Task.WhenAll(tasks);
             await context.SaveChangesAsync();
         }
