@@ -1,7 +1,13 @@
+using Markdig;
+
 namespace Domain.Shared.ContractTemplates;
 
 public static class ContractTemplateGenerator
 {
+    private static readonly MarkdownPipeline Pipeline = new MarkdownPipelineBuilder()
+        .UseAdvancedExtensions()
+        .Build();
+
     public class ContractTemplate
     {
         public required string ContractNumber { get; set; }
@@ -166,9 +172,19 @@ public static class ContractTemplateGenerator
                     </p>
                 </div>";
 
+        string renderedCarTerms = string.IsNullOrWhiteSpace(contractTemplate.CarTerms)
+            ? string.Empty
+            : Markdown.ToHtml(contractTemplate.CarTerms, Pipeline);
+
         string fullContractTerms = string.IsNullOrWhiteSpace(contractTemplate.CarTerms)
             ? standardClauses
-            : $"<div class='custom-terms'>{contractTemplate.CarTerms}</div><br/>{standardClauses}";
+            : $@"<div class='custom-terms'>
+                    <div class='markdown-content'>
+                        {renderedCarTerms}
+                    </div>
+                </div>
+                <br/>
+                {standardClauses}";
 
         // Return the complete HTML template.
         return @$"
@@ -265,6 +281,41 @@ public static class ContractTemplateGenerator
                                     font-size: 13px;
                                     color: #777;
                                     margin-top: 30px;
+                                }}
+                                .markdown-content {{
+                                    padding: 15px;
+                                    background-color: #f8f9fa;
+                                    border-radius: 4px;
+                                }}
+                                .markdown-content h1,
+                                .markdown-content h2,
+                                .markdown-content h3,
+                                .markdown-content h4,
+                                .markdown-content h5,
+                                .markdown-content h6 {{
+                                    margin-top: 1em;
+                                    margin-bottom: 0.5em;
+                                    color: #2c3e50;
+                                }}
+                                .markdown-content p {{
+                                    margin: 0.5em 0;
+                                }}
+                                .markdown-content ul,
+                                .markdown-content ol {{
+                                    padding-left: 1.5em;
+                                    margin: 0.5em 0;
+                                }}
+                                .markdown-content code {{
+                                    background-color: #f1f1f1;
+                                    padding: 0.2em 0.4em;
+                                    border-radius: 3px;
+                                    font-family: monospace;
+                                }}
+                                .markdown-content blockquote {{
+                                    border-left: 4px solid #ddd;
+                                    padding-left: 1em;
+                                    margin: 1em 0;
+                                    color: #666;
                                 }}
                             </style>
                         </head>
