@@ -6,6 +6,7 @@ namespace Domain.Entities;
 public class GPSDevice : BaseEntity
 {
     public DeviceStatusEnum Status { get; set; } = DeviceStatusEnum.Available;
+    public string OSBuildId { get; set; } = string.Empty;
     public required string Name { get; set; }
 
     // Navigation

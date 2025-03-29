@@ -80,6 +80,7 @@ public class DatabaseTestBase : IAsyncLifetime
     public async Task ResetDatabaseAsync()
     {
         await _respawner.ResetAsync(_dbConnection);
+        DbContext.ChangeTracker.Clear();
     }
 
     public async Task DisposeAsync()
