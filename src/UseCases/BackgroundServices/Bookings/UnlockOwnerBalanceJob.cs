@@ -16,14 +16,22 @@ public class UnlockOwnerBalanceJob(IAppDBContext context)
         if (booking == null)
             return;
 
-        // Only unlock if the booking is completed or past cancellation period
+        // Only unlock if:
+        // 1. Booking is completed
+        // 2. Past cancellation period (3 days before start)
+        // 3. More than half of booking duration has passed (no early return refund possible)
         if (
             booking.Status == BookingStatusEnum.Completed
             || (booking.StartTime - DateTimeOffset.UtcNow).TotalDays <= 3
-        ) // Using 3 days as minimum refund period
+            || (DateTimeOffset.UtcNow - booking.StartTime).TotalDays
+                > Math.Ceiling((booking.EndTime - booking.StartTime).TotalDays) / 2
+        )
         {
             var ownerEarningAmount = booking.BasePrice;
-            booking.Car.Owner.LockedBalance = Math.Max(0, booking.Car.Owner.LockedBalance - ownerEarningAmount);
+            booking.Car.Owner.LockedBalance = Math.Max(
+                0,
+                booking.Car.Owner.LockedBalance - ownerEarningAmount
+            );
         }
 
         await context.SaveChangesAsync(CancellationToken.None);

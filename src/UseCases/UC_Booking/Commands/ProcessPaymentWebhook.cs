@@ -128,11 +128,22 @@ public sealed class ProcessPaymentWebhook
                     )
             );
 
-            // Schedule balance unlock job for 7 days after booking start
-            // (or after the last possible cancellation date)
+            // Schedule balance unlock job for the later of:
+            // 1. 3 days before start (cancellation period)
+            // 2. Half of the booking duration (early return refund period)
+            var bookingDuration = (booking.EndTime - booking.StartTime).TotalDays;
+            var halfwayPoint = booking.StartTime.AddDays(Math.Ceiling(bookingDuration / 2));
+            var unlockDate = new DateTimeOffset(
+                Math.Max(
+                    booking.StartTime.AddDays(-3).Ticks, // Cancellation period
+                    halfwayPoint.Ticks // Early return period
+                ),
+                TimeSpan.Zero
+            );
+
             BackgroundJob.Schedule<UnlockOwnerBalanceJob>(
                 job => job.UnlockBalance(booking.Id),
-                booking.StartTime.AddDays(-3) // Schedule for when minimum refund period starts
+                unlockDate
             );
 
             return Result.Success();

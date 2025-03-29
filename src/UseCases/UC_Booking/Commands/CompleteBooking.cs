@@ -1,12 +1,12 @@
 using Ardalis.Result;
+using Domain.Constants;
+using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
 using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using NetTopologySuite;
-using NetTopologySuite.Geometries;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Services.EmailService;
@@ -35,9 +35,6 @@ public sealed class CompleteBooking
         CurrentUser currentUser
     ) : IRequestHandler<Command, Result<Response>>
     {
-        private static readonly GeometryFactory GeometryFactory =
-            NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-        private const int SRID = 4326; // WGS84 coordinate system
         private const decimal MAX_ALLOWED_DISTANCE_METERS = 100;
         private const decimal EARLY_RETURN_REFUND_PERCENTAGE = 0.5m; // 50% refund for unused days if less than half of total days
         private const decimal LATE_RETURN_PENALTY_MULTIPLIER = 1.2m; // 120% of daily rate for late days
@@ -117,11 +114,78 @@ public sealed class CompleteBooking
 
             var dailyRate = booking.BasePrice / totalBookingDays;
 
-            // Early Return Case
+            var refundType = await context.TransactionTypes.FirstAsync(
+                t => t.Name == TransactionTypeNames.Refund,
+                cancellationToken
+            );
+
+            var admin = await context.Users.FirstOrDefaultAsync(
+                u => u.Role.Name == UserRoleNames.Admin,
+                cancellationToken
+            );
+
+            if (admin == null)
+                return Result.Error("Không tìm thấy admin");
+
+            // Early Return Case with 50% refund
             if (actualDays < (totalBookingDays / 2) && actualDays >= 1)
             {
                 unusedDays = totalBookingDays - actualDays;
-                refundAmount = dailyRate * unusedDays * EARLY_RETURN_REFUND_PERCENTAGE;
+                // Calculate refund as 50% of total booking amount
+                refundAmount = booking.TotalAmount * EARLY_RETURN_REFUND_PERCENTAGE;
+
+                // Calculate refund portions
+                var adminRefundAmount = refundAmount * 0.1m; // 10% from admin
+                var ownerRefundAmount = refundAmount * 0.9m; // 90% from owner
+
+                // Create refund transactions
+                var adminRefundTransaction = new Transaction
+                {
+                    FromUserId = admin.Id,
+                    ToUserId = booking.UserId,
+                    BookingId = booking.Id,
+                    BankAccountId = null,
+                    TypeId = refundType.Id,
+                    Status = TransactionStatusEnum.Completed,
+                    Amount = adminRefundAmount,
+                    Description = "Hoàn tiền từ Admin: Trả xe sớm",
+                    BalanceAfter = booking.User.Balance + adminRefundAmount
+                };
+
+                var ownerRefundTransaction = new Transaction
+                {
+                    FromUserId = booking.Car.OwnerId,
+                    ToUserId = booking.UserId,
+                    BookingId = booking.Id,
+                    BankAccountId = null,
+                    TypeId = refundType.Id,
+                    Status = TransactionStatusEnum.Completed,
+                    Amount = ownerRefundAmount,
+                    Description = "Hoàn tiền từ Chủ xe: Trả xe sớm",
+                    BalanceAfter = booking.User.Balance + refundAmount
+                };
+
+                // Update balances
+                admin.Balance -= adminRefundAmount;
+
+                // Handle owner's locked balance
+                var ownerLockedBalance = booking.Car.Owner.LockedBalance;
+                if (ownerLockedBalance >= ownerRefundAmount)
+                {
+                    booking.Car.Owner.LockedBalance -= ownerRefundAmount;
+                }
+                else
+                {
+                    // If locked balance is insufficient, take the rest from available balance
+                    var remainingRefund = ownerRefundAmount - ownerLockedBalance;
+                    booking.Car.Owner.LockedBalance = 0;
+                    booking.Car.Owner.Balance -= remainingRefund;
+                }
+
+                booking.Car.Owner.Balance -= ownerRefundAmount;
+                booking.User.Balance += refundAmount;
+
+                context.Transactions.AddRange(adminRefundTransaction, ownerRefundTransaction);
             }
             // Late Return Case
             else if (overtimeHours > GRACE_PERIOD_HOURS)
@@ -151,6 +215,13 @@ public sealed class CompleteBooking
             {
                 booking.IsRefund = true;
                 booking.RefundAmount = refundAmount;
+                booking.RefundDate = DateTimeOffset.UtcNow;
+            }
+
+            // Unlock remaining balance for the owner
+            if (booking.Car.Owner.LockedBalance > 0)
+            {
+                booking.Car.Owner.LockedBalance = 0; // Release all locked balance since booking is completed
             }
 
             await context.SaveChangesAsync(cancellationToken);
