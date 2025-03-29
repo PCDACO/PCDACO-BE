@@ -293,7 +293,7 @@ public sealed class CreateBooking
     {
         private const int MAX_BOOKING_DAYS = 30;
         private const double MIN_HOURS_BEFORE_START = 1.5;
-        private const int EARLIST_HOUR = 7;
+        private const int EARLIST_HOUR = 6;
         private const int LATEST_HOUR = 22;
 
         public Validator()
@@ -306,7 +306,15 @@ public sealed class CreateBooking
                 .GreaterThan(DateTime.UtcNow.AddHours(MIN_HOURS_BEFORE_START))
                 .WithMessage("Thời gian bắt đầu thuê phải sau một tiếng rưỡi")
                 .Must(time => time.Hour >= EARLIST_HOUR && time.Hour <= LATEST_HOUR)
-                .WithMessage($"Thời gian bắt đầu thuê phải từ {EARLIST_HOUR}h đến {LATEST_HOUR}h");
+                .WithMessage($"Thời gian bắt đầu thuê phải từ {EARLIST_HOUR}h đến {LATEST_HOUR}h")
+                .Must(
+                    (command, endTime) =>
+                    {
+                        var duration = (int)(endTime - command.StartTime).TotalDays;
+                        return duration <= MAX_BOOKING_DAYS;
+                    }
+                )
+                .WithMessage($"Thời gian thuê phải từ 1 đến {MAX_BOOKING_DAYS} ngày");
 
             RuleFor(x => x.EndTime)
                 .NotEmpty()
