@@ -57,7 +57,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         var device = await _dbContext.GPSDevices.FirstOrDefaultAsync(d => d.OSBuildId == osBuildId);
         Assert.NotNull(device);
         Assert.Equal(deviceName, device.Name);
-        Assert.Equal(DeviceStatusEnum.Available, device.Status);
+        Assert.Equal(DeviceStatusEnum.InUsed, device.Status);
 
         // Verify CarGPS was created
         var carGPS = await _dbContext.CarGPSes.FirstOrDefaultAsync(c =>
@@ -267,6 +267,99 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.False(restoredCarGPS.IsDeleted);
         Assert.Equal(newLatitude, restoredCarGPS.Location.Y, 6);
         Assert.Equal(newLongitude, restoredCarGPS.Location.X, 6);
+    }
+
+    [Fact]
+    public async Task Handle_ExistingDeviceNotAvailable_ReturnsError()
+    {
+        // Arrange
+        var (car, _) = await SetupTestCar();
+
+        // Create an existing device with InUsed status
+        string existingOsBuildId = "BUSY-DEVICE";
+        var existingDevice = new GPSDevice
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            OSBuildId = existingOsBuildId,
+            Name = "Busy Device",
+            Status = DeviceStatusEnum.InUsed, // Device is not available
+            IsDeleted = false,
+        };
+
+        await _dbContext.GPSDevices.AddAsync(existingDevice);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory);
+        var command = new AssignDeviceToCar.Command(
+            CarId: car.Id,
+            OSBuildId: existingOsBuildId,
+            DeviceName: "Updated Device Name",
+            Longtitude: 106.7004238,
+            Latitude: 10.7756587
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(ResponseMessages.GPSDeviceIsNotAvailable, result.Errors);
+
+        // Verify no CarGPS was created
+        var carGPSCount = await _dbContext.CarGPSes.CountAsync(c => c.CarId == car.Id);
+        Assert.Equal(0, carGPSCount);
+
+        // Verify device status hasn't changed
+        var unchangedDevice = await _dbContext.GPSDevices.FindAsync(existingDevice.Id);
+        Assert.NotNull(unchangedDevice);
+        Assert.Equal(DeviceStatusEnum.InUsed, unchangedDevice.Status);
+    }
+
+    [Fact]
+    public async Task Handle_UpdatesDeviceStatusToInUsed_WhenAssigned()
+    {
+        // Arrange
+        var (car, _) = await SetupTestCar();
+
+        // Create an available device
+        string deviceOsBuildId = "AVAILABLE-DEVICE";
+        var availableDevice = new GPSDevice
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            OSBuildId = deviceOsBuildId,
+            Name = "Available Device",
+            Status = DeviceStatusEnum.Available, // Device is available
+            IsDeleted = false,
+        };
+
+        await _dbContext.GPSDevices.AddAsync(availableDevice);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory);
+        var command = new AssignDeviceToCar.Command(
+            CarId: car.Id,
+            OSBuildId: deviceOsBuildId,
+            DeviceName: "Device Name",
+            Longtitude: 106.7004238,
+            Latitude: 10.7756587
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+
+        // Verify device status is changed to InUsed after assignment
+        var updatedDevice = await _dbContext.GPSDevices.FindAsync(availableDevice.Id);
+        Assert.NotNull(updatedDevice);
+        Assert.Equal(DeviceStatusEnum.InUsed, updatedDevice.Status);
+
+        // Verify CarGPS was created
+        var carGPS = await _dbContext.CarGPSes.FirstOrDefaultAsync(c =>
+            c.CarId == car.Id && c.DeviceId == availableDevice.Id
+        );
+        Assert.NotNull(carGPS);
     }
 
     [Fact]

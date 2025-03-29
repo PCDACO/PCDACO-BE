@@ -27,30 +27,38 @@ public class AssignDeviceToCar
         {
             // check car
             Car? gettingCar = await context
-                .Cars.AsNoTracking()
-                .Where(c => !c.IsDeleted)
+                .Cars.Where(c => !c.IsDeleted)
                 .Where(c => c.Id == request.CarId)
                 .FirstOrDefaultAsync(cancellationToken);
             if (gettingCar is null)
                 return Result.Error(ResponseMessages.CarNotFound);
             // check device
             GPSDevice? gettingDevice = await context
-                .GPSDevices.AsNoTracking()
-                .Where(d => !d.IsDeleted)
-                .Where(d => d.OSBuildId == request.OSBuildId)
+                .GPSDevices.Where(d => d.OSBuildId == request.OSBuildId)
                 .FirstOrDefaultAsync(cancellationToken);
+
             // add new device
-            if (gettingDevice is null)
+            if (gettingDevice is not null)
             {
-                gettingDevice = new GPSDevice
+                if (gettingDevice.Status != DeviceStatusEnum.Available)
+                {
+                    return Result.Error(ResponseMessages.GPSDeviceIsNotAvailable);
+                }
+                gettingDevice.Status = DeviceStatusEnum.InUsed;
+            }
+            else
+            {
+                gettingDevice = new GPSDevice()
                 {
                     OSBuildId = request.OSBuildId,
                     Name = request.DeviceName,
-                    Status = DeviceStatusEnum.Available,
+                    Status = DeviceStatusEnum.InUsed,
                 };
-                context.GPSDevices.Add(gettingDevice);
+                await context.GPSDevices.AddAsync(gettingDevice, cancellationToken);
+                await context.SaveChangesAsync(cancellationToken);
             }
-            // check car gps checking status
+
+            /// assign device to car
             CarGPS? checkingCarGPS = await context
                 .CarGPSes.Where(c => c.CarId == request.CarId)
                 .Where(c => c.DeviceId == gettingDevice.Id)
@@ -75,7 +83,7 @@ public class AssignDeviceToCar
                         new Coordinate(request.Longtitude, request.Latitude)
                     ),
                 };
-                context.CarGPSes.Add(checkingCarGPS);
+                await context.CarGPSes.AddAsync(checkingCarGPS, cancellationToken);
             }
             await context.SaveChangesAsync(cancellationToken);
             return Result.SuccessWithMessage(ResponseMessages.Created);
