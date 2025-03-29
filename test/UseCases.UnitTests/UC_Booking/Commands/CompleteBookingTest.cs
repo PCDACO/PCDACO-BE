@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
 using Hangfire;
@@ -138,6 +139,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        UserRole adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
 
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         var driver = await TestDataCreateUser.CreateTestUser(
@@ -145,7 +147,15 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             driverRole,
             "driver@test.com"
         );
+        var admin = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            adminRole,
+            "admin@test.com"
+        );
         _currentUser.SetUser(driver);
+
+        // Setup transaction types
+        await TestDataTransactionType.InitializeTestTransactionTypes(_dbContext);
 
         // Setup car and booking
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
