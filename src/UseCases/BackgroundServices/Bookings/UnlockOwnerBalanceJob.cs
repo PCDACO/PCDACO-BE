@@ -23,7 +23,7 @@ public class UnlockOwnerBalanceJob(IAppDBContext context)
         ) // Using 3 days as minimum refund period
         {
             var ownerEarningAmount = booking.BasePrice;
-            booking.Car.Owner.LockedBalance -= ownerEarningAmount;
+            booking.Car.Owner.LockedBalance = Math.Max(0, booking.Car.Owner.LockedBalance - ownerEarningAmount);
         }
 
         await context.SaveChangesAsync(CancellationToken.None);
