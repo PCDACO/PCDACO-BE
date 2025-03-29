@@ -22,8 +22,9 @@ public class UpdateDatabase
         if (context is null)
             throw new ArgumentNullException(nameof(context));
         //init needed objects
-        //context.Database.EnsureDeleted();
-        //context.Database.Migrate();
+        //
+        context.Database.EnsureDeleted();
+        context.Database.Migrate();
         List<Task> tasks = [];
         UserRole[] userRoles = [];
         //check if there is no data in db then update db
