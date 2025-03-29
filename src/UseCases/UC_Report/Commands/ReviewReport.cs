@@ -40,6 +40,7 @@ public class ReviewReport
                 return Result.Error("Báo cáo đã được xử lý");
 
             report.Status = BookingReportStatus.UnderReview;
+            report.ResolvedById = currentUser.User.Id;
 
             await context.SaveChangesAsync(cancellationToken);
 
