@@ -1,15 +1,9 @@
 using API.Utils;
-
 using Ardalis.Result;
-
 using Carter;
-
 using MediatR;
-
 using UseCases.UC_GPSDevice.Commands;
-
 using IResult = Microsoft.AspNetCore.Http.IResult;
-
 
 namespace API.Endpoints.CarGpsEndpoints;
 
@@ -22,18 +16,24 @@ public class AssignDeviceToCarEndpoint : ICarterModule
             .WithTags("Cars")
             .RequireAuthorization();
     }
+
     private async Task<IResult> Handle(ISender sender, Guid id, AssignDeviceToCarRequest request)
     {
-        Result result = await sender.Send(new AssignDeviceToCar.Command(
-            CarId: id,
-            Longtitude: request.Longtitude!.Value,
-            Latitude: request.Latitude!.Value,
-            DeviceId: request.DeviceId
-        ));
+        Result result = await sender.Send(
+            new AssignDeviceToCar.Command(
+                CarId: id,
+                Longtitude: request.Longtitude!.Value,
+                Latitude: request.Latitude!.Value,
+                OSBuildId: request.OSBuildId,
+                DeviceName: request.DeviceName
+            )
+        );
         return result.MapResult();
     }
+
     private record AssignDeviceToCarRequest(
-        Guid DeviceId,
+        string OSBuildId,
+        string DeviceName,
         double? Longtitude,
         double? Latitude
     );
