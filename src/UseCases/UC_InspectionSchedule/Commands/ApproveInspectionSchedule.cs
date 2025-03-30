@@ -51,8 +51,13 @@ public sealed class ApproveInspectionSchedule
                 return Result.Forbidden("Bạn không phải là kiểm định viên được chỉ định");
 
             // Check if schedule can be updated
-            if (schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.Signed)
-                return Result.Error(ResponseMessages.OnlyUpdateInSignedInspectionSchedule);
+            if (
+                schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.Signed
+                && schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.InProgress
+            )
+                return Result.Error(
+                    ResponseMessages.OnlyUpdateSignedOrInprogressInspectionSchedule
+                );
 
             // Verify only datetimeoffset.utcnow faster than schedule.InspectionDate 1 hour above can not update
             if (DateTimeOffset.UtcNow > schedule.InspectionDate.AddHours(1))

@@ -131,7 +131,7 @@ public class ApproveInspectionScheduleEndpoint : ICarterModule
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
-                                            ResponseMessages.OnlyUpdateInSignedInspectionSchedule
+                                            ResponseMessages.OnlyUpdateSignedOrInprogressInspectionSchedule
                                         ),
                                     },
                                 },
