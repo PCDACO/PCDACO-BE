@@ -12,6 +12,8 @@ using UseCases.DTOs;
 using UseCases.UC_Car.Queries;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
+using UseCases.Utils;
+
 using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Car.Queries;
@@ -37,11 +39,11 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
-        var admin = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
+        var admin = await CreateUserWithEncryptedPhone(adminRole.Id);
         _currentUser.SetUser(admin);
 
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var owner = await CreateUserWithEncryptedPhone(ownerRole.Id, "owner@test.com");
 
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
@@ -112,11 +114,11 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
-        var admin = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
+        var admin = await CreateUserWithEncryptedPhone(adminRole.Id);
         _currentUser.SetUser(admin);
 
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var owner = await CreateUserWithEncryptedPhone(ownerRole.Id, "owner@test.com");
 
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
@@ -188,11 +190,11 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
-        var admin = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
+        var admin = await CreateUserWithEncryptedPhone(adminRole.Id);
         _currentUser.SetUser(admin);
 
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var owner = await CreateUserWithEncryptedPhone(ownerRole.Id, "owner@test.com");
 
         // Create manufacturers and models with specific names
         var manufacturer1 = await TestDataCreateManufacturer.CreateTestManufacturer(
@@ -264,11 +266,11 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
-        var admin = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
+        var admin = await CreateUserWithEncryptedPhone(adminRole.Id);
         _currentUser.SetUser(admin);
 
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var owner = await CreateUserWithEncryptedPhone(ownerRole.Id, "owner@test.com");
 
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
@@ -355,11 +357,11 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
-        var admin = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
+        var admin = await CreateUserWithEncryptedPhone(adminRole.Id);
         _currentUser.SetUser(admin);
 
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var owner = await CreateUserWithEncryptedPhone(ownerRole.Id, "owner@test.com");
 
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
         var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
@@ -408,15 +410,11 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
     {
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
-        var admin = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
+        var admin = await CreateUserWithEncryptedPhone(adminRole.Id);
         _currentUser.SetUser(admin);
 
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        var owner = await TestDataCreateUser.CreateTestUser(
-            _dbContext,
-            ownerRole,
-            "owner@test.com"
-        );
+        var owner = await CreateUserWithEncryptedPhone(ownerRole.Id, "owner@test.com");
 
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(
             _dbContext,
@@ -640,6 +638,48 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         await _dbContext.CarAmenities.AddAsync(carAmenity);
         await _dbContext.SaveChangesAsync();
+    }
+
+    private async Task<User> CreateUserWithEncryptedPhone(
+        Guid roleId,
+        string email = "test@example.com",
+        string name = "Test User",
+        string phoneNumber = "0123456789"
+    )
+    {
+        // Generate encryption key and encrypt phone number
+        (string key, string iv) = await _keyService.GenerateKeyAsync();
+        string encryptedPhoneNumber = await _aesService.Encrypt(phoneNumber, key, iv);
+        string encryptedKey = _keyService.EncryptKey(key, _encryptionSettings.Key);
+
+        // Create encryption key
+        var encryptionKey = new EncryptionKey
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            EncryptedKey = encryptedKey,
+            IV = iv,
+        };
+        await _dbContext.EncryptionKeys.AddAsync(encryptionKey);
+        await _dbContext.SaveChangesAsync();
+
+        // Create user with encrypted phone number
+        var user = new User
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            Name = name,
+            Password = "password".HashString(),
+            Address = "Test Address",
+            DateOfBirth = DateTime.UtcNow.AddYears(-30),
+            Email = email,
+            RoleId = roleId,
+            Phone = encryptedPhoneNumber,
+            EncryptionKeyId = encryptionKey.Id,
+        };
+
+        await _dbContext.Users.AddAsync(user);
+        await _dbContext.SaveChangesAsync();
+
+        return user;
     }
 
     #endregion
