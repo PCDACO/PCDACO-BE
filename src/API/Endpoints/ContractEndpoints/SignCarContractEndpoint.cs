@@ -1,9 +1,7 @@
 using API.Utils;
-using Ardalis.Result;
 using Carter;
 using MediatR;
 using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
 using UseCases.UC_Contract.Commands;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
@@ -26,6 +24,7 @@ public class SignCarContractEndpoint : ICarterModule
                     Requirements:
                     - Contract must exist and be in Pending status
                     - Related inspection schedule must exist and be in InProgress status
+                    - Contract can only be signed by the car owner or the assigned technician
 
                     Process:
                     - If signed by owner: Updates OwnerSignatureDate and sets status to OwnerSigned
@@ -33,6 +32,7 @@ public class SignCarContractEndpoint : ICarterModule
                     - If both have signed, inspection schedule status is updated to Signed
 
                     The system automatically detects the user role and applies the appropriate signature.
+                    Once both signatures are present, the schedule status will be updated to Signed.
 
                     Access Control:
                     - Car owners can only sign their own car contracts
@@ -69,7 +69,7 @@ public class SignCarContractEndpoint : ICarterModule
                         ["401"] = new() { Description = "Unauthorized - User not authenticated" },
                         ["403"] = new()
                         {
-                            Description = "Forbidden - Authorization error",
+                            Description = "Forbidden - User not authorized to sign this contract",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -77,17 +77,16 @@ public class SignCarContractEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["errors"] = new OpenApiArray
-                                        {
-                                            new OpenApiString("Bạn không có quyền ký hợp đồng này"),
-                                        },
+                                        ["message"] = new OpenApiString(
+                                            "Bạn không có quyền ký hợp đồng này"
+                                        ),
                                     },
                                 },
                             },
                         },
                         ["404"] = new()
                         {
-                            Description = "Not Found - Resource not found",
+                            Description = "Not Found - Contract or inspection schedule not found",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -95,10 +94,24 @@ public class SignCarContractEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["errors"] = new OpenApiArray
-                                        {
-                                            new OpenApiString("Không tìm thấy hợp đồng"),
-                                        },
+                                        ["message"] = new OpenApiString("Không tìm thấy hợp đồng"),
+                                    },
+                                },
+                            },
+                        },
+                        ["409"] = new()
+                        {
+                            Description = "Conflict - Contract not in signable state",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["message"] = new OpenApiString(
+                                            "Hợp đồng không ở trạng thái có thể ký"
+                                        ),
                                     },
                                 },
                             },

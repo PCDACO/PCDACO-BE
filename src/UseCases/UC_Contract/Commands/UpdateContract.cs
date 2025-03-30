@@ -46,6 +46,9 @@ public sealed class UpdateContract
             if (schedule.TechnicianId != currentUser.User.Id)
                 return Result.Forbidden("Bạn không phải là kiểm định viên được chỉ định");
 
+            if (schedule.Car.GPS == null)
+                return Result.Error("Xe chưa được gán thiết bị GPS");
+
             // Find or create contract
             var contract = await context.CarContracts.FirstOrDefaultAsync(
                 c => c.CarId == schedule.CarId && !c.IsDeleted,
