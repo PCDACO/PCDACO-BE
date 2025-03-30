@@ -25,6 +25,7 @@ public class GetCarsForStaffs
         string ModelName,
         Guid OwnerId,
         string OwnerName,
+        string OwnerPhoneNumber,
         string LicensePlate,
         string Color,
         int Seat,
@@ -48,21 +49,32 @@ public class GetCarsForStaffs
             IKeyManagementService keyManagementService
         )
         {
-            string decryptedKey = keyManagementService.DecryptKey(
+            string carDecryptedKey = keyManagementService.DecryptKey(
                 car.EncryptionKey.EncryptedKey,
                 masterKey
             );
             string decryptedLicensePlate = await aesEncryptionService.Decrypt(
                 car.EncryptedLicensePlate,
-                decryptedKey,
+                carDecryptedKey,
                 car.EncryptionKey.IV
             );
+            string ownerDecryptedKey = keyManagementService.DecryptKey(
+                car.Owner.EncryptionKey.EncryptedKey,
+                masterKey
+            );
+            string decryptedPhoneNumber = await aesEncryptionService.Decrypt(
+                car.Owner.Phone,
+                ownerDecryptedKey,
+                car.Owner.EncryptionKey.IV
+            );
+
             return new(
                 car.Id,
                 car.Model.Id,
                 car.Model.Name,
                 car.Owner.Id,
                 car.Owner.Name,
+                decryptedPhoneNumber,
                 decryptedLicensePlate,
                 car.Color,
                 car.Seat,
@@ -111,6 +123,7 @@ public class GetCarsForStaffs
                 .AsNoTracking()
                 .IgnoreQueryFilters()
                 .Include(c => c.Owner).ThenInclude(o => o.Feedbacks)
+                .Include(c => c.Owner).ThenInclude(o => o.EncryptionKey)
                 .Include(c => c.Model).ThenInclude(o => o.Manufacturer)
                 .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars).ThenInclude(ic => ic.Type)
