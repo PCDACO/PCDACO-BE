@@ -1,6 +1,7 @@
 using API.Utils;
 using Ardalis.Result;
 using Carter;
+using Domain.Constants;
 using MediatR;
 using Microsoft.OpenApi.Any;
 using UseCases.UC_InspectionSchedule.Commands;
@@ -130,7 +131,7 @@ public class ApproveInspectionScheduleEndpoint : ICarterModule
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
-                                            "Chỉ có thể cập nhật lịch kiểm định đang được tiến hành"
+                                            ResponseMessages.OnlyUpdateInSignedInspectionSchedule
                                         ),
                                     },
                                 },

@@ -51,8 +51,8 @@ public sealed class ApproveInspectionSchedule
                 return Result.Forbidden("Bạn không phải là kiểm định viên được chỉ định");
 
             // Check if schedule can be updated
-            if (schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.InProgress)
-                return Result.Error(ResponseMessages.OnlyUpdateInProgressInspectionSchedule);
+            if (schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.Signed)
+                return Result.Error(ResponseMessages.OnlyUpdateInSignedInspectionSchedule);
 
             // Verify only datetimeoffset.utcnow faster than schedule.InspectionDate 1 hour above can not update
             if (DateTimeOffset.UtcNow > schedule.InspectionDate.AddHours(1))
@@ -131,16 +131,6 @@ public sealed class ApproveInspectionSchedule
                     .Where(c => c.Id == schedule.CarId)
                     .ExecuteUpdateAsync(
                         c => c.SetProperty(c => c.Status, Domain.Enums.CarStatusEnum.Available),
-                        cancellationToken: cancellationToken
-                    );
-            }
-            if (!request.IsApproved)
-            {
-                await context
-                    .Cars.Where(c => !c.IsDeleted)
-                    .Where(c => c.Id == schedule.CarId)
-                    .ExecuteUpdateAsync(
-                        c => c.SetProperty(c => c.Status, Domain.Enums.CarStatusEnum.Rejected),
                         cancellationToken: cancellationToken
                     );
             }

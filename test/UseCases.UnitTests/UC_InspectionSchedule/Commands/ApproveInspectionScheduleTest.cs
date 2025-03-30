@@ -114,7 +114,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         _currentUser.SetUser(technician1);
 
         // Setup car and schedule assigned to technician2
-        var (schedule, _) = await SetupInProgressSchedule(technician2);
+        var (schedule, _) = await SetupSignedSchedule(technician2);
 
         var handler = new ApproveInspectionSchedule.Handler(
             _dbContext,
@@ -138,7 +138,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
     }
 
     [Fact]
-    public async Task Handle_ScheduleNotInProgress_ReturnsError()
+    public async Task Handle_ScheduleNotSigned_ReturnsError()
     {
         // Arrange
         var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
@@ -160,7 +160,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            Status = InspectionScheduleStatusEnum.Pending, // Not InProgress
+            Status = InspectionScheduleStatusEnum.Pending, // Not Signed
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddMinutes(30),
             CreatedBy = consultant.Id,
@@ -186,7 +186,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
 
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains(ResponseMessages.OnlyUpdateInProgressInspectionSchedule, result.Errors);
+        Assert.Contains(ResponseMessages.OnlyUpdateInSignedInspectionSchedule, result.Errors);
     }
 
     [Fact]
@@ -212,7 +212,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            Status = InspectionScheduleStatusEnum.InProgress,
+            Status = InspectionScheduleStatusEnum.Signed,
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddHours(-2), // 2 hours in the past
             CreatedBy = consultant.Id,
@@ -264,7 +264,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            Status = InspectionScheduleStatusEnum.InProgress,
+            Status = InspectionScheduleStatusEnum.Signed,
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddMinutes(30),
             CreatedBy = consultant.Id,
@@ -308,7 +308,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         SetupMockEncryptionServices();
 
         // Setup car and schedule for testing
-        var (schedule, contract) = await SetupInProgressSchedule(technician);
+        var (schedule, contract) = await SetupSignedSchedule(technician);
 
         var handler = new ApproveInspectionSchedule.Handler(
             _dbContext,
@@ -374,7 +374,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            Status = InspectionScheduleStatusEnum.InProgress,
+            Status = InspectionScheduleStatusEnum.Signed,
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddMinutes(30),
             CreatedBy = consultant.Id,
@@ -431,7 +431,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            Status = InspectionScheduleStatusEnum.InProgress,
+            Status = InspectionScheduleStatusEnum.Signed,
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddMinutes(30),
             CreatedBy = consultant.Id,
@@ -475,7 +475,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         SetupMockEncryptionServices();
 
         // Setup car and schedule for testing
-        var (schedule, contract) = await SetupInProgressSchedule(technician);
+        var (schedule, contract) = await SetupSignedSchedule(technician);
 
         var handler = new ApproveInspectionSchedule.Handler(
             _dbContext,
@@ -543,7 +543,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
     }
 
     #region Helper Methods
-    private async Task<(InspectionSchedule schedule, CarContract contract)> SetupInProgressSchedule(
+    private async Task<(InspectionSchedule schedule, CarContract contract)> SetupSignedSchedule(
         User technician
     )
     {
@@ -570,7 +570,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            Status = InspectionScheduleStatusEnum.InProgress,
+            Status = InspectionScheduleStatusEnum.Signed,
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddMinutes(30),
             CreatedBy = consultant.Id,
