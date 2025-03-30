@@ -103,11 +103,11 @@ public sealed class StartBookingTrip
         {
             RuleFor(x => x.BookingId).NotEmpty().WithMessage("ID booking không được để trống");
 
-            RuleFor(x => x.Latitude).InclusiveBetween(-90, 90).WithMessage("Vĩ độ không hợp lệ");
+            RuleFor(x => x.Latitude).InclusiveBetween(-90, 90).WithMessage("Cần đến gần chiếc xe thì mới bắt đầu được");
 
             RuleFor(x => x.Longitude)
                 .InclusiveBetween(-180, 180)
-                .WithMessage("Kinh độ không hợp lệ");
+                .WithMessage("Cần đến gần chiếc xe thì mới bắt đầu được");
         }
     }
 }
