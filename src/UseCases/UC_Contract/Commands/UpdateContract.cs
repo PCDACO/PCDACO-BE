@@ -40,6 +40,9 @@ public sealed class UpdateContract
             if (schedule is null)
                 return Result.NotFound("Không tìm thấy lịch kiểm định");
 
+            if (schedule.Status != InspectionScheduleStatusEnum.InProgress)
+                return Result.Conflict("Lịch kiểm định không ở trạng thái đang diễn ra");
+
             if (schedule.TechnicianId != currentUser.User.Id)
                 return Result.Forbidden("Bạn không phải là kiểm định viên được chỉ định");
 

@@ -7,4 +7,5 @@ public enum InspectionScheduleStatusEnum
     Rejected,
     InProgress,
     Expired,
+    Signed,
 }
