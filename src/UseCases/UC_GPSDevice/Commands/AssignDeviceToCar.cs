@@ -55,33 +55,45 @@ public class AssignDeviceToCar
                     Status = DeviceStatusEnum.InUsed,
                 };
                 await context.GPSDevices.AddAsync(gettingDevice, cancellationToken);
-                await context.SaveChangesAsync(cancellationToken);
             }
 
-            /// assign device to car
+            // Create location point once, reuse as needed
+            var newLocation = geometryFactory.CreatePoint(
+                new Coordinate(request.Longtitude, request.Latitude)
+            );
+
+            // Find car GPS association
             CarGPS? checkingCarGPS = await context
                 .CarGPSes.Where(c => c.CarId == request.CarId)
-                .Where(c => c.DeviceId == gettingDevice.Id)
-                .Where(c => !c.IsDeleted)
                 .FirstOrDefaultAsync(cancellationToken);
+
             if (checkingCarGPS is not null)
             {
-                if (!checkingCarGPS.IsDeleted)
+                // Car already has GPS association
+                if (checkingCarGPS.DeviceId == gettingDevice.Id && !checkingCarGPS.IsDeleted)
+                {
+                    // Error if same device is already actively assigned to car
                     return Result.Error(ResponseMessages.CarGPSIsExisted);
-                checkingCarGPS.Restore();
-                checkingCarGPS.Location = geometryFactory.CreatePoint(
-                    new Coordinate(request.Longtitude, request.Latitude)
-                );
+                }
+
+                // Update association
+                checkingCarGPS.DeviceId = gettingDevice.Id;
+                checkingCarGPS.Location = newLocation;
+
+                // Restore if previously deleted
+                if (checkingCarGPS.IsDeleted)
+                {
+                    checkingCarGPS.Restore();
+                }
             }
             else
             {
+                // Create new association
                 checkingCarGPS = new()
                 {
                     DeviceId = gettingDevice.Id,
                     CarId = request.CarId,
-                    Location = geometryFactory.CreatePoint(
-                        new Coordinate(request.Longtitude, request.Latitude)
-                    ),
+                    Location = newLocation,
                 };
                 await context.CarGPSes.AddAsync(checkingCarGPS, cancellationToken);
             }
