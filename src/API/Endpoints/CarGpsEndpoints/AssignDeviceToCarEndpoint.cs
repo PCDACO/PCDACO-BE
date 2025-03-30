@@ -74,9 +74,9 @@ public class AssignDeviceToCarEndpoint : ICarterModule
                                 },
                             },
                         },
-                        ["409"] = new()
+                        ["400"] = new()
                         {
-                            Description = "Conflict - Device not available or already assigned",
+                            Description = "BadRequest - Device not available or already assigned",
                             Content =
                             {
                                 ["application/json"] = new()
