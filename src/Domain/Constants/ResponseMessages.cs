@@ -84,7 +84,7 @@ public class ResponseMessages
         "Không thể tạo lịch kiểm định với cùng 1 kỹ thuật viên sau khi lịch kiểm định quá hạn. Vui lòng chọn kỹ thuật viên khác";
     public const string HasOverLapScheduleWithTheSameTechnician =
         "Thời gian kiểm định đã được tạo cho kỹ thuật viên này bị trùng với lịch kiểm định đã được duyệt";
-    public const string OnlyUpdateInSignedInspectionSchedule =
+    public const string OnlyUpdateSignedOrInprogressInspectionSchedule =
         "Chỉ có thể cập nhật lịch kiểm định đã được ký hợp đồng";
 
     // Inspection Statuses

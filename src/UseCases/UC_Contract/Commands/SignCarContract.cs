@@ -13,10 +13,10 @@ public sealed class SignCarContract
 {
     public record Command(Guid ContractId) : IRequest<Result<Response>>;
 
-    public record Response(Guid ContractId, string Status)
+    public record Response(Guid ContractId, Guid CarId, string Status)
     {
         public static Response FromEntity(CarContract contract) =>
-            new(contract.Id, contract.Status.ToString());
+            new(contract.Id, contract.CarId, contract.Status.ToString());
     };
 
     internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)

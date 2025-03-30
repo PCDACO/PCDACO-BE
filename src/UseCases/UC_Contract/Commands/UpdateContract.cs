@@ -14,7 +14,10 @@ public sealed class UpdateContract
 {
     public sealed record Command(Guid ScheduleId) : IRequest<Result<Response>>;
 
-    public sealed record Response(Guid ContractId);
+    public sealed record Response(Guid ContractId, Guid CarId)
+    {
+        public static Response FromEntity(CarContract contract) => new(contract.Id, contract.CarId);
+    }
 
     internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
         : IRequestHandler<Command, Result<Response>>
@@ -78,7 +81,7 @@ public sealed class UpdateContract
 
             await context.SaveChangesAsync(cancellationToken);
 
-            return Result.Success(new Response(contract.Id), "Cập nhật hợp đồng thành công");
+            return Result.Success(Response.FromEntity(contract), "Cập nhật hợp đồng thành công");
         }
     }
 

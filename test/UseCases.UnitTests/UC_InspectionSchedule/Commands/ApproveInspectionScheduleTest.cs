@@ -186,7 +186,10 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
 
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains(ResponseMessages.OnlyUpdateInSignedInspectionSchedule, result.Errors);
+        Assert.Contains(
+            ResponseMessages.OnlyUpdateSignedOrInprogressInspectionSchedule,
+            result.Errors
+        );
     }
 
     [Fact]
