@@ -305,8 +305,8 @@ public sealed class CreateBooking
                 .WithMessage("Phải chọn thời gian bắt đầu thuê")
                 .GreaterThan(DateTime.UtcNow.AddHours(MIN_HOURS_BEFORE_START))
                 .WithMessage("Thời gian bắt đầu thuê phải sau một tiếng rưỡi")
-                .Must(time => time.Hour >= EARLIST_HOUR && time.Hour <= LATEST_HOUR)
-                .WithMessage($"Thời gian bắt đầu thuê phải từ {EARLIST_HOUR}h đến {LATEST_HOUR}h")
+                // .Must(time => time.Hour >= EARLIST_HOUR && time.Hour <= LATEST_HOUR)
+                // .WithMessage($"Thời gian bắt đầu thuê phải từ {EARLIST_HOUR}h đến {LATEST_HOUR}h")
                 .Must(
                     (command, endTime) =>
                     {
