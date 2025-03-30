@@ -1,9 +1,11 @@
 using Ardalis.Result;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
+using UseCases.DTOs;
 using UseCases.Utils;
 using static Domain.Shared.ContractTemplates.CarContractTemplateGenerator;
 
@@ -17,6 +19,7 @@ public sealed class GetCarContract
 
     internal sealed class Handler(
         IAppDBContext context,
+        CurrentUser currentUser,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings
@@ -46,6 +49,11 @@ public sealed class GetCarContract
                 return Result.NotFound("Không tìm thấy hợp đồng.");
             }
 
+            if (currentUser.User!.IsOwner() && contract.TechnicianSignatureDate == null)
+            {
+                return Result.Error("Vui lòng chờ kiểm định viên ký và xác nhận hợp đồng trước.");
+            }
+
             var contractDate = GetTimestampFromUuid.Execute(contract.Id);
 
             string decryptedOwnerLicenseNumber = await DecryptOwnerLicenseNumber(contract);
@@ -72,7 +80,7 @@ public sealed class GetCarContract
                 CarTerms = contract.Car.Terms,
                 InspectionResults = contract.InspectionResults ?? string.Empty,
                 InspectionPhotos = [],
-                GPSDeviceId = contract.GPSDeviceId?.ToString() ?? string.Empty
+                GPSDeviceId = contract.GPSDeviceId?.ToString() ?? string.Empty,
             };
 
             string html = GenerateFullContractHtml(contractTemplate);

@@ -43,9 +43,26 @@ public class GetCarContractEndpoint : ICarterModule
                                 ["text/html"] = new()
                                 {
                                     Schema = new() { Type = "string" },
-                                    Example = new OpenApiString("<html>...</html>")
-                                }
-                            }
+                                    Example = new OpenApiString("<html>...</html>"),
+                                },
+                            },
+                        },
+                        ["400"] = new()
+                        {
+                            Description = "Bad Request - Contract not ready for viewing",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["message"] = new OpenApiString(
+                                            "Vui lòng chờ kiểm định viên ký và xác nhận hợp đồng trước."
+                                        ),
+                                    },
+                                },
+                            },
                         },
                         ["401"] = new() { Description = "Unauthorized - User not authenticated" },
                         ["404"] = new()
@@ -58,12 +75,12 @@ public class GetCarContractEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString("Không tìm thấy hợp đồng")
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                        ["message"] = new OpenApiString("Không tìm thấy hợp đồng"),
+                                    },
+                                },
+                            },
+                        },
+                    },
                 }
             );
     }
