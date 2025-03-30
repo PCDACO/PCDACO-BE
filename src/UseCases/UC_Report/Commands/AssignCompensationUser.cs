@@ -48,8 +48,7 @@ public class AssignCompensationUser
             if (report == null)
                 return Result.NotFound("Không tìm thấy báo cáo");
 
-            if (report.Status != BookingReportStatus.UnderReview)
-                return Result.Error("Báo cáo chưa được xem xét");
+            report.Status = BookingReportStatus.UnderReview;
 
             var compensationUser = await context.Users.FirstOrDefaultAsync(
                 u => u.Id == request.UserId,
