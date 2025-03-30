@@ -24,6 +24,7 @@ public class GetGPSDevices
 
     public record Response(
      Guid Id,
+     string OSBuildId,
      string Name,
      string Status,
      DateTimeOffset CreatedAt
@@ -32,6 +33,7 @@ public class GetGPSDevices
         public static Response FromEntity(GPSDevice device)
             => new(
                 device.Id,
+                device.OSBuildId,
                 device.Name,
                 device.Status.ToString(),
                GetTimestampFromUuid.Execute(device.Id)
