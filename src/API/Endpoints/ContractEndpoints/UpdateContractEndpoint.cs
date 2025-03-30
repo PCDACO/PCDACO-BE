@@ -1,68 +1,71 @@
 using API.Utils;
-using Ardalis.Result;
 using Carter;
-using Domain.Constants;
 using MediatR;
 using Microsoft.OpenApi.Any;
-using UseCases.UC_InspectionSchedule.Commands;
+using UseCases.UC_Contract.Commands;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
-namespace API.Endpoints.InspectionScheduleEndpoints;
+namespace API.Endpoints.ContractEndpoints;
 
-public class ApproveInspectionScheduleEndpoint : ICarterModule
+public class UpdateContractEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPatch("/api/inspection-schedules/{id:guid}/approve", Handle)
-            .WithTags("Inspection Schedules")
+        app.MapPut("/api/contracts/update-from-schedule/{id:guid}", Handle)
+            .WithSummary("Update car contract from inspection schedule")
+            .WithTags("Contracts")
             .RequireAuthorization()
-            .WithSummary("Approve an inspection schedule")
             .WithOpenApi(operation =>
                 new(operation)
                 {
                     Description = """
-                    Allows a technician to approve or reject an inspection schedule after performing the inspection.
+                    Updates a car contract based on inspection schedule information.
+
+                    Process:
+                    1. Finds the inspection schedule by ID
+                    2. Updates the associated contract with:
+                       - Technician ID (current user)
+                       - Sets status to Pending
+                    3. Creates a new contract if one doesn't exist
 
                     Requirements:
                     - Must be executed by a technician
-                    - Only the assigned technician can approve/reject their own schedules
-                    - The inspection schedule must be in InProgress status
-                    - The current time cannot be more than 1 hour after the scheduled inspection time
-                    - The car contract must be properly signed by both owner and technician
+                    - Must be the technician assigned to the inspection
+                    - Inspection schedule must exist and be in InProgress status
+                    - Car must have a GPS device assigned
 
-                    Process:
-                    1. Updates the contract with inspection results and generates HTML contract
-                    2. Updates the contract status to Completed
-                    3. Updates the schedule status to Approved (if approved) or Rejected (if not)
-                    4. Updates the car status to Available (if approved) or Rejected (if not)
+                    Returns:
+                    - ContractId for further operations
                     """,
 
                     Responses =
                     {
                         ["200"] = new()
                         {
-                            Description = "Success - Inspection schedule approved or rejected",
+                            Description = "Success - Contract updated successfully",
                             Content =
                             {
                                 ["application/json"] = new()
                                 {
                                     Example = new OpenApiObject
                                     {
+                                        ["isSuccess"] = new OpenApiBoolean(true),
+                                        ["message"] = new OpenApiString(
+                                            "Cập nhật hợp đồng thành công"
+                                        ),
                                         ["value"] = new OpenApiObject
                                         {
-                                            ["id"] = new OpenApiString(
+                                            ["contractId"] = new OpenApiString(
                                                 "3fa85f64-5717-4562-b3fc-2c963f66afa6"
                                             ),
                                         },
-                                        ["isSuccess"] = new OpenApiBoolean(true),
-                                        ["message"] = new OpenApiString("Cập nhật thành công"),
                                     },
                                 },
                             },
                         },
                         ["400"] = new()
                         {
-                            Description = "Bad Request - Validation error",
+                            Description = "Bad Request - Car missing GPS device",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -70,15 +73,9 @@ public class ApproveInspectionScheduleEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["errors"] = new OpenApiArray
-                                        {
-                                            new OpenApiString(
-                                                "Id lịch kiểm định không được để trống"
-                                            ),
-                                            new OpenApiString(
-                                                "Trạng thái phê duyệt không được để trống"
-                                            ),
-                                        },
+                                        ["message"] = new OpenApiString(
+                                            "Xe chưa được gán thiết bị GPS"
+                                        ),
                                     },
                                 },
                             },
@@ -87,7 +84,7 @@ public class ApproveInspectionScheduleEndpoint : ICarterModule
                         ["403"] = new()
                         {
                             Description =
-                                "Forbidden - User is not a technician or not assigned to this schedule",
+                                "Forbidden - User is not a technician or not assigned to the inspection",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -104,7 +101,7 @@ public class ApproveInspectionScheduleEndpoint : ICarterModule
                         },
                         ["404"] = new()
                         {
-                            Description = "Not Found - Schedule or contract not found",
+                            Description = "Not Found - Inspection schedule not found",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -119,10 +116,9 @@ public class ApproveInspectionScheduleEndpoint : ICarterModule
                                 },
                             },
                         },
-                        ["400"] = new()
+                        ["409"] = new()
                         {
-                            Description =
-                                "Bad request - Schedule in wrong state, expired, or contract issues",
+                            Description = "Conflict - Schedule is not in InProgress status",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -131,7 +127,7 @@ public class ApproveInspectionScheduleEndpoint : ICarterModule
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
-                                            ResponseMessages.OnlyUpdateInSignedInspectionSchedule
+                                            "Lịch kiểm định không ở trạng thái đang diễn ra"
                                         ),
                                     },
                                 },
@@ -142,21 +138,9 @@ public class ApproveInspectionScheduleEndpoint : ICarterModule
             );
     }
 
-    private async Task<IResult> Handle(
-        ISender sender,
-        Guid id,
-        ApproveInspectionScheduleRequest request
-    )
+    private static async Task<IResult> Handle(ISender sender, Guid id)
     {
-        Result<ApproveInspectionSchedule.Response> result = await sender.Send(
-            new ApproveInspectionSchedule.Command(
-                Id: id,
-                Note: request.Note,
-                IsApproved: request.IsApproved
-            )
-        );
+        var result = await sender.Send(new UpdateContract.Command(id));
         return result.MapResult();
     }
-
-    private record ApproveInspectionScheduleRequest(string Note, bool IsApproved);
 }

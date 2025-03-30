@@ -100,7 +100,14 @@ public class GPSDeviceGenerator
 
         foreach (var device in Devices)
         {
-            devices.Add(new GPSDevice { Name = device.Name, Status = device.Status });
+            devices.Add(
+                new GPSDevice
+                {
+                    OSBuildId = device.OSBuildId,
+                    Name = device.Name,
+                    Status = device.Status,
+                }
+            );
         }
         return [.. devices];
     }

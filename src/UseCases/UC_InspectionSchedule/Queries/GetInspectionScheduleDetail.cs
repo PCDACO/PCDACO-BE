@@ -27,7 +27,9 @@ public class GetInspectionScheduleDetail
             TechnicianDetail Technician,
             OwnerDetail Owner,
             CarDetail Car,
-            DateTimeOffset CreatedAt
+            DateTimeOffset CreatedAt,
+            Guid ContractId,
+            bool HasGPSDevice
         )
     {
         public static async Task<Response> FromEntity(
@@ -74,7 +76,9 @@ public class GetInspectionScheduleDetail
                                 IconUrl: ca.Amenity.IconUrl
                             )).ToArray()
                     ),
-                    CreatedAt: GetTimestampFromUuid.Execute(inspectionSchedule.Id)
+                    CreatedAt: GetTimestampFromUuid.Execute(inspectionSchedule.Id),
+                    ContractId: inspectionSchedule.Car.Contract != null ? inspectionSchedule.Car.Contract.Id : Guid.Empty,
+                    HasGPSDevice: inspectionSchedule.Car.GPS != null
                   );
         }
     };
@@ -123,6 +127,8 @@ public class GetInspectionScheduleDetail
                .Include(i => i.Car).ThenInclude(c => c.FuelType)
                .Include(i => i.Car).ThenInclude(c => c.TransmissionType)
                .Include(i => i.Car).ThenInclude(c => c.Model)
+               .Include(i => i.Car).ThenInclude(c => c.GPS)
+               .Include(i => i.Car).ThenInclude(c => c.Contract)
                .Include(i => i.Technician)
                .Where(i => !i.IsDeleted)
                .Where(i => i.Id == request.Id)
