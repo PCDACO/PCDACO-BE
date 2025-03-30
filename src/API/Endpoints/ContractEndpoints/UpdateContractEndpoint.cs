@@ -11,7 +11,7 @@ public class UpdateContractEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPut("/api/contracts/update-from-schedule/{id:guid}", Handle)
+        app.MapPut("/api/schedules/{id:guid}/contract", Handle)
             .WithSummary("Update car contract from inspection schedule")
             .WithTags("Contracts")
             .RequireAuthorization()
