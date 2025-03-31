@@ -26,6 +26,7 @@ public sealed class GetAllBookings
         decimal TotalAmount,
         decimal TotalDistance,
         bool IsPaid,
+        bool IsRefund
         string Status,
         DateTimeOffset StartTime,
         DateTimeOffset EndTime,
@@ -41,6 +42,7 @@ public sealed class GetAllBookings
                 booking.TotalAmount,
                 booking.TotalDistance,
                 booking.IsPaid,
+                booking.IsRefund,
                 booking.Status.ToString(),
                 booking.StartTime,
                 booking.EndTime,
