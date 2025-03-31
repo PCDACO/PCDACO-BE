@@ -122,6 +122,7 @@ public sealed class GetTotalStatistics
                 var monthlyActiveUsers = context
                     .Bookings.AsNoTracking()
                     .Include(b => b.User)
+                    .AsEnumerable()
                     .Where(b =>
                         GetTimestampFromUuid.Execute(b.Id) >= startOfMonth
                         && GetTimestampFromUuid.Execute(b.Id) <= endOfMonth
