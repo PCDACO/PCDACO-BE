@@ -26,7 +26,7 @@ public sealed class GetAllBookings
         decimal TotalAmount,
         decimal TotalDistance,
         bool IsPaid,
-        bool IsRefund
+        bool IsRefund,
         string Status,
         DateTimeOffset StartTime,
         DateTimeOffset EndTime,
