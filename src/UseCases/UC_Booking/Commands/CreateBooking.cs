@@ -305,8 +305,6 @@ public sealed class CreateBooking
                 .WithMessage("Phải chọn thời gian bắt đầu thuê")
                 .GreaterThan(DateTime.UtcNow.AddHours(MIN_HOURS_BEFORE_START))
                 .WithMessage("Thời gian bắt đầu thuê phải sau một tiếng rưỡi")
-                // .Must(time => time.Hour >= EARLIST_HOUR && time.Hour <= LATEST_HOUR)
-                // .WithMessage($"Thời gian bắt đầu thuê phải từ {EARLIST_HOUR}h đến {LATEST_HOUR}h")
                 .Must(
                     (command, endTime) =>
                     {
@@ -320,9 +318,7 @@ public sealed class CreateBooking
                 .NotEmpty()
                 .WithMessage("Phải chọn thời gian kết thúc thuê")
                 .GreaterThan(x => x.StartTime)
-                .WithMessage("Thời gian kết thúc thuê phải sau thời gian bắt đầu thuê")
-                .Must(time => time.Hour >= EARLIST_HOUR && time.Hour <= LATEST_HOUR)
-                .WithMessage($"Thời gian kết thúc thuê phải từ {EARLIST_HOUR}h đến {LATEST_HOUR}h");
+                .WithMessage("Thời gian kết thúc thuê phải sau thời gian bắt đầu thuê");
         }
     }
 }
