@@ -138,7 +138,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Equal(ResultStatus.Conflict, result.Status);
         Assert.Contains(ResponseMessages.OnlyUpdatePendingInspectionSchedule, result.Errors);
     }
 

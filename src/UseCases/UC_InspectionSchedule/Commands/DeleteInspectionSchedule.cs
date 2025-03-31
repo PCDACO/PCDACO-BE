@@ -31,7 +31,7 @@ public sealed class DeleteInspectionSchedule
 
             // Verify schedule is in pending status
             if (schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.Pending)
-                return Result.Error(ResponseMessages.OnlyDeletePendingInspectionSchedule);
+                return Result.Conflict(ResponseMessages.OnlyDeletePendingInspectionSchedule);
 
             // verify only datetimeoffset.utcnow faster than schedule.InspectionDate 1 day can delete
             if (DateTimeOffset.UtcNow.AddDays(1) > schedule.InspectionDate)
