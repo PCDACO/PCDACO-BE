@@ -2,6 +2,7 @@ using Bogus;
 using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
+using UUIDNext;
 
 namespace Persistance.Bogus;
 
@@ -126,7 +127,6 @@ public class BookingGenerator
 
             var booking = new Booking
             {
-                Id = Guid.NewGuid(),
                 UserId = driver.Id,
                 CarId = car.Id,
                 Status = status,
