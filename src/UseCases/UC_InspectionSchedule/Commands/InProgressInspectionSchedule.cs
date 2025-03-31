@@ -46,7 +46,7 @@ public sealed class InProgressInspectionSchedule
 
             // Check if datetimeoffset.utcnow is greater than schedule.InspectionDate above 15 minutes
             if (DateTimeOffset.UtcNow > schedule.InspectionDate.AddMinutes(15))
-                return Result.Error(ResponseMessages.InspectionScheduleExpired);
+                return Result.Conflict(ResponseMessages.InspectionScheduleExpired);
 
             // Update schedule
             schedule.Status = InspectionScheduleStatusEnum.InProgress;

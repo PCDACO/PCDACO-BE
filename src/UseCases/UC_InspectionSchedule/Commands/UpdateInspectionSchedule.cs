@@ -46,7 +46,7 @@ public sealed class UpdateInspectionSchedule
 
             // Check if schedule can be updated (only pending schedules can be updated)
             if (schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.Pending)
-                return Result.Error(ResponseMessages.OnlyUpdatePendingInspectionSchedule);
+                return Result.Conflict(ResponseMessages.OnlyUpdatePendingInspectionSchedule);
 
             // Verify technician exists and is a technician
             var technician = await context

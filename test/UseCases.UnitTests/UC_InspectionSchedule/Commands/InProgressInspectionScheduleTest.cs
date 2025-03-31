@@ -183,7 +183,7 @@ public class InProgressInspectionScheduleTest(DatabaseTestBase fixture) : IAsync
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Equal(ResultStatus.Conflict, result.Status);
         Assert.Contains(ResponseMessages.InspectionScheduleExpired, result.Errors);
     }
 
