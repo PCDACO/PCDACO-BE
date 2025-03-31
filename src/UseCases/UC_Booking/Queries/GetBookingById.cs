@@ -77,7 +77,10 @@ public sealed class GetBookingById
                     booking.ActualReturnTime,
                     booking.TotalDistance,
                     booking.Status.ToString(),
-                    booking.Note
+                    booking.Note,
+                    booking.IsRefund,
+                    booking.RefundAmount,
+                    booking.RefundDate
                 ),
                 new PaymentDetail(
                     booking.BasePrice,
@@ -181,7 +184,10 @@ public sealed class GetBookingById
         DateTimeOffset ActualReturnTime,
         decimal TotalDistance,
         string Status,
-        string Note
+        string Note,
+        bool IsRefund,
+        decimal? RefundAmount,
+        DateTimeOffset? RefundDate
     );
 
     public record PaymentDetail(

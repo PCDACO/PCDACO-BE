@@ -3,10 +3,12 @@ using Domain.Constants;
 using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
+using Domain.Shared.EmailTemplates.EmailBookings;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
 using UseCases.DTOs;
+using UseCases.Services.EmailService;
 
 namespace UseCases.UC_Booking.Commands;
 
@@ -14,8 +16,11 @@ public sealed class CancelBooking
 {
     public sealed record Command(Guid BookingId, string CancelReason = "") : IRequest<Result>;
 
-    internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
-        : IRequestHandler<Command, Result>
+    internal sealed class Handler(
+        IAppDBContext context,
+        CurrentUser currentUser,
+        IEmailService emailService
+    ) : IRequestHandler<Command, Result>
     {
         private const decimal ADMIN_REFUND_PERCENTAGE = 0.1m;
         private const decimal OWNER_REFUND_PERCENTAGE = 0.9m;
@@ -23,12 +28,12 @@ public sealed class CancelBooking
         private const decimal REFUND_PERCENTAGE_BEFORE_5_DAYS = 0.5m;
         private const decimal REFUND_PERCENTAGE_BEFORE_3_DAYS = 0.3m;
         private const decimal REFUND_PERCENTAGE_BEFORE_1_DAY = 0m;
+        private const decimal OWNER_PENALTY_WITHIN_24H = 0.5m;
+        private const decimal OWNER_PENALTY_WITHIN_3_DAYS = 0.3m;
+        private const decimal OWNER_PENALTY_WITHIN_7_DAYS = 0.1m;
 
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
-            if (!currentUser.User!.IsDriver())
-                return Result.Forbidden("Bạn không có quyền thực hiện chức năng này !");
-
             var booking = await context
                 .Bookings.Include(x => x.Car)
                 .ThenInclude(x => x.Owner)
@@ -38,22 +43,14 @@ public sealed class CancelBooking
             if (booking == null)
                 return Result.NotFound("Không tìm thấy booking");
 
-            if (booking.UserId != currentUser.User.Id)
+            // Check if user is either the driver or the owner
+            bool isDriver = booking.UserId == currentUser.User!.Id;
+            bool isOwner = booking.Car.OwnerId == currentUser.User!.Id;
+
+            if (!isDriver && !isOwner)
                 return Result.Forbidden(
                     "Bạn không có quyền thực hiện chức năng này với booking này!"
                 );
-
-            // Add cancellation limit check
-            var recentCancellations = await context.Bookings.CountAsync(
-                b =>
-                    b.UserId == currentUser.User.Id
-                    && b.Status == BookingStatusEnum.Cancelled
-                    && b.UpdatedAt >= DateTime.UtcNow.AddDays(-30),
-                cancellationToken
-            );
-
-            if (recentCancellations >= 5)
-                return Result.Error("Bạn đã hủy quá số lần cho phép trong 30 ngày");
 
             if (
                 booking.Status
@@ -66,28 +63,66 @@ public sealed class CancelBooking
                 )
             )
             {
-                return Result.Conflict(
-                    $"Không thể hủy booking ở trạng thái " + booking.Status.ToString()
-                );
+                return Result.Conflict($"Không thể hủy booking ở trạng thái {booking.Status}");
             }
 
             // Calculate days until start time
             var daysUntilStart = (booking.StartTime - DateTimeOffset.UtcNow).TotalDays;
+            decimal penaltyAmount = 0;
 
-            // Calculate refund percentage based on cancellation timing
-            decimal refundPercentage = CalculateRefundPercentage(daysUntilStart);
-
-            if (booking.Status == BookingStatusEnum.Approved)
-                booking.Car.Status = CarStatusEnum.Available;
-
-            if (booking.IsPaid)
+            if (isDriver)
             {
-                await HandleRefundTransactions(
-                    booking,
-                    refundPercentage,
-                    $"Hủy đặt xe {request.CancelReason}",
+                // Add cancellation limit check
+                var recentCancellations = await context.Bookings.CountAsync(
+                    b =>
+                        b.UserId == currentUser.User.Id
+                        && b.Status == BookingStatusEnum.Cancelled
+                        && b.UpdatedAt >= DateTime.UtcNow.AddDays(-30),
                     cancellationToken
                 );
+
+                if (recentCancellations >= 5)
+                    return Result.Error("Bạn đã hủy quá số lần cho phép trong 30 ngày");
+
+                // Calculate refund percentage based on cancellation timing
+                decimal refundPercentage = CalculateRefundPercentage(daysUntilStart);
+
+                if (booking.Status == BookingStatusEnum.Approved)
+                    booking.Car.Status = CarStatusEnum.Available;
+
+                if (booking.IsPaid)
+                {
+                    await HandleRefundTransactions(
+                        booking,
+                        refundPercentage,
+                        $"Hủy đặt xe {request.CancelReason}",
+                        cancellationToken
+                    );
+                }
+            }
+            else // Owner cancellation
+            {
+                // Calculate penalty for owner
+                decimal penaltyPercentage = CalculateOwnerPenalty(daysUntilStart);
+                penaltyAmount = booking.TotalAmount * penaltyPercentage;
+
+                if (booking.IsPaid)
+                {
+                    // Refund full amount to driver
+                    await HandleOwnerCancellationRefund(
+                        booking,
+                        penaltyAmount,
+                        $"Chủ xe hủy đặt xe: {request.CancelReason}",
+                        cancellationToken
+                    );
+                }
+
+                // Apply penalty to owner's account
+                booking.Car.Owner.Balance -= penaltyAmount;
+
+                // Update car status
+                if (booking.Status == BookingStatusEnum.Approved)
+                    booking.Car.Status = CarStatusEnum.Available;
             }
 
             booking.Status = BookingStatusEnum.Cancelled;
@@ -95,10 +130,24 @@ public sealed class CancelBooking
             booking.UpdatedAt = DateTimeOffset.UtcNow;
             await context.SaveChangesAsync(cancellationToken);
 
-            // TODO: send email to both Owner and Driver with refund details
+            // Send cancellation emails
+            await SendCancellationEmails(
+                driverName: booking.User.Name,
+                driverEmail: booking.User.Email,
+                ownerName: booking.Car.Owner.Name,
+                ownerEmail: booking.Car.Owner.Email,
+                carName: booking.Car.Model.Name,
+                startTime: booking.StartTime,
+                endTime: booking.EndTime,
+                amount: isOwner ? penaltyAmount : (booking.RefundAmount ?? 0),
+                cancelReason: request.CancelReason,
+                isOwnerCancelled: isOwner
+            );
 
             return Result.SuccessWithMessage(
-                $"Đã hủy booking thành công. {(booking.IsPaid ? $"Số tiền hoàn trả: {booking.RefundAmount:N0} VND ({refundPercentage * 100}%)" : "")}"
+                isOwner
+                    ? $"Đã hủy booking thành công. Tiền phạt: {CalculateOwnerPenalty(daysUntilStart) * 100}% ({booking.TotalAmount * CalculateOwnerPenalty(daysUntilStart):N0} VND)"
+                    : $"Đã hủy booking thành công. {(booking.IsPaid ? $"Số tiền hoàn trả: {booking.RefundAmount:N0} VND" : "")}"
             );
         }
 
@@ -180,6 +229,114 @@ public sealed class CancelBooking
             booking.RefundDate = DateTimeOffset.UtcNow;
 
             context.Transactions.AddRange(adminRefundTransaction, ownerRefundTransaction);
+        }
+
+        private static decimal CalculateOwnerPenalty(double daysUntilStart) =>
+            daysUntilStart switch
+            {
+                < 1 => OWNER_PENALTY_WITHIN_24H,
+                < 3 => OWNER_PENALTY_WITHIN_3_DAYS,
+                < 7 => OWNER_PENALTY_WITHIN_7_DAYS,
+                _ => 0
+            };
+
+        private async Task HandleOwnerCancellationRefund(
+            Booking booking,
+            decimal penaltyAmount,
+            string reason,
+            CancellationToken cancellationToken
+        )
+        {
+            var admin = await context.Users.FirstOrDefaultAsync(
+                u => u.Role.Name == UserRoleNames.Admin,
+                cancellationToken
+            );
+
+            if (admin == null)
+                throw new InvalidOperationException("Admin user not found");
+
+            var transactionTypes = await context
+                .TransactionTypes.Where(t => new[] { TransactionTypeNames.Refund }.Contains(t.Name))
+                .ToListAsync(cancellationToken);
+
+            var refundType = transactionTypes.First(t => t.Name == TransactionTypeNames.Refund);
+
+            // Create a full refund transaction for the driver
+            var refundTransaction = new Transaction
+            {
+                FromUserId = booking.Car.OwnerId,
+                ToUserId = booking.UserId,
+                BookingId = booking.Id,
+                BankAccountId = null,
+                TypeId = refundType.Id,
+                Status = TransactionStatusEnum.Completed,
+                Amount = booking.TotalAmount,
+                Description = reason,
+                BalanceAfter = booking.User.Balance + booking.TotalAmount
+            };
+
+            // Create penalty transaction
+            var penaltyTransaction = new Transaction
+            {
+                FromUserId = booking.Car.OwnerId,
+                ToUserId = admin.Id, // Penalty goes to admin
+                BookingId = booking.Id,
+                BankAccountId = null,
+                TypeId = refundType.Id,
+                Status = TransactionStatusEnum.Completed,
+                Amount = penaltyAmount,
+                Description = $"Phí phạt hủy booking: {reason}",
+                BalanceAfter = admin.Balance + penaltyAmount
+            };
+
+            context.Transactions.AddRange(refundTransaction, penaltyTransaction);
+        }
+
+        private async Task SendCancellationEmails(
+            string driverName,
+            string driverEmail,
+            string ownerName,
+            string ownerEmail,
+            string carName,
+            DateTimeOffset startTime,
+            DateTimeOffset endTime,
+            decimal amount,
+            string cancelReason,
+            bool isOwnerCancelled
+        )
+        {
+            // Send email to driver
+            var driverEmailTemplate = DriverCancelBookingTemplate.Template(
+                driverName,
+                carName,
+                startTime,
+                endTime,
+                amount,
+                cancelReason,
+                isOwnerCancelled
+            );
+            await emailService.SendEmailAsync(
+                driverEmail,
+                isOwnerCancelled ? "Chủ Xe Đã Hủy Đơn" : "Xác Nhận Hủy Đơn",
+                driverEmailTemplate
+            );
+
+            // Send email to owner
+            var ownerEmailTemplate = OwnerCancelBookingTemplate.Template(
+                ownerName,
+                carName,
+                driverName,
+                startTime,
+                endTime,
+                amount,
+                cancelReason,
+                isOwnerCancelled
+            );
+            await emailService.SendEmailAsync(
+                ownerEmail,
+                isOwnerCancelled ? "Xác Nhận Hủy Đơn" : "Khách Hàng Đã Hủy Đơn",
+                ownerEmailTemplate
+            );
         }
     }
 }
