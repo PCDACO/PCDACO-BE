@@ -6,8 +6,7 @@ public static class DriverBookingCancelledDueToOverdueTemplate
         string customerName,
         string carName,
         DateTimeOffset startTime,
-        DateTimeOffset endTime,
-        decimal compensationAmount
+        DateTimeOffset endTime
     )
     {
         return $@"
@@ -34,10 +33,6 @@ public static class DriverBookingCancelledDueToOverdueTemplate
                             <tr>
                                 <td style='padding: 8px 0;'><strong>Thời gian kết thúc:</strong></td>
                                 <td style='text-align: right;'>{endTime:HH:mm dd/MM/yyyy}</td>
-                            </tr>
-                            <tr style='border-top: 2px solid #ddd;'>
-                                <td style='padding: 8px 0;'><strong>Bồi thường:</strong></td>
-                                <td style='text-align: right; color: {EmailTemplateColors.CompleteAccent}; font-weight: bold;'>{compensationAmount:N0} VNĐ</td>
                             </tr>
                         </table>
                     </div>
