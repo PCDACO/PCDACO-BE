@@ -170,6 +170,47 @@ public static class ContractTemplateGenerator
                         <br/>
                         d) Nếu không đạt được thỏa thuận, tranh chấp sẽ được giải quyết tại Tòa án có thẩm quyền.
                     </p>
+                </div>
+
+                <div class='clause'>
+                    <strong>Điều 11: Quy định về vệ sinh và nhiên liệu xe</strong>
+                    <p>
+                        a) Điều kiện giao xe:
+                        <br/>
+                        - Bên A (Chủ xe) có trách nhiệm bàn giao xe trong tình trạng sạch sẽ, vệ sinh cả nội thất và ngoại thất.
+                        <br/>
+                        - Mức nhiên liệu khi giao xe phải đạt tối thiểu 90% (hoặc đồng hồ báo F - Full).
+                        <br/>
+                        - Hai bên sẽ chụp ảnh và ghi nhận tình trạng vệ sinh, mức nhiên liệu vào biên bản bàn giao xe.
+                        <br/>
+                        <br/>
+                        b) Điều kiện trả xe:
+                        <br/>
+                        - Bên B (Người thuê) phải trả xe trong tình trạng sạch sẽ như khi nhận xe.
+                        <br/>
+                        - Mức nhiên liệu khi trả xe phải tương đương với mức khi nhận xe (tối thiểu 90%).
+                        <br/>
+                        <br/>
+                        c) Phí phạt:
+                        <br/>
+                        - Nếu xe được trả về trong tình trạng bẩn (nội thất hoặc ngoại thất):
+                          + Phí vệ sinh cơ bản: 200.000 VNĐ
+                          + Phí vệ sinh đặc biệt (nếu có vết bẩn khó làm sạch): 500.000 VNĐ
+                        <br/>
+                        - Nếu mức nhiên liệu khi trả xe thấp hơn quy định:
+                          + Phí bù nhiên liệu: Giá nhiên liệu hiện hành × (Mức nhiên liệu thiếu)
+                          + Phí phạt bổ sung: 200.000 VNĐ
+                        <br/>
+                        <br/>
+                        d) Quy trình xử lý:
+                        <br/>
+                        - Khi trả xe, hai bên sẽ kiểm tra và ghi nhận tình trạng vệ sinh, mức nhiên liệu vào biên bản.
+                        <br/>
+                        - Nếu phát hiện vi phạm, Bên A có quyền giữ lại một phần tiền đặt cọc để chi trả các khoản phí phạt.
+                        <br/>
+                        - Bên B có quyền tự xử lý vệ sinh xe hoặc đổ xăng bổ sung trong vòng 2 giờ kể từ thời điểm trả xe
+                          để tránh các khoản phí phạt.
+                    </p>
                 </div>";
 
         string renderedCarTerms = string.IsNullOrWhiteSpace(contractTemplate.CarTerms)
