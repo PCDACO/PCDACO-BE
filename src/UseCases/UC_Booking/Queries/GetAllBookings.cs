@@ -11,12 +11,12 @@ namespace UseCases.UC_Booking.Queries;
 public sealed class GetAllBookings
 {
     public sealed record Query(
-        int Limit,
-        Guid? LastId,
+        int PageNumber = 1,
+        int PageSize = 10,
         string? SearchTerm = null,
         string[]? BookingStatuses = null,
         bool? IsPaid = null
-    ) : IRequest<Result<CursorPaginatedResponse<Response>>>;
+    ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public sealed record Response(
         Guid Id,
@@ -51,9 +51,9 @@ public sealed class GetAllBookings
     };
 
     internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
-        : IRequestHandler<Query, Result<CursorPaginatedResponse<Response>>>
+        : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
     {
-        public async Task<Result<CursorPaginatedResponse<Response>>> Handle(
+        public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(
             Query request,
             CancellationToken cancellationToken
         )
@@ -94,33 +94,30 @@ public sealed class GetAllBookings
                     || EF.Functions.ILike(b.Car.Owner.Name, $"%{request.SearchTerm}%")
                 );
 
-            // Apply cursor pagination
-            if (request.LastId.HasValue)
-                query = query.Where(b => b.Id.CompareTo(request.LastId.Value) < 0);
-
             // Order by Id descending (newest first)
             query = query.OrderByDescending(b => b.Id);
 
-            // Get total count and items
             var totalCount = await query.CountAsync(cancellationToken);
+
             var bookings = await query
-                .Take(request.Limit)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
 
-            // Determine if there are more items
-            var hasMore = bookings.Count > request.Limit;
-
-            var lastId = bookings.LastOrDefault()?.Id;
+            var hasNext = await query
+                .Skip(request.PageSize * request.PageNumber)
+                .AnyAsync(cancellationToken: cancellationToken);
 
             return Result.Success(
-                new CursorPaginatedResponse<Response>(
+                OffsetPaginatedResponse<Response>.Map(
                     bookings.Select(Response.FromEntity),
                     totalCount,
-                    request.Limit,
-                    lastId,
-                    hasMore
-                )
+                    request.PageSize,
+                    request.PageNumber,
+                    hasNext
+                ),
+                "Lấy danh sách đặt xe thành công"
             );
         }
     }
