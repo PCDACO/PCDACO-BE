@@ -35,7 +35,11 @@ public sealed class SignCarContract
             if (contract == null)
                 return Result.NotFound("Không tìm thấy hợp đồng");
 
-            if (contract.Status != CarContractStatusEnum.Pending)
+            if (
+                contract.Status != CarContractStatusEnum.Pending
+                && contract.Status != CarContractStatusEnum.TechnicianSigned
+                && contract.Status != CarContractStatusEnum.OwnerSigned
+            )
                 return Result.Conflict("Hợp đồng không ở trạng thái có thể ký");
 
             // Check if schedule exists and is in progress
