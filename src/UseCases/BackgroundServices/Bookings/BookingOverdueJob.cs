@@ -1,3 +1,5 @@
+using Domain.Constants;
+using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
@@ -10,8 +12,9 @@ namespace UseCases.BackgroundServices.Bookings;
 
 public class BookingOverdueJob(IAppDBContext context, IEmailService emailService)
 {
-    private const decimal COMPENSATION_PERCENTAGE = 0.3m; // 30% compensation of the affected booking's total amount
     private const int PRE_CANCELLATION_HOURS = 6;
+    private const decimal ADMIN_REFUND_PERCENTAGE = 0.1m;
+    private const decimal OWNER_REFUND_PERCENTAGE = 0.9m;
 
     public async Task HandleOverdueBookings()
     {
@@ -49,9 +52,6 @@ public class BookingOverdueJob(IAppDBContext context, IEmailService emailService
             if (affectedBooking == null)
                 continue;
 
-            // Calculate compensation for the affected booking
-            decimal compensationAmount = affectedBooking.TotalAmount * COMPENSATION_PERCENTAGE;
-
             // Update affected booking status
             affectedBooking.Status = BookingStatusEnum.Cancelled;
             affectedBooking.Note =
@@ -59,20 +59,88 @@ public class BookingOverdueJob(IAppDBContext context, IEmailService emailService
 
             if (affectedBooking.IsPaid)
             {
-                affectedBooking.IsRefund = true;
-                affectedBooking.RefundAmount = affectedBooking.TotalAmount;
-                affectedBooking.RefundDate = DateTimeOffset.UtcNow;
+                var admin = await context.Users.FirstOrDefaultAsync(u =>
+                    u.Role.Name == UserRoleNames.Admin
+                );
 
-                // Return the full amount to the affected driver
-                affectedBooking.User.Balance += affectedBooking.TotalAmount;
+                if (admin != null)
+                {
+                    await HandleBookingRefund(
+                        affectedBooking,
+                        admin,
+                        "Hoàn tiền do chuyến đi trước chưa trả xe"
+                    );
+                }
             }
 
             // Send notifications
             await SendOverdueNotification(overdueBooking);
-            await SendAffectedBookingNotification(affectedBooking, compensationAmount);
+            await SendAffectedBookingNotification(affectedBooking);
         }
 
         await context.SaveChangesAsync(CancellationToken.None);
+    }
+
+    private async Task HandleBookingRefund(Booking booking, User admin, string reason)
+    {
+        var refundAmount = booking.TotalAmount;
+        var adminRefundAmount = refundAmount * ADMIN_REFUND_PERCENTAGE;
+        var ownerRefundAmount = refundAmount * OWNER_REFUND_PERCENTAGE;
+
+        var refundType = await context.TransactionTypes.FirstAsync(t =>
+            t.Name == TransactionTypeNames.Refund
+        );
+
+        var adminRefundTransaction = new Transaction
+        {
+            FromUserId = admin.Id,
+            ToUserId = booking.UserId,
+            BookingId = booking.Id,
+            BankAccountId = null,
+            TypeId = refundType.Id,
+            Status = TransactionStatusEnum.Completed,
+            Amount = adminRefundAmount,
+            Description = $"Hoàn tiền từ Admin: {reason}",
+            BalanceAfter = booking.User.Balance + adminRefundAmount
+        };
+
+        var ownerRefundTransaction = new Transaction
+        {
+            FromUserId = booking.Car.OwnerId,
+            ToUserId = booking.UserId,
+            BookingId = booking.Id,
+            BankAccountId = null,
+            TypeId = refundType.Id,
+            Status = TransactionStatusEnum.Completed,
+            Amount = ownerRefundAmount,
+            Description = $"Hoàn tiền từ Chủ xe: {reason}",
+            BalanceAfter = booking.User.Balance + refundAmount
+        };
+
+        // Check owner's available balance and handle refund from locked balance if needed
+        var ownerAvailableBalance = booking.Car.Owner.Balance - booking.Car.Owner.LockedBalance;
+
+        if (ownerAvailableBalance < ownerRefundAmount)
+        {
+            var amountFromLocked = ownerRefundAmount - ownerAvailableBalance;
+            booking.Car.Owner.LockedBalance = Math.Max(
+                0,
+                booking.Car.Owner.LockedBalance - amountFromLocked
+            );
+            ownerRefundTransaction.Description += " (Hoàn tiền từ số dư bị khóa)";
+        }
+
+        // Update balances
+        admin.Balance -= adminRefundAmount;
+        booking.Car.Owner.Balance -= ownerRefundAmount;
+        booking.User.Balance += refundAmount;
+
+        // Update booking refund info
+        booking.IsRefund = true;
+        booking.RefundAmount = refundAmount;
+        booking.RefundDate = DateTimeOffset.UtcNow;
+
+        context.Transactions.AddRange(adminRefundTransaction, ownerRefundTransaction);
     }
 
     private async Task SendOverdueNotification(Booking booking)
@@ -94,14 +162,13 @@ public class BookingOverdueJob(IAppDBContext context, IEmailService emailService
         );
     }
 
-    private async Task SendAffectedBookingNotification(Booking booking, decimal compensationAmount)
+    private async Task SendAffectedBookingNotification(Booking booking)
     {
         var template = DriverBookingCancelledDueToOverdueTemplate.Template(
             booking.User.Name,
             booking.Car.Model.Name,
             booking.StartTime,
-            booking.EndTime,
-            compensationAmount
+            booking.EndTime
         );
 
         BackgroundJob.Enqueue(
