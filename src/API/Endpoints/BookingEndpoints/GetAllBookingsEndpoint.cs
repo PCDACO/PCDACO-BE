@@ -20,7 +20,7 @@ public class GetAllBookingsEndpoint : ICarterModule
                 new(operation)
                 {
                     Description = """
-                    Retrieve paginated list of bookings with cursor-based pagination.
+                    Retrieve paginated list of bookings with offset-based pagination.
 
                     Access Control:
                     - Drivers: Can only view their own bookings
@@ -32,9 +32,9 @@ public class GetAllBookingsEndpoint : ICarterModule
                     - Payment: Filter by payment status
 
                     Pagination:
-                    - Cursor-based pagination using lastId
-                    - Default limit: 10 items per page
-                    - Returns hasMore flag for additional pages
+                    - Offset-based pagination using pageNumber and pageSize
+                    - Default pageSize: 10 items per page
+                    - Returns hasNext flag for additional pages
                     """,
 
                     Responses =
@@ -76,14 +76,14 @@ public class GetAllBookingsEndpoint : ICarterModule
                                                 }
                                             },
                                             ["totalCount"] = new OpenApiInteger(50),
-                                            ["limit"] = new OpenApiInteger(10),
-                                            ["lastId"] = new OpenApiString(
-                                                "123e4567-e89b-12d3-a456-426614174000"
-                                            ),
-                                            ["hasMore"] = new OpenApiBoolean(true)
+                                            ["pageSize"] = new OpenApiInteger(10),
+                                            ["currentPage"] = new OpenApiInteger(1),
+                                            ["hasNext"] = new OpenApiBoolean(true)
                                         },
                                         ["isSuccess"] = new OpenApiBoolean(true),
-                                        ["message"] = new OpenApiString("")
+                                        ["message"] = new OpenApiString(
+                                            "Lấy danh sách đặt xe thành công"
+                                        )
                                     }
                                 }
                             }
@@ -117,8 +117,8 @@ public class GetAllBookingsEndpoint : ICarterModule
 
     private static async Task<IResult> Handle(
         ISender sender,
-        [FromQuery(Name = "limit")] int? limit,
-        [FromQuery(Name = "lastId")] Guid? lastId,
+        [FromQuery(Name = "index")] int? pageNumber,
+        [FromQuery(Name = "size")] int? pageSize,
         [FromQuery(Name = "search")] string? searchTerm,
         [FromQuery(Name = "status")] string[]? status,
         [FromQuery(Name = "isPaid")] bool? isPaid,
@@ -126,7 +126,7 @@ public class GetAllBookingsEndpoint : ICarterModule
     )
     {
         var result = await sender.Send(
-            new GetAllBookings.Query(limit ?? 10, lastId, searchTerm, status, isPaid),
+            new GetAllBookings.Query(pageNumber ?? 1, pageSize ?? 10, searchTerm, status, isPaid),
             cancellationToken
         );
 
