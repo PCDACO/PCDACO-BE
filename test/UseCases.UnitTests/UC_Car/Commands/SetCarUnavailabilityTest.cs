@@ -223,8 +223,7 @@ public class SetCarUnavailabilityTest(DatabaseTestBase fixture) : IAsyncLifetime
         var handler = new SetCarUnavailability.Handler(_dbContext, _currentUser);
         var command = new SetCarUnavailability.Command(
             car.Id,
-            new List<DateTimeOffset> { today, tomorrow, dayAfter },
-            false // Mark as unavailable
+            new List<DateTimeOffset> { today, tomorrow, dayAfter }
         );
 
         // Act
@@ -245,7 +244,7 @@ public class SetCarUnavailabilityTest(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Handle_UpdatesExistingAvailabilityRecords()
+    public async Task Handle_SoftDeletesExistingDatesNotInRequest()
     {
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
@@ -268,87 +267,44 @@ public class SetCarUnavailabilityTest(DatabaseTestBase fixture) : IAsyncLifetime
             carStatus: CarStatusEnum.Available
         );
 
-        var today = DateTimeOffset.UtcNow;
-
-        // Create existing availability record marked as unavailable
-        var existingAvailability = new CarAvailability
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            CarId = car.Id,
-            Date = today,
-            IsAvailable = false,
-        };
-
-        await _dbContext.CarAvailabilities.AddAsync(existingAvailability);
-        await _dbContext.SaveChangesAsync();
-
-        var handler = new SetCarUnavailability.Handler(_dbContext, _currentUser);
-        var command = new SetCarUnavailability.Command(
-            car.Id,
-            new List<DateTimeOffset> { today },
-            true // Mark as available (change from current false)
-        );
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Ok, result.Status);
-
-        // Verify record was updated
-        var updatedRecord = await _dbContext.CarAvailabilities.FirstAsync(ca =>
-            ca.Id == existingAvailability.Id
-        );
-
-        Assert.True(updatedRecord.IsAvailable);
-        Assert.NotNull(updatedRecord.UpdatedAt);
-    }
-
-    [Fact]
-    public async Task Handle_MixOfUpdateAndCreate_HandlesCorrectly()
-    {
-        // Arrange
-        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        TransmissionType transmissionType =
-            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
-        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-
-        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-        _currentUser.SetUser(owner);
-
-        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
-        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
-
-        var car = await TestDataCreateCar.CreateTestCar(
-            dBContext: _dbContext,
-            ownerId: owner.Id,
-            modelId: model.Id,
-            transmissionType: transmissionType,
-            fuelType: fuelType,
-            carStatus: CarStatusEnum.Available
-        );
-
-        var today = DateTimeOffset.UtcNow;
+        var today = new DateTimeOffset(2025, 4, 2, 10, 0, 0, TimeSpan.Zero);
         var tomorrow = today.AddDays(1);
         var dayAfter = today.AddDays(2);
 
-        // Create one existing availability record
-        var existingAvailability = new CarAvailability
+        // Create existing availability records
+        var existingAvailabilities = new List<CarAvailability>
         {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            CarId = car.Id,
-            Date = today,
-            IsAvailable = true, // Will be changed to false
+            new()
+            {
+                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+                CarId = car.Id,
+                Date = today,
+                IsAvailable = false,
+            },
+            new()
+            {
+                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+                CarId = car.Id,
+                Date = tomorrow,
+                IsAvailable = false,
+            },
+            new()
+            {
+                Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+                CarId = car.Id,
+                Date = dayAfter,
+                IsAvailable = false,
+            },
         };
 
-        await _dbContext.CarAvailabilities.AddAsync(existingAvailability);
+        await _dbContext.CarAvailabilities.AddRangeAsync(existingAvailabilities);
         await _dbContext.SaveChangesAsync();
 
+        // Only include today in the request
         var handler = new SetCarUnavailability.Handler(_dbContext, _currentUser);
         var command = new SetCarUnavailability.Command(
             car.Id,
-            new List<DateTimeOffset> { today, tomorrow, dayAfter },
-            false // Mark all as unavailable
+            new List<DateTimeOffset> { new DateTimeOffset(2025, 4, 2, 8, 0, 0, TimeSpan.Zero) }
         );
 
         // Act
@@ -357,90 +313,23 @@ public class SetCarUnavailabilityTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
 
-        // Verify records
-        var allRecords = await _dbContext
+        // Verify only today's record is not deleted
+        var activeRecords = await _dbContext
             .CarAvailabilities.Where(ca => ca.CarId == car.Id && !ca.IsDeleted)
             .ToListAsync();
 
-        Assert.Equal(3, allRecords.Count);
+        Assert.Single(activeRecords);
+        Assert.Equal(today.Date, activeRecords[0].Date.Date);
 
-        // First record should be updated
-        var updatedRecord = allRecords.First(r => r.Date.Date == today.Date);
-        Assert.Equal(existingAvailability.Id, updatedRecord.Id);
-        Assert.False(updatedRecord.IsAvailable);
-
-        // The other two should be new
-        Assert.Contains(allRecords, ca => ca.Date.Date == tomorrow.Date && !ca.IsAvailable);
-        Assert.Contains(allRecords, ca => ca.Date.Date == dayAfter.Date && !ca.IsAvailable);
-    }
-
-    [Fact]
-    public async Task Handle_MakeUnavailableDatesAvailable_Succeeds()
-    {
-        // Arrange
-        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        TransmissionType transmissionType =
-            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
-        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-
-        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-        _currentUser.SetUser(owner);
-
-        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
-        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
-
-        var car = await TestDataCreateCar.CreateTestCar(
-            dBContext: _dbContext,
-            ownerId: owner.Id,
-            modelId: model.Id,
-            transmissionType: transmissionType,
-            fuelType: fuelType,
-            carStatus: CarStatusEnum.Available
-        );
-
-        var today = DateTimeOffset.UtcNow;
-        var tomorrow = today.AddDays(1);
-
-        // Create existing unavailable dates
-        var todayAvailability = new CarAvailability
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            CarId = car.Id,
-            Date = today,
-            IsAvailable = false,
-        };
-
-        var tomorrowAvailability = new CarAvailability
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            CarId = car.Id,
-            Date = tomorrow,
-            IsAvailable = false,
-        };
-
-        await _dbContext.CarAvailabilities.AddRangeAsync(todayAvailability, tomorrowAvailability);
-        await _dbContext.SaveChangesAsync();
-
-        var handler = new SetCarUnavailability.Handler(_dbContext, _currentUser);
-        var command = new SetCarUnavailability.Command(
-            car.Id,
-            new List<DateTimeOffset> { today, tomorrow },
-            true // Make them available again
-        );
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Ok, result.Status);
-
-        // Verify both records were updated to available
-        var records = await _dbContext
-            .CarAvailabilities.Where(ca => ca.CarId == car.Id && !ca.IsDeleted)
+        // Verify tomorrow and day after are marked as deleted
+        var deletedRecords = await _dbContext
+            .CarAvailabilities.IgnoreQueryFilters()
+            .Where(ca => ca.CarId == car.Id && ca.IsDeleted)
             .ToListAsync();
 
-        Assert.Equal(2, records.Count);
-        Assert.All(records, r => Assert.True(r.IsAvailable));
+        Assert.Equal(2, deletedRecords.Count);
+        Assert.Contains(deletedRecords, ca => ca.Date.Date == tomorrow.Date);
+        Assert.Contains(deletedRecords, ca => ca.Date.Date == dayAfter.Date);
     }
 
     [Fact]
