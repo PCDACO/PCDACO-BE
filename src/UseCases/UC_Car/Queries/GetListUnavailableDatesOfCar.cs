@@ -12,10 +12,9 @@ public sealed class GetListUnavailableDatesOfCar
     public record Query(Guid CarId, int? Month = null, int? Year = null)
         : IRequest<Result<List<Response>>>;
 
-    public record Response(DateTimeOffset Date, bool IsAvailable)
+    public record Response(DateTimeOffset Date)
     {
-        public static Response FromEntity(CarAvailability availability) =>
-            new(availability.Date, availability.IsAvailable);
+        public static Response FromEntity(CarAvailability availability) => new(availability.Date);
     }
 
     internal sealed class Handler(IAppDBContext context)

@@ -2,7 +2,6 @@ using Ardalis.Result;
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
-using Microsoft.EntityFrameworkCore;
 using Persistance.Data;
 using UseCases.UC_Car.Queries;
 using UseCases.UnitTests.TestBases;
@@ -103,9 +102,6 @@ public class GetListUnavailableDatesOfCarTest(DatabaseTestBase fixture) : IAsync
         Assert.Contains(result.Value, d => d.Date.Date == today.Date);
         Assert.Contains(result.Value, d => d.Date.Date == dayAfter.Date);
         Assert.DoesNotContain(result.Value, d => d.Date.Date == tomorrow.Date);
-
-        // Verify all returned dates have IsAvailable = false
-        Assert.All(result.Value, d => Assert.False(d.IsAvailable));
     }
 
     [Fact]
