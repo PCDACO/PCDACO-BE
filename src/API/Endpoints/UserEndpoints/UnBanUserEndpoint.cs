@@ -3,7 +3,6 @@ using Ardalis.Result;
 using Carter;
 using MediatR;
 using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
 using UseCases.UC_User.Commands;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
@@ -48,13 +47,13 @@ public class UnBanUserEndpoint : ICarterModule
                                             ["userId"] = new OpenApiString(
                                                 "123e4567-e89b-12d3-a456-426614174000"
                                             ),
-                                            ["isBanned"] = new OpenApiBoolean(false)
+                                            ["isBanned"] = new OpenApiBoolean(false),
                                         },
                                         ["isSuccess"] = new OpenApiBoolean(true),
-                                        ["message"] = new OpenApiString("Đã hủy cấm người dùng")
-                                    }
-                                }
-                            }
+                                        ["message"] = new OpenApiString("Đã hủy cấm người dùng"),
+                                    },
+                                },
+                            },
                         },
                         ["401"] = new() { Description = "Unauthorized - User not authenticated" },
                         ["403"] = new()
@@ -69,10 +68,10 @@ public class UnBanUserEndpoint : ICarterModule
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
                                             "Bạn không có quyền thực hiện hành động này"
-                                        )
-                                    }
-                                }
-                            }
+                                        ),
+                                    },
+                                },
+                            },
                         },
                         ["404"] = new()
                         {
@@ -84,10 +83,12 @@ public class UnBanUserEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString("Không tìm thấy người dùng")
-                                    }
-                                }
-                            }
+                                        ["message"] = new OpenApiString(
+                                            "Không tìm thấy người dùng"
+                                        ),
+                                    },
+                                },
+                            },
                         },
                         ["409"] = new()
                         {
@@ -99,12 +100,12 @@ public class UnBanUserEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString("Người dùng không bị cấm")
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                        ["message"] = new OpenApiString("Người dùng không bị cấm"),
+                                    },
+                                },
+                            },
+                        },
+                    },
                 }
             );
     }

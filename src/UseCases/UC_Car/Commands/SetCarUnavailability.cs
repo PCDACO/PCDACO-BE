@@ -10,8 +10,7 @@ namespace UseCases.UC_Car.Commands;
 
 public class SetCarUnavailability
 {
-    public record Command(Guid CarId, List<DateTimeOffset> Dates, bool IsAvailable = false)
-        : IRequest<Result>;
+    public record Command(Guid CarId, List<DateTimeOffset> Dates) : IRequest<Result>;
 
     internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
         : IRequestHandler<Command, Result>
@@ -35,24 +34,18 @@ public class SetCarUnavailability
             if (car.OwnerId != currentUser.User!.Id)
                 return Result.Error(ResponseMessages.ForbiddenAudit);
 
-            // Normalize dates to midnight for consistent comparison
-            var normalizedDates = request
-                .Dates.Select(d => new DateTimeOffset(d.Date, d.Offset))
-                .ToList();
-
             // Check for existing bookings
-            var dateToCheck = normalizedDates.ToHashSet();
             var existingBookingDate = context
                 .Bookings.Where(b =>
                     b.CarId == request.CarId
                     && !b.IsDeleted
-                    && b.Status != Domain.Enums.BookingStatusEnum.Cancelled
-                )
-                .AsEnumerable()
-                .Where(b =>
-                    dateToCheck.Any(d =>
-                        b.StartTime.UtcDateTime.Date <= d.UtcDateTime.Date
-                        && b.EndTime.UtcDateTime.Date >= d.UtcDateTime.Date
+                    && (
+                        b.Status == Domain.Enums.BookingStatusEnum.Ongoing
+                        || b.Status == Domain.Enums.BookingStatusEnum.ReadyForPickup
+                        || b.Status == Domain.Enums.BookingStatusEnum.Approved
+                    )
+                    && request.Dates.Any(d =>
+                        b.StartTime.Date <= d.Date && b.EndTime.Date >= d.Date
                     )
                 )
                 .Select(b => b.StartTime)
@@ -63,47 +56,38 @@ public class SetCarUnavailability
                     $"Không thể thay đổi trạng thái vì ngày {existingBookingDate} đã có đơn đặt xe"
                 );
 
-            // Get all existing availability records
-            var datesToCheck = normalizedDates.Select(d => d.UtcDateTime).ToHashSet();
+            // Get existing car availabilities for this car
+            var existingAvailabilities = context.CarAvailabilities.Where(ca =>
+                ca.CarId == request.CarId && !ca.IsDeleted
+            );
 
-            // Get existing availabilities
-            var existingAvailabilities = await context
-                .CarAvailabilities.Where(ca =>
-                    ca.CarId == request.CarId
-                    && !ca.IsDeleted
-                    && datesToCheck.Contains(ca.Date.UtcDateTime.Date)
-                )
-                .ToDictionaryAsync(ca => ca.Date.Date, ca => ca, cancellationToken);
+            // Find dates that already exist in the database
+            var existingDates = existingAvailabilities.Select(ca => ca.Date.Date).ToHashSet();
 
-            // Prepare records to add or update
-            var toAdd = new List<CarAvailability>();
-
-            foreach (var date in normalizedDates)
+            // Add new dates that don't exist yet
+            foreach (var date in request.Dates)
             {
-                if (existingAvailabilities.TryGetValue(date.Date, out var existing))
+                if (!existingDates.Contains(date.Date))
                 {
-                    // Update existing record
-                    existing.IsAvailable = request.IsAvailable;
-                    existing.UpdatedAt = DateTimeOffset.UtcNow;
-                }
-                else
-                {
-                    // Create new availability record
-                    toAdd.Add(
+                    context.CarAvailabilities.Add(
                         new CarAvailability
                         {
                             CarId = request.CarId,
                             Date = date,
-                            IsAvailable = request.IsAvailable,
+                            IsAvailable = false,
                         }
                     );
                 }
             }
 
-            // Add new records if any
-            if (toAdd.Count > 0)
+            // Soft delete dates that are not in request.Dates
+            var requestDateSet = request.Dates.Select(d => d.Date).ToHashSet();
+            foreach (var availability in existingAvailabilities)
             {
-                await context.CarAvailabilities.AddRangeAsync(toAdd, cancellationToken);
+                if (!requestDateSet.Contains(availability.Date.Date))
+                {
+                    availability.IsDeleted = true;
+                }
             }
 
             // Save all changes in one transaction
