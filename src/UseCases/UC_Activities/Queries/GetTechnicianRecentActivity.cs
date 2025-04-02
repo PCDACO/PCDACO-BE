@@ -61,23 +61,23 @@ public class GetTechnicianRecentActivity
             {
                 case Domain.Enums.InspectionScheduleStatusEnum.Approved:
                     {
-                        return $"Kĩ thuật viên ${schedule.Technician.Name} đã hoàn tất xem xét xe ${schedule.Car.Model.Name}-${licensePlate} của ${schedule.Car.Owner.Name}";
+                        return $"Kĩ thuật viên {schedule.Technician.Name} đã hoàn tất kiểm định xe {schedule.Car.Model.Name}-{licensePlate} của {schedule.Car.Owner.Name}";
                     };
                 case Domain.Enums.InspectionScheduleStatusEnum.Expired:
                     {
-                        return $"Kĩ thuật viên ${schedule.Technician.Name} đã quá hạn xem xét xe ${schedule.Car.Model.Name}-${licensePlate} của ${schedule.Car.Owner.Name}";
+                        return $"Kĩ thuật viên {schedule.Technician.Name} đã quá hạn kiểm định xe {schedule.Car.Model.Name}-{licensePlate} của {schedule.Car.Owner.Name}";
                     };
                 case Domain.Enums.InspectionScheduleStatusEnum.InProgress:
                     {
-                        return $"Kĩ thuật viên ${schedule.Technician.Name} đang trong quá trình xem xét xe ${schedule.Car.Model.Name}-${licensePlate} của ${schedule.Car.Owner.Name}";
+                        return $"Kĩ thuật viên {schedule.Technician.Name} đã cập nhật đang trong quá trình kiểm định xe {schedule.Car.Model.Name}-{licensePlate} của {schedule.Car.Owner.Name}";
                     };
                 case Domain.Enums.InspectionScheduleStatusEnum.Rejected:
                     {
-                        return $"Kĩ thuật viên ${schedule.Technician.Name} từ chối xe ${schedule.Car.Model.Name}-${licensePlate} của ${schedule.Car.Owner.Name}";
+                        return $"Kĩ thuật viên {schedule.Technician.Name} đã từ chối xe {schedule.Car.Model.Name}-{licensePlate} của {schedule.Car.Owner.Name}";
                     };
                 case Domain.Enums.InspectionScheduleStatusEnum.Signed:
                     {
-                        return $"Kĩ thuật viên ${schedule.Technician.Name} kí hợp đồng thuê xe xe ${schedule.Car.Model.Name}-${licensePlate} của ${schedule.Car.Owner.Name}";
+                        return $"Kĩ thuật viên {schedule.Technician.Name} đã kí hợp đồng thuê xe {schedule.Car.Model.Name}-{licensePlate} của {schedule.Car.Owner.Name}";
                     };
                 default:
                     {
