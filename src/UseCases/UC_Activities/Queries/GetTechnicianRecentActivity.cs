@@ -121,6 +121,7 @@ public class GetTechnicianRecentActivity
                 .Where(i => i.UpdatedAt != null)
                 .Where(i => i.TechnicianId == currentUser!.User!.Id)
                 .OrderByDescending(i => i.UpdatedAt).ThenByDescending(i => i.Id)
+                .Take(5)
                 .ToArrayAsync(cancellationToken);
             return OffsetPaginatedResponse<Response>.Map(
                     items: await Task.WhenAll(
