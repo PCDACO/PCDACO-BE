@@ -44,6 +44,7 @@ public class AssignDeviceToCar
                 {
                     return Result.Error(ResponseMessages.GPSDeviceIsNotAvailable);
                 }
+                gettingDevice.Name = request.DeviceName;
                 gettingDevice.Status = DeviceStatusEnum.InUsed;
             }
             else
