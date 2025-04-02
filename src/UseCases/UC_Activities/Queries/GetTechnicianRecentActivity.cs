@@ -1,4 +1,3 @@
-
 using Ardalis.Result;
 
 using Domain.Constants;
@@ -17,7 +16,7 @@ namespace UseCases.UC_Activities.Queries;
 
 public class GetTechnicianRecentActivity
 {
-    public record Query() : IRequest<Result<OffsetPaginatedResponse<Response>>>;
+    public record Query() : IRequest<Result<Response>>;
 
     public record Response(ActivityDetails[] Activities)
     {
@@ -88,8 +87,6 @@ public class GetTechnicianRecentActivity
         }
     }
 
-
-
     public record ActivityDetails(
         string AvatarUrl,
     string Content,
@@ -102,9 +99,9 @@ public class GetTechnicianRecentActivity
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings
-            ) : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
+            ) : IRequestHandler<Query, Result<Response>>
     {
-        public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<Result<Response>> Handle(Query request, CancellationToken cancellationToken)
         {
             if (!currentUser?.User?.IsTechnician() ?? false)
             {
@@ -123,19 +120,12 @@ public class GetTechnicianRecentActivity
                 .OrderByDescending(i => i.UpdatedAt).ThenByDescending(i => i.Id)
                 .Take(5)
                 .ToArrayAsync(cancellationToken);
-            return OffsetPaginatedResponse<Response>.Map(
-                    items: await Task.WhenAll(
-                        Response.FromEntity(
+            return Result.Success(await Response.FromEntity(
                             activities,
                             encryptionSettings.Key,
                             aesEncryptionService,
                             keyManagementService
-                            )),
-                   totalItems: 0,
-                   pageNumber: 1,
-                   pageSize: 10000,
-                   hasNext: false
-                    );
+                            ), ResponseMessages.Fetched);
         }
     }
 

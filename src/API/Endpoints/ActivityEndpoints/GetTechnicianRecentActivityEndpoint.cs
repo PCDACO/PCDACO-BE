@@ -6,7 +6,6 @@ using Carter;
 
 using MediatR;
 
-using UseCases.DTOs;
 using UseCases.UC_Activities.Queries;
 
 using IResult = Microsoft.AspNetCore.Http.IResult;
@@ -17,7 +16,7 @@ public class GetTechnicianRecentActivityEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/users/technician/recent-activity",Handle)
+        app.MapGet("/api/users/technician/recent-activity", Handle)
             .WithSummary("Get technicians' recent activity")
             .WithTags("Users")
             .RequireAuthorization();
@@ -28,7 +27,7 @@ public class GetTechnicianRecentActivityEndpoint : ICarterModule
             CancellationToken cancellationToken
             )
     {
-        Result<OffsetPaginatedResponse<GetTechnicianRecentActivity.Response>> result = await sender.Send(
+        Result<GetTechnicianRecentActivity.Response> result = await sender.Send(
                 new GetTechnicianRecentActivity.Query(), cancellationToken
                 );
         return result.MapResult();
