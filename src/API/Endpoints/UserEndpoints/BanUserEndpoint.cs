@@ -3,7 +3,6 @@ using Ardalis.Result;
 using Carter;
 using MediatR;
 using Microsoft.OpenApi.Any;
-using Microsoft.OpenApi.Models;
 using UseCases.UC_User.Commands;
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
