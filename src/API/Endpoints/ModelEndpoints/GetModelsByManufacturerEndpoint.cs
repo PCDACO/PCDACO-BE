@@ -67,12 +67,13 @@ public class GetModelsByManufacturerEndpoint : ICarterModule
                                                     ["createdAt"] = new OpenApiString(
                                                         "2023-05-15T10:30:00Z"
                                                     ),
-                                                    ["manufacturerId"] = new OpenApiString(
-                                                        "123e4567-e89b-12d3-a456-426614174001"
-                                                    ),
-                                                    ["manufacturerName"] = new OpenApiString(
-                                                        "Toyota"
-                                                    ),
+                                                    ["manufacturer"] = new OpenApiObject
+                                                    {
+                                                        ["id"] = new OpenApiString(
+                                                            "123e4567-e89b-12d3-a456-426614174001"
+                                                        ),
+                                                        ["name"] = new OpenApiString("Toyota"),
+                                                    },
                                                 },
                                                 new OpenApiObject
                                                 {
@@ -86,12 +87,13 @@ public class GetModelsByManufacturerEndpoint : ICarterModule
                                                     ["createdAt"] = new OpenApiString(
                                                         "2023-04-20T14:45:00Z"
                                                     ),
-                                                    ["manufacturerId"] = new OpenApiString(
-                                                        "123e4567-e89b-12d3-a456-426614174001"
-                                                    ),
-                                                    ["manufacturerName"] = new OpenApiString(
-                                                        "Toyota"
-                                                    ),
+                                                    ["manufacturer"] = new OpenApiObject
+                                                    {
+                                                        ["id"] = new OpenApiString(
+                                                            "123e4567-e89b-12d3-a456-426614174001"
+                                                        ),
+                                                        ["name"] = new OpenApiString("Toyota"),
+                                                    },
                                                 },
                                             },
                                             ["totalItems"] = new OpenApiInteger(42),
