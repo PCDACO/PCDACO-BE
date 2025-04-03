@@ -8,6 +8,7 @@ public enum BookingStatusEnum
     ReadyForPickup,
     Ongoing,
     Completed,
+    Done,
     Cancelled,
     Expired
 }

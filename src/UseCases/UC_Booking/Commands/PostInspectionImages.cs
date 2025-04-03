@@ -138,6 +138,7 @@ public sealed class PostInspectionImages
                 // Automatically confirm car return
                 booking.IsCarReturned = true;
                 booking.UpdatedAt = DateTimeOffset.UtcNow;
+                booking.Status = BookingStatusEnum.Done;
             }
 
             await context.SaveChangesAsync(cancellationToken);
