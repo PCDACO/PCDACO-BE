@@ -30,7 +30,7 @@ public class GetAllReports
         DateTimeOffset? ResolvedAt,
         Guid? ResolvedById,
         string? ResolutionComments,
-        ICollection<ImageReport> ImageReports
+        string[] ImageReports
     )
     {
         public static Response FromEntity(BookingReport report) =>
@@ -46,7 +46,7 @@ public class GetAllReports
                 report.ResolvedAt,
                 report.ResolvedById,
                 report.ResolutionComments,
-                report.ImageReports
+                [.. report.ImageReports.Select(ir => ir.Url)]
             );
     }
 
