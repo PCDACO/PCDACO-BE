@@ -128,7 +128,7 @@ public class CreateModelTest(DatabaseTestBase fixture) : IAsyncLifetime
         var validator = new CreateModel.Validator();
         var command = new CreateModel.Command(
             "", // Empty name
-            DateTime.UtcNow.AddDays(-1), // Past date
+            DateTime.UtcNow.AddDays(1), // future date
             Guid.Empty // Empty manufacturer ID
         );
 
