@@ -80,15 +80,12 @@ public class GetAllReportEndpoint : ICarterModule
                                                     ["resolutionComments"] = new OpenApiNull(),
                                                     ["imageReports"] = new OpenApiArray
                                                     {
-                                                        new OpenApiObject
-                                                        {
-                                                            ["id"] = new OpenApiString(
-                                                                "123e4567-e89b-12d3-a456-426614174003"
-                                                            ),
-                                                            ["url"] = new OpenApiString(
-                                                                "https://example.com/image.jpg"
-                                                            )
-                                                        }
+                                                        new OpenApiString(
+                                                            "https://example.com/image1.jpg"
+                                                        ),
+                                                        new OpenApiString(
+                                                            "https://example.com/image2.jpg"
+                                                        )
                                                     }
                                                 }
                                             },
