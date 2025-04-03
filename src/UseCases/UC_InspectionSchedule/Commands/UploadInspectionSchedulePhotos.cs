@@ -65,6 +65,12 @@ public sealed class UploadInspectionSchedulePhotos
                 );
             }
 
+            // Check if the inspection schedule is assigned to the current user
+            if (inspectionSchedule.TechnicianId != currentUser.User.Id)
+            {
+                return Result.Forbidden("Bạn không phải là kiểm định viên được chỉ định");
+            }
+
             // Upload new images
             List<Task<string>> uploadTasks = [];
 

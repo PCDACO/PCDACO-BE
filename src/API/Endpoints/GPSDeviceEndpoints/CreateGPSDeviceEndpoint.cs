@@ -1,13 +1,8 @@
 using API.Utils;
-
 using Ardalis.Result;
-
 using Carter;
-
 using MediatR;
-
 using UseCases.UC_GPSDevice.Commands;
-
 using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.GPSDeviceEndpoints;
@@ -21,13 +16,15 @@ public class CreateGPSDeviceEndpoint : ICarterModule
             .WithTags("GPS Devices")
             .RequireAuthorization();
     }
-    private async Task<IResult> Handle(
-        ISender sender,
-        CreateGPSDeviceRequest request
-    )
+
+    private async Task<IResult> Handle(ISender sender, CreateGPSDeviceRequest request)
     {
-        Result<CreateGPSDevice.Response> result = await sender.Send(new CreateGPSDevice.Command(request.Name), default);
+        Result<CreateGPSDevice.Response> result = await sender.Send(
+            new CreateGPSDevice.Command(request.OSBuildId, request.Name),
+            default
+        );
         return result.MapResult();
     }
-    private record CreateGPSDeviceRequest(string Name);
+
+    private record CreateGPSDeviceRequest(string OSBuildId, string Name);
 }

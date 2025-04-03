@@ -44,6 +44,10 @@ public sealed class InProgressInspectionSchedule
             if (schedule.Status != InspectionScheduleStatusEnum.Pending)
                 return Result.Error(ResponseMessages.OnlyUpdatePendingInspectionSchedule);
 
+            // Check if the schedule is assigned to the current user
+            if (schedule.TechnicianId != currentUser.User.Id)
+                return Result.Forbidden("Bạn không phải là kiểm định viên được chỉ định");
+
             // Check if datetimeoffset.utcnow is greater than schedule.InspectionDate above 15 minutes
             if (DateTimeOffset.UtcNow > schedule.InspectionDate.AddMinutes(15))
                 return Result.Conflict(ResponseMessages.InspectionScheduleExpired);

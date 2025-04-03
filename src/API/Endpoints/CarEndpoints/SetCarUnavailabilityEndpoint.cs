@@ -127,17 +127,10 @@ public class SetCarUnavailabilityEndpoint : ICarterModule
     private async Task<IResult> Handle(ISender sender, Guid id, SetCarUnavailabilityRequest request)
     {
         Result result = await sender.Send(
-            new SetCarUnavailability.Command(
-                CarId: id,
-                Dates: request.Dates,
-                IsAvailable: request.IsAvailable
-            )
+            new SetCarUnavailability.Command(CarId: id, Dates: request.Dates)
         );
         return result.MapResult();
     }
 
-    private record SetCarUnavailabilityRequest(
-        List<DateTimeOffset> Dates,
-        bool IsAvailable = false
-    );
+    private record SetCarUnavailabilityRequest(List<DateTimeOffset> Dates);
 }
