@@ -1,11 +1,7 @@
 using Ardalis.Result;
-
 using Domain.Entities;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Utils;
@@ -26,8 +22,7 @@ public sealed class GetModelsByManufacturer
         string Name,
         DateTimeOffset ReleaseDate,
         DateTimeOffset CreatedAt,
-        Guid ManufacturerId,
-        string ManufacturerName
+        ManufacturerDetail Manufacturer
     )
     {
         public static Response FromEntity(Model model) =>
@@ -36,16 +31,23 @@ public sealed class GetModelsByManufacturer
                 model.Name,
                 model.ReleaseDate,
                 GetTimestampFromUuid.Execute(model.Id),
-                model.Manufacturer.Id,
-                model.Manufacturer.Name
+                ManufacturerDetail.FromEntity(model.Manufacturer!)
             );
     }
 
-    public class Handler(
-        IAppDBContext context
-    ) : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
+    public sealed record ManufacturerDetail(Guid Id, string Name)
     {
-        public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(Query request, CancellationToken cancellationToken)
+        public static ManufacturerDetail FromEntity(Manufacturer manufacturer) =>
+            new(manufacturer.Id, manufacturer.Name);
+    };
+
+    public class Handler(IAppDBContext context)
+        : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
+    {
+        public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(
+            Query request,
+            CancellationToken cancellationToken
+        )
         {
             // Query models
             IQueryable<Model> query = context
