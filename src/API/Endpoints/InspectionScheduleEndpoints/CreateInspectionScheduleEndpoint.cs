@@ -41,9 +41,9 @@ public class CreateInspectionScheduleEndpoint : ICarterModule
 
                     Responses =
                     {
-                        ["201"] = new()
+                        ["200"] = new()
                         {
-                            Description = "Created - Inspection schedule successfully created",
+                            Description = "Success - Inspection schedule successfully created",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -64,6 +64,22 @@ public class CreateInspectionScheduleEndpoint : ICarterModule
                         },
                         ["400"] = new()
                         {
+                            Description =
+                                "Bad Request - Car already has an active inspection schedule",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["message"] = new OpenApiString("Xe đã có lịch kiểm định"),
+                                    },
+                                },
+                            },
+                        },
+                        ["400"] = new()
+                        {
                             Description = "Bad Request - Validation errors",
                             Content =
                             {
@@ -74,6 +90,23 @@ public class CreateInspectionScheduleEndpoint : ICarterModule
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
                                             "Thời điểm kiểm định phải lớn hơn hoặc bằng thời điểm hiện tại"
+                                        ),
+                                    },
+                                },
+                            },
+                        },
+                        ["400"] = new()
+                        {
+                            Description = "Bad Request - Scheduling conflict with technician",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["message"] = new OpenApiString(
+                                            "Kiểm định viên đã có lịch trong vòng 1 giờ của thời điểm này"
                                         ),
                                     },
                                 },
@@ -109,42 +142,6 @@ public class CreateInspectionScheduleEndpoint : ICarterModule
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
                                             "Không tìm thấy xe hoặc kiểm định viên"
-                                        ),
-                                    },
-                                },
-                            },
-                        },
-                        ["409"] = new()
-                        {
-                            Description =
-                                "Conflict - Car already has an active inspection schedule",
-                            Content =
-                            {
-                                ["application/json"] = new()
-                                {
-                                    Example = new OpenApiObject
-                                    {
-                                        ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString(
-                                            "Xe đã có lịch kiểm định đang hoạt động"
-                                        ),
-                                    },
-                                },
-                            },
-                        },
-                        ["422"] = new()
-                        {
-                            Description =
-                                "Unprocessable Entity - Scheduling conflict with technician",
-                            Content =
-                            {
-                                ["application/json"] = new()
-                                {
-                                    Example = new OpenApiObject
-                                    {
-                                        ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString(
-                                            "Kiểm định viên đã có lịch trong vòng 1 giờ của thời điểm này"
                                         ),
                                     },
                                 },

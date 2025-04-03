@@ -83,6 +83,24 @@ public class ApproveInspectionScheduleEndpoint : ICarterModule
                                 },
                             },
                         },
+                        ["400"] = new()
+                        {
+                            Description =
+                                "Bad request - Schedule in wrong state, expired, or contract issues",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["message"] = new OpenApiString(
+                                            ResponseMessages.OnlyUpdateSignedOrInprogressInspectionSchedule
+                                        ),
+                                    },
+                                },
+                            },
+                        },
                         ["401"] = new() { Description = "Unauthorized - User not authenticated" },
                         ["403"] = new()
                         {
@@ -114,24 +132,6 @@ public class ApproveInspectionScheduleEndpoint : ICarterModule
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
                                             "Không tìm thấy lịch kiểm định"
-                                        ),
-                                    },
-                                },
-                            },
-                        },
-                        ["400"] = new()
-                        {
-                            Description =
-                                "Bad request - Schedule in wrong state, expired, or contract issues",
-                            Content =
-                            {
-                                ["application/json"] = new()
-                                {
-                                    Example = new OpenApiObject
-                                    {
-                                        ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString(
-                                            ResponseMessages.OnlyUpdateSignedOrInprogressInspectionSchedule
                                         ),
                                     },
                                 },
