@@ -64,7 +64,7 @@ public class GetAllReportEndpoint : ICarterModule
                                                     ["reporterId"] = new OpenApiString(
                                                         "123e4567-e89b-12d3-a456-426614174002"
                                                     ),
-                                                    ["reportedName"] = new OpenApiString(
+                                                    ["reporterName"] = new OpenApiString(
                                                         "John Doe"
                                                     ),
                                                     ["title"] = new OpenApiString(

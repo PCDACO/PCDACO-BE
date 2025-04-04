@@ -16,7 +16,6 @@ public class TrackCarLocationEndpoint : ICarterModule
         app.MapPost("/api/cars/{id:guid}/track", Handle)
             .WithSummary("Track car location from GPS device")
             .WithTags("Cars")
-            .RequireAuthorization()
             .WithOpenApi(operation =>
                 new(operation)
                 {
@@ -24,7 +23,6 @@ public class TrackCarLocationEndpoint : ICarterModule
                     Updates the real-time location of a car from its GPS device.
 
                     Notes:
-                    - Requires authentication with GPS device credentials
                     - Updates the car's current location in CarGPS table
                     - If there's an active booking for the car:
                       * Creates a new TripTracking record

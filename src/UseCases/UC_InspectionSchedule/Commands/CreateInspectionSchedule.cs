@@ -74,6 +74,7 @@ public sealed class CreateInspectionSchedule
                     return Result.Error(ResponseMessages.ReportNotUnderReviewed);
 
                 report.Status = BookingReportStatus.UnderReview;
+                report.ResolvedById = currentUser.User.Id;
             }
 
             // Check for existing active schedules for the car

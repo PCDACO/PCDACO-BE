@@ -22,7 +22,7 @@ public class GetAllReports
         Guid Id,
         Guid BookingId,
         Guid ReporterId,
-        string ReportedName,
+        string ReporterName,
         string Title,
         string Description,
         BookingReportType ReportType,
