@@ -63,6 +63,19 @@ public sealed class CreateCar
             if (currentUser.User!.IsAdmin())
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
             if (currentUser.User.Role.Name != UserRoleNames.Owner) return Result.Forbidden(ResponseMessages.ForbiddenAudit);
+            // Verify owner license first
+            var license = await context.Users.FirstOrDefaultAsync(
+                u =>
+                    u.Id == currentUser.User.Id
+                    && u.LicenseIsApproved == true
+                    && u.LicenseExpiryDate > DateTimeOffset.UtcNow,
+                cancellationToken
+            );
+
+            if (license == null)
+                return Result.Error(
+                    "Bằng lái xe của bạn không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật thông tin bằng lái xe trước khi tạo xe."
+                );
             // Check if amenities are exist
             if (request.AmenityIds.Length > 0)
             {
