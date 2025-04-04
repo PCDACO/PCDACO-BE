@@ -6,6 +6,7 @@ using Domain.Enums;
 using Domain.Shared.EmailTemplates.EmailBookings;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Services.EmailService;
@@ -19,7 +20,8 @@ public sealed class CancelBooking
     internal sealed class Handler(
         IAppDBContext context,
         CurrentUser currentUser,
-        IEmailService emailService
+        IEmailService emailService,
+        ILogger<Handler> logger
     ) : IRequestHandler<Command, Result>
     {
         private const decimal ADMIN_REFUND_PERCENTAGE = 0.1m;
@@ -38,19 +40,30 @@ public sealed class CancelBooking
                 .Bookings.Include(x => x.Car)
                 .ThenInclude(x => x.Owner)
                 .Include(x => x.User)
+                .Include(x => x.Car.Model)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
+            {
+                logger.LogWarning("Booking with ID {BookingId} not found", request.BookingId);
                 return Result.NotFound("Không tìm thấy booking");
+            }
 
             // Check if user is either the driver or the owner
             bool isDriver = booking.UserId == currentUser.User!.Id;
             bool isOwner = booking.Car.OwnerId == currentUser.User!.Id;
 
             if (!isDriver && !isOwner)
+            {
+                logger.LogWarning(
+                    "User {UserId} attempted to cancel booking {BookingId} without permission",
+                    currentUser.User.Id,
+                    request.BookingId
+                );
                 return Result.Forbidden(
                     "Bạn không có quyền thực hiện chức năng này với booking này!"
                 );
+            }
 
             if (
                 booking.Status
@@ -63,6 +76,12 @@ public sealed class CancelBooking
                 )
             )
             {
+                logger.LogWarning(
+                    "User {UserId} attempted to cancel booking {BookingId} in status {Status}",
+                    currentUser.User.Id,
+                    request.BookingId,
+                    booking.Status
+                );
                 return Result.Conflict($"Không thể hủy booking ở trạng thái {booking.Status}");
             }
 
@@ -82,7 +101,14 @@ public sealed class CancelBooking
                 );
 
                 if (recentCancellations >= 5)
+                {
+                    logger.LogWarning(
+                        "User {UserId} exceeded cancellation limit for booking {BookingId}",
+                        currentUser.User.Id,
+                        request.BookingId
+                    );
                     return Result.Error("Bạn đã hủy quá số lần cho phép trong 30 ngày");
+                }
 
                 // Calculate refund percentage based on cancellation timing
                 decimal refundPercentage = CalculateRefundPercentage(daysUntilStart);
@@ -122,13 +148,24 @@ public sealed class CancelBooking
 
                 // Update car status
                 if (booking.Status == BookingStatusEnum.Approved)
+                {
+                    logger.LogInformation(
+                        "Car status updated to available for booking {BookingId}",
+                        request.BookingId
+                    );
                     booking.Car.Status = CarStatusEnum.Available;
+                }
             }
 
             booking.Status = BookingStatusEnum.Cancelled;
             booking.Note = request.CancelReason;
             booking.UpdatedAt = DateTimeOffset.UtcNow;
             await context.SaveChangesAsync(cancellationToken);
+            logger.LogInformation(
+                "Booking {BookingId} cancelled successfully by user {UserId}",
+                request.BookingId,
+                currentUser.User.Id
+            );
 
             // Send cancellation emails
             await SendCancellationEmails(
@@ -142,6 +179,10 @@ public sealed class CancelBooking
                 amount: isOwner ? penaltyAmount : (booking.RefundAmount ?? 0),
                 cancelReason: request.CancelReason,
                 isOwnerCancelled: isOwner
+            );
+            logger.LogInformation(
+                "Cancellation emails sent for booking {BookingId}",
+                request.BookingId
             );
 
             return Result.SuccessWithMessage(
@@ -173,7 +214,10 @@ public sealed class CancelBooking
             );
 
             if (admin == null)
+            {
+                logger.LogError("Admin user not found for booking {BookingId}", booking.Id);
                 throw new InvalidOperationException("Admin user not found");
+            }
 
             var refundAmount = booking.TotalAmount * refundPercentage;
             var adminRefundAmount = refundAmount * ADMIN_REFUND_PERCENTAGE;
