@@ -13,7 +13,6 @@ public static class CarContractTemplateGenerator
         public required string OwnerLicenseNumber { get; set; }
         public required string OwnerAddress { get; set; }
         public required string TechnicianName { get; set; }
-        public required string TechnicianLicenseNumber { get; set; }
         public required string CarManufacturer { get; set; }
         public required string CarLicensePlate { get; set; }
         public required string CarSeat { get; set; }
@@ -301,7 +300,6 @@ public static class CarContractTemplateGenerator
                                 <p>Địa chỉ: {contractTemplate.OwnerAddress}</p>
                                 <br/>
                                 <p><strong>ĐẠI DIỆN KIỂM ĐỊNH:</strong> {contractTemplate.TechnicianName}</p>
-                                <p>Số giấy phép: {contractTemplate.TechnicianLicenseNumber}</p>
                             </div>
                         </div>
 
