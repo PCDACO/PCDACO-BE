@@ -58,7 +58,7 @@ public class GetReportById
                 report.Id,
                 report.ReportedById,
                 report.ReportedBy.Name,
-                report.Booking.User.Role.Name,
+                report.ReportedBy.Role.Name,
                 report.Title,
                 report.Description,
                 report.ReportType,
