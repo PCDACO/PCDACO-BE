@@ -17,7 +17,8 @@ public class GetReportById
     public sealed record Response(
         Guid Id,
         Guid ReporterId,
-        string ReportedName,
+        string ReporterName,
+        string ReporterRole,
         string Title,
         string Description,
         BookingReportType ReportType,
@@ -57,6 +58,7 @@ public class GetReportById
                 report.Id,
                 report.ReportedById,
                 report.ReportedBy.Name,
+                report.Booking.User.Role.Name,
                 report.Title,
                 report.Description,
                 report.ReportType,
@@ -231,6 +233,7 @@ public class GetReportById
         {
             BookingReport? report = await context
                 .BookingReports.Include(r => r.ReportedBy)
+                .ThenInclude(r => r.Role)
                 .Include(r => r.ImageReports)
                 .Include(r => r.Booking)
                 .ThenInclude(b => b.User)

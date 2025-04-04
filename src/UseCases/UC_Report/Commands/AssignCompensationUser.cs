@@ -62,6 +62,7 @@ public class AssignCompensationUser
             report.CompensationReason = request.CompensationReason;
             report.CompensationAmount = request.CompensationAmount;
             report.IsCompensationPaid = false;
+            report.ResolvedById = currentUser.User.Id;
 
             var dueDate = DateTimeOffset.Now.AddDays(5);
 
