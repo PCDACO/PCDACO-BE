@@ -56,6 +56,11 @@ public class SwitchGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifetim
         Assert.Equal(10.7756587, carGPS.Location.Y, 6); // Y is latitude
         Assert.Equal(106.7004238, carGPS.Location.X, 6); // X is longitude
         Assert.False(carGPS.IsDeleted);
+
+        // Verify GPS device status was updated
+        var updatedDevice = await _dbContext.GPSDevices.FirstOrDefaultAsync(d => d.Id == device.Id);
+        Assert.NotNull(updatedDevice);
+        Assert.Equal(DeviceStatusEnum.InUsed, updatedDevice.Status);
     }
 
     [Fact]
@@ -160,7 +165,7 @@ public class SwitchGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifetim
     }
 
     [Fact]
-    public async Task Handle_DeviceAssociatedWithDeletedCarGPS_CreatesNewAssociation()
+    public async Task Handle_RequestedCarAlreadyHasCarGPS_ReturnError()
     {
         // Arrange
         var (car, _) = await SetupTestCar();
@@ -193,16 +198,263 @@ public class SwitchGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifetim
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(
+            "Không thể đổi thiết bị GPS cho xe này vì xe đã có thiết bị GPS",
+            result.Errors
+        );
+    }
+
+    [Theory]
+    [InlineData(BookingStatusEnum.Pending)]
+    [InlineData(BookingStatusEnum.Ongoing)]
+    [InlineData(BookingStatusEnum.ReadyForPickup)]
+    [InlineData(BookingStatusEnum.Approved)]
+    public async Task Handle_DeviceUsedWithActiveBooking_ReturnsError(
+        BookingStatusEnum bookingStatus
+    )
+    {
+        // Arrange
+        var (firstCar, owner) = await SetupTestCar();
+        var (secondCar, _) = await SetupTestCar("Second Car");
+        var device = await TestDataGPSDevice.CreateTestGPSDevice(_dbContext);
+
+        // Create active GPS association for first car
+        var location = _geometryFactory.CreatePoint(new Coordinate(106.6, 10.6));
+        location.SRID = 4326;
+
+        var existingCarGPS = new CarGPS
+        {
+            CarId = firstCar.Id,
+            DeviceId = device.Id,
+            Location = location,
+            IsDeleted = false,
+        };
+        await _dbContext.CarGPSes.AddAsync(existingCarGPS);
+
+        // Create active booking for the first car
+        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var driver = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            driverRole,
+            "driver@example.com"
+        );
+
+        var booking = new Booking
+        {
+            Id = Guid.NewGuid(),
+            CarId = firstCar.Id,
+            UserId = driver.Id,
+            Status = bookingStatus,
+            StartTime = DateTimeOffset.UtcNow,
+            EndTime = DateTimeOffset.UtcNow.AddDays(1),
+            ActualReturnTime = DateTimeOffset.UtcNow.AddDays(1),
+            BasePrice = 100,
+            PlatformFee = 20,
+            ExcessDay = 0,
+            ExcessDayFee = 0,
+            TotalAmount = 120,
+            Note = "Test booking",
+            IsPaid = true,
+        };
+        await _dbContext.Bookings.AddAsync(booking);
+        await _dbContext.SaveChangesAsync();
+
+        // Try to switch device to second car
+        var handler = new SwitchGPSDeviceForCar.Handler(_dbContext, _geometryFactory);
+        var command = new SwitchGPSDeviceForCar.Command(
+            CarId: secondCar.Id,
+            GPSDeviceId: device.Id,
+            Longtitude: 107.0,
+            Latitude: 11.0
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(
+            "Không thể đổi thiết bị GPS khi gps device đang được dùng cho xe có đơn đặt xe",
+            result.Errors
+        );
+
+        // Verify GPS association is unchanged
+        var unchangedGPS = await _dbContext.CarGPSes.FirstOrDefaultAsync(c =>
+            c.DeviceId == device.Id
+        );
+        Assert.NotNull(unchangedGPS);
+        Assert.Equal(firstCar.Id, unchangedGPS.CarId);
+        Assert.Equal(106.6, unchangedGPS.Location.X, 6); // Original X coordinate
+        Assert.Equal(10.6, unchangedGPS.Location.Y, 6); // Original Y coordinate
+    }
+
+    [Theory]
+    [InlineData(BookingStatusEnum.Completed)]
+    [InlineData(BookingStatusEnum.Cancelled)]
+    [InlineData(BookingStatusEnum.Rejected)]
+    [InlineData(BookingStatusEnum.Expired)]
+    public async Task Handle_DeviceWithInactiveBooking_Succeeds(BookingStatusEnum bookingStatus)
+    {
+        // Arrange
+        var (firstCar, owner) = await SetupTestCar();
+        var (secondCar, _) = await SetupTestCar("Second Car");
+        var device = await TestDataGPSDevice.CreateTestGPSDevice(_dbContext);
+
+        // Create active GPS association for first car
+        var location = _geometryFactory.CreatePoint(new Coordinate(106.6, 10.6));
+        location.SRID = 4326;
+
+        var existingCarGPS = new CarGPS
+        {
+            CarId = firstCar.Id,
+            DeviceId = device.Id,
+            Location = location,
+            IsDeleted = false,
+        };
+        await _dbContext.CarGPSes.AddAsync(existingCarGPS);
+
+        // Create inactive booking for the first car
+        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var driver = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            driverRole,
+            "driver@example.com"
+        );
+
+        var booking = new Booking
+        {
+            Id = Guid.NewGuid(),
+            CarId = firstCar.Id,
+            UserId = driver.Id,
+            Status = bookingStatus, // Inactive status
+            StartTime = DateTimeOffset.UtcNow,
+            EndTime = DateTimeOffset.UtcNow.AddDays(1),
+            ActualReturnTime = DateTimeOffset.UtcNow.AddDays(1),
+            BasePrice = 100,
+            PlatformFee = 20,
+            ExcessDay = 0,
+            ExcessDayFee = 0,
+            TotalAmount = 120,
+            Note = "Test booking",
+            IsPaid = true,
+        };
+        await _dbContext.Bookings.AddAsync(booking);
+        await _dbContext.SaveChangesAsync();
+
+        // Try to switch device to second car
+        var handler = new SwitchGPSDeviceForCar.Handler(_dbContext, _geometryFactory);
+        var command = new SwitchGPSDeviceForCar.Command(
+            CarId: secondCar.Id,
+            GPSDeviceId: device.Id,
+            Longtitude: 107.0,
+            Latitude: 11.0
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Equal("Cập nhật thiết bị GPS cho xe thành công", result.SuccessMessage);
 
-        // Verify a new CarGPS was created
-        var carGPSs = await _dbContext.CarGPSes.Where(c => c.DeviceId == device.Id).ToListAsync();
-        Assert.Single(carGPSs.Where(c => !c.IsDeleted)); // One active association
+        // Verify GPS association was updated to second car
+        var updatedCarGPS = await _dbContext.CarGPSes.FirstOrDefaultAsync(c =>
+            c.DeviceId == device.Id
+        );
+        Assert.NotNull(updatedCarGPS);
+        Assert.Equal(secondCar.Id, updatedCarGPS.CarId);
+        Assert.Equal(107.0, updatedCarGPS.Location.X, 6);
+        Assert.Equal(11.0, updatedCarGPS.Location.Y, 6);
+    }
 
-        var activeCarGPS = carGPSs.First(c => !c.IsDeleted);
-        Assert.Equal(car.Id, activeCarGPS.CarId);
-        Assert.Equal(11.0, activeCarGPS.Location.Y, 6);
-        Assert.Equal(107.0, activeCarGPS.Location.X, 6);
+    [Fact]
+    public async Task Handle_MultipleBookings_OnlyActiveBlocksSwitch()
+    {
+        // Arrange
+        var (firstCar, owner) = await SetupTestCar();
+        var (secondCar, _) = await SetupTestCar("Second Car");
+        var device = await TestDataGPSDevice.CreateTestGPSDevice(_dbContext);
+
+        // Create active GPS association for first car
+        var location = _geometryFactory.CreatePoint(new Coordinate(106.6, 10.6));
+        location.SRID = 4326;
+
+        var existingCarGPS = new CarGPS
+        {
+            CarId = firstCar.Id,
+            DeviceId = device.Id,
+            Location = location,
+            IsDeleted = false,
+        };
+        await _dbContext.CarGPSes.AddAsync(existingCarGPS);
+
+        // Create driver user
+        var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+        var driver = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            driverRole,
+            "driver@example.com"
+        );
+
+        // Create both active and inactive bookings for the car
+        var activeBooking = new Booking
+        {
+            Id = Guid.NewGuid(),
+            CarId = firstCar.Id,
+            UserId = driver.Id,
+            Status = BookingStatusEnum.Ongoing, // Active status
+            StartTime = DateTimeOffset.UtcNow,
+            EndTime = DateTimeOffset.UtcNow.AddDays(1),
+            ActualReturnTime = DateTimeOffset.UtcNow.AddDays(1),
+            BasePrice = 100,
+            PlatformFee = 20,
+            ExcessDay = 0,
+            ExcessDayFee = 0,
+            TotalAmount = 120,
+            Note = "Active booking",
+            IsPaid = true,
+        };
+
+        var inactiveBooking = new Booking
+        {
+            Id = Guid.NewGuid(),
+            CarId = firstCar.Id,
+            UserId = driver.Id,
+            Status = BookingStatusEnum.Completed, // Inactive status
+            StartTime = DateTimeOffset.UtcNow.AddDays(-10),
+            EndTime = DateTimeOffset.UtcNow.AddDays(-9),
+            ActualReturnTime = DateTimeOffset.UtcNow.AddDays(-9),
+            BasePrice = 100,
+            PlatformFee = 20,
+            ExcessDay = 0,
+            ExcessDayFee = 0,
+            TotalAmount = 120,
+            Note = "Inactive booking",
+            IsPaid = true,
+        };
+
+        await _dbContext.Bookings.AddRangeAsync(activeBooking, inactiveBooking);
+        await _dbContext.SaveChangesAsync();
+
+        // Try to switch device to second car
+        var handler = new SwitchGPSDeviceForCar.Handler(_dbContext, _geometryFactory);
+        var command = new SwitchGPSDeviceForCar.Command(
+            CarId: secondCar.Id,
+            GPSDeviceId: device.Id,
+            Longtitude: 107.0,
+            Latitude: 11.0
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(
+            "Không thể đổi thiết bị GPS khi gps device đang được dùng cho xe có đơn đặt xe",
+            result.Errors
+        );
     }
 
     [Fact]
