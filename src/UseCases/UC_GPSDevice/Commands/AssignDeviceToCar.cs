@@ -46,6 +46,7 @@ public class AssignDeviceToCar
                 }
                 gettingDevice.Name = request.DeviceName;
                 gettingDevice.Status = DeviceStatusEnum.InUsed;
+                gettingDevice.UpdatedAt = DateTime.UtcNow;
             }
             else
             {
