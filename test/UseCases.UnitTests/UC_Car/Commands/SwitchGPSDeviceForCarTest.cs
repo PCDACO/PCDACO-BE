@@ -94,7 +94,7 @@ public class SwitchGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifetim
 
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
-        
+
         // Verify GPS association was updated to second car
         var updatedCarGPS = await _dbContext.CarGPSes.FirstOrDefaultAsync(c =>
             c.DeviceId == device.Id
@@ -206,7 +206,7 @@ public class SwitchGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifetim
     }
 
     [Fact]
-    public async Task Validator_EmptyCarId_FailsValidation()
+    public void Validator_EmptyCarId_FailsValidation()
     {
         // Arrange
         var validator = new SwitchGPSDeviceForCar.Validator();
@@ -227,7 +227,7 @@ public class SwitchGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifetim
     }
 
     [Fact]
-    public async Task Validator_EmptyGPSDeviceId_FailsValidation()
+    public void Validator_EmptyGPSDeviceId_FailsValidation()
     {
         // Arrange
         var validator = new SwitchGPSDeviceForCar.Validator();

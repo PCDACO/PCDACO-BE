@@ -86,7 +86,7 @@ public class UpdateGPSDeviceTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Verify device was not updated
         var unchangedDevice = await _dbContext.GPSDevices.FindAsync(gpsDevice.Id);
-        Assert.Equal("Test GPS Device", unchangedDevice.Name);
+        Assert.Equal("Test GPS Device", unchangedDevice!.Name);
         Assert.Equal(DeviceStatusEnum.Available, unchangedDevice.Status);
     }
 
@@ -147,7 +147,7 @@ public class UpdateGPSDeviceTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Verify deleted device remains deleted
         var stillDeletedDevice = await _dbContext.GPSDevices.FindAsync(deletedDevice.Id);
-        Assert.True(stillDeletedDevice.IsDeleted);
+        Assert.True(stillDeletedDevice!.IsDeleted);
     }
 
     [Fact]
