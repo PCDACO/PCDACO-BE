@@ -57,6 +57,7 @@ public sealed class DisableCar
                 .Where(b => b.CarId == request.Id)
                 .Where(b =>
                     b.Status == BookingStatusEnum.Pending
+                    || b.Status == BookingStatusEnum.ReadyForPickup
                     || b.Status == BookingStatusEnum.Approved
                     || b.Status == BookingStatusEnum.Ongoing
                 )
