@@ -11,7 +11,7 @@ public class SignCarContractEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapPost("/api/cars/contracts/{id:guid}/sign", Handle)
+        app.MapPost("/api/cars/{id:guid}/contract/sign", Handle)
             .WithSummary("Sign car inspection contract")
             .WithTags("Cars")
             .RequireAuthorization()

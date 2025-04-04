@@ -34,11 +34,11 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
     public async Task Handle_OwnerSigning_UpdatesContractSuccessfully()
     {
         // Arrange
-        var (owner, technician, contract, _) = await SetupContractScenario();
+        var (owner, technician, contract, _, car) = await SetupContractScenario();
         _currentUser.SetUser(owner); // Set owner as current user
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(contract.Id);
+        var command = new SignCarContract.Command(car.Id);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -59,11 +59,11 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
     public async Task Handle_TechnicianSigning_UpdatesContractSuccessfully()
     {
         // Arrange
-        var (owner, technician, contract, _) = await SetupContractScenario();
+        var (owner, technician, contract, _, car) = await SetupContractScenario();
         _currentUser.SetUser(technician); // Set technician as current user
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(contract.Id);
+        var command = new SignCarContract.Command(car.Id);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -84,17 +84,17 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
     public async Task Handle_BothPartiesSigning_UpdatesScheduleStatusToSigned()
     {
         // Arrange
-        var (owner, technician, contract, schedule) = await SetupContractScenario();
+        var (owner, technician, contract, schedule, car) = await SetupContractScenario();
 
         // First, have the technician sign
         _currentUser.SetUser(technician);
         var techHandler = new SignCarContract.Handler(_dbContext, _currentUser);
-        await techHandler.Handle(new SignCarContract.Command(contract.Id), CancellationToken.None);
+        await techHandler.Handle(new SignCarContract.Command(car.Id), CancellationToken.None);
 
         // Then, have the owner sign
         _currentUser.SetUser(owner);
         var ownerHandler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var ownerCommand = new SignCarContract.Command(contract.Id);
+        var ownerCommand = new SignCarContract.Command(car.Id);
 
         // Act
         var result = await ownerHandler.Handle(ownerCommand, CancellationToken.None);
@@ -114,7 +114,7 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Handle_ContractNotFound_ReturnsNotFound()
+    public async Task Handle_CarNotFound_ReturnsError()
     {
         // Arrange
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
@@ -123,6 +123,28 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
         var command = new SignCarContract.Command(Guid.NewGuid());
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Equal("Xe không tồn tại", result.Errors.First());
+    }
+
+    [Fact]
+    public async Task Handle_ContractNotFound_ReturnsNotFound()
+    {
+        // Arrange
+        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var owner = await CreateUserWithEncryptedData(ownerRole.Id);
+        _currentUser.SetUser(owner);
+
+        // Create a car but no contract
+        var car = await CreateTestCar(owner.Id);
+
+        var handler = new SignCarContract.Handler(_dbContext, _currentUser);
+        var command = new SignCarContract.Command(car.Id);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -152,7 +174,7 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.SaveChangesAsync();
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(contract.Id);
+        var command = new SignCarContract.Command(car.Id);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -178,7 +200,7 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.SaveChangesAsync();
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(contract.Id);
+        var command = new SignCarContract.Command(car.Id);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -203,12 +225,10 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
         var technician = await CreateUserWithEncryptedData(technicianRole.Id);
 
-        var car = await CreateTestCar(realOwner.Id); // Car belongs to realOwner
-
-        var (_, _, contract, _) = await SetupContractScenario(realOwner, technician);
+        var (_, _, _, _, car) = await SetupContractScenario(realOwner, technician);
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(contract.Id);
+        var command = new SignCarContract.Command(car.Id);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -236,10 +256,10 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
         _currentUser.SetUser(wrongTechnician);
 
-        var (_, _, contract, _) = await SetupContractScenario(owner, realTechnician);
+        var (_, _, _, _, car) = await SetupContractScenario(owner, realTechnician);
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(contract.Id);
+        var command = new SignCarContract.Command(car.Id);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -266,10 +286,10 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
         var technician = await CreateUserWithEncryptedData(technicianRole.Id);
 
-        var (_, _, contract, _) = await SetupContractScenario(owner, technician);
+        var (_, _, _, _, car) = await SetupContractScenario(owner, technician);
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(contract.Id);
+        var command = new SignCarContract.Command(car.Id);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -285,7 +305,8 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         User owner,
         User technician,
         CarContract contract,
-        InspectionSchedule schedule
+        InspectionSchedule schedule,
+        Car car
     )> SetupContractScenario(User? existingOwner = null, User? existingTechnician = null)
     {
         // Create roles if not provided
@@ -335,7 +356,7 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.CarContracts.AddAsync(contract);
         await _dbContext.SaveChangesAsync();
 
-        return (owner, technician, contract, schedule);
+        return (owner, technician, contract, schedule, car);
     }
 
     private async Task<User> CreateUserWithEncryptedData(

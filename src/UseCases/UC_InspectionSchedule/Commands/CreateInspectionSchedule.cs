@@ -91,20 +91,6 @@ public sealed class CreateInspectionSchedule
             if (existingActiveSchedule != null)
                 return Result.Error(ResponseMessages.CarHadInspectionSchedule);
 
-            // Check for expired schedules with the same technician
-            var existingExpiredSchedule = await context
-                .InspectionSchedules.AsNoTracking()
-                .Where(s => s.CarId == request.CarId)
-                .Where(s => !s.IsDeleted)
-                .Where(s => s.Status == InspectionScheduleStatusEnum.Expired)
-                .Where(s => s.TechnicianId == request.TechnicianId)
-                .FirstOrDefaultAsync(cancellationToken);
-
-            if (existingExpiredSchedule != null)
-                return Result.Error(
-                    ResponseMessages.CarHadExpiredInspectionScheduleWithThisTechnician
-                );
-
             // Get technician's existing inspection schedules that are not expired or rejected
             var technicianSchedules = await context
                 .InspectionSchedules.AsNoTracking()
