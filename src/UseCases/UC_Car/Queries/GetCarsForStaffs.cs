@@ -16,7 +16,7 @@ namespace UseCases.UC_Car.Queries;
 
 public class GetCarsForStaffs
 {
-    public record Query(int PageNumber, int PageSize, string Keyword, CarStatusEnum? Status)
+    public record Query(int PageNumber, int PageSize, string Keyword, CarStatusEnum? Status, bool? OnlyNoGps = false)
         : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
@@ -133,8 +133,16 @@ public class GetCarsForStaffs
                 .Include(c => c.GPS)
                 .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
                 .Where(c => !c.IsDeleted)
-                .Where(c => request.Status == null ? true : request.Status == c.Status)
-                .OrderByDescending(c => c.Id);
+                .Where(c => request.Status == null ? true : request.Status == c.Status);
+
+            // Filter by GPS availability if the OnlyNoGps parameter is provided
+            if (request.OnlyNoGps == true)
+            {
+                gettingQuery = gettingQuery.Where(c => c.GPS == null);
+            }
+            
+            gettingQuery = gettingQuery.OrderByDescending(c => c.Id);
+            
             if (!string.IsNullOrWhiteSpace(request.Keyword))
             {
                 gettingQuery = gettingQuery.Where(c =>
