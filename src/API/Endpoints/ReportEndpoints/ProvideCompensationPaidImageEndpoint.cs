@@ -17,6 +17,7 @@ public class ProvideCompensationPaidImageEndpoint : ICarterModule
             .WithSummary("Provide compensation payment proof")
             .WithTags("Reports")
             .RequireAuthorization()
+            .DisableAntiforgery()
             .WithOpenApi(operation =>
                 new(operation)
                 {
