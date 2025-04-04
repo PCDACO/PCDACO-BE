@@ -78,12 +78,6 @@ public sealed class CreateWithdrawalRequest
             RuleFor(x => x.BankAccountId)
                 .NotEmpty()
                 .WithMessage("Tài khoản ngân hàng không được để trống");
-
-            RuleFor(x => x.Amount)
-                .GreaterThanOrEqualTo(500_000)
-                .WithMessage("Số tiền rút tối thiểu là 500,000 VND")
-                .LessThanOrEqualTo(100_000_000) // 100 million VND
-                .WithMessage("Số tiền không được vượt quá 100,000,000 VND");
         }
     }
 }
