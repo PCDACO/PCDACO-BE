@@ -11,7 +11,7 @@ namespace UseCases.UC_Contract.Commands;
 
 public sealed class SignCarContract
 {
-    public record Command(Guid ContractId) : IRequest<Result<Response>>;
+    public record Command(Guid CarId) : IRequest<Result<Response>>;
 
     public record Response(Guid ContractId, Guid CarId, string Status)
     {
@@ -27,10 +27,18 @@ public sealed class SignCarContract
             CancellationToken cancellationToken
         )
         {
+            // Check if car exists and is not deleted
+            var car = await context
+                .Cars.Where(c => c.Id == request.CarId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (car == null)
+                return Result.Error("Xe không tồn tại");
+
             // Check if contract exists and is not deleted
             var contract = await context
                 .CarContracts.Include(c => c.Car)
-                .FirstOrDefaultAsync(c => c.Id == request.ContractId, cancellationToken);
+                .FirstOrDefaultAsync(c => c.CarId == request.CarId, cancellationToken);
 
             if (contract == null)
                 return Result.NotFound("Không tìm thấy hợp đồng");
@@ -110,7 +118,7 @@ public sealed class SignCarContract
     {
         public Validator()
         {
-            RuleFor(x => x.ContractId).NotEmpty().WithMessage("ID hợp đồng không được để trống");
+            RuleFor(x => x.CarId).NotEmpty().WithMessage("ID xe không được để trống");
         }
     }
 }
