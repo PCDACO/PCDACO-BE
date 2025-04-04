@@ -4,6 +4,7 @@ using Domain.Entities;
 using Domain.Enums;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Persistance.Data;
 using UseCases.DTOs;
 using UseCases.UC_Booking.Commands;
@@ -18,6 +19,9 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly IBackgroundJobClient _backgroundJobClient = new BackgroundJobClient();
     private readonly TestDataEmailService _emailService = new();
+    private readonly ILogger<CompleteBooking.Handler> _logger = LoggerFactory
+        .Create(builder => builder.AddConsole())
+        .CreateLogger<CompleteBooking.Handler>();
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
 
@@ -37,6 +41,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _backgroundJobClient,
             _emailService,
+            _logger,
             _currentUser
         );
         var command = new CompleteBooking.Command(Guid.NewGuid());
@@ -61,6 +66,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _backgroundJobClient,
             _emailService,
+            _logger,
             _currentUser
         );
         var command = new CompleteBooking.Command(Guid.NewGuid());
@@ -121,6 +127,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _backgroundJobClient,
             _emailService,
+            _logger,
             _currentUser
         );
         var command = new CompleteBooking.Command(booking.Id);
@@ -186,6 +193,7 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             _backgroundJobClient,
             _emailService,
+            _logger,
             _currentUser
         );
         var command = new CompleteBooking.Command(booking.Id);
@@ -247,7 +255,8 @@ public class CompleteBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     //         BookingStatusEnum.Ongoing
     //     );
     //
-    //     var handler = new CompleteBooking.Handler(_dbContext, _backgroundJobClient, _emailService, _currentUser);
+    //     var handler = new CompleteBooking.Handler(_dbContext, _backgroundJobClient, _emailService,
+    // _logger, _currentUser);
     //     var command = new CompleteBooking.Command(booking.Id););
     //
     //     // Act

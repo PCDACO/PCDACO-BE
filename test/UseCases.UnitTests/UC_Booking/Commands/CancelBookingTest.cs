@@ -2,6 +2,7 @@ using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Moq;
 using Persistance.Data;
 using UseCases.DTOs;
@@ -18,6 +19,9 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
+    private readonly ILogger<CancelBooking.Handler> _logger = LoggerFactory
+        .Create(builder => builder.AddConsole())
+        .CreateLogger<CancelBooking.Handler>();
     private readonly Mock<IEmailService> _emailServiceMock = new();
 
     public Task InitializeAsync() => Task.CompletedTask;
@@ -49,7 +53,12 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             BookingStatusEnum.Pending
         );
 
-        var handler = new CancelBooking.Handler(_dbContext, _currentUser, _emailServiceMock.Object);
+        var handler = new CancelBooking.Handler(
+            _dbContext,
+            _currentUser,
+            _emailServiceMock.Object,
+            _logger
+        );
         var command = new CancelBooking.Command(booking.Id);
 
         // Act
@@ -71,7 +80,12 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new CancelBooking.Handler(_dbContext, _currentUser, _emailServiceMock.Object);
+        var handler = new CancelBooking.Handler(
+            _dbContext,
+            _currentUser,
+            _emailServiceMock.Object,
+            _logger
+        );
         var command = new CancelBooking.Command(Guid.NewGuid());
 
         // Act
@@ -110,7 +124,12 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             status
         );
 
-        var handler = new CancelBooking.Handler(_dbContext, _currentUser, _emailServiceMock.Object);
+        var handler = new CancelBooking.Handler(
+            _dbContext,
+            _currentUser,
+            _emailServiceMock.Object,
+            _logger
+        );
         var command = new CancelBooking.Command(booking.Id);
 
         // Act
@@ -148,7 +167,12 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             initialStatus
         );
 
-        var handler = new CancelBooking.Handler(_dbContext, _currentUser, _emailServiceMock.Object);
+        var handler = new CancelBooking.Handler(
+            _dbContext,
+            _currentUser,
+            _emailServiceMock.Object,
+            _logger
+        );
         var command = new CancelBooking.Command(booking.Id, "Test cancellation reason");
 
         // Act
@@ -210,7 +234,12 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
         booking.IsPaid = true;
         await _dbContext.SaveChangesAsync();
 
-        var handler = new CancelBooking.Handler(_dbContext, _currentUser, _emailServiceMock.Object);
+        var handler = new CancelBooking.Handler(
+            _dbContext,
+            _currentUser,
+            _emailServiceMock.Object,
+            _logger
+        );
         var command = new CancelBooking.Command(booking.Id, "Test cancellation reason");
 
         // Act
@@ -269,7 +298,12 @@ public class CancelBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             BookingStatusEnum.Pending
         );
 
-        var handler = new CancelBooking.Handler(_dbContext, _currentUser, _emailServiceMock.Object);
+        var handler = new CancelBooking.Handler(
+            _dbContext,
+            _currentUser,
+            _emailServiceMock.Object,
+            _logger
+        );
         var command = new CancelBooking.Command(newBooking.Id);
 
         // Act

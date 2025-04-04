@@ -7,6 +7,7 @@ using FluentValidation;
 using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using UseCases.Abstractions;
 using UseCases.BackgroundServices.Bookings;
 using UseCases.DTOs;
@@ -30,6 +31,7 @@ public sealed class CreateBooking
         IEmailService emailService,
         IBackgroundJobClient backgroundJobClient,
         BookingReminderJob reminderService,
+        ILogger<Handler> logger,
         CurrentUser currentUser
     ) : IRequestHandler<CreateBookingCommand, Result<Response>>
     {
@@ -54,9 +56,12 @@ public sealed class CreateBooking
             );
 
             if (hasUnpaidCompensation)
+            {
+                logger.LogWarning("User {UserId} has unpaid compensation", currentUser.User.Id);
                 return Result.Error(
                     "Bạn có khoản bồi thường chưa thanh toán. Vui lòng thanh toán trước khi đặt xe mới."
                 );
+            }
 
             // Verify driver license first
             var license = await context.Users.FirstOrDefaultAsync(
@@ -84,7 +89,10 @@ public sealed class CreateBooking
             );
 
             if (activeBookingCount > 0)
+            {
+                logger.LogWarning("User {UserId} has active bookings", currentUser.User.Id);
                 return Result.Error("Bạn chỉ có thể đặt tối đa 1 đơn cùng lúc");
+            }
 
             // Check if car exists
             var car = await context
@@ -122,6 +130,7 @@ public sealed class CreateBooking
 
             if (hasConflict)
             {
+                logger.LogWarning("Booking conflict detected for car {CarId}", request.CarId);
                 return Result.Conflict(
                     "Xe đã được đặt trong khoảng thời gian này. Vui lòng chọn ngày khác."
                 );
@@ -173,6 +182,7 @@ public sealed class CreateBooking
             context.Bookings.Add(booking);
             context.Contracts.Add(contract);
             await context.SaveChangesAsync(cancellationToken);
+            logger.LogInformation("Booking created with ID: {BookingId}", booking.Id);
 
             backgroundJobClient.Enqueue(
                 () =>
@@ -186,6 +196,10 @@ public sealed class CreateBooking
                         car.Owner.Email,
                         car.Model.Name
                     )
+            );
+            logger.LogInformation(
+                "Email sent to driver and owner for booking ID: {BookingId}",
+                booking.Id
             );
 
             // Schedule automated reminders and expiration

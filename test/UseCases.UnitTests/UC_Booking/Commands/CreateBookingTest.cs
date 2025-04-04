@@ -4,6 +4,7 @@ using Domain.Enums;
 using Domain.Shared;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Persistance.Data;
 using UseCases.Abstractions;
 using UseCases.BackgroundServices.Bookings;
@@ -24,6 +25,9 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly IAesEncryptionService _aesService = fixture.AesEncryptionService;
     private readonly IKeyManagementService _keyService = fixture.KeyManagementService;
     private readonly EncryptionSettings _encryptionSettings = fixture.EncryptionSettings;
+    private readonly ILogger<CreateBooking.Handler> _logger = LoggerFactory
+        .Create(builder => builder.AddConsole())
+        .CreateLogger<CreateBooking.Handler>();
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
 
@@ -51,6 +55,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             bookingReminderJob,
+            _logger,
             _currentUser
         );
         var command = new CreateBooking.CreateBookingCommand(
@@ -97,6 +102,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             bookingReminderJob,
+            _logger,
             _currentUser
         );
         var command = new CreateBooking.CreateBookingCommand(
@@ -158,6 +164,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             bookingReminderJob,
+            _logger,
             _currentUser
         );
         var command = new CreateBooking.CreateBookingCommand(
@@ -266,6 +273,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             bookingReminderJob,
+            _logger,
             _currentUser
         );
         var command1 = new CreateBooking.CreateBookingCommand(
@@ -285,6 +293,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             bookingReminderJob,
+            _logger,
             _currentUser
         );
         var command2 = new CreateBooking.CreateBookingCommand(
@@ -328,6 +337,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             bookingReminderJob,
+            _logger,
             _currentUser
         );
         var command = new CreateBooking.CreateBookingCommand(
@@ -426,6 +436,7 @@ public class CreateBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             bookingReminderJob,
+            _logger,
             _currentUser
         );
         _currentUser.SetUser(testUser2);

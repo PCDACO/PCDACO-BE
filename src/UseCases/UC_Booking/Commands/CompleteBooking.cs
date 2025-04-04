@@ -7,6 +7,7 @@ using Domain.Shared.EmailTemplates.EmailBookings;
 using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Services.EmailService;
@@ -32,6 +33,7 @@ public sealed class CompleteBooking
         IAppDBContext context,
         IBackgroundJobClient backgroundJobClient,
         IEmailService emailService,
+        ILogger<Handler> logger,
         CurrentUser currentUser
     ) : IRequestHandler<Command, Result<Response>>
     {
@@ -70,6 +72,12 @@ public sealed class CompleteBooking
             // Validate current status
             if (booking.Status != BookingStatusEnum.Ongoing)
             {
+                logger.LogWarning(
+                    "User {UserId} tried to complete booking {BookingId} in status {Status}",
+                    currentUser.User.Id,
+                    booking.Id,
+                    booking.Status
+                );
                 return Result.Conflict(
                     $"Không thể phê duyệt booking ở trạng thái " + booking.Status.ToString()
                 );
@@ -84,6 +92,11 @@ public sealed class CompleteBooking
 
             if (distanceInMeters > MAX_ALLOWED_DISTANCE_METERS)
             {
+                logger.LogWarning(
+                    "User {UserId} tried to complete booking {BookingId} outside allowed distance",
+                    currentUser.User.Id,
+                    booking.Id
+                );
                 return Result.Error(
                     $"Xe phải được trả tại địa điểm đã đón: {booking.Car.PickupAddress}. "
                         + $"Vui lòng di chuyển đến trong phạm vi {MAX_ALLOWED_DISTANCE_METERS} mét so với vị trí đón xe!"
@@ -133,6 +146,13 @@ public sealed class CompleteBooking
                 unusedDays = totalBookingDays - actualDays;
                 // Calculate refund as 50% of total booking amount
                 refundAmount = booking.TotalAmount * EARLY_RETURN_REFUND_PERCENTAGE;
+
+                logger.LogInformation(
+                    "User {UserId} returned booking {BookingId} early, refund amount: {RefundAmount}",
+                    currentUser.User.Id,
+                    booking.Id,
+                    refundAmount
+                );
 
                 // Calculate refund portions
                 var adminRefundAmount = refundAmount * 0.1m; // 10% from admin
@@ -197,6 +217,14 @@ public sealed class CompleteBooking
                     excessDays = Math.Ceiling((decimal)overtimeDays);
                     excessFee = dailyRate * excessDays * LATE_RETURN_PENALTY_MULTIPLIER;
                 }
+
+                logger.LogInformation(
+                    "User {UserId} returned booking {BookingId} late, excess days: {ExcessDays}, excess fee: {ExcessFee}",
+                    currentUser.User.Id,
+                    booking.Id,
+                    excessDays,
+                    excessFee
+                );
             }
 
             // Calculate final amount
@@ -213,6 +241,13 @@ public sealed class CompleteBooking
 
             if (refundAmount > 0)
             {
+                logger.LogInformation(
+                    "User {UserId} received refund for booking {BookingId}, amount: {RefundAmount}",
+                    currentUser.User.Id,
+                    booking.Id,
+                    refundAmount
+                );
+
                 booking.IsRefund = true;
                 booking.RefundAmount = refundAmount;
                 booking.RefundDate = DateTimeOffset.UtcNow;
