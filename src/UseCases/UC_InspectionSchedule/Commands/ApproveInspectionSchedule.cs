@@ -92,11 +92,6 @@ public sealed class ApproveInspectionSchedule
                     ),
                     OwnerAddress = schedule.Car.Owner.Address,
                     TechnicianName = schedule.Technician.Name,
-                    TechnicianLicenseNumber = await DecryptValue(
-                        schedule.Technician.EncryptedLicenseNumber,
-                        schedule.Technician.EncryptionKey,
-                        aesEncryptionService
-                    ),
                     CarManufacturer = schedule.Car.Model.Name,
                     CarLicensePlate = await DecryptValue(
                         schedule.Car.EncryptedLicensePlate,

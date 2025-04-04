@@ -47,7 +47,7 @@ public class GetConsultantRecentActivity
 
                 activities.Add(
                     new ActivityDetails(
-                        AvatarUrl: schedule.Technician.AvatarUrl,
+                        AvatarUrl: schedule.Consultant.AvatarUrl,
                         Content: content,
                         HappenedAt: schedule.UpdatedAt ?? GetTimestampFromUuid.Execute(schedule.Id),
                         Type: "inspection"
@@ -168,6 +168,7 @@ public class GetConsultantRecentActivity
                 .Include(i => i.Car)
                 .ThenInclude(c => c.Model)
                 .Include(i => i.Technician)
+                .Include(i => i.Consultant)
                 .Where(i => i.CreatedBy == currentUser.User.Id)
                 .OrderByDescending(i => i.UpdatedAt)
                 .Take(10)

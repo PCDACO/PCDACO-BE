@@ -30,12 +30,20 @@ public class SwitchGPSDeviceForCar
         {
             // Check if car exists and is not deleted
             Car? car = await context
-                .Cars.Where(c => !c.IsDeleted)
+                .Cars.IgnoreQueryFilters()
+                .Include(c => c.GPS)
+                .Where(c => !c.IsDeleted)
                 .Where(c => c.Id == request.CarId)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (car is null)
                 return Result.Error(ResponseMessages.CarNotFound);
+
+            // Check if this car aldready attaches a GPS device
+            if (car.GPS != null)
+                return Result.Error(
+                    "Không thể đổi thiết bị GPS cho xe này vì xe đã có thiết bị GPS"
+                );
 
             // Check if the GPS device exists
             GPSDevice? device = await context
@@ -58,6 +66,27 @@ public class SwitchGPSDeviceForCar
 
             if (currentCarGPS != null)
             {
+                // check if exist any active booking related to old car
+                var activeBooking = await context
+                    .Bookings.AsNoTracking()
+                    .Where(b =>
+                        b.CarId == currentCarGPS.CarId
+                        && (
+                            b.Status == BookingStatusEnum.Pending
+                            || b.Status == BookingStatusEnum.Ongoing
+                            || b.Status == BookingStatusEnum.ReadyForPickup
+                            || b.Status == BookingStatusEnum.Approved
+                        )
+                    )
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                if (activeBooking != null)
+                {
+                    return Result.Error(
+                        "Không thể đổi thiết bị GPS khi gps device đang được dùng cho xe có đơn đặt xe"
+                    );
+                }
+
                 // set the old car status to be pending
                 await context
                     .Cars.IgnoreQueryFilters()
@@ -73,6 +102,9 @@ public class SwitchGPSDeviceForCar
             }
             else
             {
+                // update device status to InUsed
+                device.Status = DeviceStatusEnum.InUsed;
+                device.UpdatedAt = DateTime.UtcNow;
                 // Create a new association for the car and GPS device
                 currentCarGPS = new CarGPS()
                 {

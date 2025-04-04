@@ -1,6 +1,5 @@
 using Ardalis.Result;
 using Domain.Entities;
-using Domain.Enums;
 using Domain.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -57,9 +56,6 @@ public sealed class GetCarContract
             var contractDate = GetTimestampFromUuid.Execute(contract.Id);
 
             string decryptedOwnerLicenseNumber = await DecryptOwnerLicenseNumber(contract);
-            string decryptedTechnicianLicenseNumber = await DecryptTechnicianLicenseNumber(
-                contract
-            );
             string decryptedCarLicensePlate = await DecryptCarLicensePlate(contract);
 
             var contractTemplate = new CarContractTemplate
@@ -70,7 +66,6 @@ public sealed class GetCarContract
                 OwnerLicenseNumber = decryptedOwnerLicenseNumber,
                 OwnerAddress = contract.Car.Owner.Address,
                 TechnicianName = contract.Technician?.Name ?? string.Empty,
-                TechnicianLicenseNumber = decryptedTechnicianLicenseNumber,
                 CarManufacturer = contract.Car.Model.Name,
                 CarLicensePlate = decryptedCarLicensePlate,
                 CarSeat = contract.Car.Seat.ToString(),
@@ -102,25 +97,6 @@ public sealed class GetCarContract
             );
 
             return decryptedOwnerLicenseNumber;
-        }
-
-        private async Task<string> DecryptTechnicianLicenseNumber(CarContract contract)
-        {
-            if (contract.Technician == null || contract.Technician.EncryptionKey == null)
-                return string.Empty;
-
-            var technicianKey = keyManagementService.DecryptKey(
-                contract.Technician.EncryptionKey.EncryptedKey,
-                encryptionSettings.Key
-            );
-
-            var decryptedTechnicianLicenseNumber = await aesEncryptionService.Decrypt(
-                contract.Technician.EncryptedLicenseNumber,
-                technicianKey,
-                contract.Technician.EncryptionKey.IV
-            );
-
-            return decryptedTechnicianLicenseNumber;
         }
 
         private async Task<string> DecryptCarLicensePlate(CarContract contract)
