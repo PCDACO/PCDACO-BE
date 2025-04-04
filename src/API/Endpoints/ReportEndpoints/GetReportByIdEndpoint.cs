@@ -59,6 +59,7 @@ public class GetReportByIdEndpoint : ICarterModule
                                             ["id"] = new OpenApiString(Guid.NewGuid().ToString()),
                                             ["reporterId"] = new OpenApiString(Guid.NewGuid().ToString()),
                                             ["reporterName"] = new OpenApiString("Nguyễn Văn A"),
+                                            ["reporterRole"] = new OpenApiString("Driver"),
                                             ["title"] = new OpenApiString("Báo cáo hư hỏng xe"),
                                             ["description"] = new OpenApiString("Xe bị trầy xước nhẹ"),
                                             ["reportType"] = new OpenApiString("CarDamage"),
