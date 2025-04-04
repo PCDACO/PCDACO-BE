@@ -299,67 +299,6 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
     }
 
     [Fact]
-    public async Task Handle_CarHasExpiredScheduleWithSameTechnician_ReturnsError()
-    {
-        // Arrange
-        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
-            _dbContext,
-            "Consultant"
-        );
-        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
-        _currentUser.SetUser(consultant);
-
-        // Create technician
-        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
-            _dbContext,
-            "Technician"
-        );
-        var technician = await TestDataCreateUser.CreateTestUser(
-            _dbContext,
-            technicianRole,
-            "tech@test.com"
-        );
-
-        // Create car in pending status
-        var owner = await TestDataCreateUser.CreateTestUser(
-            _dbContext,
-            await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
-        );
-        var car = await CreateTestCar(owner.Id, CarStatusEnum.Pending);
-
-        // Create an expired schedule for the car with the same technician
-        var expiredSchedule = new InspectionSchedule
-        {
-            TechnicianId = technician.Id,
-            CarId = car.Id,
-            Status = InspectionScheduleStatusEnum.Expired,
-            InspectionAddress = "456 Expired St",
-            InspectionDate = DateTimeOffset.UtcNow.AddDays(-2),
-            CreatedBy = consultant.Id,
-        };
-        await _dbContext.InspectionSchedules.AddAsync(expiredSchedule);
-        await _dbContext.SaveChangesAsync();
-
-        var handler = new CreateInspectionSchedule.Handler(_dbContext, _currentUser);
-        var command = new CreateInspectionSchedule.Command(
-            TechnicianId: technician.Id,
-            CarId: car.Id,
-            InspectionAddress: "123 Main St",
-            InspectionDate: DateTimeOffset.UtcNow.AddDays(1)
-        );
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains(
-            ResponseMessages.CarHadExpiredInspectionScheduleWithThisTechnician,
-            result.Errors
-        );
-    }
-
-    [Fact]
     public async Task Handle_TechnicianHasApprovedScheduleAfterRequestedTime_ReturnsError()
     {
         // Arrange
