@@ -41,6 +41,7 @@ public class SetCarUnavailability
                     && !b.IsDeleted
                     && (
                         b.Status == Domain.Enums.BookingStatusEnum.Ongoing
+                        || b.Status == Domain.Enums.BookingStatusEnum.Pending
                         || b.Status == Domain.Enums.BookingStatusEnum.ReadyForPickup
                         || b.Status == Domain.Enums.BookingStatusEnum.Approved
                     )
