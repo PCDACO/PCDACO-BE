@@ -2,9 +2,11 @@ using Ardalis.Result;
 using Domain.Entities;
 using FluentValidation;
 using MediatR;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using UseCases.Abstractions;
+using UseCases.Services.SignalR;
 using UUIDNext;
 
 namespace UseCases.UC_Car.Commands;
@@ -14,8 +16,11 @@ public sealed class TrackCarLocation
     public sealed record Command(Guid CarId, decimal Latitude, decimal Longitude)
         : IRequest<Result>;
 
-    internal sealed class Handler(IAppDBContext context, GeometryFactory geometryFactory)
-        : IRequestHandler<Command, Result>
+    internal sealed class Handler(
+        IAppDBContext context,
+        GeometryFactory geometryFactory,
+        IHubContext<LocationHub> hubContext
+    ) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -75,6 +80,15 @@ public sealed class TrackCarLocation
 
                 context.TripTrackings.Add(tracking);
             }
+
+            // Send location update to SignalR clients
+            await hubContext.Clients.All.SendAsync(
+                "ReceiveLocationUpdate",
+                car.Id,
+                request.Latitude,
+                request.Longitude,
+                cancellationToken: cancellationToken
+            );
 
             await context.SaveChangesAsync(cancellationToken);
 
