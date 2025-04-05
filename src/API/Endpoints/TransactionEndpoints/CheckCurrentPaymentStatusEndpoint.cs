@@ -16,7 +16,7 @@ public class CheckCurrentPaymentStatusEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
-        app.MapGet("/api/transactions/{orderCode:long}/check", Handle)
+        app.MapPost("/api/transactions/{orderCode:long}/check", Handle)
             .WithSummary("Check if the orderCode is complete or not")
             .WithTags("Transactions");
     }
