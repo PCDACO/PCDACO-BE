@@ -21,7 +21,9 @@ public sealed class GetTotalStatistics
         int TotalBookingCancelled,
         decimal CancellationLoss,
         List<TimeSeriesData> RevenueOverTime,
-        List<TimeSeriesData> ActiveUsersOverTime
+        List<TimeSeriesData> ActiveUsersOverTime,
+        List<TimeSeriesData> BookingsOverTime,
+        List<TimeSeriesData> ActiveCarsOverTime
     );
 
     internal sealed class Handler(IAppDBContext context) : IRequestHandler<Query, Result<Response>>
@@ -73,9 +75,11 @@ public sealed class GetTotalStatistics
                 .SumAsync(b => b.TotalAmount, cancellationToken);
 
             // Calculate revenue over time and active user over time (last 12 months)
-            var currentDate = DateTimeOffset.UtcNow;
-            var revenueOverTime = new List<TimeSeriesData>();
-            var activeUsersOverTime = new List<TimeSeriesData>();
+            DateTimeOffset currentDate = DateTimeOffset.UtcNow;
+            List<TimeSeriesData> revenueOverTime = [];
+            List<TimeSeriesData> activeUsersOverTime = [];
+            List<TimeSeriesData> bookingsOverTime = [];
+            List<TimeSeriesData> carsOverTime = [];
 
             string[] monthNames =
             {
@@ -106,10 +110,10 @@ public sealed class GetTotalStatistics
                     0,
                     TimeSpan.Zero
                 );
-                var endOfMonth = startOfMonth.AddMonths(1).AddSeconds(-1);
+                DateTimeOffset endOfMonth = startOfMonth.AddMonths(1).AddSeconds(-1);
 
                 // Calculate revenue for this month
-                var monthlyRevenue = await context
+                decimal monthlyRevenue = await context
                     .Bookings.Where(b =>
                         b.Status == BookingStatusEnum.Completed
                         && !b.IsDeleted
@@ -119,8 +123,9 @@ public sealed class GetTotalStatistics
                     .SumAsync(b => b.TotalAmount, cancellationToken);
 
                 // Count active users for this month
-                var monthlyActiveUsers = context
-                    .Bookings.AsNoTracking()
+                int monthlyActiveUsers = context
+                    .Bookings
+                    .AsNoTracking()
                     .Include(b => b.User)
                     .AsEnumerable()
                     .Where(b =>
@@ -131,24 +136,56 @@ public sealed class GetTotalStatistics
                     .Distinct()
                     .Count();
 
+                // Count completed bookings for this month
+                int monthlyBookings = context
+                    .Bookings
+                    .AsNoTracking()
+                    .AsEnumerable()
+                    .Where(b =>
+                        GetTimestampFromUuid.Execute(b.Id) >= startOfMonth
+                        && GetTimestampFromUuid.Execute(b.Id) <= endOfMonth
+                    )
+                    .Where(b => b.Status == BookingStatusEnum.Completed)
+                    .Select(b => b.Id)
+                    .Distinct()
+                    .Count();
+
+                // Count completed bookings for this month
+                int monthlyCars = context
+                    .Cars
+                    .AsNoTracking()
+                    .AsEnumerable()
+                    .Where(b =>
+                        GetTimestampFromUuid.Execute(b.Id) >= startOfMonth
+                        && GetTimestampFromUuid.Execute(b.Id) <= endOfMonth
+                    )
+                    .Where(c => c.Status == CarStatusEnum.Available)
+                    .Select(c => c.Id)
+                    .Distinct()
+                    .Count();
+
                 // Add to the time series data
-                var monthName = monthNames[startOfMonth.Month - 1]; // Month names are 1-indexed
+                string monthName = monthNames[startOfMonth.Month - 1]; // Month names are 1-indexed
                 revenueOverTime.Add(new TimeSeriesData(monthName, monthlyRevenue));
                 activeUsersOverTime.Add(new TimeSeriesData(monthName, monthlyActiveUsers));
+                bookingsOverTime.Add(new TimeSeriesData(monthName, monthlyBookings));
+                carsOverTime.Add(new TimeSeriesData(monthName, monthlyCars));
             }
 
-            var response = new Response(
-                TotalRevenue: totalRevenue,
-                ActiveUsers: totalActiveUsers,
-                ActiveTransactions: activeTransactions,
-                TotalRentedCars: totalRentedCars,
-                TotalBookingCancelled: totalBookingCancelled,
-                CancellationLoss: cancellationLoss,
-                RevenueOverTime: revenueOverTime,
-                ActiveUsersOverTime: activeUsersOverTime
-            );
-
-            return Result.Success(response, "Lấy thống kê hệ thống thành công");
+            return Result.Success(
+                    value: new Response(
+                        TotalRevenue: totalRevenue,
+                        ActiveUsers: totalActiveUsers,
+                        ActiveTransactions: activeTransactions,
+                        TotalRentedCars: totalRentedCars,
+                        TotalBookingCancelled: totalBookingCancelled,
+                        CancellationLoss: cancellationLoss,
+                        RevenueOverTime: revenueOverTime,
+                        ActiveUsersOverTime: activeUsersOverTime,
+                        BookingsOverTime: bookingsOverTime,
+                        ActiveCarsOverTime: carsOverTime),
+                    successMessage: "Lấy thống kê hệ thống thành công"
+                    );
         }
     }
 }
