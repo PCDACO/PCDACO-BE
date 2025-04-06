@@ -57,7 +57,7 @@ public class ApproveReport
             if (report == null)
                 return Result.NotFound("Không tìm thấy báo cáo");
 
-            if (report.Status != BookingReportStatus.UnderReview)
+            if (request.IsApproved && report.Status != BookingReportStatus.UnderReview)
                 return Result.Error("Báo cáo chưa được xem xét");
 
             report.Status = request.IsApproved
