@@ -37,7 +37,7 @@ public sealed class CompleteBooking
         CurrentUser currentUser
     ) : IRequestHandler<Command, Result<Response>>
     {
-        private const decimal MAX_ALLOWED_DISTANCE_METERS = 100;
+        private const decimal MAX_ALLOWED_DISTANCE_METERS = 5000;
         private const decimal EARLY_RETURN_REFUND_PERCENTAGE = 0.5m; // 50% refund for unused days if less than half of total days
         private const decimal LATE_RETURN_PENALTY_MULTIPLIER = 1.2m; // 120% of daily rate for late days
         private const int GRACE_PERIOD_HOURS = 3; // Grace period of 3 hours
