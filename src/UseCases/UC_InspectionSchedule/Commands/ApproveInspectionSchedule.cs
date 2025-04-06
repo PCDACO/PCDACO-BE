@@ -39,10 +39,18 @@ public sealed class ApproveInspectionSchedule
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             // Get the existing schedule
-            var schedule = await context.InspectionSchedules.FirstOrDefaultAsync(
-                s => s.Id == request.Id && !s.IsDeleted,
-                cancellationToken
-            );
+            var schedule = await context
+                .InspectionSchedules.IgnoreQueryFilters()
+                .AsSplitQuery()
+                .Include(s => s.Car)
+                .ThenInclude(s => s.Owner)
+                .Include(s => s.Car)
+                .ThenInclude(s => s.Model)
+                .Include(s => s.Car)
+                .ThenInclude(s => s.EncryptionKey)
+                .Include(s => s.Technician)
+                .Include(s => s.Photos)
+                .FirstOrDefaultAsync(s => s.Id == request.Id && !s.IsDeleted, cancellationToken);
 
             if (schedule is null)
                 return Result.NotFound(ResponseMessages.InspectionScheduleNotFound);
