@@ -18,7 +18,8 @@ public class GetInProgressInspectionScheduleForCurrentUser
         DateTimeOffset Date,
         string OwnerName,
         string Address,
-        string LicensePlate
+        string LicensePlate,
+        ContractDetail? ContractDetail
     )
     {
         public static async Task<Response> FromEntity(
@@ -42,10 +43,34 @@ public class GetInProgressInspectionScheduleForCurrentUser
                 Date: inspectionSchedule.InspectionDate,
                 OwnerName: inspectionSchedule.Car.Owner.Name,
                 Address: inspectionSchedule.InspectionAddress,
-                LicensePlate: decryptedLicensePlate
+                LicensePlate: decryptedLicensePlate,
+                ContractDetail: inspectionSchedule.Car.Contract != null
+                    ? new ContractDetail(
+                        Id: inspectionSchedule.Car.Contract!.Id,
+                        Terms: inspectionSchedule.Car.Contract.Terms,
+                        Status: inspectionSchedule.Car.Contract.Status.ToString(),
+                        OwnerSignatureDate: inspectionSchedule.Car.Contract.OwnerSignatureDate,
+                        TechnicianSignatureDate: inspectionSchedule
+                            .Car
+                            .Contract
+                            .TechnicianSignatureDate,
+                        InspectionResults: inspectionSchedule.Car.Contract.InspectionResults,
+                        GPSDeviceId: inspectionSchedule.Car.Contract.GPSDeviceId
+                    )
+                    : null
             );
         }
     };
+
+    public sealed record ContractDetail(
+        Guid Id,
+        string Terms,
+        string Status,
+        DateTimeOffset? OwnerSignatureDate,
+        DateTimeOffset? TechnicianSignatureDate,
+        string? InspectionResults,
+        Guid? GPSDeviceId
+    );
 
     internal sealed class Handler(
         IAppDBContext context,
@@ -80,6 +105,8 @@ public class GetInProgressInspectionScheduleForCurrentUser
                 .ThenInclude(c => c.TransmissionType)
                 .Include(i => i.Car)
                 .ThenInclude(c => c.Model)
+                .Include(i => i.Car)
+                .ThenInclude(i => i.Contract)
                 .Include(i => i.Technician)
                 .Where(i => !i.IsDeleted)
                 .Where(i => i.Status == Domain.Enums.InspectionScheduleStatusEnum.InProgress)
