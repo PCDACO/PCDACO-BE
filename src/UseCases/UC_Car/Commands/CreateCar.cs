@@ -183,7 +183,7 @@ public sealed class CreateCar
                 .MinimumLength(8)
                 .WithMessage("Biển số xe không được ít hơn 8 kí tự !")
                 .MaximumLength(11)
-                .WithMessage("Biển số xe không được ít hơn 11 kí tự !");
+                .WithMessage("Biển số xe không được vượt quá 11 kí tự !");
             RuleFor(x => x.Color).NotEmpty().WithMessage("Màu sắc không được để trống !");
             RuleFor(x => x.Seat)
                 .NotEmpty()
