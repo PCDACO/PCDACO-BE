@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using Domain.Entities;
+using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -41,6 +42,14 @@ public class BanUser
 
             user.IsBanned = true;
             user.BannedReason = request.BannedReason;
+
+            if (user.IsOwner())
+            {
+                await context.Cars.ExecuteUpdateAsync(
+                    c => c.SetProperty(c => c.Status, CarStatusEnum.Inactive),
+                    cancellationToken: cancellationToken
+                );
+            }
 
             await context.SaveChangesAsync(cancellationToken);
 
