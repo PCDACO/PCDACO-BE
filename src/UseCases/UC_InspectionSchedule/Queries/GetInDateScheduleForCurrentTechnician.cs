@@ -13,7 +13,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
     public sealed class GetInDateScheduleForCurrentTechnician
     {
         // Query remains the same
-        public sealed record Query(DateTimeOffset? InspectionDate = null, bool? IsIncident = false)
+        public sealed record Query(DateTimeOffset? InspectionDate = null, bool? IsIncident = null)
             : IRequest<Result<Response>>;
 
         // Updated response records
@@ -156,7 +156,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
                         s.TechnicianId == currentUser.User.Id
                         && !s.IsDeleted
                         && s.InspectionDate.Date == inspectionDate.Date
-                        && s.Type == scheduleType
+                        && (s.Type == scheduleType || request.IsIncident == null)
                     )
                     .OrderBy(s => s.Id)
                     .ToListAsync(cancellationToken);

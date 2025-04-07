@@ -163,7 +163,7 @@ public class GetInDateScheduleForCurrentTechnicianEndpoint : ICarterModule
     private async Task<IResult> Handle(
         ISender sender,
         DateTimeOffset? inspectionDate = null,
-        bool? isIncident = false
+        bool? isIncident = null
     )
     {
         Result<GetInDateScheduleForCurrentTechnician.Response> result = await sender.Send(
