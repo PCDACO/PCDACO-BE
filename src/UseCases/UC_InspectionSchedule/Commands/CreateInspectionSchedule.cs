@@ -108,23 +108,19 @@ public sealed class CreateInspectionSchedule
                 report.ResolvedById = currentUser.User.Id;
             }
 
-            // Check for existing active schedules for the car if new car schedule
-            if (!request.IsIncident)
-            {
-                var existingActiveSchedule = await context
-                    .InspectionSchedules.AsNoTracking()
-                    .Where(s => s.CarId == request.CarId)
-                    .Where(s => !s.IsDeleted)
-                    .Where(s =>
-                        s.Status != InspectionScheduleStatusEnum.Expired
-                        && s.Status != InspectionScheduleStatusEnum.Rejected
-                        && s.Type == InspectionScheduleType.NewCar
-                    )
-                    .FirstOrDefaultAsync(cancellationToken);
+            var existingActiveSchedule = await context
+                .InspectionSchedules.AsNoTracking()
+                .Where(s => s.CarId == request.CarId)
+                .Where(s => !s.IsDeleted)
+                .Where(s =>
+                    s.Status != InspectionScheduleStatusEnum.Expired
+                    && s.Status != InspectionScheduleStatusEnum.Rejected
+                    && s.Status != InspectionScheduleStatusEnum.Approved
+                )
+                .FirstOrDefaultAsync(cancellationToken);
 
-                if (existingActiveSchedule != null)
-                    return Result.Error(ResponseMessages.CarHadInspectionSchedule);
-            }
+            if (existingActiveSchedule != null)
+                return Result.Error(ResponseMessages.CarHadInspectionSchedule);
 
             // Get technician's existing inspection schedules that are not expired or rejected
             var technicianSchedules = await context
