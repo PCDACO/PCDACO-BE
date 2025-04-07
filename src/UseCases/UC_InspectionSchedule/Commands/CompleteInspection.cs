@@ -150,7 +150,7 @@ public sealed class CompleteInspection
                 schedule.Status = InspectionScheduleStatusEnum.Rejected;
 
                 // Update car status
-                schedule.Car.Status = CarStatusEnum.Rejected;
+                schedule.Car.Status = CarStatusEnum.Inactive;
             }
 
             await context.SaveChangesAsync(cancellationToken);

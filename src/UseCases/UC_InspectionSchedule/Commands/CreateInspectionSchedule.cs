@@ -47,7 +47,38 @@ public sealed class CreateInspectionSchedule
             if (car is null)
                 return Result.Error(ResponseMessages.CarNotFound);
 
-            if (car.Status != CarStatusEnum.Pending)
+            // determine inspection schedule type
+            InspectionScheduleType scheduleType = request.IsIncident
+                ? InspectionScheduleType.Incident
+                : InspectionScheduleType.NewCar;
+
+            if (request.IsIncident)
+            {
+                // Check if the car is in pending status
+                if (car.Status == CarStatusEnum.Pending || car.Status == CarStatusEnum.Rented)
+                    return Result.Error(
+                        "Không thể tao lịch kiểm định sự cố cho xe đang chờ duyệt hoặc đã được thuê"
+                    );
+                // Check only car doesn't have any active booking can continue
+                var activeBooking = await context
+                    .Bookings.Where(b => b.CarId == request.CarId)
+                    .Where(b =>
+                        b.Status == BookingStatusEnum.Pending
+                        || b.Status == BookingStatusEnum.Ongoing
+                        || b.Status == BookingStatusEnum.ReadyForPickup
+                        || b.Status == BookingStatusEnum.Approved
+                    )
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (activeBooking != null)
+                    return Result.Error(
+                        "Xe đang có lịch đặt không thể tạo lịch kiểm định cho sự cố"
+                    );
+
+                // update car status to maintain
+                car.Status = CarStatusEnum.Maintain;
+                car.UpdatedAt = DateTimeOffset.UtcNow;
+            }
+            else if (car.Status != CarStatusEnum.Pending)
                 return Result.Error(ResponseMessages.CarIsNotInPending);
 
             // Verify user exists and is a technician
@@ -62,7 +93,7 @@ public sealed class CreateInspectionSchedule
                 return Result.Error(ResponseMessages.TechnicianNotFound);
 
             // Check if the report exists and is not deleted and is under review
-            if (request.ReportId != null)
+            if (request.ReportId != null && request.IsIncident)
             {
                 var report = await context.BookingReports.FirstOrDefaultAsync(
                     r => r.Id == request.ReportId && !r.IsDeleted,
@@ -77,19 +108,23 @@ public sealed class CreateInspectionSchedule
                 report.ResolvedById = currentUser.User.Id;
             }
 
-            // Check for existing active schedules for the car
-            var existingActiveSchedule = await context
-                .InspectionSchedules.AsNoTracking()
-                .Where(s => s.CarId == request.CarId)
-                .Where(s => !s.IsDeleted)
-                .Where(s =>
-                    s.Status != InspectionScheduleStatusEnum.Expired
-                    && s.Status != InspectionScheduleStatusEnum.Rejected
-                )
-                .FirstOrDefaultAsync(cancellationToken);
+            // Check for existing active schedules for the car if new car schedule
+            if (!request.IsIncident)
+            {
+                var existingActiveSchedule = await context
+                    .InspectionSchedules.AsNoTracking()
+                    .Where(s => s.CarId == request.CarId)
+                    .Where(s => !s.IsDeleted)
+                    .Where(s =>
+                        s.Status != InspectionScheduleStatusEnum.Expired
+                        && s.Status != InspectionScheduleStatusEnum.Rejected
+                        && s.Type == InspectionScheduleType.NewCar
+                    )
+                    .FirstOrDefaultAsync(cancellationToken);
 
-            if (existingActiveSchedule != null)
-                return Result.Error(ResponseMessages.CarHadInspectionSchedule);
+                if (existingActiveSchedule != null)
+                    return Result.Error(ResponseMessages.CarHadInspectionSchedule);
+            }
 
             // Get technician's existing inspection schedules that are not expired or rejected
             var technicianSchedules = await context

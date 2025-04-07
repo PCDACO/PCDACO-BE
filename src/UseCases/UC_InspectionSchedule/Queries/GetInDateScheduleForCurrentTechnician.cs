@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using Domain.Constants;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +13,7 @@ namespace UseCases.UC_InspectionSchedule.Queries
     public sealed class GetInDateScheduleForCurrentTechnician
     {
         // Query remains the same
-        public sealed record Query(DateTimeOffset? InspectionDate = null)
+        public sealed record Query(DateTimeOffset? InspectionDate = null, bool? IsIncident = null)
             : IRequest<Result<Response>>;
 
         // Updated response records
@@ -128,6 +129,10 @@ namespace UseCases.UC_InspectionSchedule.Queries
                     not null => request.InspectionDate!.Value,
                     _ => DateTimeOffset.UtcNow,
                 };
+                InspectionScheduleType scheduleType =
+                    request.IsIncident == true
+                        ? InspectionScheduleType.Incident
+                        : InspectionScheduleType.NewCar;
                 IEnumerable<InspectionSchedule> schedules = await context
                     .InspectionSchedules.AsNoTracking()
                     .AsSplitQuery()
@@ -146,11 +151,12 @@ namespace UseCases.UC_InspectionSchedule.Queries
                     .ThenInclude(c => c.TransmissionType)
                     .Include(s => s.Car)
                     .ThenInclude(c => c.FuelType)
-                    .Where(s => s.Status == Domain.Enums.InspectionScheduleStatusEnum.Pending)
+                    .Where(s => s.Status == InspectionScheduleStatusEnum.Pending)
                     .Where(s =>
                         s.TechnicianId == currentUser.User.Id
                         && !s.IsDeleted
                         && s.InspectionDate.Date == inspectionDate.Date
+                        && (s.Type == scheduleType || request.IsIncident == null)
                     )
                     .OrderBy(s => s.Id)
                     .ToListAsync(cancellationToken);

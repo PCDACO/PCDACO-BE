@@ -3,14 +3,14 @@ using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared;
+using Infrastructure.Encryption;
 using Microsoft.EntityFrameworkCore;
-using Moq;
 using Persistance.Data;
-using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.UC_InspectionSchedule.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
+using UseCases.Utils;
 
 namespace UseCases.UnitTests.UC_InspectionSchedule.Commands;
 
@@ -19,10 +19,10 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
+    private readonly AesEncryptionService _aesEncryptionService = fixture.AesEncryptionService;
+    private readonly KeyManagementService _keyManagementService = fixture.KeyManagementService;
+    private readonly EncryptionSettings _encryptionSettings = fixture.EncryptionSettings;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
-    private readonly Mock<IAesEncryptionService> _aesEncryptionService = new();
-    private readonly Mock<IKeyManagementService> _keyManagementService = new();
-    private readonly EncryptionSettings _encryptionSettings = new() { Key = "TestKey" };
 
     public Task InitializeAsync() => Task.CompletedTask;
 
@@ -42,8 +42,8 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         var handler = new ApproveInspectionSchedule.Handler(
             _dbContext,
             _currentUser,
-            _aesEncryptionService.Object,
-            _keyManagementService.Object,
+            _aesEncryptionService,
+            _keyManagementService,
             _encryptionSettings
         );
         var command = new ApproveInspectionSchedule.Command(
@@ -74,8 +74,8 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         var handler = new ApproveInspectionSchedule.Handler(
             _dbContext,
             _currentUser,
-            _aesEncryptionService.Object,
-            _keyManagementService.Object,
+            _aesEncryptionService,
+            _keyManagementService,
             _encryptionSettings
         );
         var command = new ApproveInspectionSchedule.Command(
@@ -119,8 +119,8 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         var handler = new ApproveInspectionSchedule.Handler(
             _dbContext,
             _currentUser,
-            _aesEncryptionService.Object,
-            _keyManagementService.Object,
+            _aesEncryptionService,
+            _keyManagementService,
             _encryptionSettings
         );
         var command = new ApproveInspectionSchedule.Command(
@@ -160,7 +160,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         {
             TechnicianId = technician.Id,
             CarId = car.Id,
-            Status = InspectionScheduleStatusEnum.Pending, // Not Signed
+            Status = InspectionScheduleStatusEnum.Pending,
             InspectionAddress = "123 Main St",
             InspectionDate = DateTimeOffset.UtcNow.AddMinutes(30),
             CreatedBy = consultant.Id,
@@ -171,8 +171,8 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         var handler = new ApproveInspectionSchedule.Handler(
             _dbContext,
             _currentUser,
-            _aesEncryptionService.Object,
-            _keyManagementService.Object,
+            _aesEncryptionService,
+            _keyManagementService,
             _encryptionSettings
         );
         var command = new ApproveInspectionSchedule.Command(
@@ -217,7 +217,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
             CarId = car.Id,
             Status = InspectionScheduleStatusEnum.Signed,
             InspectionAddress = "123 Main St",
-            InspectionDate = DateTimeOffset.UtcNow.AddHours(-2), // 2 hours in the past
+            InspectionDate = DateTimeOffset.UtcNow.AddHours(-2),
             CreatedBy = consultant.Id,
         };
         await _dbContext.InspectionSchedules.AddAsync(schedule);
@@ -226,8 +226,8 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         var handler = new ApproveInspectionSchedule.Handler(
             _dbContext,
             _currentUser,
-            _aesEncryptionService.Object,
-            _keyManagementService.Object,
+            _aesEncryptionService,
+            _keyManagementService,
             _encryptionSettings
         );
         var command = new ApproveInspectionSchedule.Command(
@@ -278,8 +278,8 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         var handler = new ApproveInspectionSchedule.Handler(
             _dbContext,
             _currentUser,
-            _aesEncryptionService.Object,
-            _keyManagementService.Object,
+            _aesEncryptionService,
+            _keyManagementService,
             _encryptionSettings
         );
         var command = new ApproveInspectionSchedule.Command(
@@ -307,17 +307,14 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         var technician = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
         _currentUser.SetUser(technician);
 
-        // Setup mock encryption services
-        SetupMockEncryptionServices();
-
         // Setup car and schedule for testing
         var (schedule, contract) = await SetupSignedSchedule(technician);
 
         var handler = new ApproveInspectionSchedule.Handler(
             _dbContext,
             _currentUser,
-            _aesEncryptionService.Object,
-            _keyManagementService.Object,
+            _aesEncryptionService,
+            _keyManagementService,
             _encryptionSettings
         );
         var command = new ApproveInspectionSchedule.Command(
@@ -388,8 +385,8 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         var handler = new ApproveInspectionSchedule.Handler(
             _dbContext,
             _currentUser,
-            _aesEncryptionService.Object,
-            _keyManagementService.Object,
+            _aesEncryptionService,
+            _keyManagementService,
             _encryptionSettings
         );
         var command = new ApproveInspectionSchedule.Command(
@@ -445,8 +442,8 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         var handler = new ApproveInspectionSchedule.Handler(
             _dbContext,
             _currentUser,
-            _aesEncryptionService.Object,
-            _keyManagementService.Object,
+            _aesEncryptionService,
+            _keyManagementService,
             _encryptionSettings
         );
         var command = new ApproveInspectionSchedule.Command(
@@ -474,17 +471,14 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         var technician = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
         _currentUser.SetUser(technician);
 
-        // Setup mock encryption services
-        SetupMockEncryptionServices();
-
         // Setup car and schedule for testing
         var (schedule, contract) = await SetupSignedSchedule(technician);
 
         var handler = new ApproveInspectionSchedule.Handler(
             _dbContext,
             _currentUser,
-            _aesEncryptionService.Object,
-            _keyManagementService.Object,
+            _aesEncryptionService,
+            _keyManagementService,
             _encryptionSettings
         );
         var command = new ApproveInspectionSchedule.Command(
@@ -596,9 +590,51 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
 
     private async Task<(Car car, User owner)> SetupCar()
     {
-        // Create owner
+        // Create owner with encrypted license number
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+
+        // Generate encryption keys for owner
+        (string ownerKey, string ownerIv) = await _keyManagementService.GenerateKeyAsync();
+        string encryptedOwnerKey = _keyManagementService.EncryptKey(
+            ownerKey,
+            _encryptionSettings.Key
+        );
+
+        var ownerEncryptionKey = new EncryptionKey
+        {
+            EncryptedKey = encryptedOwnerKey,
+            IV = ownerIv,
+        };
+        await _dbContext.EncryptionKeys.AddAsync(ownerEncryptionKey);
+        await _dbContext.SaveChangesAsync();
+
+        // Create owner with encrypted phone and license
+        string licenseNumber = "123456789";
+        string encryptedLicense = await _aesEncryptionService.Encrypt(
+            licenseNumber,
+            ownerKey,
+            ownerIv
+        );
+        string encryptedPhone = await _aesEncryptionService.Encrypt(
+            "0987654321",
+            ownerKey,
+            ownerIv
+        );
+
+        var owner = new User
+        {
+            Name = "Test Owner",
+            Email = "owner@test.com",
+            Password = "password".HashString(),
+            Address = "123 Owner St",
+            RoleId = ownerRole.Id,
+            EncryptionKeyId = ownerEncryptionKey.Id,
+            EncryptedLicenseNumber = encryptedLicense,
+            Phone = encryptedPhone,
+            DateOfBirth = DateTimeOffset.UtcNow.AddYears(-30),
+        };
+        await _dbContext.Users.AddAsync(owner);
+        await _dbContext.SaveChangesAsync();
 
         // Create car prerequisites
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
@@ -609,15 +645,55 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Gasoline");
 
-        // Create car
-        var car = await TestDataCreateCar.CreateTestCar(
-            _dbContext,
-            owner.Id,
-            model.Id,
-            transmissionType,
-            fuelType,
-            CarStatusEnum.Pending
+        // Create car with encrypted license plate
+        (string carKey, string carIv) = await _keyManagementService.GenerateKeyAsync();
+        string encryptedCarKey = _keyManagementService.EncryptKey(carKey, _encryptionSettings.Key);
+
+        var carEncryptionKey = new EncryptionKey { EncryptedKey = encryptedCarKey, IV = carIv };
+        await _dbContext.EncryptionKeys.AddAsync(carEncryptionKey);
+        await _dbContext.SaveChangesAsync();
+
+        string licensePlate = "51A-12345";
+        string encryptedLicensePlate = await _aesEncryptionService.Encrypt(
+            licensePlate,
+            carKey,
+            carIv
         );
+
+        var car = new Car
+        {
+            OwnerId = owner.Id,
+            ModelId = model.Id,
+            TransmissionTypeId = transmissionType.Id,
+            FuelTypeId = fuelType.Id,
+            Color = "Black",
+            EncryptedLicensePlate = encryptedLicensePlate,
+            EncryptionKeyId = carEncryptionKey.Id,
+            Seat = 4,
+            Description = "Test description",
+            FuelConsumption = 7.5m,
+            RequiresCollateral = true,
+            Price = 500000,
+            Terms = "Test terms",
+            Status = CarStatusEnum.Pending,
+            PickupLocation = new NetTopologySuite.Geometries.Point(106.6601, 10.7626)
+            {
+                SRID = 4326,
+            },
+            PickupAddress = "123 Pickup St",
+        };
+
+        await _dbContext.Cars.AddAsync(car);
+        await _dbContext.SaveChangesAsync();
+
+        // Create car statistic
+        var carStatistic = new CarStatistic
+        {
+            CarId = car.Id,
+            AverageRating = 0,
+            TotalBooking = 0,
+        };
+        await _dbContext.CarStatistics.AddAsync(carStatistic);
 
         // Create GPS device for the car
         var gpsDevice = new GPSDevice
@@ -646,28 +722,8 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
 
     private async Task<(Car car, User owner)> SetupCarWithoutContract()
     {
-        // Create owner
-        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-
-        // Create car prerequisites
-        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
-        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
-        var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
-            _dbContext,
-            "Automatic"
-        );
-        var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Gasoline");
-
-        // Create car without a contract
-        var car = await TestDataCreateCar.CreateTestCar(
-            _dbContext,
-            owner.Id,
-            model.Id,
-            transmissionType,
-            fuelType,
-            CarStatusEnum.Pending
-        );
+        // Create car with encrypted data but without a contract
+        var (car, owner) = await SetupCar();
 
         // Explicitly remove any auto-generated contract
         var existingContract = await _dbContext.CarContracts.FirstOrDefaultAsync(c =>
@@ -680,19 +736,6 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         }
 
         return (car, owner);
-    }
-
-    private void SetupMockEncryptionServices()
-    {
-        // Setup mock for AesEncryptionService
-        _aesEncryptionService
-            .Setup(x => x.Decrypt(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<string>()))
-            .ReturnsAsync("DecryptedValue");
-
-        // Setup mock for KeyManagementService
-        _keyManagementService
-            .Setup(x => x.DecryptKey(It.IsAny<string>(), It.IsAny<string>()))
-            .Returns("DecryptedKey");
     }
     #endregion
 }
