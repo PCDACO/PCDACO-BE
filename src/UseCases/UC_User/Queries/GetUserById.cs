@@ -16,7 +16,6 @@ public class GetUserById
     public record Response(
         // Basic user information
         Guid Id,
-        Guid EncryptionKeyId,
         Guid RoleId,
         string AvatarUrl,
         string Name,
@@ -120,7 +119,6 @@ public class GetUserById
             return new(
                 // Basic user information
                 user.Id,
-                user.EncryptionKeyId,
                 user.RoleId,
                 user.AvatarUrl,
                 user.Name,
@@ -153,7 +151,6 @@ public class GetUserById
         Guid Id,
         Guid OwnerId,
         Guid ModelId,
-        Guid EncryptionKeyId,
         Guid FuelTypeId,
         Guid TransmissionTypeId,
         string Status,
@@ -194,7 +191,6 @@ public class GetUserById
                 car.Id,
                 car.OwnerId,
                 car.ModelId,
-                car.EncryptionKeyId,
                 car.FuelTypeId,
                 car.TransmissionTypeId,
                 car.Status.ToString(),
