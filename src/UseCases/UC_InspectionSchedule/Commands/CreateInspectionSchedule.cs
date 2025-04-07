@@ -118,7 +118,6 @@ public sealed class CreateInspectionSchedule
                     .Where(s =>
                         s.Status != InspectionScheduleStatusEnum.Expired
                         && s.Status != InspectionScheduleStatusEnum.Rejected
-                        && s.Status != InspectionScheduleStatusEnum.Approved
                         && s.Type == InspectionScheduleType.NewCar
                     )
                     .FirstOrDefaultAsync(cancellationToken);
@@ -135,7 +134,6 @@ public sealed class CreateInspectionSchedule
                 .Where(s =>
                     s.Status != InspectionScheduleStatusEnum.Expired
                     && s.Status != InspectionScheduleStatusEnum.Rejected
-                    && s.Type == scheduleType
                 )
                 .Select(s => new { s.InspectionDate, s.Status })
                 .ToListAsync(cancellationToken);
