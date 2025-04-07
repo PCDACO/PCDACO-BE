@@ -160,10 +160,17 @@ public class GetInDateScheduleForCurrentTechnicianEndpoint : ICarterModule
             );
     }
 
-    private async Task<IResult> Handle(ISender sender, DateTimeOffset? inspectionDate = null)
+    private async Task<IResult> Handle(
+        ISender sender,
+        DateTimeOffset? inspectionDate = null,
+        bool? isIncident = null
+    )
     {
         Result<GetInDateScheduleForCurrentTechnician.Response> result = await sender.Send(
-            new GetInDateScheduleForCurrentTechnician.Query(InspectionDate: inspectionDate)
+            new GetInDateScheduleForCurrentTechnician.Query(
+                InspectionDate: inspectionDate,
+                IsIncident: isIncident
+            )
         );
         return result.MapResult();
     }

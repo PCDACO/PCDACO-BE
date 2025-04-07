@@ -71,7 +71,10 @@ public sealed class ApproveInspectionSchedule
             if (DateTimeOffset.UtcNow > schedule.InspectionDate.AddHours(1))
                 return Result.Error(ResponseMessages.InspectionScheduleExpired);
 
-            if (request.IsApproved)
+            if (
+                request.IsApproved
+                && schedule.Status == Domain.Enums.InspectionScheduleStatusEnum.Signed
+            )
             {
                 // Get car contract
                 var contract = await context.CarContracts.FirstOrDefaultAsync(
