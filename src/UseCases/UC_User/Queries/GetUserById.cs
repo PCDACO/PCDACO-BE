@@ -24,15 +24,7 @@ public class GetUserById
         DateTimeOffset DateOfBirth,
         string Phone,
         decimal Balance,
-        decimal LockedBalance,
-        string LicenseNumber,
-        string LicenseImageFrontUrl,
-        string LicenseImageBackUrl,
-        DateTimeOffset? LicenseExpiryDate,
-        bool? LicenseIsApproved,
-        string? LicenseRejectReason,
-        DateTimeOffset? LicenseImageUploadedAt,
-        DateTimeOffset? LicenseApprovedAt,
+        LicenseInfo? LicenseInfo,
         bool IsBanned,
         string BannedReason,
         string Role,
@@ -127,15 +119,18 @@ public class GetUserById
                 user.DateOfBirth,
                 decryptedPhone,
                 user.Balance,
-                user.LockedBalance,
-                decryptedLicenseNumber,
-                user.LicenseImageFrontUrl,
-                user.LicenseImageBackUrl,
-                user.LicenseExpiryDate,
-                user.LicenseIsApproved,
-                user.LicenseRejectReason,
-                user.LicenseImageUploadedAt,
-                user.LicenseApprovedAt,
+                string.IsNullOrEmpty(decryptedLicenseNumber)
+                    ? null
+                    : new LicenseInfo(
+                        decryptedLicenseNumber,
+                        user.LicenseImageFrontUrl,
+                        user.LicenseImageBackUrl,
+                        user.LicenseExpiryDate,
+                        user.LicenseIsApproved,
+                        user.LicenseRejectReason,
+                        user.LicenseImageUploadedAt,
+                        user.LicenseApprovedAt
+                    ),
                 user.IsBanned,
                 user.BannedReason,
                 user.Role.Name,
@@ -146,6 +141,17 @@ public class GetUserById
             );
         }
     }
+
+    public record LicenseInfo(
+        string LicenseNumber,
+        string LicenseImageFrontUrl,
+        string LicenseImageBackUrl,
+        DateTimeOffset? LicenseExpiryDate,
+        bool? LicenseIsApproved,
+        string? LicenseRejectReason,
+        DateTimeOffset? LicenseImageUploadedAt,
+        DateTimeOffset? LicenseApprovedAt
+    );
 
     public record CarResponse(
         Guid Id,
