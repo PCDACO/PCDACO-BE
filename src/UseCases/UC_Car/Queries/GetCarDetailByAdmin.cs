@@ -97,9 +97,13 @@ public class GetCarDetailByAdmin
             string decryptedOwnerPhone = string.Empty;
             if (car.Owner.EncryptionKey != null && car.Owner.Phone != null)
             {
+                string userDecryptedKey = keyManagementService.DecryptKey(
+                    car.Owner.EncryptionKey.EncryptedKey,
+                    masterKey
+                );
                 decryptedOwnerPhone = await aesEncryptionService.Decrypt(
                     car.Owner.Phone,
-                    car.Owner.EncryptionKey.EncryptedKey,
+                    userDecryptedKey,
                     car.Owner.EncryptionKey.IV
                 );
             }
@@ -243,6 +247,7 @@ public class GetCarDetailByAdmin
                 .Include(c => c.Owner)
                 .ThenInclude(o => o.Feedbacks)
                 .Include(c => c.Owner)
+                .ThenInclude(o => o.EncryptionKey)
                 .Include(c => c.Model)
                 .ThenInclude(o => o.Manufacturer)
                 .Include(c => c.EncryptionKey)
