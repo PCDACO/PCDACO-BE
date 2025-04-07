@@ -22,7 +22,7 @@ public sealed class StartBookingTrip
         CurrentUser currentUser
     ) : IRequestHandler<Command, Result>
     {
-        private const int MAX_ALLOWED_DISTANCE_METERS = 10;
+        private const int MAX_ALLOWED_DISTANCE_METERS = 5000;
         private const decimal METERS_PER_DEGREE = 111320m; // 1 degree = 111320 meters
 
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)

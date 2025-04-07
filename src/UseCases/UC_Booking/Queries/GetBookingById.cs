@@ -80,7 +80,7 @@ public sealed class GetBookingById
                     booking.Status.ToString(),
                     booking.Note,
                     booking.IsRefund,
-                    booking.RefundAmount,
+                    booking.RefundAmount ?? 0,
                     booking.RefundDate
                 ),
                 new PaymentDetail(
