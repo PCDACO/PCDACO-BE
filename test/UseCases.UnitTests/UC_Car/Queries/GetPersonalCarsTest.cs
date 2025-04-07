@@ -76,7 +76,7 @@ public class GetPersonalCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmission.Id,
             fuelType.Id,
-            CarStatusEnum.Rejected,
+            CarStatusEnum.Inactive,
             "GHI-13579"
         );
         await CreateTestCar(
@@ -496,7 +496,7 @@ public class GetPersonalCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmission.Id,
             fuelType.Id,
-            CarStatusEnum.Rejected,
+            CarStatusEnum.Inactive,
             "REJECTED-1"
         );
 
