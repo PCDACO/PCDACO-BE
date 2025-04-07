@@ -14,7 +14,7 @@ public sealed class GetAllBookings
         int PageNumber = 1,
         int PageSize = 10,
         string? SearchTerm = null,
-        string[]? BookingStatuses = null,
+        int[]? BookingStatuses = null,
         bool? IsPaid = null
     ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
@@ -76,11 +76,7 @@ public sealed class GetAllBookings
             // Apply filters
             if (request.BookingStatuses != null && request.BookingStatuses.Length > 0)
             {
-                var statuses = request
-                    .BookingStatuses.Select(s =>
-                        (BookingStatusEnum)Enum.Parse(typeof(BookingStatusEnum), s)
-                    )
-                    .ToList();
+                var statuses = request.BookingStatuses.Select(s => (BookingStatusEnum)s).ToList();
                 query = query.Where(b => statuses.Contains(b.Status));
             }
 

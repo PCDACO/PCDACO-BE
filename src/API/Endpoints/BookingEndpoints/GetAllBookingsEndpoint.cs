@@ -120,7 +120,7 @@ public class GetAllBookingsEndpoint : ICarterModule
         [FromQuery(Name = "index")] int? pageNumber,
         [FromQuery(Name = "size")] int? pageSize,
         [FromQuery(Name = "search")] string? searchTerm,
-        [FromQuery(Name = "status")] string[]? status,
+        [FromQuery(Name = "status")] int[]? status,
         [FromQuery(Name = "isPaid")] bool? isPaid,
         CancellationToken cancellationToken
     )
