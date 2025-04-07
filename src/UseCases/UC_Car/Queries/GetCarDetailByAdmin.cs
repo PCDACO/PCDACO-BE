@@ -108,7 +108,7 @@ public class GetCarDetailByAdmin
                 car.Owner.Id,
                 car.Owner.Name,
                 car.Owner.Email ?? string.Empty,
-                car.Owner.Phone ?? string.Empty,
+                decryptedOwnerPhone,
                 car.Owner.Address ?? string.Empty,
                 car.Owner.AvatarUrl ?? string.Empty
             );
