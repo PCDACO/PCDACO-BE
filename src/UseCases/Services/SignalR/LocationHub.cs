@@ -1,11 +1,33 @@
+using MediatR;
 using Microsoft.AspNetCore.SignalR;
+using UseCases.UC_Car.Commands;
 
 namespace UseCases.Services.SignalR;
 
-public class LocationHub : Hub
+public class LocationHub(ISender mediator) : Hub
 {
-    public async Task SendLocationUpdate(Guid bookingId, decimal latitude, decimal longitude)
+    public async Task SendLocationUpdate(Guid carId, decimal latitude, decimal longitude)
     {
-        await Clients.All.SendAsync("ReceiveLocationUpdate", bookingId, latitude, longitude);
+        // Save to database and broadcast to other clients using the existing command
+        var result = await mediator.Send(new TrackCarLocation.Command(carId, latitude, longitude));
+
+        if (!result.IsSuccess)
+        {
+            // If there's an error, send it back to the caller
+            await Clients.Caller.SendAsync("LocationUpdateError", result.Errors);
+            return;
+        }
+
+        // The broadcast to other clients is handled in the TrackCarLocation command
+    }
+
+    public override async Task OnConnectedAsync()
+    {
+        await base.OnConnectedAsync();
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        await base.OnDisconnectedAsync(exception);
     }
 }

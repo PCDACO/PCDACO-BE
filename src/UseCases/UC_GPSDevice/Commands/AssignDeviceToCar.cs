@@ -27,11 +27,24 @@ public class AssignDeviceToCar
         {
             // check car
             Car? gettingCar = await context
-                .Cars.Where(c => !c.IsDeleted)
+                .Cars.IgnoreQueryFilters()
+                .Include(c => c.InspectionSchedules)
+                .Where(c => !c.IsDeleted)
                 .Where(c => c.Id == request.CarId)
                 .FirstOrDefaultAsync(cancellationToken);
             if (gettingCar is null)
                 return Result.Error(ResponseMessages.CarNotFound);
+
+            // Check car must has any inprogress inspection schedule to continue
+            if (
+                !gettingCar.InspectionSchedules.Any(s =>
+                    s.Status == InspectionScheduleStatusEnum.InProgress
+                )
+            )
+                return Result.Error(
+                    "Xe chưa có lịch kiểm định nào đang được tiến hành, không thể gán thiết bị GPS !"
+                );
+
             // check device
             GPSDevice? gettingDevice = await context
                 .GPSDevices.Where(d => d.OSBuildId == request.OSBuildId)
