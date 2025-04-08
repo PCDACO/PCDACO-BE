@@ -34,7 +34,7 @@ public class GetInProgressInspectionScheduleForCurrentUser
                 Date: inspectionSchedule.InspectionDate,
                 OwnerName: inspectionSchedule.Car.Owner.Name,
                 Address: inspectionSchedule.InspectionAddress,
-                LicensePlate: inspectionSchedule.Car.LicensePlate
+                LicensePlate: inspectionSchedule.Car.LicensePlate,
                 ContractDetail: inspectionSchedule.Car.Contract != null
                     ? new ContractDetail(
                         Id: inspectionSchedule.Car.Contract!.Id,
