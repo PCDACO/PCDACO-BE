@@ -37,7 +37,7 @@ public class AdminLogin
             {
                 Token = refreshToken,
                 UserId = user.Id,
-                ExpiryDate = DateTimeOffset.UtcNow.AddHours(1),
+                ExpiryDate = DateTimeOffset.UtcNow.AddHours(24),
             };
             await context.RefreshTokens.AddAsync(addingRefreshToken, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);
