@@ -147,7 +147,7 @@ public class GetCarForStaffsEndpoint : ICarterModule
         [FromQuery(Name = "index")] int pageNumber = 1,
         [FromQuery(Name = "size")] int pageSize = 10,
         [FromQuery(Name = "keyword")] string? keyword = "",
-        [FromQuery(Name = "onlyHasInspectionSchedule")] bool? onlyHasInspectionSchedule = false,
+        [FromQuery(Name = "onlyHasInprogressInspectionSchedule")] bool? onlyHasInprogressInspectionSchedule = false,
         [FromQuery(Name = "onlyNoGps")] bool? onlyNoGps = false
     )
     {
@@ -157,7 +157,7 @@ public class GetCarForStaffsEndpoint : ICarterModule
                 pageSize,
                 keyword!,
                 status,
-                OnlyHasInspectionSchedule: onlyHasInspectionSchedule,
+                OnlyHasInprogressInspectionSchedule: onlyHasInprogressInspectionSchedule,
                 OnlyNoGps: onlyNoGps)
         );
         return result.MapResult();
