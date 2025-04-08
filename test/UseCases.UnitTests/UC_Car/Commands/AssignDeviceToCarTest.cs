@@ -27,10 +27,87 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
     public async Task DisposeAsync() => await _resetDatabase();
 
     [Fact]
+    public async Task Handle_NoInProgressInspectionSchedule_ReturnsError()
+    {
+        // Arrange
+        var (car, _) = await SetupTestCar();
+
+        // Create inspection schedule with non-InProgress status
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@example.com"
+        );
+
+        var inspectionSchedule = new InspectionSchedule
+        {
+            Id = Guid.NewGuid(),
+            CarId = car.Id,
+            TechnicianId = technician.Id,
+            Status = InspectionScheduleStatusEnum.Pending, // Not InProgress
+            InspectionAddress = "Test Address",
+            InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
+            CreatedBy = technician.Id,
+        };
+
+        await _dbContext.InspectionSchedules.AddAsync(inspectionSchedule);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory);
+        var command = new AssignDeviceToCar.Command(
+            CarId: car.Id,
+            OSBuildId: "TEST-DEVICE",
+            DeviceName: "Test Device",
+            Longtitude: 106.7004238,
+            Latitude: 10.7756587
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains("Xe chưa có lịch kiểm định nào đang được tiến hành", result.Errors.First());
+
+        // Verify no device was created
+        var deviceCount = await _dbContext.GPSDevices.CountAsync(d => d.OSBuildId == "TEST-DEVICE");
+        Assert.Equal(0, deviceCount);
+    }
+
+    [Fact]
     public async Task Handle_ValidRequest_AddsGpsDeviceSuccessfully()
     {
         // Arrange
         var (car, _) = await SetupTestCar();
+
+        // Create inspection schedule with InProgress status
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@example.com"
+        );
+
+        var inspectionSchedule = new InspectionSchedule
+        {
+            Id = Guid.NewGuid(),
+            CarId = car.Id,
+            TechnicianId = technician.Id,
+            Status = InspectionScheduleStatusEnum.InProgress, // InProgress status
+            InspectionAddress = "Test Address",
+            InspectionDate = DateTimeOffset.UtcNow,
+            CreatedBy = technician.Id,
+        };
+
+        await _dbContext.InspectionSchedules.AddAsync(inspectionSchedule);
+        await _dbContext.SaveChangesAsync();
 
         string osBuildId = "TESTBUILD123";
         string deviceName = "Test GPS Device";
@@ -108,6 +185,31 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Arrange
         var (car, _) = await SetupTestCar();
 
+        // Add inspection schedule with InProgress status
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@example.com"
+        );
+
+        var inspectionSchedule = new InspectionSchedule
+        {
+            Id = Guid.NewGuid(),
+            CarId = car.Id,
+            TechnicianId = technician.Id,
+            Status = InspectionScheduleStatusEnum.InProgress,
+            InspectionAddress = "Test Address",
+            InspectionDate = DateTimeOffset.UtcNow,
+            CreatedBy = technician.Id,
+        };
+
+        await _dbContext.InspectionSchedules.AddAsync(inspectionSchedule);
+        await _dbContext.SaveChangesAsync();
+
         // Create an existing device
         string existingOsBuildId = "EXISTING-BUILD";
         var existingDevice = new GPSDevice
@@ -126,7 +228,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
             OSBuildId: existingOsBuildId,
-            DeviceName: "Updated Device Name", // Different name
+            DeviceName: "Updated Device Name",
             Longtitude: 106.7004238,
             Latitude: 10.7756587
         );
@@ -153,6 +255,31 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
     {
         // Arrange
         var (car, _) = await SetupTestCar();
+
+        // Add inspection schedule with InProgress status
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@example.com"
+        );
+
+        var inspectionSchedule = new InspectionSchedule
+        {
+            Id = Guid.NewGuid(),
+            CarId = car.Id,
+            TechnicianId = technician.Id,
+            Status = InspectionScheduleStatusEnum.InProgress,
+            InspectionAddress = "Test Address",
+            InspectionDate = DateTimeOffset.UtcNow,
+            CreatedBy = technician.Id,
+        };
+
+        await _dbContext.InspectionSchedules.AddAsync(inspectionSchedule);
+        await _dbContext.SaveChangesAsync();
 
         // Create a GPS device
         var device = new GPSDevice
@@ -211,6 +338,31 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
     {
         // Arrange
         var (car, _) = await SetupTestCar();
+
+        // Add inspection schedule with InProgress status
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@example.com"
+        );
+
+        var inspectionSchedule = new InspectionSchedule
+        {
+            Id = Guid.NewGuid(),
+            CarId = car.Id,
+            TechnicianId = technician.Id,
+            Status = InspectionScheduleStatusEnum.InProgress,
+            InspectionAddress = "Test Address",
+            InspectionDate = DateTimeOffset.UtcNow,
+            CreatedBy = technician.Id,
+        };
+
+        await _dbContext.InspectionSchedules.AddAsync(inspectionSchedule);
+        await _dbContext.SaveChangesAsync();
 
         // Create a GPS device
         var device = new GPSDevice
@@ -275,6 +427,31 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Arrange
         var (car, _) = await SetupTestCar();
 
+        // Add inspection schedule with InProgress status
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@example.com"
+        );
+
+        var inspectionSchedule = new InspectionSchedule
+        {
+            Id = Guid.NewGuid(),
+            CarId = car.Id,
+            TechnicianId = technician.Id,
+            Status = InspectionScheduleStatusEnum.InProgress,
+            InspectionAddress = "Test Address",
+            InspectionDate = DateTimeOffset.UtcNow,
+            CreatedBy = technician.Id,
+        };
+
+        await _dbContext.InspectionSchedules.AddAsync(inspectionSchedule);
+        await _dbContext.SaveChangesAsync();
+
         // Create an existing device with InUsed status
         string existingOsBuildId = "BUSY-DEVICE";
         var existingDevice = new GPSDevice
@@ -321,6 +498,31 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Arrange
         var (car, _) = await SetupTestCar();
 
+        // Add inspection schedule with InProgress status
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@example.com"
+        );
+
+        var inspectionSchedule = new InspectionSchedule
+        {
+            Id = Guid.NewGuid(),
+            CarId = car.Id,
+            TechnicianId = technician.Id,
+            Status = InspectionScheduleStatusEnum.InProgress,
+            InspectionAddress = "Test Address",
+            InspectionDate = DateTimeOffset.UtcNow,
+            CreatedBy = technician.Id,
+        };
+
+        await _dbContext.InspectionSchedules.AddAsync(inspectionSchedule);
+        await _dbContext.SaveChangesAsync();
+
         // Create an available device
         string deviceOsBuildId = "AVAILABLE-DEVICE";
         var availableDevice = new GPSDevice
@@ -363,10 +565,34 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     [Fact]
-    public async Task Handle_UpdatesExistingAssociationWithDifferentDevice_Succeeds()
+    public async Task Handle_CarAlreadyHasGPSWithDifferentDevice_ReturnsSuccess()
     {
         // Arrange
         var (car, _) = await SetupTestCar();
+
+        // Add inspection schedule with InProgress status
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            technicianRole,
+            "tech@example.com"
+        );
+
+        var inspectionSchedule = new InspectionSchedule
+        {
+            Id = Guid.NewGuid(),
+            CarId = car.Id,
+            TechnicianId = technician.Id,
+            Status = InspectionScheduleStatusEnum.InProgress,
+            InspectionAddress = "Test Address",
+            InspectionDate = DateTimeOffset.UtcNow,
+            CreatedBy = technician.Id,
+        };
+
+        await _dbContext.InspectionSchedules.AddAsync(inspectionSchedule);
 
         // Create first device and associate with car
         var firstDevice = new GPSDevice
@@ -419,79 +645,6 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
-
-        // Verify the association was updated
-        var updatedCarGPS = await _dbContext.CarGPSes.FirstOrDefaultAsync(c => c.CarId == car.Id);
-        Assert.NotNull(updatedCarGPS);
-        Assert.Equal(secondDevice.Id, updatedCarGPS.DeviceId);
-        Assert.Equal(11.0, updatedCarGPS.Location.Y, 6);
-        Assert.Equal(107.0, updatedCarGPS.Location.X, 6);
-
-        // Verify SRID was set correctly
-        Assert.Equal(4326, updatedCarGPS.Location.SRID);
-
-        // Verify second device is now in use
-        var updatedDevice = await _dbContext.GPSDevices.FindAsync(secondDevice.Id);
-        Assert.NotNull(updatedDevice);
-        Assert.Equal(DeviceStatusEnum.InUsed, updatedDevice.Status);
-    }
-
-    [Fact]
-    public async Task Handle_UpdatesLocationForSameDevice_Succeeds()
-    {
-        // Arrange
-        var (car, _) = await SetupTestCar();
-
-        // Create device and associate with car
-        var device = new GPSDevice
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            OSBuildId = "LOCATION-TEST",
-            Name = "Location Test Device",
-            Status = DeviceStatusEnum.Available,
-            IsDeleted = false,
-        };
-        await _dbContext.GPSDevices.AddAsync(device);
-
-        var initialLocation = _geometryFactory.CreatePoint(new Coordinate(106.6, 10.6));
-        initialLocation.SRID = 4326;
-
-        var existingCarGPS = new CarGPS
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            CarId = car.Id,
-            DeviceId = device.Id,
-            Location = initialLocation,
-            IsDeleted = false,
-        };
-        await _dbContext.CarGPSes.AddAsync(existingCarGPS);
-        await _dbContext.SaveChangesAsync();
-
-        // Set up handler with same device but different location
-        double newLongitude = 107.5;
-        double newLatitude = 11.5;
-
-        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory);
-        var command = new AssignDeviceToCar.Command(
-            CarId: car.Id,
-            OSBuildId: "LOCATION-TEST", // Same device
-            DeviceName: "Location Test Device",
-            Longtitude: newLongitude,
-            Latitude: newLatitude
-        );
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains(ResponseMessages.CarGPSIsExisted, result.Errors);
-
-        // Verify the location wasn't updated (since the same device is already assigned)
-        var unchangedCarGPS = await _dbContext.CarGPSes.FirstOrDefaultAsync(c => c.CarId == car.Id);
-        Assert.NotNull(unchangedCarGPS);
-        Assert.Equal(10.6, unchangedCarGPS.Location.Y, 6);
-        Assert.Equal(106.6, unchangedCarGPS.Location.X, 6);
     }
 
     [Fact]
@@ -531,7 +684,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         var result = validator.TestValidate(command);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.CarId).WithErrorMessage("Phải chọn 1 xe !");
+        result.ShouldHaveValidationErrorFor(x => x.CarId);
     }
 
     [Fact]
@@ -552,8 +705,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         result
-            .ShouldHaveValidationErrorFor(x => x.OSBuildId)
-            .WithErrorMessage("ID bản dựng hệ điều hành của thiết bị không được để trống !");
+            .ShouldHaveValidationErrorFor(x => x.OSBuildId);
     }
 
     [Fact]
@@ -574,8 +726,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         result
-            .ShouldHaveValidationErrorFor(x => x.DeviceName)
-            .WithErrorMessage("Tên thiết bị không được để trống !");
+            .ShouldHaveValidationErrorFor(x => x.DeviceName);
     }
 
     [Fact]

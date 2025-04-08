@@ -13,6 +13,7 @@ public sealed class ProcessBookingPayment
     public sealed record Command(Guid BookingId) : IRequest<Result<Response>>;
 
     public sealed record Response(
+        long OrderCode,
         decimal TotalDistance,
         decimal ExcessDays,
         decimal ExcessFee,
@@ -76,6 +77,7 @@ public sealed class ProcessBookingPayment
 
             return Result.Success(
                 new Response(
+                    OrderCode: paymentResult.OrderCode,
                     TotalDistance: booking.TotalDistance / 1000, // Convert to kilometers
                     ExcessDays: booking.ExcessDay,
                     ExcessFee: booking.ExcessDayFee,

@@ -13,9 +13,10 @@ public class GPSDevice : BaseEntity
     public CarGPS GPS { get; set; } = null!;
     public CarContract Contract { get; set; } = null!;
 
-    public void Update(string name)
+    public void Update(string name, DeviceStatusEnum status)
     {
         Name = name.Trim();
+        Status = status;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 }

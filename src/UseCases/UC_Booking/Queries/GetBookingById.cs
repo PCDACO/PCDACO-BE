@@ -48,7 +48,8 @@ public sealed class GetBookingById
                     booking.Car.Seat,
                     booking.Car.TransmissionType.Name,
                     booking.Car.FuelType.Name,
-                    [.. booking.Car.ImageCars.Select(ic => ic.Url)]
+                    [.. booking.Car.ImageCars.Select(ic => ic.Url)],
+                    booking.Car.PickupAddress
                 ),
                 new UserDetail(
                     booking.User.Id,
@@ -72,7 +73,7 @@ public sealed class GetBookingById
                     booking.Status.ToString(),
                     booking.Note,
                     booking.IsRefund,
-                    booking.RefundAmount,
+                    booking.RefundAmount ?? 0,
                     booking.RefundDate
                 ),
                 new PaymentDetail(
@@ -145,7 +146,8 @@ public sealed class GetBookingById
         int Seat,
         string TransmissionType,
         string FuelType,
-        string[] CarImageUrl
+        string[] CarImageUrl,
+        string PickupAddress
     );
 
     public record UserDetail(Guid Id, string Name, string Phone, string Email, string AvatarUrl);

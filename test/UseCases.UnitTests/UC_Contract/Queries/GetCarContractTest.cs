@@ -113,7 +113,6 @@ public class GetCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.NotNull(result.Value);
         Assert.Contains(expectedLicensePlate, result.Value.HtmlContent);
-        Assert.Contains("123456789012", result.Value.HtmlContent); // Technician license
         Assert.Contains("987654321012", result.Value.HtmlContent); // Owner license
     }
 
@@ -155,7 +154,6 @@ public class GetCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.NotNull(result.Value);
         Assert.Contains(expectedLicensePlate, result.Value.HtmlContent);
-        Assert.Contains("123456789012", result.Value.HtmlContent); // Technician license
         Assert.Contains("987654321012", result.Value.HtmlContent); // Owner license
     }
 

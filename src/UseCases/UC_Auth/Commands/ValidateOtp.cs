@@ -57,7 +57,7 @@ public class ValidateOtp
             {
                 Token = refreshToken,
                 UserId = user.Id,
-                ExpiryDate = DateTimeOffset.UtcNow.AddMinutes(60),
+                ExpiryDate = DateTimeOffset.UtcNow.AddHours(24),
             };
 
             await _context.RefreshTokens.AddAsync(addingRefreshToken, cancellationToken);

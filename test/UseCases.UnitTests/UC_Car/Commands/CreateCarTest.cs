@@ -140,9 +140,14 @@ public class CreateCarTests : IAsyncLifetime
         TransmissionType transmissionType =
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        var user = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(user);
+
+        // Make sure the user has a valid license
+        user.LicenseIsApproved = true;
+        user.LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(1); // Valid license
+        await _dbContext.SaveChangesAsync();
 
         // Use a random non-existent model ID
         var invalidModelId = Guid.NewGuid();
@@ -176,6 +181,109 @@ public class CreateCarTests : IAsyncLifetime
         // Verify no encryption key was created for the car
         var encryptionKeysCount = await _dbContext.EncryptionKeys.CountAsync();
         Assert.Equal(1, encryptionKeysCount); // Only the user's key exists
+    }
+
+    [Fact]
+    public async Task Handle_OwnerWithoutValidLicense_ReturnsError()
+    {
+        // Arrange
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+
+        // Create owner without setting license approval or with expired license
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+
+        // Make sure the license is not approved
+        owner.LicenseIsApproved = false;
+        await _dbContext.SaveChangesAsync();
+
+        _currentUser.SetUser(owner);
+
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+
+        var handler = new CreateCar.Handler(
+            _dbContext,
+            _currentUser,
+            _aesService,
+            _keyService,
+            _encryptionSettings,
+            _geometryFactory
+        );
+
+        var command = CreateValidCommand(
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            modelId: model.Id
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(
+            "Bằng lái xe của bạn không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật thông tin bằng lái xe",
+            result.Errors.First()
+        );
+
+        // Verify no car was created
+        var carsCount = await _dbContext.Cars.CountAsync();
+        Assert.Equal(0, carsCount);
+    }
+
+    [Fact]
+    public async Task Handle_OwnerWithExpiredLicense_ReturnsError()
+    {
+        // Arrange
+        TransmissionType transmissionType =
+            await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
+        FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+
+        // Create owner with approved but expired license
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+
+        // Set license to approved but expired
+        owner.LicenseIsApproved = true;
+        owner.LicenseExpiryDate = DateTimeOffset.UtcNow.AddDays(-1); // Expired
+        await _dbContext.SaveChangesAsync();
+
+        _currentUser.SetUser(owner);
+
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+
+        var handler = new CreateCar.Handler(
+            _dbContext,
+            _currentUser,
+            _aesService,
+            _keyService,
+            _encryptionSettings,
+            _geometryFactory
+        );
+
+        var command = CreateValidCommand(
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            modelId: model.Id
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(
+            "Bằng lái xe của bạn không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật thông tin bằng lái xe",
+            result.Errors.First()
+        );
+
+        // Verify no car was created
+        var carsCount = await _dbContext.Cars.CountAsync();
+        Assert.Equal(0, carsCount);
     }
 
     [Fact]
@@ -224,8 +332,15 @@ public class CreateCarTests : IAsyncLifetime
         TransmissionType transmissionType =
             await TestDataTransmissionType.CreateTestTransmissionType(_dbContext, "Automatic");
         FuelType fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        var user = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+
+        // Make sure the user has a valid license
+        user.LicenseIsApproved = true;
+        user.LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(1); // Valid license
+        await _dbContext.SaveChangesAsync();
+
         _currentUser.SetUser(user);
 
         var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);

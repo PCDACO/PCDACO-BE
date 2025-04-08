@@ -82,7 +82,7 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmission.Id,
             fuelType.Id,
-            CarStatusEnum.Rejected,
+            CarStatusEnum.Inactive,
             "GHI-13579"
         );
 
@@ -157,7 +157,7 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
             model.Id,
             transmission.Id,
             fuelType.Id,
-            CarStatusEnum.Rejected,
+            CarStatusEnum.Inactive,
             "GHI-13579"
         );
 
@@ -487,6 +487,310 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal("Luxury Cars", carResponse.Manufacturer.Name);
     }
 
+    [Fact]
+    public async Task Handle_FiltersByInspectionSchedule_WhenOnlyHasInspectionScheduleIsTrue()
+    {
+        // Arrange
+        var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var admin = await CreateUserWithEncryptedPhone(adminRole.Id);
+        _currentUser.SetUser(admin);
+
+        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var owner = await CreateUserWithEncryptedPhone(ownerRole.Id, "owner@test.com");
+
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await CreateUserWithEncryptedPhone(technicianRole.Id, "tech@test.com");
+
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+        var transmission = await TestDataTransmissionType.CreateTestTransmissionType(
+            _dbContext,
+            "Automatic"
+        );
+        var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        // Create cars - 3 cars, but only 2 with inspection schedules
+        var car1 = await CreateTestCar(
+            owner.Id,
+            model.Id,
+            transmission.Id,
+            fuelType.Id,
+            CarStatusEnum.Pending,
+            "CAR-12345"
+        );
+        var car2 = await CreateTestCar(
+            owner.Id,
+            model.Id,
+            transmission.Id,
+            fuelType.Id,
+            CarStatusEnum.Pending,
+            "CAR-67890"
+        );
+        var car3 = await CreateTestCar(
+            owner.Id,
+            model.Id,
+            transmission.Id,
+            fuelType.Id,
+            CarStatusEnum.Available,
+            "CAR-54321"
+        );
+
+        // Create inprogress inspection schedules for car1 and car2 only
+        var schedule1 = new InspectionSchedule
+        {
+            CarId = car1.Id,
+            TechnicianId = technician.Id,
+            Status = InspectionScheduleStatusEnum.InProgress,
+            InspectionAddress = "123 Test St",
+            InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
+            Note = "Test inspection for car1",
+            CreatedBy = admin.Id,
+        };
+
+        var schedule2 = new InspectionSchedule
+        {
+            CarId = car2.Id,
+            TechnicianId = technician.Id,
+            Status = InspectionScheduleStatusEnum.InProgress,
+            InspectionAddress = "456 Test Ave",
+            InspectionDate = DateTimeOffset.UtcNow.AddDays(2),
+            Note = "Test inspection for car2",
+            CreatedBy = admin.Id,
+        };
+
+        await _dbContext.InspectionSchedules.AddRangeAsync(schedule1, schedule2);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new GetCarsForStaffs.Handler(
+            _dbContext,
+            _aesService,
+            _keyService,
+            _encryptionSettings
+        );
+
+        var query = new GetCarsForStaffs.Query(
+            PageNumber: 1,
+            PageSize: 10,
+            Keyword: "",
+            Status: null,
+            OnlyHasInprogressInspectionSchedule: true
+        );
+
+        // Act
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Equal(2, result.Value.TotalItems); // Should return only the 2 cars with inspection schedules
+
+        // Verify the correct cars are returned
+        var carIds = result.Value.Items.Select(c => c.Id).ToList();
+        Assert.Contains(car1.Id, carIds);
+        Assert.Contains(car2.Id, carIds);
+        Assert.DoesNotContain(car3.Id, carIds);
+    }
+
+    [Fact]
+    public async Task Handle_FiltersByNoGps_WhenOnlyNoGpsIsTrue()
+    {
+        // Arrange
+        var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var admin = await CreateUserWithEncryptedPhone(adminRole.Id);
+        _currentUser.SetUser(admin);
+
+        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var owner = await CreateUserWithEncryptedPhone(ownerRole.Id, "owner@test.com");
+
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+        var transmission = await TestDataTransmissionType.CreateTestTransmissionType(
+            _dbContext,
+            "Automatic"
+        );
+        var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        // Create 3 cars
+        var car1 = await CreateTestCar(
+            owner.Id,
+            model.Id,
+            transmission.Id,
+            fuelType.Id,
+            CarStatusEnum.Available,
+            "CAR-11111"
+        );
+        var car2 = await CreateTestCar(
+            owner.Id,
+            model.Id,
+            transmission.Id,
+            fuelType.Id,
+            CarStatusEnum.Available,
+            "CAR-22222"
+        );
+        var car3 = await CreateTestCar(
+            owner.Id,
+            model.Id,
+            transmission.Id,
+            fuelType.Id,
+            CarStatusEnum.Available,
+            "CAR-33333"
+        );
+
+        // Add GPS devices only to car1 and car2
+        await CreateGPSForCar(car1.Id);
+        await CreateGPSForCar(car2.Id);
+        // car3 doesn't have a GPS device
+
+        var handler = new GetCarsForStaffs.Handler(
+            _dbContext,
+            _aesService,
+            _keyService,
+            _encryptionSettings
+        );
+
+        var query = new GetCarsForStaffs.Query(
+            PageNumber: 1,
+            PageSize: 10,
+            Keyword: "",
+            Status: null,
+            OnlyNoGps: true
+        );
+
+        // Act
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Equal(1, result.Value.TotalItems); // Should return only car3 (without GPS)
+        Assert.Equal(car3.Id, result.Value.Items.Single().Id);
+
+        // Verify the cars with GPS are not returned
+        var carIds = result.Value.Items.Select(c => c.Id).ToList();
+        Assert.DoesNotContain(car1.Id, carIds);
+        Assert.DoesNotContain(car2.Id, carIds);
+    }
+
+    [Fact]
+    public async Task Handle_CombinesFilters_WhenMultipleFiltersApplied()
+    {
+        // Arrange
+        var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var admin = await CreateUserWithEncryptedPhone(adminRole.Id);
+        _currentUser.SetUser(admin);
+
+        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var owner = await CreateUserWithEncryptedPhone(ownerRole.Id, "owner@test.com");
+
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await CreateUserWithEncryptedPhone(technicianRole.Id, "tech@test.com");
+
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+        var transmission = await TestDataTransmissionType.CreateTestTransmissionType(
+            _dbContext,
+            "Automatic"
+        );
+        var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        // Create 4 cars with different combinations:
+        // car1: Pending with GPS and inspection schedule
+        // car2: Pending with inspection schedule but no GPS
+        // car3: Available with GPS but no inspection schedule
+        // car4: Available with no GPS and no inspection schedule
+        var car1 = await CreateTestCar(
+            owner.Id,
+            model.Id,
+            transmission.Id,
+            fuelType.Id,
+            CarStatusEnum.Pending,
+            "CAR-0001"
+        );
+        var car2 = await CreateTestCar(
+            owner.Id,
+            model.Id,
+            transmission.Id,
+            fuelType.Id,
+            CarStatusEnum.Pending,
+            "CAR-0002"
+        );
+        var car3 = await CreateTestCar(
+            owner.Id,
+            model.Id,
+            transmission.Id,
+            fuelType.Id,
+            CarStatusEnum.Available,
+            "CAR-0003"
+        );
+        var car4 = await CreateTestCar(
+            owner.Id,
+            model.Id,
+            transmission.Id,
+            fuelType.Id,
+            CarStatusEnum.Available,
+            "CAR-0004"
+        );
+
+        // Add GPS to car1 and car3 only
+        await CreateGPSForCar(car1.Id);
+        await CreateGPSForCar(car3.Id);
+
+        // Add inspection schedules to car1 and car2 only
+        var schedule1 = new InspectionSchedule
+        {
+            CarId = car1.Id,
+            TechnicianId = technician.Id,
+            Status = InspectionScheduleStatusEnum.Pending,
+            InspectionAddress = "123 Combined Test St",
+            InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
+            Note = "Test inspection for car1",
+            CreatedBy = admin.Id,
+        };
+
+        var schedule2 = new InspectionSchedule
+        {
+            CarId = car2.Id,
+            TechnicianId = technician.Id,
+            Status = InspectionScheduleStatusEnum.InProgress,
+            InspectionAddress = "456 Combined Test Ave",
+            InspectionDate = DateTimeOffset.UtcNow.AddDays(2),
+            Note = "Test inspection for car2",
+            CreatedBy = admin.Id,
+        };
+
+        await _dbContext.InspectionSchedules.AddRangeAsync(schedule1, schedule2);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new GetCarsForStaffs.Handler(
+            _dbContext,
+            _aesService,
+            _keyService,
+            _encryptionSettings
+        );
+
+        // Query for: Pending status + Has inspection schedule + No GPS
+        var query = new GetCarsForStaffs.Query(
+            PageNumber: 1,
+            PageSize: 10,
+            Keyword: "",
+            Status: CarStatusEnum.Pending,
+            OnlyHasInprogressInspectionSchedule: true,
+            OnlyNoGps: true
+        );
+
+        // Act
+        var result = await handler.Handle(query, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Equal(1, result.Value.TotalItems); // Should return only car2
+        Assert.Equal(car2.Id, result.Value.Items.Single().Id);
+    }
+
     #region Helper Methods
 
     private async Task<Car> CreateTestCar(
@@ -503,7 +807,8 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
         string description = "Test car description",
         decimal fuelConsumption = 7.5m,
         decimal price = 100m,
-        bool requiresCollateral = false
+        bool requiresCollateral = false,
+        bool hasGPS = false
     )
     {
         // Create pickup location point
@@ -543,8 +848,11 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
         };
         await _dbContext.CarStatistics.AddAsync(carStatistic);
 
-        // Create GPS data for the car
-        await CreateGPSForCar(car.Id, latitude, longitude);
+        if (hasGPS)
+        {
+            // Create GPS data for the car
+            await CreateGPSForCar(car.Id, latitude, longitude);
+        }
 
         // Create image for the car
         await CreateCarImage(car.Id);

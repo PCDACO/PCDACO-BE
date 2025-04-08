@@ -39,10 +39,18 @@ public sealed class ApproveInspectionSchedule
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             // Get the existing schedule
-            var schedule = await context.InspectionSchedules.FirstOrDefaultAsync(
-                s => s.Id == request.Id && !s.IsDeleted,
-                cancellationToken
-            );
+            var schedule = await context
+                .InspectionSchedules.IgnoreQueryFilters()
+                .AsSplitQuery()
+                .Include(s => s.Car)
+                .ThenInclude(s => s.Owner)
+                .Include(s => s.Car)
+                .ThenInclude(s => s.Model)
+                .Include(s => s.Car)
+                .ThenInclude(s => s.EncryptionKey)
+                .Include(s => s.Technician)
+                .Include(s => s.Photos)
+                .FirstOrDefaultAsync(s => s.Id == request.Id && !s.IsDeleted, cancellationToken);
 
             if (schedule is null)
                 return Result.NotFound(ResponseMessages.InspectionScheduleNotFound);
@@ -63,7 +71,10 @@ public sealed class ApproveInspectionSchedule
             if (DateTimeOffset.UtcNow > schedule.InspectionDate.AddHours(1))
                 return Result.Error(ResponseMessages.InspectionScheduleExpired);
 
-            if (request.IsApproved)
+            if (
+                request.IsApproved
+                && schedule.Status == Domain.Enums.InspectionScheduleStatusEnum.Signed
+            )
             {
                 // Get car contract
                 var contract = await context.CarContracts.FirstOrDefaultAsync(
@@ -92,11 +103,6 @@ public sealed class ApproveInspectionSchedule
                     ),
                     OwnerAddress = schedule.Car.Owner.Address,
                     TechnicianName = schedule.Technician.Name,
-                    TechnicianLicenseNumber = await DecryptValue(
-                        schedule.Technician.EncryptedLicenseNumber,
-                        schedule.Technician.EncryptionKey,
-                        aesEncryptionService
-                    ),
                     CarManufacturer = schedule.Car.Model.Name,
                     CarLicensePlate = schedule.Car.LicensePlate,
                     CarSeat = schedule.Car.Seat.ToString(),

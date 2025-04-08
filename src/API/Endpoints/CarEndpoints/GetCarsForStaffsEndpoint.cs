@@ -146,7 +146,9 @@ public class GetCarForStaffsEndpoint : ICarterModule
         [FromQuery(Name = "status")] CarStatusEnum? status,
         [FromQuery(Name = "index")] int pageNumber = 1,
         [FromQuery(Name = "size")] int pageSize = 10,
-        [FromQuery(Name = "keyword")] string? keyword = ""
+        [FromQuery(Name = "keyword")] string? keyword = "",
+        [FromQuery(Name = "onlyHasInprogressInspectionSchedule")] bool? onlyHasInprogressInspectionSchedule = false,
+        [FromQuery(Name = "onlyNoGps")] bool? onlyNoGps = false
     )
     {
         Result<OffsetPaginatedResponse<GetCarsForStaffs.Response>> result = await sender.Send(
@@ -154,7 +156,9 @@ public class GetCarForStaffsEndpoint : ICarterModule
                 pageNumber,
                 pageSize,
                 keyword!,
-                status)
+                status,
+                OnlyHasInprogressInspectionSchedule: onlyHasInprogressInspectionSchedule,
+                OnlyNoGps: onlyNoGps)
         );
         return result.MapResult();
     }

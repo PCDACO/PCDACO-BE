@@ -52,7 +52,7 @@ public class ResponseMessages
     // CAR
     public const string CarNotFound = "Không tìm thấy xe";
     public const string CarIsNotInPending = "Xe không ở trạng thái chờ duyệt";
-    public const string CarHadInspectionSchedule = "Xe đã có lịch kiểm định";
+    public const string CarHadInspectionSchedule = "Xe đã có lịch kiểm định cùng loại";
     public const string CarMustBeAvailableToBeDisabled =
         "Xe phải đang ở trạng thái có sẵn mới có thể tạm dừng hoạt động";
     public const string CarHasActiveBookings = "Xe đang có lịch đặt, không thể tạm dừng hoạt động";
@@ -79,11 +79,11 @@ public class ResponseMessages
     public const string InspectionScheduleExpired =
         "Chỉ được thực hiện kiểm định trong khoảng 15 phút sau thời gian kiểm định";
     public const string TechnicianHasInspectionScheduleWithinOneHour =
-        "Không thể tạo lịch kiểm định có thời gian kiểm định cách nhau ít hơn 1 giờ so với lịch kiểm định khác";
+        "Không thể tạo lịch kiểm định cùng loại có thời gian kiểm định cách nhau ít hơn 1 giờ so với lịch kiểm định khác";
     public const string CarHadExpiredInspectionScheduleWithThisTechnician =
         "Không thể tạo lịch kiểm định với cùng 1 kỹ thuật viên sau khi lịch kiểm định quá hạn. Vui lòng chọn kỹ thuật viên khác";
     public const string HasOverLapScheduleWithTheSameTechnician =
-        "Thời gian kiểm định đã được tạo cho kỹ thuật viên này bị trùng với lịch kiểm định đã được duyệt";
+        "Thời gian kiểm định đã được tạo cho kỹ thuật viên này bị trùng với lịch kiểm định cùng loại đã được duyệt";
     public const string OnlyUpdateSignedOrInprogressInspectionSchedule =
         "Chỉ có thể cập nhật lịch kiểm định đã được ký hợp đồng";
 
@@ -109,4 +109,6 @@ public class ResponseMessages
     // Report
     public const string ReportNotFound = "Không tìm thấy báo cáo";
     public const string ReportNotUnderReviewed = "Báo cáo không ở trạng thái đang chờ duyệt";
+    // Transaction
+    public const string TransactionNotFound = "Không tìm thấy giao dịch";
 }

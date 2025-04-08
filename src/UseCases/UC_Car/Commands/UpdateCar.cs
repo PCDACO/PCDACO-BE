@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using Domain.Constants;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Shared;
 using FluentValidation;
 using MediatR;
@@ -53,6 +54,34 @@ public sealed class UpdateCar
                 .Cars.FirstOrDefaultAsync(c => c.Id == request.CarId, cancellationToken);
             if (checkingCar is null)
                 return Result.Error(ResponseMessages.CarNotFound);
+            
+            //Check if car belongs to any active bookings then cannot update
+            var activeBookings = context
+                .Bookings.AsNoTracking()
+                .Where(b =>
+                    b.CarId == checkingCar.Id
+                    && (
+                        b.Status == BookingStatusEnum.Pending
+                        || b.Status == BookingStatusEnum.Ongoing
+                        || b.Status == BookingStatusEnum.ReadyForPickup
+                        || b.Status == BookingStatusEnum.Approved
+                    )
+                );
+            if (activeBookings.Any())
+                return Result.Error("Xe đang có đơn thuê xe không thể cập nhật!");
+            // Check if car has any active inspection schedule can not update
+            var activeInspectionSchedules = context
+                .InspectionSchedules.AsNoTracking()
+                .Where(i =>
+                    i.CarId == checkingCar.Id
+                    && (
+                        i.Status == InspectionScheduleStatusEnum.InProgress
+                        || i.Status == InspectionScheduleStatusEnum.Signed
+                    )
+                );
+            if (activeInspectionSchedules.Any())
+                return Result.Error("Xe đang có lịch kiểm định không thể cập nhật!");
+
             List<Amenity> amenities = await context
                 .Amenities.AsNoTracking()
                 .Where(a => request.AmenityIds.Contains(a.Id))

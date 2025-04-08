@@ -89,11 +89,6 @@ public sealed class CompleteInspection
                 ),
                 OwnerAddress = schedule.Car.Owner.Address,
                 TechnicianName = schedule.Technician.Name,
-                TechnicianLicenseNumber = await DecryptValue(
-                    schedule.Technician.EncryptedLicenseNumber,
-                    schedule.Technician.EncryptionKey,
-                    aesEncryptionService
-                ),
                 CarManufacturer = schedule.Car.Model.Name,
                 CarLicensePlate = schedule.Car.LicensePlate,
                 CarSeat = schedule.Car.Seat.ToString(),
@@ -151,7 +146,7 @@ public sealed class CompleteInspection
                 schedule.Status = InspectionScheduleStatusEnum.Rejected;
 
                 // Update car status
-                schedule.Car.Status = CarStatusEnum.Rejected;
+                schedule.Car.Status = CarStatusEnum.Inactive;
             }
 
             await context.SaveChangesAsync(cancellationToken);

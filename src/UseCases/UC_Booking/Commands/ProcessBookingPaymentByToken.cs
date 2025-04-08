@@ -59,6 +59,7 @@ public sealed class ProcessBookingPaymentByToken
 
             return Result.Success(
                 new ProcessBookingPayment.Response(
+                    OrderCode: paymentResult.OrderCode,
                     TotalDistance: booking.TotalDistance / 1000,
                     ExcessDays: booking.ExcessDay,
                     ExcessFee: booking.ExcessDayFee,

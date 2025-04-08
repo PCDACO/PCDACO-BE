@@ -55,8 +55,20 @@ public sealed class CreateCar
         {
             if (currentUser.User!.IsAdmin())
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
-            if (currentUser.User.Role.Name != UserRoleNames.Owner)
-                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
+            if (currentUser.User.Role.Name != UserRoleNames.Owner) return Result.Forbidden(ResponseMessages.ForbiddenAudit);
+            // Verify owner license first
+            var license = await context.Users.FirstOrDefaultAsync(
+                u =>
+                    u.Id == currentUser.User.Id
+                    && u.LicenseIsApproved == true
+                    && u.LicenseExpiryDate > DateTimeOffset.UtcNow,
+                cancellationToken
+            );
+
+            if (license == null)
+                return Result.Error(
+                    "Bằng lái xe của bạn không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật thông tin bằng lái xe trước khi tạo xe."
+                );
             // Check if amenities are exist
             if (request.AmenityIds.Length > 0)
             {
@@ -154,7 +166,7 @@ public sealed class CreateCar
                 .MinimumLength(8)
                 .WithMessage("Biển số xe không được ít hơn 8 kí tự !")
                 .MaximumLength(11)
-                .WithMessage("Biển số xe không được ít hơn 11 kí tự !");
+                .WithMessage("Biển số xe không được vượt quá 11 kí tự !");
             RuleFor(x => x.Color).NotEmpty().WithMessage("Màu sắc không được để trống !");
             RuleFor(x => x.Seat)
                 .NotEmpty()
