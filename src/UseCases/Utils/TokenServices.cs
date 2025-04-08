@@ -32,7 +32,7 @@ public class TokenService(JwtSettings jwtSettings)
             issuer: issuer,
             audience: audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddHours(1),
+            expires: DateTime.UtcNow.AddHours(24),
             signingCredentials: creds
         );
 
