@@ -46,8 +46,6 @@ public sealed class ApproveInspectionSchedule
                 .ThenInclude(s => s.Owner)
                 .Include(s => s.Car)
                 .ThenInclude(s => s.Model)
-                .Include(s => s.Car)
-                .ThenInclude(s => s.EncryptionKey)
                 .Include(s => s.Technician)
                 .Include(s => s.Photos)
                 .FirstOrDefaultAsync(s => s.Id == request.Id && !s.IsDeleted, cancellationToken);
