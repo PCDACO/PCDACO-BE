@@ -40,15 +40,8 @@ public sealed class GetBookingContract
                 .ThenInclude(car => car.Model)
                 .Include(c => c.Booking)
                 .ThenInclude(b => b.Car)
-                .ThenInclude(car => car.EncryptionKey)
-                .Include(c => c.Booking)
-                .ThenInclude(b => b.Car)
                 .ThenInclude(car => car.Owner)
                 .ThenInclude(l => l.EncryptionKey)
-                .Include(c => c.Booking)
-                .ThenInclude(b => b.Car)
-                .ThenInclude(car => car.Owner)
-                .ThenInclude(o => o.EncryptionKey)
                 .FirstOrDefaultAsync(c => c.BookingId == request.Id, cancellationToken);
 
             if (contract == null)
@@ -60,7 +53,6 @@ public sealed class GetBookingContract
 
             string decryptedDriverLicenseNumber = await DecryptDriverLicenseNumber(contract);
             string decryptedOwnerLicenseNumber = await DecryptOwnerLicenseNumber(contract);
-            string decryptedCarLicensePlate = await DecryptCarLicensePlate(contract);
 
             var contractTemplate = new ContractTemplateGenerator.ContractTemplate
             {
@@ -73,7 +65,7 @@ public sealed class GetBookingContract
                 DriverLicenseNumber = decryptedDriverLicenseNumber,
                 DriverAddress = contract.Booking.User.Address,
                 CarManufacturer = contract.Booking.Car.Model.Name,
-                CarLicensePlate = decryptedCarLicensePlate,
+                CarLicensePlate = contract.Booking.Car.LicensePlate,
                 CarSeat = contract.Booking.Car.Seat.ToString(),
                 CarColor = contract.Booking.Car.Color,
                 CarDetail = contract.Booking.Car.Description,
@@ -119,22 +111,6 @@ public sealed class GetBookingContract
             );
 
             return decryptedOwnerLicenseNumber;
-        }
-
-        private async Task<string> DecryptCarLicensePlate(Contract contract)
-        {
-            var carKey = keyManagementService.DecryptKey(
-                contract.Booking.Car.EncryptionKey.EncryptedKey,
-                encryptionSettings.Key
-            );
-
-            var decryptedCarLicensePlate = await aesEncryptionService.Decrypt(
-                contract.Booking.Car.EncryptedLicensePlate,
-                carKey,
-                contract.Booking.Car.EncryptionKey.IV
-            );
-
-            return decryptedCarLicensePlate;
         }
     }
 }

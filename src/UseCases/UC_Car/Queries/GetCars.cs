@@ -1,16 +1,11 @@
 using Ardalis.Result;
-
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using NetTopologySuite.Geometries;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -68,15 +63,6 @@ public class GetCars
             IKeyManagementService keyManagementService
         )
         {
-            string decryptedKey = keyManagementService.DecryptKey(
-                car.EncryptionKey.EncryptedKey,
-                masterKey
-            );
-            string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                car.EncryptedLicensePlate,
-                decryptedKey,
-                car.EncryptionKey.IV
-            );
             return new(
                 Id: car.Id,
                 ModelId: car.Model.Id,
@@ -84,7 +70,7 @@ public class GetCars
                 OwnerId: car.Owner.Id,
                 OwnerName: car.Owner.Name,
                 OwnerAvatarUrl: car.Owner.AvatarUrl,
-                LicensePlate: decryptedLicensePlate,
+                LicensePlate: car.LicensePlate,
                 Color: car.Color,
                 Seat: car.Seat,
                 Description: car.Description,
@@ -99,11 +85,21 @@ public class GetCars
                 Status: car.Status.ToString(),
                 TotalRented: car.CarStatistic.TotalBooking,
                 AverageRating: car.CarStatistic.AverageRating,
-                Location: car.GPS == null ? null : new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
-                Manufacturer: new ManufacturerDetail(car.Model.Manufacturer.Id, car.Model.Manufacturer.Name),
-                Images: [.. car.ImageCars?.Select(i => new ImageDetail(i.Id, i.Url, i.Type.Name, i.Name)) ?? []],
-                Amenities: [
-                    ..car.CarAmenities.Select(a => new AmenityDetail(
+                Location: car.GPS == null
+                    ? null
+                    : new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
+                Manufacturer: new ManufacturerDetail(
+                    car.Model.Manufacturer.Id,
+                    car.Model.Manufacturer.Name
+                ),
+                Images:
+                [
+                    .. car.ImageCars?.Select(i => new ImageDetail(i.Id, i.Url, i.Type.Name, i.Name))
+                        ?? []
+                ],
+                Amenities:
+                [
+                    .. car.CarAmenities.Select(a => new AmenityDetail(
                         a.Amenity.Id,
                         a.Amenity.Name,
                         a.Amenity.Description,
@@ -136,10 +132,11 @@ public class GetCars
         )
         {
             IQueryable<Car> gettingCarQuery = context
-                .Cars
-                .AsNoTracking()
-                .Include(c => c.Owner).ThenInclude(o => o.Feedbacks)
-                .Include(c => c.Model).ThenInclude(o => o.Manufacturer)
+                .Cars.AsNoTracking()
+                .Include(c => c.Owner)
+                .ThenInclude(o => o.Feedbacks)
+                .Include(c => c.Model)
+                .ThenInclude(o => o.Manufacturer)
                 .Include(c =>
                     c.Bookings.Where(b =>
                         b.Status != BookingStatusEnum.Cancelled
@@ -147,19 +144,24 @@ public class GetCars
                         && b.Status != BookingStatusEnum.Expired
                     )
                 )
-                .Include(c => c.EncryptionKey)
-                .Include(c => c.ImageCars).ThenInclude(ic => ic.Type)
+                .Include(c => c.ImageCars)
+                .ThenInclude(ic => ic.Type)
                 .Include(c => c.CarStatistic)
                 .Include(c => c.TransmissionType)
                 .Include(c => c.FuelType)
                 .Include(c => c.GPS)
-                .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
+                .Include(c => c.CarAmenities)
+                .ThenInclude(ca => ca.Amenity)
                 .Where(c => !c.IsDeleted)
                 .Where(c => c.Status == Domain.Enums.CarStatusEnum.Available)
                 .Where(c => EF.Functions.ILike(c.Model.Name, $"%{request.Keyword}%"))
-                .Where(c => request.ManufacturerId == null || c.Model.ManufacturerId == request.ManufacturerId)
                 .Where(c =>
-                    request.Amenities == null || request.Amenities.Length == 0
+                    request.ManufacturerId == null
+                    || c.Model.ManufacturerId == request.ManufacturerId
+                )
+                .Where(c =>
+                    request.Amenities == null
+                    || request.Amenities.Length == 0
                     || request.Amenities.All(a =>
                         c.CarAmenities.Select(ca => ca.AmenityId).Contains(a)
                     )
@@ -181,18 +183,21 @@ public class GetCars
             if (request.Longtitude is not null && request.Latitude is not null)
             {
                 Point userLocation = geometryFactory.CreatePoint(
-                new Coordinate((double)request.Longtitude!, (double)request.Latitude!));
-                gettingCarQuery = gettingCarQuery
-                    .Where(c =>
-                        ((decimal)c.GPS.Location.Distance(userLocation) * 111320) <= (request.Radius ?? 0)
-                    );
+                    new Coordinate((double)request.Longtitude!, (double)request.Latitude!)
+                );
+                gettingCarQuery = gettingCarQuery.Where(c =>
+                    ((decimal)c.GPS.Location.Distance(userLocation) * 111320)
+                    <= (request.Radius ?? 0)
+                );
             }
             gettingCarQuery = gettingCarQuery
                 .Where(c => request.LastCarId == null || request.LastCarId > c.Id)
                 .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point))
                 .ThenByDescending(c => c.Id);
             int count = await gettingCarQuery.CountAsync(cancellationToken);
-            List<Car> carResult = await gettingCarQuery.Take(request.Limit).ToListAsync(cancellationToken);
+            List<Car> carResult = await gettingCarQuery
+                .Take(request.Limit)
+                .ToListAsync(cancellationToken);
             var processedCars = carResult
                 .Select(car =>
                 {
@@ -236,6 +241,7 @@ public class GetCars
                 ResponseMessages.Fetched
             );
         }
+
         private static bool IsDateConflict(
             DateTimeOffset requestStart,
             DateTimeOffset requestEnd,

@@ -36,7 +36,6 @@ public sealed class GetBookingPreviewContract
                 .Include(c => c.Model)
                 .Include(c => c.Owner)
                 .ThenInclude(o => o.EncryptionKey)
-                .Include(c => c.EncryptionKey)
                 .FirstOrDefaultAsync(c => c.Id == request.CarId, cancellationToken);
 
             if (car == null)
@@ -58,7 +57,6 @@ public sealed class GetBookingPreviewContract
             // Decrypt sensitive information
             string decryptedOwnerLicenseNumber = await DecryptOwnerLicenseNumber(car);
             string decryptedDriverLicenseNumber = await DecryptDriverLicenseNumber(driver);
-            string decryptedCarLicensePlate = await DecryptCarLicensePlate(car);
 
             var contractTemplate = new ContractTemplateGenerator.ContractTemplate
             {
@@ -71,7 +69,7 @@ public sealed class GetBookingPreviewContract
                 DriverLicenseNumber = decryptedDriverLicenseNumber,
                 DriverAddress = driver.Address,
                 CarManufacturer = car.Model.Name,
-                CarLicensePlate = decryptedCarLicensePlate,
+                CarLicensePlate = car.LicensePlate,
                 CarSeat = car.Seat.ToString(),
                 CarColor = car.Color,
                 CarDetail = car.Description,
@@ -112,20 +110,6 @@ public sealed class GetBookingPreviewContract
                 car.Owner.EncryptedLicenseNumber,
                 ownerKey,
                 car.Owner.EncryptionKey.IV
-            );
-        }
-
-        private async Task<string> DecryptCarLicensePlate(Car car)
-        {
-            var carKey = keyManagementService.DecryptKey(
-                car.EncryptionKey.EncryptedKey,
-                encryptionSettings.Key
-            );
-
-            return await aesEncryptionService.Decrypt(
-                car.EncryptedLicensePlate,
-                carKey,
-                car.EncryptionKey.IV
             );
         }
     }

@@ -51,16 +51,6 @@ public class GetCarDetailByAdminOrStaff
             IKeyManagementService keyManagementService
         )
         {
-            string decryptedKey = keyManagementService.DecryptKey(
-                car.EncryptionKey.EncryptedKey,
-                masterKey
-            );
-            string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                car.EncryptedLicensePlate,
-                decryptedKey,
-                car.EncryptionKey.IV
-            );
-
             ContractDetail? contractDetail = null;
             if (car.Contract != null)
             {
@@ -130,7 +120,7 @@ public class GetCarDetailByAdminOrStaff
                 car.Model.Name,
                 car.Model.ReleaseDate,
                 car.Color,
-                decryptedLicensePlate,
+                car.LicensePlate,
                 car.Seat,
                 car.Description,
                 car.TransmissionType.Id,
@@ -256,7 +246,6 @@ public class GetCarDetailByAdminOrStaff
                 .ThenInclude(o => o.EncryptionKey)
                 .Include(c => c.Model)
                 .ThenInclude(o => o.Manufacturer)
-                .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars)
                 .ThenInclude(ic => ic.Type)
                 .Include(c => c.CarStatistic)

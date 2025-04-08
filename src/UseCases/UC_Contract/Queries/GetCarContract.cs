@@ -37,8 +37,6 @@ public sealed class GetCarContract
                 .Include(c => c.Car)
                 .ThenInclude(car => car.Owner)
                 .ThenInclude(o => o.EncryptionKey)
-                .Include(c => c.Car)
-                .ThenInclude(car => car.EncryptionKey)
                 .Include(c => c.Technician)
                 .ThenInclude(t => t.EncryptionKey)
                 .FirstOrDefaultAsync(c => c.CarId == request.Id, cancellationToken);
@@ -56,7 +54,6 @@ public sealed class GetCarContract
             var contractDate = GetTimestampFromUuid.Execute(contract.Id);
 
             string decryptedOwnerLicenseNumber = await DecryptOwnerLicenseNumber(contract);
-            string decryptedCarLicensePlate = await DecryptCarLicensePlate(contract);
 
             var contractTemplate = new CarContractTemplate
             {
@@ -67,7 +64,7 @@ public sealed class GetCarContract
                 OwnerAddress = contract.Car.Owner.Address,
                 TechnicianName = contract.Technician?.Name ?? string.Empty,
                 CarManufacturer = contract.Car.Model.Name,
-                CarLicensePlate = decryptedCarLicensePlate,
+                CarLicensePlate = contract.Car.LicensePlate,
                 CarSeat = contract.Car.Seat.ToString(),
                 CarColor = contract.Car.Color,
                 CarDescription = contract.Car.Description,
@@ -97,22 +94,6 @@ public sealed class GetCarContract
             );
 
             return decryptedOwnerLicenseNumber;
-        }
-
-        private async Task<string> DecryptCarLicensePlate(CarContract contract)
-        {
-            var carKey = keyManagementService.DecryptKey(
-                contract.Car.EncryptionKey.EncryptedKey,
-                encryptionSettings.Key
-            );
-
-            var decryptedCarLicensePlate = await aesEncryptionService.Decrypt(
-                contract.Car.EncryptedLicensePlate,
-                carKey,
-                contract.Car.EncryptionKey.IV
-            );
-
-            return decryptedCarLicensePlate;
         }
     }
 }

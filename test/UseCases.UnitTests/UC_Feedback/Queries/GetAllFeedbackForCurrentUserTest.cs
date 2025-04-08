@@ -426,7 +426,6 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
         var modelId = await CreateTestCarModel();
         var fuelTypeId = await CreateTestFuelType();
         var transmissionTypeId = await CreateTestTransmissionType();
-        var encryptionKeyId = await CreateTestEncryptionKey();
 
         // Create pickup location point
         var geometryFactory = NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
@@ -441,8 +440,7 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
             Status = CarStatusEnum.Available,
             FuelTypeId = fuelTypeId,
             TransmissionTypeId = transmissionTypeId,
-            EncryptionKeyId = encryptionKeyId,
-            EncryptedLicensePlate = "encrypted_license_plate",
+            LicensePlate = "encrypted_license_plate",
             Color = "Red",
             Seat = 4,
             FuelConsumption = 7.5m,
@@ -489,14 +487,6 @@ public class GetAllFeedbackForCurrentUserTest(DatabaseTestBase fixture) : IAsync
         _dbContext.TransmissionTypes.Add(transmissionType);
         await _dbContext.SaveChangesAsync();
         return transmissionType.Id;
-    }
-
-    private async Task<Guid> CreateTestEncryptionKey()
-    {
-        var encryptionKey = new EncryptionKey { EncryptedKey = "test_key", IV = "test_iv" };
-        _dbContext.EncryptionKeys.Add(encryptionKey);
-        await _dbContext.SaveChangesAsync();
-        return encryptionKey.Id;
     }
 
     private async Task<Booking> CreateTestBooking(Guid userId, Guid carId)

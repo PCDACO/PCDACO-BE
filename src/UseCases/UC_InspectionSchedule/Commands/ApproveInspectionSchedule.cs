@@ -46,8 +46,6 @@ public sealed class ApproveInspectionSchedule
                 .ThenInclude(s => s.Owner)
                 .Include(s => s.Car)
                 .ThenInclude(s => s.Model)
-                .Include(s => s.Car)
-                .ThenInclude(s => s.EncryptionKey)
                 .Include(s => s.Technician)
                 .Include(s => s.Photos)
                 .FirstOrDefaultAsync(s => s.Id == request.Id && !s.IsDeleted, cancellationToken);
@@ -104,11 +102,7 @@ public sealed class ApproveInspectionSchedule
                     OwnerAddress = schedule.Car.Owner.Address,
                     TechnicianName = schedule.Technician.Name,
                     CarManufacturer = schedule.Car.Model.Name,
-                    CarLicensePlate = await DecryptValue(
-                        schedule.Car.EncryptedLicensePlate,
-                        schedule.Car.EncryptionKey,
-                        aesEncryptionService
-                    ),
+                    CarLicensePlate = schedule.Car.LicensePlate,
                     CarSeat = schedule.Car.Seat.ToString(),
                     CarColor = schedule.Car.Color,
                     CarDescription = schedule.Car.Description,

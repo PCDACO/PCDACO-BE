@@ -18,10 +18,8 @@ public class GetCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
-    private readonly EncryptionSettings _encryptionSettings = new()
-    {
-        Key = TestConstants.MasterKey,
-    };
+    private readonly EncryptionSettings _encryptionSettings =
+        new() { Key = TestConstants.MasterKey, };
     private readonly IAesEncryptionService _aesService = fixture.AesEncryptionService;
     private readonly IKeyManagementService _keyService = fixture.KeyManagementService;
 
@@ -225,24 +223,14 @@ public class GetCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
 
-        // Generate encryption key and encrypt license plate
-        (string key, string iv) = await _keyService.GenerateKeyAsync();
         string licensePlate = "TEST-LICENSE-123";
-        string encryptedLicensePlate = await _aesService.Encrypt(licensePlate, key, iv);
-        string encryptedKey = _keyService.EncryptKey(key, _encryptionSettings.Key);
-
-        // Create encryption key
-        var encryptionKey = new EncryptionKey { EncryptedKey = encryptedKey, IV = iv };
-        await _dbContext.EncryptionKeys.AddAsync(encryptionKey);
-        await _dbContext.SaveChangesAsync();
 
         // Create car
         var car = new Car
         {
             OwnerId = ownerId,
             ModelId = model.Id,
-            EncryptionKeyId = encryptionKey.Id,
-            EncryptedLicensePlate = encryptedLicensePlate,
+            LicensePlate = licensePlate,
             FuelTypeId = fuelType.Id,
             TransmissionTypeId = transmission.Id,
             Status = CarStatusEnum.Available,

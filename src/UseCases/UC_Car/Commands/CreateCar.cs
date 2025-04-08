@@ -1,22 +1,15 @@
 using Ardalis.Result;
-
 using Domain.Constants;
 using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared;
-
 using FluentValidation;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using NetTopologySuite.Geometries;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
-
 using UUIDNext;
 
 namespace UseCases.UC_Car.Commands;
@@ -113,15 +106,6 @@ public sealed class CreateCar
                 );
             if (checkingModel is null)
                 return Result.Error(ResponseMessages.ModelNotFound);
-            (string key, string iv) = await keyManagementService.GenerateKeyAsync();
-            string encryptedLicensePlate = await aesEncryptionService.Encrypt(
-                request.LicensePlate,
-                key,
-                iv
-            );
-            string encryptedKey = keyManagementService.EncryptKey(key, encryptionSettings.Key);
-            EncryptionKey newEncryptionKey = new() { EncryptedKey = encryptedKey, IV = iv };
-            context.EncryptionKeys.Add(newEncryptionKey);
             // Create current location point
             var currentLocation = geometryFactory.CreatePoint(
                 new Coordinate((double)request.PickupLongitude, (double)request.PickupLatitude)
@@ -133,8 +117,7 @@ public sealed class CreateCar
                 Id = carId,
                 ModelId = request.ModelId,
                 OwnerId = currentUser.User!.Id,
-                EncryptedLicensePlate = encryptedLicensePlate,
-                EncryptionKeyId = newEncryptionKey.Id,
+                LicensePlate = request.LicensePlate,
                 Color = request.Color,
                 Seat = request.Seat,
                 TransmissionTypeId = request.TransmissionTypeId,
@@ -157,7 +140,7 @@ public sealed class CreateCar
                 ],
             };
 
-             var carContract = new CarContract { CarId = carId };
+            var carContract = new CarContract { CarId = carId };
 
             CarStatistic newCarStatistic = new() { CarId = carId };
 

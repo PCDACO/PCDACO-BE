@@ -1991,9 +1991,6 @@ public class CarGenerator
         TransmissionType[] transmissionTypes,
         Model[] models,
         FuelType[] fuelTypes,
-        EncryptionSettings encryptionSettings,
-        IAesEncryptionService aesEncryptionService,
-        IKeyManagementService keyManagementService,
         TokenService tokenService,
         GeometryFactory geometryFactory
     )
@@ -2001,14 +1998,6 @@ public class CarGenerator
         var userTasks = Cars.Select(async u =>
         {
             string refreshToken = tokenService.GenerateRefreshToken();
-            (string key, string iv) = await keyManagementService.GenerateKeyAsync();
-            string encryptedLicensePlate = await aesEncryptionService.Encrypt(
-                u.LicensePlate,
-                key,
-                iv
-            );
-            string encryptedKey = keyManagementService.EncryptKey(key, encryptionSettings.Key);
-            EncryptionKey encryptionKeyObject = new() { EncryptedKey = encryptedKey, IV = iv };
             Guid newCarId = Uuid.NewDatabaseFriendly(Database.PostgreSql);
 
             var pickupLocation = geometryFactory.CreatePoint(
@@ -2019,7 +2008,6 @@ public class CarGenerator
             return new Car()
             {
                 Id = newCarId,
-                EncryptionKeyId = encryptionKeyObject.Id,
                 TransmissionTypeId = transmissionTypes
                     .Where(tt => tt.Name == u.TransmissionType)
                     .Select(tt => tt.Id)
@@ -2031,12 +2019,11 @@ public class CarGenerator
                     .First(),
                 Status = u.Status,
                 Color = u.Color,
-                EncryptedLicensePlate = encryptedLicensePlate,
+                LicensePlate = u.LicensePlate,
                 FuelConsumption = u.FuelConsumption,
                 Price = u.Price,
                 Seat = u.Seat,
                 OwnerId = Guid.Parse("01951eae-12a7-756d-a8d5-bb1ee525d7b5"),
-                EncryptionKey = encryptionKeyObject,
                 PickupLocation = pickupLocation,
                 PickupAddress = u.Address,
                 CarStatistic = new() { CarId = newCarId, }
