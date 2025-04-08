@@ -95,11 +95,7 @@ public sealed class CompleteInspection
                     aesEncryptionService
                 ),
                 CarManufacturer = schedule.Car.Model.Name,
-                CarLicensePlate = await DecryptValue(
-                    schedule.Car.EncryptedLicensePlate,
-                    schedule.Car.EncryptionKey,
-                    aesEncryptionService
-                ),
+                CarLicensePlate = schedule.Car.LicensePlate,
                 CarSeat = schedule.Car.Seat.ToString(),
                 CarColor = schedule.Car.Color,
                 CarDescription = schedule.Car.Description,

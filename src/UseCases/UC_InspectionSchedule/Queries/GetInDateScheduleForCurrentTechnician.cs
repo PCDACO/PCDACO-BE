@@ -38,22 +38,13 @@ namespace UseCases.UC_InspectionSchedule.Queries
                         schedules.Any()
                             ? schedules.Select(async schedule =>
                             {
-                                string decryptedKey = keyManagementService.DecryptKey(
-                                    schedule.Car.EncryptionKey.EncryptedKey,
-                                    masterKey
-                                );
-                                string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                                    schedule.Car.EncryptedLicensePlate,
-                                    decryptedKey,
-                                    schedule.Car.EncryptionKey.IV
-                                );
                                 return new CarDetail(
                                     Id: schedule.CarId,
                                     ModelId: schedule.Car.ModelId,
                                     InspectionScheduleId: schedule.Id,
                                     ModelName: schedule.Car.Model.Name,
                                     ManufacturerName: schedule.Car.Model.Manufacturer.Name,
-                                    LicensePlate: decryptedLicensePlate,
+                                    LicensePlate: schedule.Car.LicensePlate,
                                     Color: schedule.Car.Color,
                                     Seat: schedule.Car.Seat,
                                     Description: schedule.Car.Description,
@@ -140,8 +131,6 @@ namespace UseCases.UC_InspectionSchedule.Queries
                     .ThenInclude(i => i.Type)
                     .Include(s => s.Car)
                     .ThenInclude(c => c.Owner)
-                    .Include(s => s.Car)
-                    .ThenInclude(c => c.EncryptionKey)
                     .Include(s => s.Car)
                     .ThenInclude(c => c.TransmissionType)
                     .Include(s => s.Car)

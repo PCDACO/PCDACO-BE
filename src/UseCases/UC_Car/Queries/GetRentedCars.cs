@@ -1,13 +1,9 @@
 using Ardalis.Result;
-
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Shared;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -46,22 +42,13 @@ public class GetRentedCars
             IKeyManagementService keyManagementService
         )
         {
-            string decryptedKey = keyManagementService.DecryptKey(
-                car.EncryptionKey.EncryptedKey,
-                masterKey
-            );
-            string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                car.EncryptedLicensePlate,
-                decryptedKey,
-                car.EncryptionKey.IV
-            );
             return new(
                 car.Id,
                 car.Model.Id,
                 car.Model.Name,
                 car.Owner.Id,
                 car.Owner.Name,
-                decryptedLicensePlate,
+                car.LicensePlate,
                 car.Color,
                 car.Seat,
                 car.Description,
@@ -112,7 +99,6 @@ public class GetRentedCars
                 .ThenInclude(o => o.Feedbacks)
                 .Include(c => c.Model)
                 .ThenInclude(m => m.Manufacturer)
-                .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars)
                 .Include(c => c.CarAmenities)
                 .ThenInclude(ca => ca.Amenity)

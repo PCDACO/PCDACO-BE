@@ -10,11 +10,10 @@ public class Car : BaseEntity
     // Properties
     public required Guid OwnerId { get; set; }
     public required Guid ModelId { get; set; }
-    public required Guid EncryptionKeyId { get; set; }
     public required Guid FuelTypeId { get; set; }
     public required Guid TransmissionTypeId { get; set; }
     public CarStatusEnum Status { get; set; } = CarStatusEnum.Pending;
-    public required string EncryptedLicensePlate { get; set; }
+    public required string LicensePlate { get; set; }
     public required string Color { get; set; }
     public required int Seat { get; set; }
     public string Description { get; set; } = string.Empty;
@@ -34,9 +33,6 @@ public class Car : BaseEntity
 
     [ForeignKey(nameof(ModelId))]
     public Model Model { get; set; } = null!;
-
-    [ForeignKey(nameof(EncryptionKeyId))]
-    public EncryptionKey EncryptionKey { get; set; } = null!;
 
     [ForeignKey(nameof(FuelTypeId))]
     public FuelType FuelType { get; set; } = null!;

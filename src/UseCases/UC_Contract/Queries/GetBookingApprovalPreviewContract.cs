@@ -38,8 +38,6 @@ public sealed class GetBookingApprovalPreviewContract
                 .Include(b => b.Car)
                 .ThenInclude(c => c.Owner)
                 .ThenInclude(o => o.EncryptionKey)
-                .Include(b => b.Car)
-                .ThenInclude(c => c.EncryptionKey)
                 .Include(b => b.User)
                 .ThenInclude(u => u.EncryptionKey)
                 .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken);
@@ -58,7 +56,6 @@ public sealed class GetBookingApprovalPreviewContract
             // Decrypt sensitive information
             string decryptedOwnerLicenseNumber = await DecryptOwnerLicenseNumber(booking);
             string decryptedDriverLicenseNumber = await DecryptDriverLicenseNumber(booking);
-            string decryptedCarLicensePlate = await DecryptCarLicensePlate(booking);
 
             var contractTemplate = new ContractTemplateGenerator.ContractTemplate
             {
@@ -71,7 +68,7 @@ public sealed class GetBookingApprovalPreviewContract
                 DriverLicenseNumber = decryptedDriverLicenseNumber,
                 DriverAddress = booking.User.Address,
                 CarManufacturer = booking.Car.Model.Name,
-                CarLicensePlate = decryptedCarLicensePlate,
+                CarLicensePlate = booking.Car.LicensePlate,
                 CarSeat = booking.Car.Seat.ToString(),
                 CarColor = booking.Car.Color,
                 CarDetail = booking.Car.Description,
@@ -112,20 +109,6 @@ public sealed class GetBookingApprovalPreviewContract
                 booking.Car.Owner.EncryptedLicenseNumber,
                 ownerKey,
                 booking.Car.Owner.EncryptionKey.IV
-            );
-        }
-
-        private async Task<string> DecryptCarLicensePlate(Booking booking)
-        {
-            var carKey = keyManagementService.DecryptKey(
-                booking.Car.EncryptionKey.EncryptedKey,
-                encryptionSettings.Key
-            );
-
-            return await aesEncryptionService.Decrypt(
-                booking.Car.EncryptedLicensePlate,
-                carKey,
-                booking.Car.EncryptionKey.IV
             );
         }
     }

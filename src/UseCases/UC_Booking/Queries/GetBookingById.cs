@@ -31,13 +31,6 @@ public sealed class GetBookingById
             IKeyManagementService keyManagementService
         )
         {
-            string decryptedLicensePlate = await DecryptLicensePlate(
-                booking,
-                masterKey,
-                aesEncryptionService,
-                keyManagementService
-            );
-
             var decryptedPhone = await DecryptedUserPhone(
                 booking,
                 masterKey,
@@ -50,7 +43,7 @@ public sealed class GetBookingById
                 new CarDetail(
                     booking.Car.Id,
                     booking.Car.Model.Name,
-                    decryptedLicensePlate,
+                    booking.Car.LicensePlate,
                     booking.Car.Color,
                     booking.Car.Seat,
                     booking.Car.TransmissionType.Name,
@@ -141,27 +134,6 @@ public sealed class GetBookingById
 
             return (decryptedDriverPhone, decryptedOwnerPhone);
         }
-
-        private static async Task<string> DecryptLicensePlate(
-            Booking booking,
-            string masterKey,
-            IAesEncryptionService aesEncryptionService,
-            IKeyManagementService keyManagementService
-        )
-        {
-            string decryptedKey = keyManagementService.DecryptKey(
-                booking.Car.EncryptionKey.EncryptedKey,
-                masterKey
-            );
-
-            string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                booking.Car.EncryptedLicensePlate,
-                decryptedKey,
-                booking.Car.EncryptionKey.IV
-            );
-
-            return decryptedLicensePlate;
-        }
     }
 
     // Add record types for each detail section
@@ -231,8 +203,6 @@ public sealed class GetBookingById
                 .ThenInclude(c => c.TransmissionType)
                 .Include(b => b.Car)
                 .ThenInclude(c => c.FuelType)
-                .Include(b => b.Car)
-                .ThenInclude(c => c.EncryptionKey)
                 .Include(b => b.Car)
                 .ThenInclude(c => c.Owner)
                 .ThenInclude(owner => owner.EncryptionKey)

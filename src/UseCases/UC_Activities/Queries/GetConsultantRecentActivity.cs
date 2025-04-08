@@ -29,21 +29,8 @@ public class GetConsultantRecentActivity
             // Handle inspection schedules
             foreach (var schedule in data.schedules)
             {
-                // Decrypt the key
-                string decryptedKey = keyManagementService.DecryptKey(
-                    schedule.Car.EncryptionKey.EncryptedKey,
-                    masterKey
-                );
-
-                // Decrypt the license plate asynchronously
-                string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                    schedule.Car.EncryptedLicensePlate,
-                    decryptedKey,
-                    schedule.Car.EncryptionKey.IV
-                );
-
                 // Map the schedule to the message content
-                string content = MapScheduleToMessages(schedule, decryptedLicensePlate);
+                string content = MapScheduleToMessages(schedule, schedule.Car.LicensePlate);
 
                 activities.Add(
                     new ActivityDetails(
@@ -58,21 +45,8 @@ public class GetConsultantRecentActivity
             // Handle reports
             foreach (var report in data.reports)
             {
-                // Decrypt the key
-                string decryptedKey = keyManagementService.DecryptKey(
-                    report.Booking.Car.EncryptionKey.EncryptedKey,
-                    masterKey
-                );
-
-                // Decrypt the license plate asynchronously
-                string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                    report.Booking.Car.EncryptedLicensePlate,
-                    decryptedKey,
-                    report.Booking.Car.EncryptionKey.IV
-                );
-
                 // Map the report to the message content
-                string content = MapReportToMessages(report, decryptedLicensePlate);
+                string content = MapReportToMessages(report, report.Booking.Car.LicensePlate);
 
                 activities.Add(
                     new ActivityDetails(
@@ -164,8 +138,6 @@ public class GetConsultantRecentActivity
                 .ThenInclude(c => c.Owner)
                 .ThenInclude(o => o.EncryptionKey)
                 .Include(i => i.Car)
-                .ThenInclude(o => o.EncryptionKey)
-                .Include(i => i.Car)
                 .ThenInclude(c => c.Model)
                 .Include(i => i.Technician)
                 .Where(i => i.CreatedBy == currentUser.User.Id)
@@ -181,8 +153,6 @@ public class GetConsultantRecentActivity
                 .ThenInclude(c => c.Owner)
                 .ThenInclude(o => o.EncryptionKey)
                 .Include(r => r.Booking)
-                .ThenInclude(b => b.Car)
-                .ThenInclude(c => c.EncryptionKey)
                 .Include(r => r.Booking)
                 .ThenInclude(b => b.Car)
                 .ThenInclude(c => c.Model)

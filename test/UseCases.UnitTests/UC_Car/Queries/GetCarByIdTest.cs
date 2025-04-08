@@ -376,21 +376,6 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
 
-        // Generate encryption key and encrypt license plate
-        (string key, string iv) = await _keyService.GenerateKeyAsync();
-        string encryptedLicensePlate = await _aesService.Encrypt(licensePlate, key, iv);
-        string encryptedKey = _keyService.EncryptKey(key, _encryptionSettings.Key);
-
-        // Create encryption key
-        var encryptionKey = new EncryptionKey
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            EncryptedKey = encryptedKey,
-            IV = iv,
-        };
-        await _dbContext.EncryptionKeys.AddAsync(encryptionKey);
-        await _dbContext.SaveChangesAsync();
-
         // Create pickup location point
         var pickupLocation = _geometryFactory.CreatePoint(new Coordinate(106.7004238, 10.7756587));
         pickupLocation.SRID = 4326;
@@ -402,8 +387,7 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
             Id = carId,
             OwnerId = ownerId,
             ModelId = model.Id,
-            EncryptionKeyId = encryptionKey.Id,
-            EncryptedLicensePlate = encryptedLicensePlate,
+            LicensePlate = licensePlate,
             FuelTypeId = fuelType.Id,
             TransmissionTypeId = transmission.Id,
             Status = CarStatusEnum.Available,

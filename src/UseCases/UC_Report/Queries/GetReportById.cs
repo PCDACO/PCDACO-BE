@@ -40,13 +40,6 @@ public class GetReportById
             IKeyManagementService keyManagementService
         )
         {
-            string decryptedLicensePlate = await DecryptLicensePlate(
-                report,
-                masterKey,
-                aesEncryptionService,
-                keyManagementService
-            );
-
             var decryptedPhones = await DecryptUserPhones(
                 report,
                 masterKey,
@@ -84,7 +77,7 @@ public class GetReportById
                 ),
                 new CarDetail(
                     report.Booking.Car.Id,
-                    decryptedLicensePlate,
+                    report.Booking.Car.LicensePlate,
                     report.Booking.Car.Model.Name,
                     report.Booking.Car.Model.Manufacturer.Name,
                     report.Booking.Car.Color,
@@ -115,25 +108,6 @@ public class GetReportById
                         [.. report.InspectionSchedule.Photos.Select(p => p.PhotoUrl)]
                     )
                     : null
-            );
-        }
-
-        private static async Task<string> DecryptLicensePlate(
-            BookingReport report,
-            string masterKey,
-            IAesEncryptionService aesEncryptionService,
-            IKeyManagementService keyManagementService
-        )
-        {
-            string decryptedKey = keyManagementService.DecryptKey(
-                report.Booking.Car.EncryptionKey.EncryptedKey,
-                masterKey
-            );
-
-            return await aesEncryptionService.Decrypt(
-                report.Booking.Car.EncryptedLicensePlate,
-                decryptedKey,
-                report.Booking.Car.EncryptionKey.IV
             );
         }
 
@@ -244,7 +218,6 @@ public class GetReportById
                 .Include(r => r.Booking.Car.Model)
                 .ThenInclude(m => m.Manufacturer)
                 .Include(r => r.Booking.Car.ImageCars)
-                .Include(r => r.Booking.Car.EncryptionKey)
                 .Include(r => r.CompensationPaidUser)
                 .Include(r => r.InspectionSchedule)
                 .ThenInclude(i => i!.Technician)

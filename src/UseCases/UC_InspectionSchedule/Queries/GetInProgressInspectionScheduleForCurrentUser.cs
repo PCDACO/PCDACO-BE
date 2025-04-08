@@ -28,21 +28,12 @@ public class GetInProgressInspectionScheduleForCurrentUser
             IKeyManagementService keyManagementService
         )
         {
-            string decryptedKey = keyManagementService.DecryptKey(
-                inspectionSchedule.Car.EncryptionKey.EncryptedKey,
-                masterKey
-            );
-            string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                inspectionSchedule.Car.EncryptedLicensePlate,
-                decryptedKey,
-                inspectionSchedule.Car.EncryptionKey.IV
-            );
             return new(
                 Id: inspectionSchedule.Id,
                 Date: inspectionSchedule.InspectionDate,
                 OwnerName: inspectionSchedule.Car.Owner.Name,
                 Address: inspectionSchedule.InspectionAddress,
-                LicensePlate: decryptedLicensePlate
+                LicensePlate: inspectionSchedule.Car.LicensePlate
             );
         }
     };
@@ -69,8 +60,6 @@ public class GetInProgressInspectionScheduleForCurrentUser
                 .AsSplitQuery()
                 .Include(i => i.Car)
                 .ThenInclude(c => c.Owner)
-                .Include(i => i.Car)
-                .ThenInclude(c => c.EncryptionKey)
                 .Include(i => i.Car)
                 .ThenInclude(c => c.CarAmenities)
                 .ThenInclude(ca => ca.Amenity)

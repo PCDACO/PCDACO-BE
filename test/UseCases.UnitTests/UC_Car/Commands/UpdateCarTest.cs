@@ -111,8 +111,7 @@ public class UpdateCarTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Verify car was updated
         var updatedCar = await _dbContext
-            .Cars.Include(c => c.EncryptionKey)
-            .Include(c => c.CarAmenities)
+            .Cars.Include(c => c.CarAmenities)
             .FirstOrDefaultAsync(c => c.Id == car.Id);
 
         Assert.NotNull(updatedCar);
@@ -125,17 +124,7 @@ public class UpdateCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(newPrice, updatedCar.Price);
         Assert.Equal(newPickupAddress, updatedCar.PickupAddress);
 
-        // Verify license plate was encrypted correctly
-        string decryptedKey = _keyService.DecryptKey(
-            updatedCar.EncryptionKey.EncryptedKey,
-            _encryptionSettings.Key
-        );
-        string decryptedLicensePlate = await _aesService.Decrypt(
-            updatedCar.EncryptedLicensePlate,
-            decryptedKey,
-            updatedCar.EncryptionKey.IV
-        );
-        Assert.Equal(newLicensePlate, decryptedLicensePlate);
+        Assert.Equal(newLicensePlate, updatedCar.LicensePlate);
 
         // Verify amenities were updated
         Assert.Equal(3, updatedCar.CarAmenities.Count);

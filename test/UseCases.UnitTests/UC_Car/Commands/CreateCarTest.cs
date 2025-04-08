@@ -256,8 +256,7 @@ public class CreateCarTests : IAsyncLifetime
 
         // Verify car creation
         var createdCar = await _dbContext
-            .Cars.Include(c => c.EncryptionKey)
-            .Include(c => c.CarAmenities)
+            .Cars.Include(c => c.CarAmenities)
             .Include(c => c.CarStatistic)
             .FirstOrDefaultAsync(c => c.Id == result.Value.Id);
 

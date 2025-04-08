@@ -9,5 +9,4 @@ public class EncryptionKey : BaseEntity
 
     // Navigation Properties
     public User User { get; set; } = null!;
-    public Car Car { get; set; } = null!;
 }

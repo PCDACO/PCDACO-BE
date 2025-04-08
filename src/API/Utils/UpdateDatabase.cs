@@ -59,9 +59,6 @@ public class UpdateDatabase
                 transmissionTypes,
                 models,
                 fuelTypes,
-                encryptionSettings,
-                aesEncryptionService,
-                keyManageService,
                 tokenService,
                 geometryFactory
             );

@@ -1,14 +1,10 @@
 using Ardalis.Result;
-
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -49,15 +45,6 @@ public class GetCarsForStaffs
             IKeyManagementService keyManagementService
         )
         {
-            string carDecryptedKey = keyManagementService.DecryptKey(
-                car.EncryptionKey.EncryptedKey,
-                masterKey
-            );
-            string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                car.EncryptedLicensePlate,
-                carDecryptedKey,
-                car.EncryptionKey.IV
-            );
             string ownerDecryptedKey = keyManagementService.DecryptKey(
                 car.Owner.EncryptionKey.EncryptedKey,
                 masterKey
@@ -75,7 +62,7 @@ public class GetCarsForStaffs
                 car.Owner.Id,
                 car.Owner.Name,
                 decryptedPhoneNumber,
-                decryptedLicensePlate,
+                car.LicensePlate,
                 car.Color,
                 car.Seat,
                 car.Status.ToString(),
@@ -98,6 +85,7 @@ public class GetCarsForStaffs
             );
         }
     };
+
     public record LocationDetail(double Longtitude, double Latitude);
 
     public record ManufacturerDetail(Guid Id, string Name);
@@ -119,19 +107,22 @@ public class GetCarsForStaffs
         )
         {
             IQueryable<Car> gettingQuery = context
-                .Cars
-                .AsNoTracking()
+                .Cars.AsNoTracking()
                 .IgnoreQueryFilters()
-                .Include(c => c.Owner).ThenInclude(o => o.Feedbacks)
-                .Include(c => c.Owner).ThenInclude(o => o.EncryptionKey)
-                .Include(c => c.Model).ThenInclude(o => o.Manufacturer)
-                .Include(c => c.EncryptionKey)
-                .Include(c => c.ImageCars).ThenInclude(ic => ic.Type)
+                .Include(c => c.Owner)
+                .ThenInclude(o => o.Feedbacks)
+                .Include(c => c.Owner)
+                .ThenInclude(o => o.EncryptionKey)
+                .Include(c => c.Model)
+                .ThenInclude(o => o.Manufacturer)
+                .Include(c => c.ImageCars)
+                .ThenInclude(ic => ic.Type)
                 .Include(c => c.CarStatistic)
                 .Include(c => c.TransmissionType)
                 .Include(c => c.FuelType)
                 .Include(c => c.GPS)
-                .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
+                .Include(c => c.CarAmenities)
+                .ThenInclude(ca => ca.Amenity)
                 .Where(c => !c.IsDeleted)
                 .Where(c => request.Status == null ? true : request.Status == c.Status)
                 .OrderByDescending(c => c.Id);
