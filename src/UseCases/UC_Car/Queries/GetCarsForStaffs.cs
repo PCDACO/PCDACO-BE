@@ -138,7 +138,7 @@ public class GetCarsForStaffs
             if (!string.IsNullOrWhiteSpace(request.Keyword))
             {
                 gettingQuery = gettingQuery.Where(c =>
-                    EF.Functions.Like(c.Model.Name, $"%{request.Keyword}%")
+                    EF.Functions.ILike(c.Model.Name, $"%{request.Keyword}%")
                 );
             }
             int count = await gettingQuery.CountAsync(cancellationToken);
