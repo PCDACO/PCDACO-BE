@@ -8,24 +8,26 @@ using IResult = Microsoft.AspNetCore.Http.IResult;
 
 namespace API.Endpoints.CarEndpoints;
 
-public class GetCarDetailByAdminEndpoint : ICarterModule
+public class GetCarDetailByAdminOrStaffEndpoint : ICarterModule
 {
     public void AddRoutes(IEndpointRouteBuilder app)
     {
         app.MapGet("/api/car/{id}/admin", Handle)
-            .WithSummary("Get detailed car information by ID (Admin only)")
+            .WithSummary(
+                "Get detailed car information by ID for admin web (Admin or staff can use)"
+            )
             .WithTags("Cars")
             .RequireAuthorization()
             .WithOpenApi(operation =>
                 new(operation)
                 {
                     Description = """
-                    Retrieve comprehensive details about a specific car for administrative purposes.
+                    Retrieve comprehensive details about a specific car for admin or staff.
 
                     Access Control:
                     - Requires authentication
-                    - Restricted to Admin users only
-                    - Non-admin users will receive a 403 Forbidden response
+                    - Restricted to Admin or Consultant or Technician users
+                    - Not-allowed users will receive a 403 Forbidden response
 
                     Details Included:
                     - Full car specifications (model, color, seats, transmission, fuel type)
@@ -246,7 +248,9 @@ public class GetCarDetailByAdminEndpoint : ICarterModule
 
     private async Task<IResult> Handle(ISender sender, Guid id)
     {
-        Result<GetCarDetailByAdmin.Response> result = await sender.Send(new GetCarDetailByAdmin.Query(id));
+        Result<GetCarDetailByAdminOrStaff.Response> result = await sender.Send(
+            new GetCarDetailByAdminOrStaff.Query(id)
+        );
         return result.MapResult();
     }
 }
