@@ -16,7 +16,7 @@ namespace UseCases.UC_Car.Queries;
 
 public class GetCarsForStaffs
 {
-    public record Query(int PageNumber, int PageSize, string Keyword, CarStatusEnum? Status, bool? OnlyHasInspectionSchedule = false, bool? OnlyNoGps = false)
+    public record Query(int PageNumber, int PageSize, string Keyword, CarStatusEnum? Status, bool? OnlyHasInprogressInspectionSchedule = false, bool? OnlyNoGps = false)
         : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
@@ -137,9 +137,9 @@ public class GetCarsForStaffs
                 .Where(c => request.Status == null ? true : request.Status == c.Status);
 
             // Filter by inspection schedule if the OnlyHasInspectionSchedule parameter is provided
-            if (request.OnlyHasInspectionSchedule == true)
+            if (request.OnlyHasInprogressInspectionSchedule == true)
             {
-                gettingQuery = gettingQuery.Where(c => c.InspectionSchedules.Any());
+                gettingQuery = gettingQuery.Where(c => c.InspectionSchedules.Any(s => s.Status == InspectionScheduleStatusEnum.InProgress));
             }
 
             // Filter by GPS availability if the OnlyNoGps parameter is provided
