@@ -11,7 +11,7 @@ using UseCases.Utils;
 
 namespace UseCases.UC_Car.Queries;
 
-public class GetCarDetailByAdmin
+public class GetCarDetailByAdminOrStaff
 {
     public sealed record Query(Guid Id) : IRequest<Result<Response>>;
 
@@ -237,8 +237,12 @@ public class GetCarDetailByAdmin
             CancellationToken cancellationToken
         )
         {
-            // check if current user is admin
-            if (!currentUser.User!.IsAdmin())
+            // check if current user is admin or consultant or technician
+            if (
+                !currentUser.User!.IsAdmin()
+                && !currentUser.User.IsConsultant()
+                && !currentUser.User.IsTechnician()
+            )
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             Car? gettingCar = await context
