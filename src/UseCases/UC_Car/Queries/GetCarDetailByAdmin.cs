@@ -242,7 +242,9 @@ public class GetCarDetailByAdmin
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             Car? gettingCar = await context
-                .Cars.Include(c => c.Bookings)
+                .Cars.IgnoreQueryFilters()
+                .AsNoTracking()
+                .Include(c => c.Bookings)
                 .ThenInclude(b => b.User)
                 .Include(c => c.Owner)
                 .ThenInclude(o => o.Feedbacks)
@@ -260,7 +262,7 @@ public class GetCarDetailByAdmin
                 .Include(c => c.CarAmenities)
                 .ThenInclude(ca => ca.Amenity)
                 .Include(c => c.Contract)
-                .Where(c => c.Id == request.Id)
+                .Where(c => c.Id == request.Id && !c.IsDeleted)
                 .FirstOrDefaultAsync(cancellationToken);
             if (gettingCar is null)
                 return Result.NotFound(ResponseMessages.CarNotFound);
