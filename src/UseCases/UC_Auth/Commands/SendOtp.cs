@@ -35,8 +35,19 @@ public class SendOtp
                     cancellationToken
                 );
 
-            if (user is null && (bool)request.IsResetPassword!)
-                return Result.NotFound("Không tìm thấy người dùng với email này");
+            if ((bool)request.IsResetPassword!)
+            {
+                if (user is null)
+                    return Result.NotFound("Không tìm thấy người dùng với email này");
+
+                if (user.IsDeleted)
+                    return Result.NotFound("Người dùng đã bị xóa");
+            }
+            else
+            {
+                if (user is not null)
+                    return Result.NotFound("Người dùng đã tồn tại với email này");
+            }
 
             // Generate OTP
             string otp = _otpService.GenerateOtp();

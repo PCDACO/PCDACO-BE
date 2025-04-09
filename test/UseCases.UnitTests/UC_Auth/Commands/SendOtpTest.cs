@@ -47,7 +47,7 @@ public class SendOtpTest(DatabaseTestBase fixture) : IAsyncLifetime
             _backgroundJobClient
         );
 
-        var command = new SendOtp.Command("test@example.com");
+        var command = new SendOtp.Command("test@example.com", true);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
