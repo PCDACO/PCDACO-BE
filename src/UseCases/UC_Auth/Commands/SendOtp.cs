@@ -30,18 +30,12 @@ public class SendOtp
             // Find user by email
             var user = await _context
                 .Users.AsNoTracking()
-                .FirstOrDefaultAsync(
-                    u => u.Email == request.Email && !u.IsDeleted,
-                    cancellationToken
-                );
+                .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
 
             if ((bool)request.IsResetPassword!)
             {
                 if (user is null)
                     return Result.NotFound("Không tìm thấy người dùng với email này");
-
-                if (user.IsDeleted)
-                    return Result.NotFound("Người dùng đã bị xóa");
             }
             else
             {
