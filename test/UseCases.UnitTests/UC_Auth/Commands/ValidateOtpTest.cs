@@ -52,7 +52,7 @@ public class ValidateOtpTest : IAsyncLifetime
         // Arrange
         var handler = new ValidateOtp.Handler(_dbContext, _otpService, _tokenService);
 
-        var command = new ValidateOtp.Command("nonexistent@example.com", "123456");
+        var command = new ValidateOtp.Command("nonexistent@example.com", "123456", true);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -85,7 +85,7 @@ public class ValidateOtpTest : IAsyncLifetime
 
         var handler = new ValidateOtp.Handler(_dbContext, _otpService, _tokenService);
 
-        var command = new ValidateOtp.Command(testUser.Email, otp);
+        var command = new ValidateOtp.Command(testUser.Email, otp, true);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
