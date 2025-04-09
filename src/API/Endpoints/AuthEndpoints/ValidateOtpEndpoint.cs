@@ -26,11 +26,19 @@ public class ValidateOtpEndpoint : ICarterModule
     )
     {
         Result<ValidateOtp.Response> result = await sender.Send(
-            new ValidateOtp.Command(Email: request.Email, Otp: request.Otp),
+            new ValidateOtp.Command(
+                Email: request.Email,
+                Otp: request.Otp,
+                request.IsResetPassword
+            ),
             cancellationToken
         );
         return result.MapResult();
     }
 
-    private record ValidateOtpRequest(string Email, string Otp);
+    private sealed record ValidateOtpRequest(
+        string Email,
+        string Otp,
+        bool? IsResetPassword = false
+    );
 }

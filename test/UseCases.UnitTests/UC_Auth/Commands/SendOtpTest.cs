@@ -68,7 +68,7 @@ public class SendOtpTest(DatabaseTestBase fixture) : IAsyncLifetime
             _backgroundJobClient
         );
 
-        var command = new SendOtp.Command("nonexistent@example.com");
+        var command = new SendOtp.Command("nonexistent@example.com", true);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -102,7 +102,7 @@ public class SendOtpTest(DatabaseTestBase fixture) : IAsyncLifetime
             _backgroundJobClient
         );
 
-        var command = new SendOtp.Command("deleted@example.com");
+        var command = new SendOtp.Command("deleted@example.com", true);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);

@@ -4,7 +4,7 @@ using Carter;
 using MediatR;
 using UseCases.UC_Auth.Commands;
 
-namespace API.Endpoints.UserEndpoints;
+namespace API.Endpoints.AuthEndpoints;
 
 public class SendOtpEndpoint : ICarterModule
 {
@@ -24,9 +24,13 @@ public class SendOtpEndpoint : ICarterModule
         CancellationToken cancellationToken
     )
     {
-        Result result = await sender.Send(new SendOtp.Command(request.Email), cancellationToken);
+        Result result = await sender.Send(
+            new SendOtp.Command(request.Email, request.IsResetPassword),
+            cancellationToken
+        );
+
         return result.MapResult();
     }
 
-    private record SendOtpRequest(string Email);
+    private sealed record SendOtpRequest(string Email, bool? IsResetPassword = false);
 }
