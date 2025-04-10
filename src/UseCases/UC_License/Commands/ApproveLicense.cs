@@ -1,10 +1,13 @@
 using Ardalis.Result;
 using Domain.Entities;
+using Domain.Shared.EmailTemplates.EmailBookings;
 using FluentValidation;
+using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
 using UseCases.DTOs;
+using UseCases.Services.EmailService;
 
 namespace UseCases.UC_License.Commands;
 
@@ -21,10 +24,15 @@ public sealed class ApproveLicense
         }
     };
 
-    internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
-        : IRequestHandler<Command, Result<Response>>
+    internal sealed class Handler(
+        IAppDBContext context,
+        IEmailService emailService,
+        IBackgroundJobClient backgroundJobClient,
+        CurrentUser currentUser
+    ) : IRequestHandler<Command, Result<Response>>
     {
         private readonly IAppDBContext _context = context;
+        private readonly IEmailService _emailService = emailService;
         private readonly CurrentUser _currentUser = currentUser;
 
         public async Task<Result<Response>> Handle(
@@ -58,6 +66,22 @@ public sealed class ApproveLicense
             user.LicenseRejectReason = !request.IsApproved ? request.RejectReason : null;
 
             await _context.SaveChangesAsync(cancellationToken);
+
+            // Send email notification
+            var emailContent = LicenseApprovalTemplate.Template(
+                user.Name,
+                request.IsApproved,
+                request.RejectReason
+            );
+
+            backgroundJobClient.Enqueue(
+                () =>
+                    _emailService.SendEmailAsync(
+                        user.Email,
+                        "Thông Báo Phê Duyệt Giấy Phép Lái Xe",
+                        emailContent
+                    )
+            );
 
             string message = request.IsApproved ? "phê duyệt" : "từ chối";
             return Result.Success(
