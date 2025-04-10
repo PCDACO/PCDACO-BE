@@ -47,7 +47,7 @@ public static class HangfireConfig
         RecurringJob.AddOrUpdate<BookingExpiredJob>(
             "expire-bookings-automatically",
             job => job.ExpireBookingsAutomatically(),
-            Cron.Daily
+            "*/15 * * * *" // Run every 15 minutes
         );
 
         RecurringJob.AddOrUpdate<BookingOverdueJob>(
