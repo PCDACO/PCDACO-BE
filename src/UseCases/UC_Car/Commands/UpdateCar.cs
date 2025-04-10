@@ -1,18 +1,12 @@
 using Ardalis.Result;
-
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared;
-
 using FluentValidation;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using NetTopologySuite.Geometries;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -49,13 +43,15 @@ public sealed class UpdateCar
         GeometryFactory geometryFactory
     ) : IRequestHandler<Commamnd, Result<Response>>
     {
-        public async Task<Result<Response>> Handle(Commamnd request, CancellationToken cancellationToken)
+        public async Task<Result<Response>> Handle(
+            Commamnd request,
+            CancellationToken cancellationToken
+        )
         {
             if (currentUser.User!.IsAdmin())
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
             Car? checkingCar = await context
-                .Cars.Include(c => c.EncryptionKey)
-                .FirstOrDefaultAsync(c => c.Id == request.CarId, cancellationToken);
+                .Cars.FirstOrDefaultAsync(c => c.Id == request.CarId, cancellationToken);
             if (checkingCar is null)
                 return Result.Error(ResponseMessages.CarNotFound);
             
@@ -126,15 +122,6 @@ public sealed class UpdateCar
                 }),
             ];
             await context.CarAmenities.AddRangeAsync(carAmenities, cancellationToken);
-            string decryptedKey = keyManagementService.DecryptKey(
-                checkingCar.EncryptionKey.EncryptedKey,
-                encryptionSettings.Key
-            );
-            string encryptedLicensePlate = await aesEncryptionService.Encrypt(
-                request.LicensePlate,
-                decryptedKey,
-                checkingCar.EncryptionKey.IV
-            );
             // Create current location point
             var currentLocation = geometryFactory.CreatePoint(
                 new Coordinate((double)request.PickupLongitude, (double)request.PickupLatitude)
@@ -142,7 +129,7 @@ public sealed class UpdateCar
             currentLocation.SRID = 4326; // Set SRID for GPS coordinates
             // Update car
             checkingCar.ModelId = request.ModelId;
-            checkingCar.EncryptedLicensePlate = encryptedLicensePlate;
+            checkingCar.LicensePlate = request.LicensePlate;
             checkingCar.Color = request.Color;
             checkingCar.Seat = request.Seat;
             checkingCar.Description = request.Description;

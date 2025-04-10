@@ -11,7 +11,7 @@ using UseCases.Utils;
 
 namespace UseCases.UC_Car.Queries;
 
-public class GetCarDetailByAdmin
+public class GetCarDetailByAdminOrStaff
 {
     public sealed record Query(Guid Id) : IRequest<Result<Response>>;
 
@@ -51,16 +51,6 @@ public class GetCarDetailByAdmin
             IKeyManagementService keyManagementService
         )
         {
-            string decryptedKey = keyManagementService.DecryptKey(
-                car.EncryptionKey.EncryptedKey,
-                masterKey
-            );
-            string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                car.EncryptedLicensePlate,
-                decryptedKey,
-                car.EncryptionKey.IV
-            );
-
             ContractDetail? contractDetail = null;
             if (car.Contract != null)
             {
@@ -97,9 +87,13 @@ public class GetCarDetailByAdmin
             string decryptedOwnerPhone = string.Empty;
             if (car.Owner.EncryptionKey != null && car.Owner.Phone != null)
             {
+                string userDecryptedKey = keyManagementService.DecryptKey(
+                    car.Owner.EncryptionKey.EncryptedKey,
+                    masterKey
+                );
                 decryptedOwnerPhone = await aesEncryptionService.Decrypt(
                     car.Owner.Phone,
-                    car.Owner.EncryptionKey.EncryptedKey,
+                    userDecryptedKey,
                     car.Owner.EncryptionKey.IV
                 );
             }
@@ -108,7 +102,7 @@ public class GetCarDetailByAdmin
                 car.Owner.Id,
                 car.Owner.Name,
                 car.Owner.Email ?? string.Empty,
-                car.Owner.Phone ?? string.Empty,
+                decryptedOwnerPhone,
                 car.Owner.Address ?? string.Empty,
                 car.Owner.AvatarUrl ?? string.Empty
             );
@@ -126,7 +120,7 @@ public class GetCarDetailByAdmin
                 car.Model.Name,
                 car.Model.ReleaseDate,
                 car.Color,
-                decryptedLicensePlate,
+                car.LicensePlate,
                 car.Seat,
                 car.Description,
                 car.TransmissionType.Id,
@@ -233,19 +227,25 @@ public class GetCarDetailByAdmin
             CancellationToken cancellationToken
         )
         {
-            // check if current user is admin
-            if (!currentUser.User!.IsAdmin())
+            // check if current user is admin or consultant or technician
+            if (
+                !currentUser.User!.IsAdmin()
+                && !currentUser.User.IsConsultant()
+                && !currentUser.User.IsTechnician()
+            )
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             Car? gettingCar = await context
-                .Cars.Include(c => c.Bookings)
+                .Cars.IgnoreQueryFilters()
+                .AsNoTracking()
+                .Include(c => c.Bookings)
                 .ThenInclude(b => b.User)
                 .Include(c => c.Owner)
                 .ThenInclude(o => o.Feedbacks)
                 .Include(c => c.Owner)
+                .ThenInclude(o => o.EncryptionKey)
                 .Include(c => c.Model)
                 .ThenInclude(o => o.Manufacturer)
-                .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars)
                 .ThenInclude(ic => ic.Type)
                 .Include(c => c.CarStatistic)
@@ -255,7 +255,7 @@ public class GetCarDetailByAdmin
                 .Include(c => c.CarAmenities)
                 .ThenInclude(ca => ca.Amenity)
                 .Include(c => c.Contract)
-                .Where(c => c.Id == request.Id)
+                .Where(c => c.Id == request.Id && !c.IsDeleted)
                 .FirstOrDefaultAsync(cancellationToken);
             if (gettingCar is null)
                 return Result.NotFound(ResponseMessages.CarNotFound);

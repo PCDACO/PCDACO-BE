@@ -1,11 +1,9 @@
 using Domain.Entities;
 using Domain.Enums;
-using Domain.Shared;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
 using Persistance.Data;
-using UseCases.Abstractions;
 using UUIDNext;
 
 namespace UseCases.UnitTests.TestBases.TestData;
@@ -23,7 +21,6 @@ public static class TestDataCreateCar
     private static Car CreateCar(
         Guid ownerId,
         Guid modelId,
-        Guid encryptionKeyId,
         TransmissionType transmissionType,
         FuelType fuelType,
         CarStatusEnum carStatus,
@@ -41,11 +38,10 @@ public static class TestDataCreateCar
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             OwnerId = ownerId,
             ModelId = modelId,
-            EncryptionKeyId = encryptionKeyId,
             FuelTypeId = fuelType.Id,
             TransmissionTypeId = transmissionType.Id,
             Status = carStatus,
-            EncryptedLicensePlate = "ABC-12345",
+            LicensePlate = "ABC-12345",
             Color = "Red",
             Seat = 4,
             FuelConsumption = 7.5m,
@@ -95,11 +91,9 @@ public static class TestDataCreateCar
         string address = DEFAULT_ADDRESS
     )
     {
-        var encryptionKey = await TestDataCreateEncryptionKey.CreateTestEncryptionKey(dBContext);
         var car = CreateCar(
             ownerId: ownerId,
             modelId: modelId,
-            encryptionKeyId: encryptionKey.Id,
             transmissionType: transmissionType,
             fuelType: fuelType,
             carStatus: carStatus,
@@ -129,9 +123,6 @@ public static class TestDataCreateCar
         FuelType fuelType,
         string carStatus,
         string[] imageUrls,
-        IAesEncryptionService aesEncryptionService,
-        IKeyManagementService keyManagementService,
-        EncryptionSettings encryptionSettings,
         bool isDeleted = false,
         double latitude = DEFAULT_LATITUDE,
         double longitude = DEFAULT_LONGITUDE,
@@ -145,9 +136,6 @@ public static class TestDataCreateCar
             transmissionType,
             fuelType,
             (CarStatusEnum)Enum.Parse(typeof(CarStatusEnum), carStatus),
-            aesEncryptionService,
-            keyManagementService,
-            encryptionSettings,
             isDeleted,
             latitude,
             longitude,
@@ -183,9 +171,6 @@ public static class TestDataCreateCar
         TransmissionType transmissionType,
         FuelType fuelType,
         CarStatusEnum carStatus,
-        IAesEncryptionService aesEncryptionService,
-        IKeyManagementService keyManagementService,
-        EncryptionSettings encryptionSettings,
         bool isDeleted = false,
         double latitude = DEFAULT_LATITUDE,
         double longitude = DEFAULT_LONGITUDE,
@@ -193,20 +178,7 @@ public static class TestDataCreateCar
     )
     {
         // Generate encryption key and encrypt license plate
-        (string key, string iv) = await keyManagementService.GenerateKeyAsync();
         string licensePlate = "ABC-12345";
-        string encryptedLicensePlate = await aesEncryptionService.Encrypt(licensePlate, key, iv);
-        string encryptedKey = keyManagementService.EncryptKey(key, encryptionSettings.Key);
-
-        // Create encryption key
-        var newEncryptionKey = new EncryptionKey
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            EncryptedKey = encryptedKey,
-            IV = iv,
-        };
-        await dBContext.EncryptionKeys.AddAsync(newEncryptionKey);
-        await dBContext.SaveChangesAsync();
 
         // Create pickup location point
         var pickupLocation = GeometryFactory.CreatePoint(new Coordinate(longitude, latitude));
@@ -219,8 +191,7 @@ public static class TestDataCreateCar
             Id = carId,
             OwnerId = ownerId,
             ModelId = modelId,
-            EncryptionKeyId = newEncryptionKey.Id,
-            EncryptedLicensePlate = encryptedLicensePlate,
+            LicensePlate = licensePlate,
             FuelTypeId = fuelType.Id,
             TransmissionTypeId = transmissionType.Id,
             Status = carStatus,

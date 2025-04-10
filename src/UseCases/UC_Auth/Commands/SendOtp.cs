@@ -11,7 +11,7 @@ namespace UseCases.UC_Auth.Commands;
 
 public class SendOtp
 {
-    public record Command(string Email) : IRequest<Result>;
+    public record Command(string Email, bool? IsResetPassword = false) : IRequest<Result>;
 
     public class Handler(
         IAppDBContext context,
@@ -30,13 +30,18 @@ public class SendOtp
             // Find user by email
             var user = await _context
                 .Users.AsNoTracking()
-                .FirstOrDefaultAsync(
-                    u => u.Email == request.Email && !u.IsDeleted,
-                    cancellationToken
-                );
+                .FirstOrDefaultAsync(u => u.Email == request.Email, cancellationToken);
 
-            if (user is null)
-                return Result.NotFound("Không tìm thấy người dùng với email này");
+            if ((bool)request.IsResetPassword!)
+            {
+                if (user is null)
+                    return Result.NotFound("Không tìm thấy người dùng với email này");
+            }
+            else
+            {
+                if (user is not null)
+                    return Result.NotFound("Người dùng đã tồn tại với email này");
+            }
 
             // Generate OTP
             string otp = _otpService.GenerateOtp();
@@ -45,7 +50,8 @@ public class SendOtp
             _otpService.StoreOtp(request.Email, otp);
 
             // Enqueue email sending as a background task
-            _backgroundJobClient.Enqueue(() => SendOtpEmail(request.Email, otp, user.Name));
+            string userName = user?.Name ?? "Người dùng";
+            _backgroundJobClient.Enqueue(() => SendOtpEmail(request.Email, otp, userName));
 
             return Result.SuccessWithMessage("Mã OTP đã được gửi đến email của bạn");
         }
@@ -65,20 +71,20 @@ public class SendOtp
                 <div style='{EmailTemplateStyles.HeaderStyle(EmailTemplateColors.SuccessHeader)}'>
                     <h2 style='margin: 0;'>Xác thực tài khoản</h2>
                 </div>
-                
+
                 <div style='{EmailTemplateStyles.BodyStyle}'>
                     <p>Xin chào {userName},</p>
                     <p>Chúng tôi đã nhận được yêu cầu xác thực tài khoản của bạn.</p>
-                    
+
                     <div style='{EmailTemplateStyles.DetailBoxStyle(EmailTemplateColors.SuccessBackground)}'>
                         <h3 style='color: {EmailTemplateColors.SuccessAccent}; margin-top: 0; text-align: center;'>Mã OTP của bạn</h3>
                         <p style='font-size: 32px; letter-spacing: 5px; text-align: center; font-weight: bold; color: {EmailTemplateColors.SuccessAccent};'>{otp}</p>
                     </div>
-                    
+
                     <div style='background-color: {EmailTemplateColors.Warning}; padding: 15px; border-radius: 8px; margin: 20px 0;'>
                         <p style='margin: 0;'><strong>Lưu ý:</strong> Mã OTP có hiệu lực trong vòng 5 phút. Vui lòng không chia sẻ mã này với bất kỳ ai.</p>
                     </div>
-                    
+
                     <p style='{EmailTemplateStyles.FooterStyle}'>
                         Cảm ơn bạn đã sử dụng dịch vụ của chúng tôi!<br>
                         <small><strong>Cần hỗ trợ?</strong> Hãy trả lời email này</small>

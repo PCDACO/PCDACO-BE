@@ -79,7 +79,7 @@ public class SignUp
                 {
                     Token = refreshToken,
                     UserId = user.Id,
-                    ExpiryDate = DateTimeOffset.UtcNow.AddMinutes(60),
+                    ExpiryDate = DateTimeOffset.UtcNow.AddHours(24),
                 }
             );
 

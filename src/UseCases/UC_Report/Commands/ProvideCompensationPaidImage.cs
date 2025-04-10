@@ -46,6 +46,8 @@ public class ProvideCompensationPaidImage
             );
 
             report.CompensationPaidImageUrl = proofUrl;
+            report.CompensationPaidAt = DateTimeOffset.UtcNow;
+            report.UpdatedAt = DateTimeOffset.UtcNow;
 
             await context.SaveChangesAsync(cancellationToken);
 

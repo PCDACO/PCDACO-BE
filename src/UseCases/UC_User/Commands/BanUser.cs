@@ -45,10 +45,12 @@ public class BanUser
 
             if (user.IsOwner())
             {
-                await context.Cars.ExecuteUpdateAsync(
-                    c => c.SetProperty(c => c.Status, CarStatusEnum.Inactive),
-                    cancellationToken: cancellationToken
-                );
+                await context
+                    .Cars.Where(c => c.OwnerId == user.Id)
+                    .ExecuteUpdateAsync(
+                        c => c.SetProperty(c => c.Status, CarStatusEnum.Inactive),
+                        cancellationToken: cancellationToken
+                    );
             }
 
             await context.SaveChangesAsync(cancellationToken);

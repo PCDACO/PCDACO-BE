@@ -1,7 +1,6 @@
 using Ardalis.Result;
 using Domain.Constants;
 using Domain.Entities;
-using Domain.Enums;
 using Domain.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -66,14 +65,7 @@ public class GetUserById
             // Map cars, bookings and reports
             var cars = await Task.WhenAll(
                 user.Cars?.Where(c => !c.IsDeleted)
-                    .Select(async c =>
-                        await CarResponse.FromEntity(
-                            c,
-                            masterKey,
-                            aesEncryptionService,
-                            keyManagementService
-                        )
-                    ) ?? []
+                    .Select(async c => await CarResponse.FromEntity(c)) ?? []
             );
 
             var bookings =
@@ -176,23 +168,8 @@ public class GetUserById
         IEnumerable<string> ImageUrls
     )
     {
-        public static async Task<CarResponse> FromEntity(
-            Car car,
-            string masterKey,
-            IAesEncryptionService aesEncryptionService,
-            IKeyManagementService keyManagementService
-        )
+        public static async Task<CarResponse> FromEntity(Car car)
         {
-            string decryptedKey = keyManagementService.DecryptKey(
-                car.EncryptionKey.EncryptedKey,
-                masterKey
-            );
-            string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                car.EncryptedLicensePlate,
-                decryptedKey,
-                car.EncryptionKey.IV
-            );
-
             return new(
                 car.Id,
                 car.OwnerId,
@@ -200,7 +177,7 @@ public class GetUserById
                 car.FuelTypeId,
                 car.TransmissionTypeId,
                 car.Status.ToString(),
-                decryptedLicensePlate,
+                car.LicensePlate,
                 car.Color,
                 car.Seat,
                 car.Description,
@@ -350,8 +327,6 @@ public class GetUserById
                 .ThenInclude(c => c.TransmissionType)
                 .Include(u => u.Cars)
                 .ThenInclude(c => c.ImageCars)
-                .Include(u => u.Cars)
-                .ThenInclude(c => c.EncryptionKey)
                 // Include bookings related to user's cars with their reports
                 .Include(u => u.Cars)
                 .ThenInclude(c => c.Bookings)

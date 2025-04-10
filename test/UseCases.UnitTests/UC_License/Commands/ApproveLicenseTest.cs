@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using Domain.Shared;
+using Hangfire;
 using Persistance.Data;
 using UseCases.Abstractions;
 using UseCases.DTOs;
@@ -17,6 +18,8 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly IAesEncryptionService _aesService = fixture.AesEncryptionService;
     private readonly IKeyManagementService _keyService = fixture.KeyManagementService;
     private readonly EncryptionSettings _encryptionSettings = fixture.EncryptionSettings;
+    private readonly TestDataEmailService _emailService = new();
+    private readonly IBackgroundJobClient _backgroundJobClient = new BackgroundJobClient();
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
 
     public Task InitializeAsync() => Task.CompletedTask;
@@ -31,7 +34,12 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new ApproveLicense.Handler(_dbContext, _currentUser);
+        var handler = new ApproveLicense.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command = new ApproveLicense.Command(Guid.NewGuid(), true);
 
         // Act
@@ -50,7 +58,12 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         var admin = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
         _currentUser.SetUser(admin);
 
-        var handler = new ApproveLicense.Handler(_dbContext, _currentUser);
+        var handler = new ApproveLicense.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command = new ApproveLicense.Command(Guid.NewGuid(), true);
 
         // Act
@@ -72,7 +85,12 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
 
-        var handler = new ApproveLicense.Handler(_dbContext, _currentUser);
+        var handler = new ApproveLicense.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command = new ApproveLicense.Command(owner.Id, true);
 
         // Act
@@ -104,7 +122,12 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
         await _dbContext.SaveChangesAsync();
 
-        var handler = new ApproveLicense.Handler(_dbContext, _currentUser);
+        var handler = new ApproveLicense.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command = new ApproveLicense.Command(user.Id, true);
 
         // Act
@@ -133,7 +156,12 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
             _encryptionSettings
         );
 
-        var handler = new ApproveLicense.Handler(_dbContext, _currentUser);
+        var handler = new ApproveLicense.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command = new ApproveLicense.Command(user.Id, false); // No reject reason
 
         // Act
@@ -168,7 +196,12 @@ public class ApproveLicenseTest(DatabaseTestBase fixture) : IAsyncLifetime
             _encryptionSettings
         );
 
-        var handler = new ApproveLicense.Handler(_dbContext, _currentUser);
+        var handler = new ApproveLicense.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser
+        );
         var command = new ApproveLicense.Command(user.Id, isApproved, rejectReason);
 
         // Act

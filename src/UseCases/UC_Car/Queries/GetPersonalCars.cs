@@ -59,16 +59,6 @@ public class GetPersonalCars
             bool includeContract = false
         )
         {
-            string decryptedKey = keyManagementService.DecryptKey(
-                car.EncryptionKey.EncryptedKey,
-                masterKey
-            );
-            string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                car.EncryptedLicensePlate,
-                decryptedKey,
-                car.EncryptionKey.IV
-            );
-
             ContractDetail? contractDetail = null;
             if (includeContract && car.Contract != null)
             {
@@ -89,7 +79,7 @@ public class GetPersonalCars
                 ModelName: car.Model.Name,
                 OwnerId: car.Owner.Id,
                 OwnerName: car.Owner.Name,
-                LicensePlate: decryptedLicensePlate,
+                LicensePlate: car.LicensePlate,
                 Color: car.Color,
                 Seat: car.Seat,
                 Description: car.Description,
@@ -104,15 +94,20 @@ public class GetPersonalCars
                 Status: car.Status.ToString(),
                 TotalRented: car.CarStatistic.TotalBooking,
                 AverageRating: car.CarStatistic.AverageRating,
-                Location: car.GPS == null ? null : new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
-                Manufacturer: new ManufacturerDetail(car.Model.Manufacturer.Id, car.Model.Manufacturer.Name),
-                Images: [.. car.ImageCars?.Select(i => new ImageDetail(
-                    i.Id,
-                    i.Url,
-                    i.Type.Name,
-                    i.Name
-                )) ?? []],
-                Amenities: [
+                Location: car.GPS == null
+                    ? null
+                    : new LocationDetail(car.GPS.Location.X, car.GPS.Location.Y),
+                Manufacturer: new ManufacturerDetail(
+                    car.Model.Manufacturer.Id,
+                    car.Model.Manufacturer.Name
+                ),
+                Images:
+                [
+                    .. car.ImageCars?.Select(i => new ImageDetail(i.Id, i.Url, i.Type.Name, i.Name))
+                        ?? []
+                ],
+                Amenities:
+                [
                     .. car.CarAmenities.Select(a => new AmenityDetail(
                         a.Amenity.Id,
                         a.Amenity.Name,
@@ -125,27 +120,13 @@ public class GetPersonalCars
         }
     };
 
-    public record PriceDetail(
-        decimal PerHour,
-        decimal PerDay
-    );
+    public record PriceDetail(decimal PerHour, decimal PerDay);
 
-    public record LocationDetail(
-        double Longtitude,
-        double Latitude
-    );
+    public record LocationDetail(double Longtitude, double Latitude);
 
-    public record ManufacturerDetail(
-        Guid Id,
-        string Name
-    );
+    public record ManufacturerDetail(Guid Id, string Name);
 
-    public record ImageDetail(
-        Guid Id,
-        string Url,
-        string Type,
-        string Name
-    );
+    public record ImageDetail(Guid Id, string Url, string Type, string Name);
 
     public record AmenityDetail(Guid Id, string Name, string Description, string Icon);
 
@@ -180,24 +161,30 @@ public class GetPersonalCars
                 || currentUser.User.IsOwner();
 
             IQueryable<Car> gettingCarQuery = context
-                .Cars
-                .AsNoTracking()
-                .Include(c => c.Owner).ThenInclude(o => o.Feedbacks)
-                .Include(c => c.Model).ThenInclude(o => o.Manufacturer)
-                .Include(c => c.EncryptionKey)
-                .Include(c => c.ImageCars).ThenInclude(ic => ic.Type)
+                .Cars.AsNoTracking()
+                .Include(c => c.Owner)
+                .ThenInclude(o => o.Feedbacks)
+                .Include(c => c.Model)
+                .ThenInclude(o => o.Manufacturer)
+                .Include(c => c.ImageCars)
+                .ThenInclude(ic => ic.Type)
                 .Include(c => c.CarStatistic)
                 .Include(c => c.TransmissionType)
                 .Include(c => c.FuelType)
                 .Include(c => c.GPS)
-                .Include(c => c.CarAmenities).ThenInclude(ca => ca.Amenity)
+                .Include(c => c.CarAmenities)
+                .ThenInclude(ca => ca.Amenity)
                 .Include(c => c.Contract)
                 .Where(c => !c.IsDeleted)
                 .Where(c => request.Status != null ? c.Status == request.Status : true)
                 .Where(c => c.OwnerId == currentUser.User!.Id)
-                .Where(c => request.ManufacturerId == null || c.Model.ManufacturerId == request.ManufacturerId)
                 .Where(c =>
-                    request.Amenities == null || request.Amenities.Length == 0
+                    request.ManufacturerId == null
+                    || c.Model.ManufacturerId == request.ManufacturerId
+                )
+                .Where(c =>
+                    request.Amenities == null
+                    || request.Amenities.Length == 0
                     || request.Amenities.All(a =>
                         c.CarAmenities.Select(ca => ca.AmenityId).Contains(a)
                     )

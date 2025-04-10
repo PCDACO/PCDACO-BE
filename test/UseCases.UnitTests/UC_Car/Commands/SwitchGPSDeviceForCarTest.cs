@@ -520,9 +520,6 @@ public class SwitchGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifetim
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
 
-        // Create encryption key
-        var encryptionKey = await TestDataCreateEncryptionKey.CreateTestEncryptionKey(_dbContext);
-
         // Create pickup location
         var pickupLocation = _geometryFactory.CreatePoint(new Coordinate(106.7004238, 10.7756587));
         pickupLocation.SRID = 4326;
@@ -533,8 +530,7 @@ public class SwitchGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifetim
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             OwnerId = owner.Id,
             ModelId = model.Id,
-            EncryptionKeyId = encryptionKey.Id,
-            EncryptedLicensePlate = "TEST-12345",
+            LicensePlate = "TEST-12345",
             FuelTypeId = fuelType.Id,
             TransmissionTypeId = transmissionType.Id,
             Status = CarStatusEnum.Available,

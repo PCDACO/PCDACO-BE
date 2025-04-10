@@ -52,16 +52,6 @@ public class GetCarById
             bool includeContract = false
         )
         {
-            string decryptedKey = keyManagementService.DecryptKey(
-                car.EncryptionKey.EncryptedKey,
-                masterKey
-            );
-            string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                car.EncryptedLicensePlate,
-                decryptedKey,
-                car.EncryptionKey.IV
-            );
-
             ContractDetail? contractDetail = null;
             if (includeContract && car.Contract != null)
             {
@@ -82,7 +72,7 @@ public class GetCarById
                 car.Model.Name,
                 car.Owner.Id,
                 car.Owner.Name,
-                decryptedLicensePlate,
+                car.LicensePlate,
                 car.Color,
                 car.Seat,
                 car.Description,
@@ -185,7 +175,6 @@ public class GetCarById
                 .ThenInclude(o => o.Feedbacks)
                 .Include(c => c.Model)
                 .ThenInclude(o => o.Manufacturer)
-                .Include(c => c.EncryptionKey)
                 .Include(c => c.ImageCars)
                 .ThenInclude(ic => ic.Type)
                 .Include(c => c.CarStatistic)

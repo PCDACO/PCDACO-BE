@@ -481,11 +481,6 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.FuelTypes.AddAsync(fuelType);
 
         (string key, string iv) = await keyManagementService.GenerateKeyAsync();
-        string encryptedLicensePlate = await aesEncryptionService.Encrypt(
-            "TestLicensePlate",
-            key,
-            iv
-        );
         string encryptedKey = keyManagementService.EncryptKey(key, encryptionSettings.Key);
         EncryptionKey newEncryptionKey = new() { EncryptedKey = encryptedKey, IV = iv };
         context.EncryptionKeys.Add(newEncryptionKey);
@@ -499,11 +494,10 @@ public class GetUserStatisticsTest(DatabaseTestBase fixture) : IAsyncLifetime
         {
             OwnerId = ownerId,
             Status = CarStatusEnum.Available,
-            EncryptedLicensePlate = encryptedLicensePlate,
+            LicensePlate = "TestLicensePlate",
             ModelId = model.Id,
             TransmissionTypeId = transmissionType.Id,
             FuelTypeId = fuelType.Id,
-            EncryptionKeyId = newEncryptionKey.Id,
             Color = "Red",
             Seat = 5,
             FuelConsumption = 7.5m,

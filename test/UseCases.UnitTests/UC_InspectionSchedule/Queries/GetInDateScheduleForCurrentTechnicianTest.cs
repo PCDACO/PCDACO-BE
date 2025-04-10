@@ -131,10 +131,7 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
                 transmissionType,
                 fuelType,
                 "Pending",
-                new[] { "image1.jpg", "image2.jpg" },
-                aesEncryptionService: _aesEncryptionService,
-                keyManagementService: _keyManagementService,
-                encryptionSettings: _encryptionSettings
+                new[] { "image1.jpg", "image2.jpg" }
             );
 
             // Create multiple schedules for today
@@ -269,10 +266,7 @@ namespace UseCases.UnitTests.UC_InspectionSchedule.Queries
                 transmissionType,
                 fuelType,
                 "Pending",
-                ["image.jpg"],
-                aesEncryptionService: _aesEncryptionService,
-                keyManagementService: _keyManagementService,
-                encryptionSettings: _encryptionSettings
+                ["image.jpg"]
             );
 
             // Create schedules with different statuses

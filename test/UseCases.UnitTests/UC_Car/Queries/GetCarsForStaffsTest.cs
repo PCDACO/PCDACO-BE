@@ -538,12 +538,12 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
             "CAR-54321"
         );
 
-        // Create inspection schedules for car1 and car2 only
+        // Create inprogress inspection schedules for car1 and car2 only
         var schedule1 = new InspectionSchedule
         {
             CarId = car1.Id,
             TechnicianId = technician.Id,
-            Status = InspectionScheduleStatusEnum.Pending,
+            Status = InspectionScheduleStatusEnum.InProgress,
             InspectionAddress = "123 Test St",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
             Note = "Test inspection for car1",
@@ -554,7 +554,7 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
         {
             CarId = car2.Id,
             TechnicianId = technician.Id,
-            Status = InspectionScheduleStatusEnum.Pending,
+            Status = InspectionScheduleStatusEnum.InProgress,
             InspectionAddress = "456 Test Ave",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(2),
             Note = "Test inspection for car2",
@@ -576,7 +576,7 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
             PageSize: 10,
             Keyword: "",
             Status: null,
-            OnlyHasInspectionSchedule: true
+            OnlyHasInprogressInspectionSchedule: true
         );
 
         // Act
@@ -755,7 +755,7 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
         {
             CarId = car2.Id,
             TechnicianId = technician.Id,
-            Status = InspectionScheduleStatusEnum.Pending,
+            Status = InspectionScheduleStatusEnum.InProgress,
             InspectionAddress = "456 Combined Test Ave",
             InspectionDate = DateTimeOffset.UtcNow.AddDays(2),
             Note = "Test inspection for car2",
@@ -778,7 +778,7 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
             PageSize: 10,
             Keyword: "",
             Status: CarStatusEnum.Pending,
-            OnlyHasInspectionSchedule: true,
+            OnlyHasInprogressInspectionSchedule: true,
             OnlyNoGps: true
         );
 
@@ -811,21 +811,6 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
         bool hasGPS = false
     )
     {
-        // Generate encryption key and encrypt license plate
-        (string key, string iv) = await _keyService.GenerateKeyAsync();
-        string encryptedLicensePlate = await _aesService.Encrypt(licensePlate, key, iv);
-        string encryptedKey = _keyService.EncryptKey(key, _encryptionSettings.Key);
-
-        // Create encryption key
-        var encryptionKey = new EncryptionKey
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            EncryptedKey = encryptedKey,
-            IV = iv,
-        };
-        await _dbContext.EncryptionKeys.AddAsync(encryptionKey);
-        await _dbContext.SaveChangesAsync();
-
         // Create pickup location point
         var pickupLocation = _geometryFactory.CreatePoint(new Coordinate(longitude, latitude));
         pickupLocation.SRID = 4326;
@@ -837,8 +822,7 @@ public class GetCarsForStaffsTest(DatabaseTestBase fixture) : IAsyncLifetime
             Id = carId,
             OwnerId = ownerId,
             ModelId = modelId,
-            EncryptionKeyId = encryptionKey.Id,
-            EncryptedLicensePlate = encryptedLicensePlate,
+            LicensePlate = licensePlate,
             FuelTypeId = fuelTypeId,
             TransmissionTypeId = transmissionTypeId,
             Status = status,

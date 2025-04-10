@@ -10,7 +10,8 @@ namespace UseCases.UC_Auth.Commands;
 
 public class ValidateOtp
 {
-    public record Command(string Email, string Otp) : IRequest<Result<Response>>;
+    public record Command(string Email, string Otp, bool? IsResetPassword = false)
+        : IRequest<Result<Response>>;
 
     public record Response(string AccessToken, string RefreshToken);
 
@@ -32,13 +33,19 @@ public class ValidateOtp
                 cancellationToken
             );
 
-            if (user is null)
+            if (user is null && (bool)request.IsResetPassword!)
                 return Result.NotFound("Không tìm thấy người dùng với email này");
 
             // Validate the OTP
             bool isValid = _otpService.ValidateOtp(request.Email, request.Otp);
             if (!isValid)
                 return Result.Error("Mã OTP không hợp lệ hoặc đã hết hạn");
+
+            if (isValid && user is null)
+                return Result.Success(
+                    new Response(string.Empty, string.Empty),
+                    "Xác thực OTP thành công"
+                );
 
             // OTP is valid, generate tokens
             string accessToken = _tokenService.GenerateAccessToken(user);
@@ -53,12 +60,13 @@ public class ValidateOtp
                 );
 
             // Create new refresh token
-            RefreshToken addingRefreshToken = new()
-            {
-                Token = refreshToken,
-                UserId = user.Id,
-                ExpiryDate = DateTimeOffset.UtcNow.AddMinutes(60),
-            };
+            RefreshToken addingRefreshToken =
+                new()
+                {
+                    Token = refreshToken,
+                    UserId = user.Id,
+                    ExpiryDate = DateTimeOffset.UtcNow.AddHours(24),
+                };
 
             await _context.RefreshTokens.AddAsync(addingRefreshToken, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);

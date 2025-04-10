@@ -801,14 +801,15 @@ public class GetPersonalCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
 
         // Test with each user type
-        Dictionary<string, bool> roleExpectedContractVisibility = new()
-        {
-            { "Owner", true },
-            { "Admin", true },
-            { "Consultant", true },
-            { "Technician", true },
-            { "Driver", false },
-        };
+        Dictionary<string, bool> roleExpectedContractVisibility =
+            new()
+            {
+                { "Owner", true },
+                { "Admin", true },
+                { "Consultant", true },
+                { "Technician", true },
+                { "Driver", false },
+            };
 
         // Test for owner
         _currentUser.SetUser(owner);
@@ -887,21 +888,6 @@ public class GetPersonalCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
         double longitude = 106.7004238
     )
     {
-        // Generate encryption key and encrypt license plate
-        (string key, string iv) = await _keyService.GenerateKeyAsync();
-        string encryptedLicensePlate = await _aesService.Encrypt(licensePlate, key, iv);
-        string encryptedKey = _keyService.EncryptKey(key, _encryptionSettings.Key);
-
-        // Create encryption key
-        var encryptionKey = new EncryptionKey
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            EncryptedKey = encryptedKey,
-            IV = iv,
-        };
-        await _dbContext.EncryptionKeys.AddAsync(encryptionKey);
-        await _dbContext.SaveChangesAsync();
-
         // Create pickup location point
         var pickupLocation = _geometryFactory.CreatePoint(new Coordinate(longitude, latitude));
         pickupLocation.SRID = 4326;
@@ -913,8 +899,7 @@ public class GetPersonalCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             Id = carId,
             OwnerId = ownerId,
             ModelId = modelId,
-            EncryptionKeyId = encryptionKey.Id,
-            EncryptedLicensePlate = encryptedLicensePlate,
+            LicensePlate = licensePlate,
             FuelTypeId = fuelTypeId,
             TransmissionTypeId = transmissionTypeId,
             Status = status,

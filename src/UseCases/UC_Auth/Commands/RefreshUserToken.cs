@@ -44,7 +44,7 @@ public static class RefreshUserToken
             {
                 Token = newRefreshToken,
                 UserId = user.Id,
-                ExpiryDate = DateTimeOffset.UtcNow.AddMinutes(60),
+                ExpiryDate = DateTimeOffset.UtcNow.AddHours(24),
             };
             await context.RefreshTokens.AddAsync(newRefreshTokenEntity, cancellationToken);
             await context.SaveChangesAsync(cancellationToken);

@@ -1,14 +1,10 @@
 using Ardalis.Result;
-
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
 using Domain.Shared;
-
 using MediatR;
-
 using Microsoft.EntityFrameworkCore;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -16,7 +12,7 @@ namespace UseCases.UC_Car.Queries;
 
 public class GetCarsForStaffs
 {
-    public record Query(int PageNumber, int PageSize, string Keyword, CarStatusEnum? Status, bool? OnlyHasInspectionSchedule = false, bool? OnlyNoGps = false)
+    public record Query(int PageNumber, int PageSize, string Keyword, CarStatusEnum? Status, bool? OnlyHasInprogressInspectionSchedule = false, bool? OnlyNoGps = false)
         : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
@@ -49,15 +45,6 @@ public class GetCarsForStaffs
             IKeyManagementService keyManagementService
         )
         {
-            string carDecryptedKey = keyManagementService.DecryptKey(
-                car.EncryptionKey.EncryptedKey,
-                masterKey
-            );
-            string decryptedLicensePlate = await aesEncryptionService.Decrypt(
-                car.EncryptedLicensePlate,
-                carDecryptedKey,
-                car.EncryptionKey.IV
-            );
             string ownerDecryptedKey = keyManagementService.DecryptKey(
                 car.Owner.EncryptionKey.EncryptedKey,
                 masterKey
@@ -75,7 +62,7 @@ public class GetCarsForStaffs
                 car.Owner.Id,
                 car.Owner.Name,
                 decryptedPhoneNumber,
-                decryptedLicensePlate,
+                car.LicensePlate,
                 car.Color,
                 car.Seat,
                 car.Status.ToString(),
@@ -98,6 +85,7 @@ public class GetCarsForStaffs
             );
         }
     };
+
     public record LocationDetail(double Longtitude, double Latitude);
 
     public record ManufacturerDetail(Guid Id, string Name);
@@ -119,14 +107,16 @@ public class GetCarsForStaffs
         )
         {
             IQueryable<Car> gettingQuery = context
-                .Cars
-                .AsNoTracking()
+                .Cars.AsNoTracking()
                 .IgnoreQueryFilters()
-                .Include(c => c.Owner).ThenInclude(o => o.Feedbacks)
-                .Include(c => c.Owner).ThenInclude(o => o.EncryptionKey)
-                .Include(c => c.Model).ThenInclude(o => o.Manufacturer)
-                .Include(c => c.EncryptionKey)
-                .Include(c => c.ImageCars).ThenInclude(ic => ic.Type)
+                .Include(c => c.Owner)
+                .ThenInclude(o => o.Feedbacks)
+                .Include(c => c.Owner)
+                .ThenInclude(o => o.EncryptionKey)
+                .Include(c => c.Model)
+                .ThenInclude(o => o.Manufacturer)
+                .Include(c => c.ImageCars)
+                .ThenInclude(ic => ic.Type)
                 .Include(c => c.CarStatistic)
                 .Include(c => c.TransmissionType)
                 .Include(c => c.FuelType)
@@ -137,9 +127,9 @@ public class GetCarsForStaffs
                 .Where(c => request.Status == null ? true : request.Status == c.Status);
 
             // Filter by inspection schedule if the OnlyHasInspectionSchedule parameter is provided
-            if (request.OnlyHasInspectionSchedule == true)
+            if (request.OnlyHasInprogressInspectionSchedule == true)
             {
-                gettingQuery = gettingQuery.Where(c => c.InspectionSchedules.Any());
+                gettingQuery = gettingQuery.Where(c => c.InspectionSchedules.Any(s => s.Status == InspectionScheduleStatusEnum.InProgress));
             }
 
             // Filter by GPS availability if the OnlyNoGps parameter is provided
@@ -153,7 +143,7 @@ public class GetCarsForStaffs
             if (!string.IsNullOrWhiteSpace(request.Keyword))
             {
                 gettingQuery = gettingQuery.Where(c =>
-                    EF.Functions.Like(c.Model.Name, $"%{request.Keyword}%")
+                    EF.Functions.ILike(c.Model.Name, $"%{request.Keyword}%")
                 );
             }
             int count = await gettingQuery.CountAsync(cancellationToken);
