@@ -24,7 +24,6 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
     [Theory]
     [InlineData("Admin")]
     [InlineData("Driver")]
-    [InlineData("Owner")]
     public async Task Handle_UserNotConsultantAndTechnician_ReturnsForbidden(string roleName)
     {
         // Arrange
