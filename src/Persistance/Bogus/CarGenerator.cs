@@ -1,9 +1,7 @@
 using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
-using Domain.Shared;
 using NetTopologySuite.Geometries;
-using UseCases.Abstractions;
 using UseCases.Utils;
 using UUIDNext;
 
@@ -1997,6 +1995,7 @@ public class CarGenerator
     {
         var userTasks = Cars.Select(async u =>
         {
+            await Task.Delay(0);
             string refreshToken = tokenService.GenerateRefreshToken();
             Guid newCarId = Uuid.NewDatabaseFriendly(Database.PostgreSql);
 
