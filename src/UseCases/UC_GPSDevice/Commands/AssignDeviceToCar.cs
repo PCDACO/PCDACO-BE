@@ -53,10 +53,6 @@ public class AssignDeviceToCar
             // add new device
             if (gettingDevice is not null)
             {
-                if (gettingDevice.Status != DeviceStatusEnum.Available)
-                {
-                    return Result.Error(ResponseMessages.GPSDeviceIsNotAvailable);
-                }
                 gettingDevice.Name = request.DeviceName;
                 gettingDevice.Status = DeviceStatusEnum.InUsed;
                 gettingDevice.UpdatedAt = DateTime.UtcNow;

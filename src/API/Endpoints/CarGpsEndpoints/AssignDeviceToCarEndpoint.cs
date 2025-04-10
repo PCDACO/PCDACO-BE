@@ -1,6 +1,7 @@
 using API.Utils;
 using Ardalis.Result;
 using Carter;
+using Infrastructure.Idempotency;
 using MediatR;
 using Microsoft.OpenApi.Any;
 using UseCases.UC_GPSDevice.Commands;
@@ -15,6 +16,7 @@ public class AssignDeviceToCarEndpoint : ICarterModule
         app.MapPost("/api/cars/{id:guid}/assign-device", Handle)
             .WithSummary("Assign Device To Car")
             .WithTags("Cars")
+            .AddEndpointFilter<IdempotencyFilter>()
             .RequireAuthorization()
             .WithOpenApi(operation =>
                 new(operation)
