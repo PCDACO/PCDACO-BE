@@ -44,6 +44,7 @@ public sealed class ApproveInspectionSchedule
                 .AsSplitQuery()
                 .Include(s => s.Car)
                 .ThenInclude(s => s.Owner)
+                .ThenInclude(o => o.EncryptionKey)
                 .Include(s => s.Car)
                 .ThenInclude(s => s.Model)
                 .Include(s => s.Technician)
