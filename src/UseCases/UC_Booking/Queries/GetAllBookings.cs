@@ -3,6 +3,8 @@ using Domain.Entities;
 using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -50,8 +52,11 @@ public sealed class GetAllBookings
             );
     };
 
-    internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
-        : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
+    internal sealed class Handler(
+        IAppDBContext context,
+        ILogger<Handler> logger,
+        CurrentUser currentUser
+    ) : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
     {
         public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(
             Query request,
@@ -65,6 +70,8 @@ public sealed class GetAllBookings
                 .ThenInclude(c => c.Owner)
                 .Include(b => b.User)
                 .AsQueryable();
+
+            logger.LogInformation("{UserRole}", currentUser.User?.Role);
 
             /// Filter by user role
             if (currentUser.User!.IsDriver())
