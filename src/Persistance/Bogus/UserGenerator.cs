@@ -39,48 +39,48 @@ public class UserGenerator
             Address = "480/59A, Đường Bình Quới, Phường 28, Quận Bình Thạnh",
             RoleId = Guid.Parse("01951e22-c88e-7c99-901e-23ff1ebccf85"),
         },
-        // DRIVER
-        new()
-        {
-            Id = Guid.Parse("01950d41-d234-7b63-a360-72b27605b4a4"),
-            Name = "DRIVER",
-            Email = "thinhdpham2510@gmail.com",
-            Password = "Ph@mDucThinh25102003".HashString(),
-            Phone = "0938396953",
-            Address = "480/59A, Đường Bình Quới, Phường 28, Quận Bình Thạnh",
-            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"),
-        },
-        new()
-        {
-            Id = Guid.Parse("01957a2a-27ca-7315-990e-71e56af48bfa"),
-            Name = "Trung Anh Driver",
-            Email = "anhthtse151299@gmail.com",
-            Password = "@Trunganh123".HashString(),
-            Phone = "0918516221",
-            Address = "480/59A, Đường Bình Quới, Phường 28, Quận Bình Thạnh",
-            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"),
-        },
-        // Owner
-        new()
-        {
-            Id = Guid.Parse("01951eae-12a7-756d-a8d5-bb1ee525d7b5"),
-            Name = "Owner",
-            Email = "thinhmusicion@gmail.com",
-            Password = "Ph@mDucThinh25102003".HashString(),
-            Phone = "0877344076",
-            Address = "312, Đường Xô Viết Nghệ Tĩnh, Phường 25, Quận Bình Thạnh",
-            RoleId = Guid.Parse("01951e20-7a6e-7106-a6f3-148b63f52149"),
-        },
-        new()
-        {
-            Id = Guid.Parse("01957a2a-4e2e-73a3-ac6a-1dfa84e48520"),
-            Name = "Trung Anh Owner",
-            Email = "anhthtservice@gmail.com",
-            Password = "@Trunganh123".HashString(),
-            Phone = "0961790276",
-            Address = "312, Đường Xô Viết Nghệ Tĩnh, Phường 25, Quận Bình Thạnh",
-            RoleId = Guid.Parse("01951e20-7a6e-7106-a6f3-148b63f52149"),
-        },
+        // // DRIVER
+        // new()
+        // {
+        //     Id = Guid.Parse("01950d41-d234-7b63-a360-72b27605b4a4"),
+        //     Name = "DRIVER",
+        //     Email = "thinhdpham2510@gmail.com",
+        //     Password = "Ph@mDucThinh25102003".HashString(),
+        //     Phone = "0938396953",
+        //     Address = "480/59A, Đường Bình Quới, Phường 28, Quận Bình Thạnh",
+        //     RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"),
+        // },
+        // new()
+        // {
+        //     Id = Guid.Parse("01957a2a-27ca-7315-990e-71e56af48bfa"),
+        //     Name = "Trung Anh Driver",
+        //     Email = "anhthtse151299@gmail.com",
+        //     Password = "@Trunganh123".HashString(),
+        //     Phone = "0918516221",
+        //     Address = "480/59A, Đường Bình Quới, Phường 28, Quận Bình Thạnh",
+        //     RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"),
+        // },
+        // // Owner
+        // new()
+        // {
+        //     Id = Guid.Parse("01951eae-12a7-756d-a8d5-bb1ee525d7b5"),
+        //     Name = "Owner",
+        //     Email = "thinhmusicion@gmail.com",
+        //     Password = "Ph@mDucThinh25102003".HashString(),
+        //     Phone = "0877344076",
+        //     Address = "312, Đường Xô Viết Nghệ Tĩnh, Phường 25, Quận Bình Thạnh",
+        //     RoleId = Guid.Parse("01951e20-7a6e-7106-a6f3-148b63f52149"),
+        // },
+        // new()
+        // {
+        //     Id = Guid.Parse("01957a2a-4e2e-73a3-ac6a-1dfa84e48520"),
+        //     Name = "Trung Anh Owner",
+        //     Email = "anhthtservice@gmail.com",
+        //     Password = "@Trunganh123".HashString(),
+        //     Phone = "0961790276",
+        //     Address = "312, Đường Xô Viết Nghệ Tĩnh, Phường 25, Quận Bình Thạnh",
+        //     RoleId = Guid.Parse("01951e20-7a6e-7106-a6f3-148b63f52149"),
+        // },
         // Technician
         new()
         {
@@ -103,185 +103,185 @@ public class UserGenerator
             Address = "480/59A Đường Bình Quới Phường 28 Quận Bình Thạnh",
             RoleId = Guid.Parse("01951e22-dd78-7933-b742-76110d88728c"),
         },
-        // Pending License Approval - Drivers
-        new()
-        {
-            Id = Guid.Parse("01960d1a-b2e3-7d1c-a384-83b27605c5a5"),
-            Name = "Driver Pending Approval 1",
-            Email = "driver.pending1@example.com",
-            Password = "Password123!".HashString(),
-            Phone = "0901234567",
-            Address = "123 Đường Nguyễn Văn Linh, Quận 7, TP.HCM",
-            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
-            LicenseNumber = "79000123456",
-            LicenseImageFrontUrl =
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
-            LicenseImageBackUrl =
-                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
-            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(5),
-        },
-        new()
-        {
-            Id = Guid.Parse("01960d1a-c4f9-7d2d-b492-94c38716d6b6"),
-            Name = "Driver Pending Approval 2",
-            Email = "driver.pending2@example.com",
-            Password = "Password123!".HashString(),
-            Phone = "0907654321",
-            Address = "456 Đường Lê Văn Lương, Quận 7, TP.HCM",
-            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
-            LicenseNumber = "79000654321",
-            LicenseImageFrontUrl =
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
-            LicenseImageBackUrl =
-                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
-            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(3),
-        },
-        new()
-        {
-            Id = Guid.Parse("01960d1a-d5e8-7d39-c5a0-a5d497827dc7"),
-            Name = "Driver Pending Approval 3",
-            Email = "driver.pending3@example.com",
-            Password = "Password123!".HashString(),
-            Phone = "0912345678",
-            Address = "789 Đường Phạm Văn Đồng, Quận Thủ Đức, TP.HCM",
-            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
-            LicenseNumber = "79000789012",
-            LicenseImageFrontUrl =
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
-            LicenseImageBackUrl =
-                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
-            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(4),
-        },
-        // Pending License Approval - Owners
-        new()
-        {
-            Id = Guid.Parse("01960d1a-e6d7-7d48-d6b1-b6e5a8938ed8"),
-            Name = "Owner Pending Approval 1",
-            Email = "owner.pending1@example.com",
-            Password = "Password123!".HashString(),
-            Phone = "0909876543",
-            Address = "101 Đường Nguyễn Hữu Thọ, Quận 7, TP.HCM",
-            RoleId = Guid.Parse("01951e20-7a6e-7106-a6f3-148b63f52149"), // Owner
-            LicenseNumber = "79000111111",
-            LicenseImageFrontUrl =
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
-            LicenseImageBackUrl =
-                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
-            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(5),
-        },
-        new()
-        {
-            Id = Guid.Parse("01960d1a-f7c6-7d57-e7c2-c7f6b9a49fe9"),
-            Name = "Owner Pending Approval 2",
-            Email = "owner.pending2@example.com",
-            Password = "Password123!".HashString(),
-            Phone = "0903456789",
-            Address = "202 Đường Mai Chí Thọ, Quận 2, TP.HCM",
-            RoleId = Guid.Parse("01951e20-7a6e-7106-a6f3-148b63f52149"), // Owner
-            LicenseNumber = "79000222222",
-            LicenseImageFrontUrl =
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
-            LicenseImageBackUrl =
-                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
-            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(4),
-        },
-        // Approved License Drivers
-        new()
-        {
-            Id = Guid.Parse("01960d1b-a7c9-7e21-d4b3-e8f9c0d1b2a3"),
-            Name = "Driver Approved License 1",
-            Email = "driver.approved1@example.com",
-            Password = "Password123!".HashString(),
-            Phone = "0923456789",
-            Address = "55 Đường Nguyễn Thị Thập, Quận 7, TP.HCM",
-            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
-            LicenseNumber = "79000111222",
-            LicenseImageFrontUrl =
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
-            LicenseImageBackUrl =
-                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
-            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(3),
-        },
-        new()
-        {
-            Id = Guid.Parse("01960d1b-b8d0-7e32-e5c4-f9a0d1b2c3d4"),
-            Name = "Driver Approved License 2",
-            Email = "driver.approved2@example.com",
-            Password = "Password123!".HashString(),
-            Phone = "0934567890",
-            Address = "123 Đường Võ Văn Tần, Quận 3, TP.HCM",
-            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
-            LicenseNumber = "79000222333",
-            LicenseImageFrontUrl =
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
-            LicenseImageBackUrl =
-                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
-            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(5),
-        },
-        new()
-        {
-            Id = Guid.Parse("01960d1b-c9e1-7e43-f6d5-a0b1c2d3e4f5"),
-            Name = "Driver Approved License 3",
-            Email = "driver.approved3@example.com",
-            Password = "Password123!".HashString(),
-            Phone = "0945678901",
-            Address = "45 Đường Lý Tự Trọng, Quận 1, TP.HCM",
-            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
-            LicenseNumber = "79000333444",
-            LicenseImageFrontUrl =
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
-            LicenseImageBackUrl =
-                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
-            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(4),
-        },
-        new()
-        {
-            Id = Guid.Parse("01960d1b-d0f2-7e54-e7d6-b1c2d3e4f5a6"),
-            Name = "Driver Approved License 4",
-            Email = "driver.approved4@example.com",
-            Password = "Password123!".HashString(),
-            Phone = "0956789012",
-            Address = "78 Đường Nguyễn Huệ, Quận 1, TP.HCM",
-            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
-            LicenseNumber = "79000444555",
-            LicenseImageFrontUrl =
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
-            LicenseImageBackUrl =
-                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
-            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(3),
-        },
-        new()
-        {
-            Id = Guid.Parse("01960d1b-e1a3-7e65-f8e7-c2d3e4f5a6b7"),
-            Name = "Driver Approved License 5",
-            Email = "driver.approved5@example.com",
-            Password = "Password123!".HashString(),
-            Phone = "0967890123",
-            Address = "321 Đường Phan Xích Long, Quận Phú Nhuận, TP.HCM",
-            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
-            LicenseNumber = "79000555666",
-            LicenseImageFrontUrl =
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
-            LicenseImageBackUrl =
-                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
-            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(5),
-        },
-        new()
-        {
-            Id = Guid.Parse("01960d1b-f2b4-7e76-a9f8-d3e4f5a6b7c8"),
-            Name = "Driver Approved License 6",
-            Email = "driver.approved6@example.com",
-            Password = "Password123!".HashString(),
-            Phone = "0978901234",
-            Address = "156 Đường Cách Mạng Tháng Tám, Quận 3, TP.HCM",
-            RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
-            LicenseNumber = "79000666777",
-            LicenseImageFrontUrl =
-                "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
-            LicenseImageBackUrl =
-                "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
-            LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(4),
-        },
+        // // Pending License Approval - Drivers
+        // new()
+        // {
+        //     Id = Guid.Parse("01960d1a-b2e3-7d1c-a384-83b27605c5a5"),
+        //     Name = "Driver Pending Approval 1",
+        //     Email = "driver.pending1@example.com",
+        //     Password = "Password123!".HashString(),
+        //     Phone = "0901234567",
+        //     Address = "123 Đường Nguyễn Văn Linh, Quận 7, TP.HCM",
+        //     RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
+        //     LicenseNumber = "79000123456",
+        //     LicenseImageFrontUrl =
+        //         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+        //     LicenseImageBackUrl =
+        //         "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+        //     LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(5),
+        // },
+        // new()
+        // {
+        //     Id = Guid.Parse("01960d1a-c4f9-7d2d-b492-94c38716d6b6"),
+        //     Name = "Driver Pending Approval 2",
+        //     Email = "driver.pending2@example.com",
+        //     Password = "Password123!".HashString(),
+        //     Phone = "0907654321",
+        //     Address = "456 Đường Lê Văn Lương, Quận 7, TP.HCM",
+        //     RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
+        //     LicenseNumber = "79000654321",
+        //     LicenseImageFrontUrl =
+        //         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+        //     LicenseImageBackUrl =
+        //         "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+        //     LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(3),
+        // },
+        // new()
+        // {
+        //     Id = Guid.Parse("01960d1a-d5e8-7d39-c5a0-a5d497827dc7"),
+        //     Name = "Driver Pending Approval 3",
+        //     Email = "driver.pending3@example.com",
+        //     Password = "Password123!".HashString(),
+        //     Phone = "0912345678",
+        //     Address = "789 Đường Phạm Văn Đồng, Quận Thủ Đức, TP.HCM",
+        //     RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
+        //     LicenseNumber = "79000789012",
+        //     LicenseImageFrontUrl =
+        //         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+        //     LicenseImageBackUrl =
+        //         "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+        //     LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(4),
+        // },
+        // // Pending License Approval - Owners
+        // new()
+        // {
+        //     Id = Guid.Parse("01960d1a-e6d7-7d48-d6b1-b6e5a8938ed8"),
+        //     Name = "Owner Pending Approval 1",
+        //     Email = "owner.pending1@example.com",
+        //     Password = "Password123!".HashString(),
+        //     Phone = "0909876543",
+        //     Address = "101 Đường Nguyễn Hữu Thọ, Quận 7, TP.HCM",
+        //     RoleId = Guid.Parse("01951e20-7a6e-7106-a6f3-148b63f52149"), // Owner
+        //     LicenseNumber = "79000111111",
+        //     LicenseImageFrontUrl =
+        //         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+        //     LicenseImageBackUrl =
+        //         "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+        //     LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(5),
+        // },
+        // new()
+        // {
+        //     Id = Guid.Parse("01960d1a-f7c6-7d57-e7c2-c7f6b9a49fe9"),
+        //     Name = "Owner Pending Approval 2",
+        //     Email = "owner.pending2@example.com",
+        //     Password = "Password123!".HashString(),
+        //     Phone = "0903456789",
+        //     Address = "202 Đường Mai Chí Thọ, Quận 2, TP.HCM",
+        //     RoleId = Guid.Parse("01951e20-7a6e-7106-a6f3-148b63f52149"), // Owner
+        //     LicenseNumber = "79000222222",
+        //     LicenseImageFrontUrl =
+        //         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+        //     LicenseImageBackUrl =
+        //         "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+        //     LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(4),
+        // },
+        // // Approved License Drivers
+        // new()
+        // {
+        //     Id = Guid.Parse("01960d1b-a7c9-7e21-d4b3-e8f9c0d1b2a3"),
+        //     Name = "Driver Approved License 1",
+        //     Email = "driver.approved1@example.com",
+        //     Password = "Password123!".HashString(),
+        //     Phone = "0923456789",
+        //     Address = "55 Đường Nguyễn Thị Thập, Quận 7, TP.HCM",
+        //     RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
+        //     LicenseNumber = "79000111222",
+        //     LicenseImageFrontUrl =
+        //         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+        //     LicenseImageBackUrl =
+        //         "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+        //     LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(3),
+        // },
+        // new()
+        // {
+        //     Id = Guid.Parse("01960d1b-b8d0-7e32-e5c4-f9a0d1b2c3d4"),
+        //     Name = "Driver Approved License 2",
+        //     Email = "driver.approved2@example.com",
+        //     Password = "Password123!".HashString(),
+        //     Phone = "0934567890",
+        //     Address = "123 Đường Võ Văn Tần, Quận 3, TP.HCM",
+        //     RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
+        //     LicenseNumber = "79000222333",
+        //     LicenseImageFrontUrl =
+        //         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+        //     LicenseImageBackUrl =
+        //         "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+        //     LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(5),
+        // },
+        // new()
+        // {
+        //     Id = Guid.Parse("01960d1b-c9e1-7e43-f6d5-a0b1c2d3e4f5"),
+        //     Name = "Driver Approved License 3",
+        //     Email = "driver.approved3@example.com",
+        //     Password = "Password123!".HashString(),
+        //     Phone = "0945678901",
+        //     Address = "45 Đường Lý Tự Trọng, Quận 1, TP.HCM",
+        //     RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
+        //     LicenseNumber = "79000333444",
+        //     LicenseImageFrontUrl =
+        //         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+        //     LicenseImageBackUrl =
+        //         "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+        //     LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(4),
+        // },
+        // new()
+        // {
+        //     Id = Guid.Parse("01960d1b-d0f2-7e54-e7d6-b1c2d3e4f5a6"),
+        //     Name = "Driver Approved License 4",
+        //     Email = "driver.approved4@example.com",
+        //     Password = "Password123!".HashString(),
+        //     Phone = "0956789012",
+        //     Address = "78 Đường Nguyễn Huệ, Quận 1, TP.HCM",
+        //     RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
+        //     LicenseNumber = "79000444555",
+        //     LicenseImageFrontUrl =
+        //         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+        //     LicenseImageBackUrl =
+        //         "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+        //     LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(3),
+        // },
+        // new()
+        // {
+        //     Id = Guid.Parse("01960d1b-e1a3-7e65-f8e7-c2d3e4f5a6b7"),
+        //     Name = "Driver Approved License 5",
+        //     Email = "driver.approved5@example.com",
+        //     Password = "Password123!".HashString(),
+        //     Phone = "0967890123",
+        //     Address = "321 Đường Phan Xích Long, Quận Phú Nhuận, TP.HCM",
+        //     RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
+        //     LicenseNumber = "79000555666",
+        //     LicenseImageFrontUrl =
+        //         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+        //     LicenseImageBackUrl =
+        //         "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+        //     LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(5),
+        // },
+        // new()
+        // {
+        //     Id = Guid.Parse("01960d1b-f2b4-7e76-a9f8-d3e4f5a6b7c8"),
+        //     Name = "Driver Approved License 6",
+        //     Email = "driver.approved6@example.com",
+        //     Password = "Password123!".HashString(),
+        //     Phone = "0978901234",
+        //     Address = "156 Đường Cách Mạng Tháng Tám, Quận 3, TP.HCM",
+        //     RoleId = Guid.Parse("01951e20-ab3f-722f-aceb-3485c166e8cf"), // Driver
+        //     LicenseNumber = "79000666777",
+        //     LicenseImageFrontUrl =
+        //         "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlOD0DOcgJ9c2cgjGZi5sb-4VZK8bdJLYiTQ&s",
+        //     LicenseImageBackUrl =
+        //         "https://inkythuatso.com/uploads/thumbnails/800/2022/08/hinh-anh-bang-lai-xe-b2-mat-sau-inkythuatso-09-15-26-07.jpg",
+        //     LicenseExpiryDate = DateTimeOffset.UtcNow.AddYears(4),
+        // },
     ];
 
     public static async Task<User[]> Execute(
