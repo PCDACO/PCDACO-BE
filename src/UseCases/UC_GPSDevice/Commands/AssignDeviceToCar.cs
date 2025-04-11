@@ -5,6 +5,7 @@ using Domain.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
 using UseCases.Abstractions;
 
@@ -20,8 +21,11 @@ public class AssignDeviceToCar
         double Latitude
     ) : IRequest<Result>;
 
-    public class Handler(IAppDBContext context, GeometryFactory geometryFactory)
-        : IRequestHandler<Command, Result>
+    public class Handler(
+        IAppDBContext context,
+        GeometryFactory geometryFactory,
+        ILogger<Handler> logger
+    ) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -33,7 +37,10 @@ public class AssignDeviceToCar
                 .Where(c => c.Id == request.CarId)
                 .FirstOrDefaultAsync(cancellationToken);
             if (gettingCar is null)
+            {
+                logger.LogError("Car not found: {CarId}", request.CarId);
                 return Result.Error(ResponseMessages.CarNotFound);
+            }
 
             // Check car must has any inprogress inspection schedule to continue
             if (
@@ -41,9 +48,15 @@ public class AssignDeviceToCar
                     s.Status == InspectionScheduleStatusEnum.InProgress
                 )
             )
+            {
+                logger.LogError(
+                    "Car {CarId} has no in-progress inspection schedule",
+                    request.CarId
+                );
                 return Result.Error(
                     "Xe chưa có lịch kiểm định nào đang được tiến hành, không thể gán thiết bị GPS !"
                 );
+            }
 
             // check device
             GPSDevice? gettingDevice = await context
@@ -55,6 +68,10 @@ public class AssignDeviceToCar
             {
                 if (gettingDevice.Status != DeviceStatusEnum.Available)
                 {
+                    logger.LogError(
+                        "Device {OSBuildId} is not available for assignment",
+                        request.OSBuildId
+                    );
                     return Result.Error(ResponseMessages.GPSDeviceIsNotAvailable);
                 }
                 gettingDevice.Name = request.DeviceName;
@@ -87,6 +104,11 @@ public class AssignDeviceToCar
                 // Car already has GPS association
                 if (checkingCarGPS.DeviceId == gettingDevice.Id && !checkingCarGPS.IsDeleted)
                 {
+                    logger.LogError(
+                        "Device {OSBuildId} is already assigned to Car {CarId}",
+                        request.OSBuildId,
+                        request.CarId
+                    );
                     // Error if same device is already actively assigned to car
                     return Result.Error(ResponseMessages.CarGPSIsExisted);
                 }

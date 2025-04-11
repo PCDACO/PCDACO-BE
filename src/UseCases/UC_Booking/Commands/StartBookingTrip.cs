@@ -4,6 +4,7 @@ using Domain.Enums;
 using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
 using UseCases.Abstractions;
 using UseCases.DTOs;
@@ -19,6 +20,7 @@ public sealed class StartBookingTrip
     internal sealed class Handler(
         IAppDBContext context,
         GeometryFactory geometryFactory,
+        ILogger<Handler> logger,
         CurrentUser currentUser
     ) : IRequestHandler<Command, Result>
     {
@@ -36,7 +38,10 @@ public sealed class StartBookingTrip
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
+            {
+                logger.LogError("Booking not found: {BookingId}", request.BookingId);
                 return Result.NotFound("Không tìm thấy booking");
+            }
 
             if (booking.UserId != currentUser.User.Id)
                 return Result.Forbidden(
@@ -46,6 +51,11 @@ public sealed class StartBookingTrip
             // Validate current status
             if (booking.Status != BookingStatusEnum.ReadyForPickup)
             {
+                logger.LogError(
+                    "Cannot start trip for booking {BookingId} in status {Status}",
+                    booking.Id,
+                    booking.Status
+                );
                 return Result.Conflict(
                     $"Không thể phê duyệt booking ở trạng thái " + booking.Status.ToString()
                 );
@@ -54,7 +64,10 @@ public sealed class StartBookingTrip
             var carGPS = booking.Car.GPS;
 
             if (carGPS == null)
-                return Result.NotFound("Không tìm thấy vị trí GPS của xe");
+            {
+                logger.LogError("Car GPS not found for booking {BookingId}", booking.Id);
+                return Result.NotFound("Không tìm thấy thiết bị GPS của xe");
+            }
 
             // if (!booking.IsPaid)
             //     return Result.Error("Cần thanh toán trước khi bắt đầu chuyến đi");
@@ -71,6 +84,10 @@ public sealed class StartBookingTrip
 
             if (distanceInMeters > MAX_ALLOWED_DISTANCE_METERS)
             {
+                logger.LogWarning(
+                    "Driver is too far from the car: {Distance} meters",
+                    distanceInMeters
+                );
                 return Result.Error(
                     $"Bạn phải ở trong phạm vi {MAX_ALLOWED_DISTANCE_METERS}m từ xe để bắt đầu chuyến đi. "
                         + $"Hiện tại bạn cách xe {(int)distanceInMeters}m"
@@ -103,7 +120,9 @@ public sealed class StartBookingTrip
         {
             RuleFor(x => x.BookingId).NotEmpty().WithMessage("ID booking không được để trống");
 
-            RuleFor(x => x.Latitude).InclusiveBetween(-90, 90).WithMessage("Cần đến gần chiếc xe thì mới bắt đầu được");
+            RuleFor(x => x.Latitude)
+                .InclusiveBetween(-90, 90)
+                .WithMessage("Cần đến gần chiếc xe thì mới bắt đầu được");
 
             RuleFor(x => x.Longitude)
                 .InclusiveBetween(-180, 180)

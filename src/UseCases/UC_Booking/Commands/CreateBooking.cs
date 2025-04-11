@@ -46,6 +46,8 @@ public sealed class CreateBooking
             if (currentUser.User.IsBanned)
                 return Result.Forbidden("Tài khoản của bạn đã bị cấm sử dụng");
 
+            // TODO: Owner cannot create Booking on their own cars
+
             // Check for unpaid compensation
             var hasUnpaidCompensation = await context.BookingReports.AnyAsync(
                 r =>

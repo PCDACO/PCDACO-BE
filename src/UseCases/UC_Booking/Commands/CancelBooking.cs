@@ -208,6 +208,11 @@ public sealed class CancelBooking
             CancellationToken cancellationToken
         )
         {
+            logger.LogInformation(
+                "Processing driver cancellation refund for booking {BookingId}",
+                booking.Id
+            );
+
             var admin = await context.Users.FirstOrDefaultAsync(
                 u => u.Role.Name == UserRoleNames.Admin,
                 cancellationToken
@@ -269,12 +274,23 @@ public sealed class CancelBooking
                     bookingLockedBalance.Amount -= ownerRefundAmount;
                     booking.Car.Owner.LockedBalance -= ownerRefundAmount;
 
+                    logger.LogInformation(
+                        "Refunding {Amount} from booking's locked balance for booking {BookingId}",
+                        ownerRefundAmount,
+                        booking.Id
+                    );
+
                     // If there's remaining locked balance, move it to available balance
                     if (bookingLockedBalance.Amount > 0)
                     {
                         booking.Car.Owner.Balance += bookingLockedBalance.Amount;
                         booking.Car.Owner.LockedBalance -= bookingLockedBalance.Amount;
                         bookingLockedBalance.Amount = 0;
+
+                        logger.LogInformation(
+                            "Remaining locked balance moved to available balance for booking {BookingId}",
+                            booking.Id
+                        );
                     }
                 }
                 else
@@ -284,12 +300,25 @@ public sealed class CancelBooking
                     booking.Car.Owner.LockedBalance -= bookingLockedBalance.Amount;
                     booking.Car.Owner.Balance -= remainingRefund;
                     bookingLockedBalance.Amount = 0;
+
+                    logger.LogInformation(
+                        "Refunding {Amount} from booking's locked balance and {RemainingRefund} from available balance for booking {BookingId}",
+                        bookingLockedBalance.Amount,
+                        remainingRefund,
+                        booking.Id
+                    );
                 }
             }
             else
             {
                 // If no locked balance record found, take from available balance
                 booking.Car.Owner.Balance -= ownerRefundAmount;
+
+                logger.LogInformation(
+                    "Refunding {Amount} from available balance for booking {BookingId}",
+                    ownerRefundAmount,
+                    booking.Id
+                );
             }
 
             admin.Balance -= adminRefundAmount;
@@ -319,6 +348,11 @@ public sealed class CancelBooking
             CancellationToken cancellationToken
         )
         {
+            logger.LogInformation(
+                "Processing owner cancellation refund for booking {BookingId}",
+                booking.Id
+            );
+
             var admin = await context.Users.FirstOrDefaultAsync(
                 u => u.Role.Name == UserRoleNames.Admin,
                 cancellationToken
@@ -374,12 +408,23 @@ public sealed class CancelBooking
                     bookingLockedBalance.Amount -= booking.TotalAmount;
                     booking.Car.Owner.LockedBalance -= booking.TotalAmount;
 
+                    logger.LogInformation(
+                        "Refunding {Amount} from booking's locked balance for booking {BookingId}",
+                        booking.TotalAmount,
+                        booking.Id
+                    );
+
                     // If there's remaining locked balance, move it to available balance
                     if (bookingLockedBalance.Amount > 0)
                     {
                         booking.Car.Owner.Balance += bookingLockedBalance.Amount;
                         booking.Car.Owner.LockedBalance -= bookingLockedBalance.Amount;
                         bookingLockedBalance.Amount = 0;
+
+                        logger.LogInformation(
+                            "Remaining locked balance moved to available balance for booking {BookingId}",
+                            booking.Id
+                        );
                     }
                 }
                 else
@@ -389,12 +434,25 @@ public sealed class CancelBooking
                     booking.Car.Owner.LockedBalance -= bookingLockedBalance.Amount;
                     booking.Car.Owner.Balance -= remainingRefund;
                     bookingLockedBalance.Amount = 0;
+
+                    logger.LogInformation(
+                        "Refunding {Amount} from booking's locked balance and {RemainingRefund} from available balance for booking {BookingId}",
+                        bookingLockedBalance.Amount,
+                        remainingRefund,
+                        booking.Id
+                    );
                 }
             }
             else
             {
                 // If no locked balance record found, take from available balance
                 booking.Car.Owner.Balance -= booking.TotalAmount;
+
+                logger.LogInformation(
+                    "Refunding {Amount} from available balance for booking {BookingId}",
+                    booking.TotalAmount,
+                    booking.Id
+                );
             }
 
             // Apply penalty from available balance

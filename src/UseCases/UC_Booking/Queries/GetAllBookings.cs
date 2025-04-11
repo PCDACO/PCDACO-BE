@@ -73,6 +73,8 @@ public sealed class GetAllBookings
 
             logger.LogInformation("{UserRole}", currentUser.User?.Role);
 
+            // TODO: Get all Bookings when Owner create
+
             /// Filter by user role
             if (currentUser.User!.IsDriver())
                 query = query.Where(b => b.UserId == currentUser.User.Id);

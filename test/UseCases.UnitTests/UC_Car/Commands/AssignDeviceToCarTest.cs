@@ -4,6 +4,7 @@ using Domain.Entities;
 using Domain.Enums;
 using FluentValidation.TestHelper;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
 using Persistance.Data;
@@ -21,6 +22,9 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
     private readonly GeometryFactory _geometryFactory =
         NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
+    private readonly ILogger<AssignDeviceToCar.Handler> _logger = LoggerFactory
+        .Create(builder => builder.AddConsole())
+        .CreateLogger<AssignDeviceToCar.Handler>();
 
     public Task InitializeAsync() => Task.CompletedTask;
 
@@ -57,7 +61,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.InspectionSchedules.AddAsync(inspectionSchedule);
         await _dbContext.SaveChangesAsync();
 
-        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory);
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
             OSBuildId: "TEST-DEVICE",
@@ -114,7 +118,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         double longitude = 106.7004238;
         double latitude = 10.7756587;
 
-        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory);
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
             OSBuildId: osBuildId,
@@ -154,7 +158,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         string osBuildId = "TESTBUILD456";
         string deviceName = "Test GPS Device";
 
-        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory);
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: nonExistentCarId,
             OSBuildId: osBuildId,
@@ -224,7 +228,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.GPSDevices.AddAsync(existingDevice);
         await _dbContext.SaveChangesAsync();
 
-        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory);
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
             OSBuildId: existingOsBuildId,
@@ -309,7 +313,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.CarGPSes.AddAsync(existingCarGPS);
         await _dbContext.SaveChangesAsync();
 
-        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory);
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
             OSBuildId: "DEVICE-123",
@@ -396,7 +400,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         double newLongitude = 106.7004238;
         double newLatitude = 10.7756587;
 
-        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory);
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
             OSBuildId: "DEVICE-456",
@@ -466,7 +470,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.GPSDevices.AddAsync(existingDevice);
         await _dbContext.SaveChangesAsync();
 
-        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory);
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
             OSBuildId: existingOsBuildId,
@@ -537,7 +541,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.GPSDevices.AddAsync(availableDevice);
         await _dbContext.SaveChangesAsync();
 
-        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory);
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
             OSBuildId: deviceOsBuildId,
@@ -631,7 +635,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.SaveChangesAsync();
 
         // Set up handler with second device
-        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory);
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
             OSBuildId: "SECOND-DEVICE",
@@ -704,8 +708,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         var result = validator.TestValidate(command);
 
         // Assert
-        result
-            .ShouldHaveValidationErrorFor(x => x.OSBuildId);
+        result.ShouldHaveValidationErrorFor(x => x.OSBuildId);
     }
 
     [Fact]
@@ -725,8 +728,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         var result = validator.TestValidate(command);
 
         // Assert
-        result
-            .ShouldHaveValidationErrorFor(x => x.DeviceName);
+        result.ShouldHaveValidationErrorFor(x => x.DeviceName);
     }
 
     [Fact]
