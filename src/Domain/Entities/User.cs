@@ -53,6 +53,9 @@ public class User : BaseEntity
     public ICollection<Transaction> ReceivedTransactions { get; set; } = [];
     public ICollection<RefreshToken> RefreshTokens { get; set; } = [];
 
+    [InverseProperty(nameof(BookingLockedBalance.Owner))]
+    public ICollection<BookingLockedBalance> BookingLockedBalances { get; set; } = [];
+
     [InverseProperty(nameof(InspectionSchedule.Technician))]
     public ICollection<InspectionSchedule> TechnicianInspectionSchedules { get; set; } = [];
 
