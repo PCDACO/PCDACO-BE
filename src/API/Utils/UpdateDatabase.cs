@@ -55,37 +55,37 @@ public class UpdateDatabase
                 keyManageService,
                 tokenService
             );
-            Car[] cars = await CarGenerator.Execute(
-                transmissionTypes,
-                models,
-                fuelTypes,
-                tokenService,
-                geometryFactory
-            );
+            // Car[] cars = await CarGenerator.Execute(
+            //     transmissionTypes,
+            //     models,
+            //     fuelTypes,
+            //     tokenService,
+            //     geometryFactory
+            // );
             // Generate inspection schedules
-            InspectionSchedule[] inspectionSchedules = InspectionScheduleGenerator.Execute(
-                cars,
-                users,
-                userRoles
-            );
-            BankAccount[] bankAccounts = await BankAccountGenerator.Execute(
-                users,
-                bankInfos,
-                encryptionSettings,
-                aesEncryptionService,
-                keyManageService
-            );
-            WithdrawalRequest[] withdrawalRequests = WithdrawalRequestGenerator.Execute(
-                users,
-                bankAccounts
-            );
-            Booking[] bookings = BookingGenerator.Execute(users, cars, userRoles, 20);
-            Transaction[] transactions = TransactionGenerator.Execute(
-                users,
-                transactionTypes,
-                bankAccounts
-            );
-            BookingReport[] reports = BookingReportGenerator.Execute(bookings, users, cars);
+            // InspectionSchedule[] inspectionSchedules = InspectionScheduleGenerator.Execute(
+            //     cars,
+            //     users,
+            //     userRoles
+            // );
+            // BankAccount[] bankAccounts = await BankAccountGenerator.Execute(
+            //     users,
+            //     bankInfos,
+            //     encryptionSettings,
+            //     aesEncryptionService,
+            //     keyManageService
+            // );
+            // WithdrawalRequest[] withdrawalRequests = WithdrawalRequestGenerator.Execute(
+            //     users,
+            //     bankAccounts
+            // );
+            // Booking[] bookings = BookingGenerator.Execute(users, cars, userRoles, 20);
+            // Transaction[] transactions = TransactionGenerator.Execute(
+            //     users,
+            //     transactionTypes,
+            //     bankAccounts
+            // );
+            // BookingReport[] reports = BookingReportGenerator.Execute(bookings, users, cars);
             tasks.Add(context.AddRangeAsync(userRoles));
             tasks.Add(context.AddRangeAsync(amenities));
             tasks.Add(context.AddRangeAsync(bankInfos));
@@ -96,14 +96,14 @@ public class UpdateDatabase
             tasks.Add(context.AddRangeAsync(manufacturers));
             tasks.Add(context.AddRangeAsync(models));
             tasks.Add(context.AddRangeAsync(users));
-            tasks.Add(context.AddRangeAsync(cars));
-            tasks.Add(context.AddRangeAsync(inspectionSchedules));
+            // tasks.Add(context.AddRangeAsync(cars));
+            // tasks.Add(context.AddRangeAsync(inspectionSchedules));
             tasks.Add(context.AddRangeAsync(gpsDevices));
-            tasks.Add(context.AddRangeAsync(bankAccounts));
-            tasks.Add(context.AddRangeAsync(withdrawalRequests));
-            tasks.Add(context.AddRangeAsync(bookings));
-            tasks.Add(context.AddRangeAsync(transactions));
-            tasks.Add(context.AddRangeAsync(reports));
+            // tasks.Add(context.AddRangeAsync(bankAccounts));
+            // tasks.Add(context.AddRangeAsync(withdrawalRequests));
+            // tasks.Add(context.AddRangeAsync(bookings));
+            // tasks.Add(context.AddRangeAsync(transactions));
+            // tasks.Add(context.AddRangeAsync(reports));
             await Task.WhenAll(tasks);
             await context.SaveChangesAsync();
         }
