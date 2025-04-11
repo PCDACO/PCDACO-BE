@@ -68,7 +68,8 @@ public class AssignDeviceToCar
 
             // check device
             GPSDevice? gettingDevice = await context
-                .GPSDevices.Where(d => d.OSBuildId == request.OSBuildId)
+                .GPSDevices.IgnoreQueryFilters()
+                .Where(d => d.OSBuildId == request.OSBuildId)
                 .FirstOrDefaultAsync(cancellationToken);
 
             // add new device
@@ -76,6 +77,7 @@ public class AssignDeviceToCar
             {
                 gettingDevice.Name = request.DeviceName;
                 gettingDevice.Status = DeviceStatusEnum.InUsed;
+                gettingDevice.IsDeleted = false;
                 gettingDevice.UpdatedAt = DateTime.UtcNow;
             }
             else
@@ -96,7 +98,8 @@ public class AssignDeviceToCar
 
             // Find car GPS association
             CarGPS? checkingCarGPS = await context
-                .CarGPSes.Where(c => c.CarId == request.CarId)
+                .CarGPSes.IgnoreQueryFilters()
+                .Where(c => c.CarId == request.CarId)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (checkingCarGPS is not null)
