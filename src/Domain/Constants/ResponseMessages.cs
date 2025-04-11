@@ -32,7 +32,7 @@ public class ResponseMessages
     public const string GPSDeviceIsNotAvailable = "Thiết bị GPS không khả dụng";
 
     // CAR GPS
-    public const string CarGPSIsExisted = "Thiết bị GPS này đang được sử dụng";
+    public const string CarGPSIsExisted = "Thiết bị GPS đã được gán cho xe này";
 
     // DEVICE STATUS
     public const string DeviceStatusNotFound = "Không tìm thấy trạng thái thiết bị";
@@ -109,6 +109,7 @@ public class ResponseMessages
     // Report
     public const string ReportNotFound = "Không tìm thấy báo cáo";
     public const string ReportNotUnderReviewed = "Báo cáo không ở trạng thái đang chờ duyệt";
+
     // Transaction
     public const string TransactionNotFound = "Không tìm thấy giao dịch";
 }

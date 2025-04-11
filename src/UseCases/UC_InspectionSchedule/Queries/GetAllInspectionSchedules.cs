@@ -53,7 +53,11 @@ public sealed class GetAllInspectionSchedules
             CancellationToken cancellationToken
         )
         {
-            if (!currentUser.User!.IsConsultant() && !currentUser.User!.IsTechnician())
+            if (
+                !currentUser.User!.IsConsultant()
+                && !currentUser.User!.IsTechnician()
+                && !currentUser.User!.IsOwner()
+            )
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             var query = context
@@ -62,6 +66,12 @@ public sealed class GetAllInspectionSchedules
                 .Include(s => s.Car)
                 .ThenInclude(c => c.Owner)
                 .Where(s => !s.IsDeleted);
+
+            // Filter by owner if the user is an owner
+            if (currentUser.User.IsOwner())
+            {
+                query = query.Where(s => s.Car.OwnerId == currentUser.User.Id);
+            }
 
             // Filter by technician if provided
             if (request.TechnicianId != null)
