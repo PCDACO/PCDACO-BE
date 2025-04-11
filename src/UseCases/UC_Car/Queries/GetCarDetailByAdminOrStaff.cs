@@ -164,7 +164,12 @@ public class GetCarDetailByAdminOrStaff
                     )),
                 ],
                 contractDetail,
-                car.InspectionSchedules.Any()
+                car.InspectionSchedules.Any(s =>
+                    s.Status == InspectionScheduleStatusEnum.Approved
+                    || s.Status == InspectionScheduleStatusEnum.InProgress
+                    || s.Status == InspectionScheduleStatusEnum.Pending
+                    || s.Status == InspectionScheduleStatusEnum.Signed
+                )
             );
         }
     };
