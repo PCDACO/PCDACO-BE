@@ -26,6 +26,7 @@ public static class GetCurrentUser
         int TotalRent, // Total completed Rent driver has
         int TotalRented, // Total rented owner has
         decimal Balance,
+        decimal LockedBalance, // Total locked balance of Owner
         int TotalCar // Total car owner has
     )
     {
@@ -71,6 +72,7 @@ public static class GetCurrentUser
                     )
                     : 0,
                 user.Balance,
+                user.LockedBalance,
                 // Total car owner has else if user has role driver then 0
                 TotalCar: user.Role.Name == UserRoleNames.Owner
                     ? user.Cars.Count(c => !c.IsDeleted && c.OwnerId == user.Id)
