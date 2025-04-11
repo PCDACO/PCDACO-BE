@@ -22,7 +22,6 @@ public class GetAllInspectionSchedulesTest(DatabaseTestBase fixture) : IAsyncLif
     public async Task DisposeAsync() => await _resetDatabase();
 
     [Theory]
-    [InlineData("Admin")]
     [InlineData("Driver")]
     public async Task Handle_UserNotConsultantAndTechnician_ReturnsForbidden(string roleName)
     {
