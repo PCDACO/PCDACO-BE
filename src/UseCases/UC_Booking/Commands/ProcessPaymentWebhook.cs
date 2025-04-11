@@ -104,14 +104,12 @@ public sealed class ProcessPaymentWebhook
             admin.Balance += booking.PlatformFee;
             booking.Car.Owner.LockedBalance += ownerEarningTransaction.Amount;
 
-            booking.Car.Owner.BookingLockedBalances.Add(
-                new BookingLockedBalance
-                {
-                    OwnerId = booking.Car.Owner.Id,
-                    BookingId = booking.Id,
-                    Amount = ownerEarningTransaction.Amount
-                }
-            );
+            var bookingLockedBalance = new BookingLockedBalance
+            {
+                OwnerId = booking.Car.Owner.Id,
+                BookingId = booking.Id,
+                Amount = ownerEarningTransaction.Amount
+            };
 
             // Update booking and statistics
             booking.IsPaid = true;
@@ -121,6 +119,7 @@ public sealed class ProcessPaymentWebhook
                 platformFeeTransaction,
                 ownerEarningTransaction
             );
+            context.BookingLockedBalances.Add(bookingLockedBalance);
             await context.SaveChangesAsync(cancellationToken);
 
             BackgroundJob.Enqueue(
