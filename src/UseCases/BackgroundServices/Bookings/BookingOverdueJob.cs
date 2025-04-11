@@ -117,22 +117,44 @@ public class BookingOverdueJob(IAppDBContext context, IEmailService emailService
             BalanceAfter = booking.User.Balance + refundAmount
         };
 
-        // Check owner's available balance and handle refund from locked balance if needed
-        var ownerAvailableBalance = booking.Car.Owner.Balance - booking.Car.Owner.LockedBalance;
+        // Find the booking's locked balance
+        var bookingLockedBalance = booking.Car.Owner.BookingLockedBalances.FirstOrDefault(b =>
+            b.BookingId == booking.Id
+        );
 
-        if (ownerAvailableBalance < ownerRefundAmount)
+        if (bookingLockedBalance != null)
         {
-            var amountFromLocked = ownerRefundAmount - ownerAvailableBalance;
-            booking.Car.Owner.LockedBalance = Math.Max(
-                0,
-                booking.Car.Owner.LockedBalance - amountFromLocked
-            );
-            ownerRefundTransaction.Description += " (Hoàn tiền từ số dư bị khóa)";
+            if (bookingLockedBalance.Amount >= ownerRefundAmount)
+            {
+                // Use booking's locked balance for refund
+                bookingLockedBalance.Amount -= ownerRefundAmount;
+                booking.Car.Owner.LockedBalance -= ownerRefundAmount;
+
+                // If there's remaining locked balance, move it to available balance
+                if (bookingLockedBalance.Amount > 0)
+                {
+                    booking.Car.Owner.Balance += bookingLockedBalance.Amount;
+                    booking.Car.Owner.LockedBalance -= bookingLockedBalance.Amount;
+                    bookingLockedBalance.Amount = 0;
+                }
+            }
+            else
+            {
+                // If booking's locked balance is insufficient, use all of it and take the rest from available balance
+                var remainingRefund = ownerRefundAmount - bookingLockedBalance.Amount;
+                booking.Car.Owner.LockedBalance -= bookingLockedBalance.Amount;
+                booking.Car.Owner.Balance -= remainingRefund;
+                bookingLockedBalance.Amount = 0;
+            }
+        }
+        else
+        {
+            // If no locked balance record found, take from available balance
+            booking.Car.Owner.Balance -= ownerRefundAmount;
         }
 
         // Update balances
         admin.Balance -= adminRefundAmount;
-        booking.Car.Owner.Balance -= ownerRefundAmount;
         booking.User.Balance += refundAmount;
 
         // Update booking refund info

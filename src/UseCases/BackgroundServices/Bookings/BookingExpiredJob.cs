@@ -157,20 +157,44 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
             BalanceAfter = booking.User.Balance + refundAmount
         };
 
-        // Check owner's available balance and handle refund from locked balance if needed
-        var ownerAvailableBalance = booking.Car.Owner.Balance - booking.Car.Owner.LockedBalance;
-        if (ownerAvailableBalance < ownerRefundAmount)
+        // Find the booking's locked balance
+        var bookingLockedBalance = booking.Car.Owner.BookingLockedBalances.FirstOrDefault(b =>
+            b.BookingId == booking.Id
+        );
+
+        if (bookingLockedBalance != null)
         {
-            // If owner has insufficient available balance, take from locked balance
-            var amountFromLocked = ownerRefundAmount - ownerAvailableBalance;
-            booking.Car.Owner.LockedBalance = Math.Max(0, booking.Car.Owner.LockedBalance - amountFromLocked);
-            // Add a note to the transaction description
-            ownerRefundTransaction.Description += " (Hoàn tiền từ số dư bị khóa)";
+            if (bookingLockedBalance.Amount >= ownerRefundAmount)
+            {
+                // Use booking's locked balance for refund
+                bookingLockedBalance.Amount -= ownerRefundAmount;
+                booking.Car.Owner.LockedBalance -= ownerRefundAmount;
+
+                // If there's remaining locked balance, move it to available balance
+                if (bookingLockedBalance.Amount > 0)
+                {
+                    booking.Car.Owner.Balance += bookingLockedBalance.Amount;
+                    booking.Car.Owner.LockedBalance -= bookingLockedBalance.Amount;
+                    bookingLockedBalance.Amount = 0;
+                }
+            }
+            else
+            {
+                // If booking's locked balance is insufficient, use all of it and take the rest from available balance
+                var remainingRefund = ownerRefundAmount - bookingLockedBalance.Amount;
+                booking.Car.Owner.LockedBalance -= bookingLockedBalance.Amount;
+                booking.Car.Owner.Balance -= remainingRefund;
+                bookingLockedBalance.Amount = 0;
+            }
+        }
+        else
+        {
+            // If no locked balance record found, take from available balance
+            booking.Car.Owner.Balance -= ownerRefundAmount;
         }
 
         // Update balances
         admin.Balance -= adminRefundAmount;
-        booking.Car.Owner.Balance -= ownerRefundAmount;
         booking.User.Balance += refundAmount;
 
         // Update booking refund info
@@ -186,7 +210,7 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
         var booking = await context
             .Bookings.Include(b => b.Car)
             .ThenInclude(c => c.Owner)
-            .Include(b => b.User)
+            .ThenInclude(o => o.BookingLockedBalances)
             .FirstOrDefaultAsync(b =>
                 b.Id == bookingId
                 && (
@@ -205,15 +229,15 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
             "Hết hạn tự động do không thanh toán trong vòng 12 giờ sau khi được phê duyệt";
         booking.Car.Status = CarStatusEnum.Available;
 
-        // Since this is an unpaid booking, we don't need to handle any refunds
-        // but we should ensure any locked balance is released if it exists
-        if (booking.Car.Owner.LockedBalance > 0)
+        // Find and clear any locked balance for this booking
+        var bookingLockedBalance = booking.Car.Owner.BookingLockedBalances.FirstOrDefault(b =>
+            b.BookingId == booking.Id
+        );
+
+        if (bookingLockedBalance != null)
         {
-            var lockedAmountForBooking = booking.BasePrice; // The owner's portion
-            booking.Car.Owner.LockedBalance = Math.Max(
-                0,
-                booking.Car.Owner.LockedBalance - lockedAmountForBooking
-            );
+            booking.Car.Owner.LockedBalance -= bookingLockedBalance.Amount;
+            bookingLockedBalance.Amount = 0;
         }
 
         await context.SaveChangesAsync(CancellationToken.None);

@@ -118,7 +118,7 @@ public sealed class CancelBooking
 
                 if (booking.IsPaid)
                 {
-                    await HandleRefundTransactions(
+                    await HandleDriverCancellationRefund(
                         booking,
                         refundPercentage,
                         $"Hủy đặt xe {request.CancelReason}",
@@ -201,7 +201,7 @@ public sealed class CancelBooking
                 _ => REFUND_PERCENTAGE_BEFORE_1_DAY,
             };
 
-        private async Task HandleRefundTransactions(
+        private async Task HandleDriverCancellationRefund(
             Booking booking,
             decimal refundPercentage,
             string reason,
@@ -256,14 +256,42 @@ public sealed class CancelBooking
                 BalanceAfter = booking.User.Balance + refundAmount
             };
 
-            var ownerAvailableBalance = booking.Car.Owner.Balance - booking.Car.Owner.LockedBalance;
-            if (ownerAvailableBalance < ownerRefundAmount)
+            // Get the booking's locked balance
+            var bookingLockedBalance = booking.Car.Owner.BookingLockedBalances.FirstOrDefault(b =>
+                b.BookingId == booking.Id
+            );
+
+            if (bookingLockedBalance != null)
             {
-                // If owner has insufficient available balance, take from locked balance
-                booking.Car.Owner.LockedBalance -= ownerRefundAmount;
+                if (bookingLockedBalance.Amount >= ownerRefundAmount)
+                {
+                    // Use booking's locked balance for refund
+                    bookingLockedBalance.Amount -= ownerRefundAmount;
+                    booking.Car.Owner.LockedBalance -= ownerRefundAmount;
+
+                    // If there's remaining locked balance, move it to available balance
+                    if (bookingLockedBalance.Amount > 0)
+                    {
+                        booking.Car.Owner.Balance += bookingLockedBalance.Amount;
+                        booking.Car.Owner.LockedBalance -= bookingLockedBalance.Amount;
+                        bookingLockedBalance.Amount = 0;
+                    }
+                }
+                else
+                {
+                    // If booking's locked balance is insufficient, use all of it and take the rest from available balance
+                    var remainingRefund = ownerRefundAmount - bookingLockedBalance.Amount;
+                    booking.Car.Owner.LockedBalance -= bookingLockedBalance.Amount;
+                    booking.Car.Owner.Balance -= remainingRefund;
+                    bookingLockedBalance.Amount = 0;
+                }
+            }
+            else
+            {
+                // If no locked balance record found, take from available balance
+                booking.Car.Owner.Balance -= ownerRefundAmount;
             }
 
-            booking.Car.Owner.Balance -= ownerRefundAmount;
             admin.Balance -= adminRefundAmount;
             booking.User.Balance += refundAmount;
 
@@ -332,6 +360,47 @@ public sealed class CancelBooking
                 Description = $"Phí phạt hủy booking: {reason}",
                 BalanceAfter = admin.Balance + penaltyAmount
             };
+
+            // Get the booking's locked balance
+            var bookingLockedBalance = booking.Car.Owner.BookingLockedBalances.FirstOrDefault(b =>
+                b.BookingId == booking.Id
+            );
+
+            if (bookingLockedBalance != null)
+            {
+                if (bookingLockedBalance.Amount >= booking.TotalAmount)
+                {
+                    // Use booking's locked balance for refund
+                    bookingLockedBalance.Amount -= booking.TotalAmount;
+                    booking.Car.Owner.LockedBalance -= booking.TotalAmount;
+
+                    // If there's remaining locked balance, move it to available balance
+                    if (bookingLockedBalance.Amount > 0)
+                    {
+                        booking.Car.Owner.Balance += bookingLockedBalance.Amount;
+                        booking.Car.Owner.LockedBalance -= bookingLockedBalance.Amount;
+                        bookingLockedBalance.Amount = 0;
+                    }
+                }
+                else
+                {
+                    // If booking's locked balance is insufficient, use all of it and take the rest from available balance
+                    var remainingRefund = booking.TotalAmount - bookingLockedBalance.Amount;
+                    booking.Car.Owner.LockedBalance -= bookingLockedBalance.Amount;
+                    booking.Car.Owner.Balance -= remainingRefund;
+                    bookingLockedBalance.Amount = 0;
+                }
+            }
+            else
+            {
+                // If no locked balance record found, take from available balance
+                booking.Car.Owner.Balance -= booking.TotalAmount;
+            }
+
+            // Apply penalty from available balance
+            booking.Car.Owner.Balance -= penaltyAmount;
+            admin.Balance += penaltyAmount;
+            booking.User.Balance += booking.TotalAmount;
 
             context.Transactions.AddRange(refundTransaction, penaltyTransaction);
         }
