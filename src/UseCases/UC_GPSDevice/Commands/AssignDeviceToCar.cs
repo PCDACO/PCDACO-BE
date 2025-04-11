@@ -19,15 +19,23 @@ public class AssignDeviceToCar
         string DeviceName,
         double Longtitude,
         double Latitude
-    ) : IRequest<Result>;
+    ) : IRequest<Result<Response>>;
+
+    public sealed record Response(Guid Id)
+    {
+        public static Response FromEntity(GPSDevice gpsDevice) => new(gpsDevice.Id);
+    };
 
     public class Handler(
         IAppDBContext context,
         GeometryFactory geometryFactory,
         ILogger<Handler> logger
-    ) : IRequestHandler<Command, Result>
+    ) : IRequestHandler<Command, Result<Response>>
     {
-        public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
+        public async Task<Result<Response>> Handle(
+            Command request,
+            CancellationToken cancellationToken
+        )
         {
             // check car
             Car? gettingCar = await context
@@ -127,7 +135,7 @@ public class AssignDeviceToCar
                 await context.CarGPSes.AddAsync(checkingCarGPS, cancellationToken);
             }
             await context.SaveChangesAsync(cancellationToken);
-            return Result.SuccessWithMessage(ResponseMessages.Created);
+            return Result.Success(Response.FromEntity(gettingDevice), ResponseMessages.Created);
         }
     }
 

@@ -137,6 +137,8 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Verify device was created
         var device = await _dbContext.GPSDevices.FirstOrDefaultAsync(d => d.OSBuildId == osBuildId);
         Assert.NotNull(device);
+        Assert.True(!string.IsNullOrEmpty(device.Id.ToString()));
+        Assert.Equal(osBuildId, device.OSBuildId);
         Assert.Equal(deviceName, device.Name);
         Assert.Equal(DeviceStatusEnum.InUsed, device.Status);
 
@@ -484,6 +486,8 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
+        // Check gps device id updated as same as response result id
+        Assert.Equal(availableDevice.Id, result.Value.Id);
 
         // Verify device status is changed to InUsed after assignment
         var updatedDevice = await _dbContext.GPSDevices.FindAsync(availableDevice.Id);
