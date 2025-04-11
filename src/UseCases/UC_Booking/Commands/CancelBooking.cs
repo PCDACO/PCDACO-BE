@@ -39,6 +39,7 @@ public sealed class CancelBooking
             var booking = await context
                 .Bookings.Include(x => x.Car)
                 .ThenInclude(x => x.Owner)
+                .ThenInclude(o => o.BookingLockedBalances)
                 .Include(x => x.User)
                 .Include(x => x.Car.Model)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);

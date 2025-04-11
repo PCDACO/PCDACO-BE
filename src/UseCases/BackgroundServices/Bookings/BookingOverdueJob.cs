@@ -42,6 +42,7 @@ public class BookingOverdueJob(IAppDBContext context, IEmailService emailService
                 .ThenInclude(c => c.Model)
                 .Include(b => b.Car)
                 .ThenInclude(c => c.Owner)
+                .ThenInclude(o => o.BookingLockedBalances)
                 .FirstOrDefaultAsync(b =>
                     b.CarId == overdueBooking.CarId
                     && b.Status == BookingStatusEnum.Approved

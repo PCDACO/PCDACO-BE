@@ -56,6 +56,7 @@ public sealed class CompleteBooking
                 .ThenInclude(x => x.Model)
                 .Include(x => x.Car)
                 .ThenInclude(x => x.Owner)
+                .ThenInclude(o => o.BookingLockedBalances)
                 .Include(x => x.Car)
                 .ThenInclude(x => x.GPS)
                 .Include(x => x.User)

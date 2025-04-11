@@ -32,6 +32,7 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
         var expiredBookings = await context
             .Bookings.Include(b => b.Car)
             .ThenInclude(c => c.Owner)
+            .ThenInclude(o => o.BookingLockedBalances)
             .Include(b => b.User)
             .Where(b =>
                 b.Status == BookingStatusEnum.ReadyForPickup
