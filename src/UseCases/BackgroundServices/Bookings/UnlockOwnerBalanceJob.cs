@@ -11,6 +11,7 @@ public class UnlockOwnerBalanceJob(IAppDBContext context)
         var booking = await context
             .Bookings.Include(b => b.Car)
             .ThenInclude(c => c.Owner)
+            .ThenInclude(o => o.BookingLockedBalances)
             .FirstOrDefaultAsync(b => b.Id == bookingId);
 
         if (booking == null)
@@ -27,11 +28,18 @@ public class UnlockOwnerBalanceJob(IAppDBContext context)
                 > Math.Ceiling((booking.EndTime - booking.StartTime).TotalDays) / 2
         )
         {
-            var ownerEarningAmount = booking.BasePrice;
-            booking.Car.Owner.LockedBalance = Math.Max(
-                0,
-                booking.Car.Owner.LockedBalance - ownerEarningAmount
+            // Find the booking's locked balance
+            var bookingLockedBalance = booking.Car.Owner.BookingLockedBalances.FirstOrDefault(b =>
+                b.BookingId == booking.Id
             );
+
+            if (bookingLockedBalance != null && bookingLockedBalance.Amount > 0)
+            {
+                // Move the locked balance to available balance
+                booking.Car.Owner.Balance += bookingLockedBalance.Amount;
+                booking.Car.Owner.LockedBalance -= bookingLockedBalance.Amount;
+                bookingLockedBalance.Amount = 0;
+            }
         }
 
         await context.SaveChangesAsync(CancellationToken.None);

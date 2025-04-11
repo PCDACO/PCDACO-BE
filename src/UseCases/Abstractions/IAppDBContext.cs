@@ -10,6 +10,7 @@ public interface IAppDBContext : IDisposable
     DbSet<BankAccount> BankAccounts { get; }
     DbSet<BankInfo> BankInfos { get; }
     DbSet<Booking> Bookings { get; }
+    DbSet<BookingLockedBalance> BookingLockedBalances { get; }
     DbSet<Car> Cars { get; }
     DbSet<CarAmenity> CarAmenities { get; }
     DbSet<BookingReport> BookingReports { get; }

@@ -102,8 +102,16 @@ public sealed class ProcessPaymentWebhook
             );
 
             admin.Balance += booking.PlatformFee;
-            booking.Car.Owner.Balance += ownerEarningTransaction.Amount;
             booking.Car.Owner.LockedBalance += ownerEarningTransaction.Amount;
+
+            booking.Car.Owner.BookingLockedBalances.Add(
+                new BookingLockedBalance
+                {
+                    OwnerId = booking.Car.Owner.Id,
+                    BookingId = booking.Id,
+                    Amount = ownerEarningTransaction.Amount
+                }
+            );
 
             // Update booking and statistics
             booking.IsPaid = true;

@@ -2,6 +2,7 @@ using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
 using Persistance.Data;
 using UseCases.DTOs;
@@ -17,6 +18,9 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly GeometryFactory _geometryFactory = new();
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
+    private readonly ILogger<StartBookingTrip.Handler> _logger = LoggerFactory
+        .Create(builder => builder.AddConsole())
+        .CreateLogger<StartBookingTrip.Handler>();
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
 
     private readonly decimal _latitude = 10.7756587m;
@@ -34,7 +38,12 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new StartBookingTrip.Handler(_dbContext, _geometryFactory, _currentUser);
+        var handler = new StartBookingTrip.Handler(
+            _dbContext,
+            _geometryFactory,
+            _logger,
+            _currentUser
+        );
         var command = new StartBookingTrip.Command(Guid.NewGuid(), _latitude, _longitude);
 
         // Act
@@ -53,7 +62,12 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
         var testUser = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(testUser);
 
-        var handler = new StartBookingTrip.Handler(_dbContext, _geometryFactory, _currentUser);
+        var handler = new StartBookingTrip.Handler(
+            _dbContext,
+            _geometryFactory,
+            _logger,
+            _currentUser
+        );
         var command = new StartBookingTrip.Command(Guid.NewGuid(), _latitude, _longitude);
 
         // Act
@@ -109,7 +123,12 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
             status
         );
 
-        var handler = new StartBookingTrip.Handler(_dbContext, _geometryFactory, _currentUser);
+        var handler = new StartBookingTrip.Handler(
+            _dbContext,
+            _geometryFactory,
+            _logger,
+            _currentUser
+        );
         var command = new StartBookingTrip.Command(booking.Id, _latitude, _longitude);
 
         // Act
@@ -160,7 +179,12 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
             BookingStatusEnum.ReadyForPickup
         );
 
-        var handler = new StartBookingTrip.Handler(_dbContext, _geometryFactory, _currentUser);
+        var handler = new StartBookingTrip.Handler(
+            _dbContext,
+            _geometryFactory,
+            _logger,
+            _currentUser
+        );
         var command = new StartBookingTrip.Command(booking.Id, _latitude, _longitude);
 
         // Act
@@ -213,7 +237,7 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
     //         BookingStatusEnum.Ongoing
     //     );
     //
-    //     var handler = new StartBookingTrip.Handler(_dbContext, _geometryFactory, _currentUser);
+    //     var handler = new StartBookingTrip.Handler(_dbContext, _geometryFactory, _logger, _currentUser);
     //     var command = new StartBookingTrip.Command(booking.Id, _latitude, _longitude);
     //
     //     // Act
