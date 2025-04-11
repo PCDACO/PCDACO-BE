@@ -41,7 +41,8 @@ public class GetCarDetailByAdminOrStaff
         ImageDetail[] Images,
         AmenityDetail[] Amenities,
         BookingSchedule[] Bookings,
-        ContractDetail? Contract
+        ContractDetail? Contract,
+        bool HasInspectionSchedule
     )
     {
         public static async Task<Response> FromEntity(
@@ -162,7 +163,13 @@ public class GetCarDetailByAdminOrStaff
                         b.Status.ToString()
                     )),
                 ],
-                contractDetail
+                contractDetail,
+                car.InspectionSchedules.Any(s =>
+                    s.Status == InspectionScheduleStatusEnum.Approved
+                    || s.Status == InspectionScheduleStatusEnum.InProgress
+                    || s.Status == InspectionScheduleStatusEnum.Pending
+                    || s.Status == InspectionScheduleStatusEnum.Signed
+                )
             );
         }
     };
@@ -238,6 +245,7 @@ public class GetCarDetailByAdminOrStaff
             Car? gettingCar = await context
                 .Cars.IgnoreQueryFilters()
                 .AsNoTracking()
+                .Include(c => c.InspectionSchedules)
                 .Include(c => c.Bookings)
                 .ThenInclude(b => b.User)
                 .Include(c => c.Owner)

@@ -57,6 +57,7 @@ public sealed class GetAllInspectionSchedules
                 !currentUser.User!.IsConsultant()
                 && !currentUser.User!.IsTechnician()
                 && !currentUser.User!.IsOwner()
+                && !currentUser.User!.IsAdmin()
             )
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 

@@ -120,7 +120,7 @@ public class AssignDeviceToCarEndpoint : ICarterModule
 
     private async Task<IResult> Handle(ISender sender, Guid id, AssignDeviceToCarRequest request)
     {
-        Result result = await sender.Send(
+        Result<AssignDeviceToCar.Response> result = await sender.Send(
             new AssignDeviceToCar.Command(
                 CarId: id,
                 Longtitude: request.Longtitude!.Value,

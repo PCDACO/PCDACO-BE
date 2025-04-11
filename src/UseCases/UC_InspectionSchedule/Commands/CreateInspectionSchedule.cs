@@ -135,14 +135,6 @@ public sealed class CreateInspectionSchedule
                 .ToListAsync(cancellationToken);
 
             var requestedTime = request.InspectionDate;
-            // check conflicts with approved schedules
-            var hasApprovedScheduleConflict = technicianSchedules.Any(schedule =>
-                schedule.Status == InspectionScheduleStatusEnum.Approved
-                && requestedTime <= schedule.InspectionDate
-            );
-
-            if (hasApprovedScheduleConflict)
-                return Result.Error(ResponseMessages.HasOverLapScheduleWithTheSameTechnician);
 
             // check conflicts with pending or in progress schedules
             var hasActiveScheduleConflict = technicianSchedules.Any(schedule =>
