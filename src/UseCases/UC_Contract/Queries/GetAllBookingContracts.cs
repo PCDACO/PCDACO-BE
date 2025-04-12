@@ -1,7 +1,7 @@
 using Ardalis.Result;
-using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
+using Domain.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -10,49 +10,51 @@ using UseCases.Utils;
 
 namespace UseCases.UC_Contract.Queries;
 
-public class GetAllCarContracts
+public sealed class GetAllBookingContracts
 {
     public record Query(
         int PageNumber,
         int PageSize,
-        string Keyword,
-        CarContractStatusEnum? Status = null
+        string Keyword = "",
+        ContractStatusEnum? Status = null
     ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
         Guid Id,
         string Terms,
+        Guid BookingId,
         Guid CarId,
         string CarModel,
         string LicensePlate,
         Guid OwnerId,
         string OwnerName,
-        Guid? TechnicianId,
-        string? TechnicianName,
+        Guid DriverId,
+        string DriverName,
         string Status,
+        DateTimeOffset StartDate,
+        DateTimeOffset EndDate,
+        DateTimeOffset? DriverSignatureDate,
         DateTimeOffset? OwnerSignatureDate,
-        DateTimeOffset? TechnicianSignatureDate,
-        string? InspectionResults,
-        Guid? GpsDeviceId,
         DateTimeOffset CreatedAt
     )
     {
-        public static Response FromEntity(CarContract contract) =>
+        public static Response FromEntity(Contract contract) =>
             new(
                 Id: contract.Id,
                 Terms: contract.Terms,
-                CarId: contract.CarId,
-                CarModel: contract.Car.Model.Name,
-                LicensePlate: contract.Car.LicensePlate,
-                OwnerId: contract.Car.OwnerId,
-                OwnerName: contract.Car.Owner.Name,
-                TechnicianId: contract.TechnicianId,
-                TechnicianName: contract.Technician?.Name,
+                BookingId: contract.BookingId,
+                CarId: contract.Booking.CarId,
+                CarModel: contract.Booking.Car.Model.Name,
+                LicensePlate: contract.Booking.Car.LicensePlate,
+                OwnerId: contract.Booking.Car.OwnerId,
+                OwnerName: contract.Booking.Car.Owner.Name,
+                DriverId: contract.Booking.UserId,
+                DriverName: contract.Booking.User.Name,
                 Status: contract.Status.ToString(),
+                StartDate: contract.StartDate,
+                EndDate: contract.EndDate,
+                DriverSignatureDate: contract.DriverSignatureDate,
                 OwnerSignatureDate: contract.OwnerSignatureDate,
-                TechnicianSignatureDate: contract.TechnicianSignatureDate,
-                InspectionResults: contract.InspectionResults,
-                GpsDeviceId: contract.GPSDeviceId,
                 CreatedAt: GetTimestampFromUuid.Execute(contract.Id)
             );
     }
@@ -65,34 +67,33 @@ public class GetAllCarContracts
             CancellationToken cancellationToken
         )
         {
+            // Create query with all required includes
+            var query = context
+                .Contracts.AsNoTracking()
+                .AsSplitQuery()
+                .Include(c => c.Booking)
+                .ThenInclude(b => b.Car)
+                .ThenInclude(c => c.Model)
+                .Include(c => c.Booking)
+                .ThenInclude(b => b.Car)
+                .ThenInclude(c => c.Owner)
+                .Include(c => c.Booking)
+                .ThenInclude(b => b.User)
+                .AsQueryable();
+
             // Check if user is admin
             if (!currentUser.User!.IsAdmin())
             {
-                return Result.Forbidden("Không có quyền truy cập danh sách hợp đồng");
+                return Result.Forbidden("Bạn không có quyền xem các hợp đồng này");
             }
 
-            // Start building the query
-            IQueryable<CarContract> query = context
-                .CarContracts.AsNoTracking()
-                .Include(c => c.Car)
-                .ThenInclude(car => car.Model)
-                .Include(c => c.Car)
-                .ThenInclude(car => car.Owner)
-                .ThenInclude(o => o.EncryptionKey)
-                .Include(c => c.Technician)
-                .AsSplitQuery();
-
-            // Apply filtering
+            // Apply search filtering if provided
             if (!string.IsNullOrWhiteSpace(request.Keyword))
             {
-                string keyword = request.Keyword.Trim().ToLower();
                 query = query.Where(c =>
-                    EF.Functions.ILike(c.Car.LicensePlate, $"%{keyword}%")
-                    || EF.Functions.ILike(c.Car.Owner.Name, $"%{keyword}%")
-                    || (
-                        c.Technician != null
-                        && EF.Functions.ILike(c.Technician.Name, $"%{keyword}%")
-                    )
+                    EF.Functions.ILike(c.Booking.Car.LicensePlate, $"%{request.Keyword}%")
+                    || EF.Functions.ILike(c.Booking.Car.Owner.Name, $"%{request.Keyword}%")
+                    || EF.Functions.ILike(c.Booking.User.Name, $"%{request.Keyword}%")
                 );
             }
 
@@ -112,6 +113,7 @@ public class GetAllCarContracts
                 .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
 
+            // Transform to response objects
             var items = pagedItems.Select(Response.FromEntity).ToList();
 
             // Calculate hasNext for pagination
@@ -128,7 +130,7 @@ public class GetAllCarContracts
                 hasNext
             );
 
-            return Result.Success(paginatedResponse, ResponseMessages.Fetched);
+            return Result.Success(paginatedResponse, "Contracts fetched successfully");
         }
     }
 }

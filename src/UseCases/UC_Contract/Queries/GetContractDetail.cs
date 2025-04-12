@@ -1,11 +1,7 @@
 using Ardalis.Result;
-using Domain.Constants;
-using Domain.Entities;
-using Domain.Enums;
 using Domain.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
-using NetTopologySuite.Geometries;
 using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Utils;
@@ -82,19 +78,13 @@ public sealed class GetContractDetail
             CancellationToken cancellationToken
         )
         {
-            // Check if user has permission to view contracts
-            if (
-                !(
-                    currentUser.User!.IsAdmin()
-                    || currentUser.User.IsConsultant()
-                    || currentUser.User.IsTechnician()
-                )
-            )
+            // Check if user is admin
+            if (!currentUser.User!.IsAdmin())
             {
                 return Result.Forbidden("Bạn không có quyền xem hợp đồng này");
             }
 
-            // Fetch contract with related data
+            // Build query
             var contract = await context
                 .CarContracts.IgnoreQueryFilters()
                 .AsNoTracking()
@@ -111,6 +101,7 @@ public sealed class GetContractDetail
                 .ThenInclude(o => o.EncryptionKey)
                 .Include(c => c.Car)
                 .ThenInclude(c => c.ImageCars)
+                .ThenInclude(i => i.Type)
                 .Include(c => c.Car)
                 .ThenInclude(c => c.CarAmenities)
                 .ThenInclude(ca => ca.Amenity)
