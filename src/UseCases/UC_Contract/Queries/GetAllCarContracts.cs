@@ -23,6 +23,7 @@ public class GetAllCarContracts
 
     public record Response(
         Guid Id,
+        string Terms,
         Guid CarId,
         string CarModel,
         string LicensePlate,
@@ -41,6 +42,7 @@ public class GetAllCarContracts
         public static Response FromEntity(CarContract contract) =>
             new(
                 Id: contract.Id,
+                Terms: contract.Terms,
                 CarId: contract.CarId,
                 CarModel: contract.Car.Model.Name,
                 LicensePlate: contract.Car.LicensePlate,

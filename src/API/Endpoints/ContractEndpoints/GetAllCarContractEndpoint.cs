@@ -1,9 +1,7 @@
 using API.Utils;
 using Ardalis.Result;
 using Carter;
-
 using Domain.Enums;
-
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Any;
@@ -66,6 +64,9 @@ public class GetAllCarContractEndpoint : ICarterModule
                                                 {
                                                     ["id"] = new OpenApiString(
                                                         "123e4567-e89b-12d3-a456-426614174000"
+                                                    ),
+                                                    ["terms"] = new OpenApiString(
+                                                        "Standard inspection terms and conditions"
                                                     ),
                                                     ["carId"] = new OpenApiString(
                                                         "123e4567-e89b-12d3-a456-426614174001"

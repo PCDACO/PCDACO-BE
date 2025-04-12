@@ -56,6 +56,9 @@ public class GetContractDetailEndpoint : ICarterModule
                                             ["id"] = new OpenApiString(
                                                 "123e4567-e89b-12d3-a456-426614174000"
                                             ),
+                                            ["terms"] = new OpenApiString(
+                                                "Standard inspection terms and conditions"
+                                            ),
                                             ["status"] = new OpenApiString("Active"),
                                             ["ownerSignatureDate"] = new OpenApiString(
                                                 "2024-03-15T10:00:00Z"

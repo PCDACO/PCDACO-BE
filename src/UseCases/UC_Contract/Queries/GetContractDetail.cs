@@ -57,6 +57,7 @@ public sealed class GetContractDetail
 
     public sealed record Response(
         Guid Id,
+        string Terms,
         string Status,
         DateTimeOffset? OwnerSignatureDate,
         DateTimeOffset? TechnicianSignatureDate,
@@ -159,6 +160,7 @@ public sealed class GetContractDetail
             // Create response
             var response = new Response(
                 Id: contract.Id,
+                Terms: contract.Terms,
                 Status: contract.Status.ToString(),
                 OwnerSignatureDate: contract.OwnerSignatureDate,
                 TechnicianSignatureDate: contract.TechnicianSignatureDate,
