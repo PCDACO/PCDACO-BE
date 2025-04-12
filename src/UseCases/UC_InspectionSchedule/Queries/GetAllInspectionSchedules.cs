@@ -26,6 +26,7 @@ public sealed class GetAllInspectionSchedules
         string Note,
         string InspectionAddress,
         DateTimeOffset InspectionDate,
+        bool IsIncident,
         DateTimeOffset CreatedAt
     )
     {
@@ -41,6 +42,7 @@ public sealed class GetAllInspectionSchedules
                 schedule.Note,
                 schedule.InspectionAddress,
                 schedule.InspectionDate,
+                schedule.Type == InspectionScheduleType.Incident,
                 GetTimestampFromUuid.Execute(schedule.Id)
             );
     }
