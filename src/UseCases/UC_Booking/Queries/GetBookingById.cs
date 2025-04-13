@@ -153,7 +153,7 @@ public sealed class GetBookingById
             return (decryptedDriverPhone, decryptedOwnerPhone);
         }
 
-        private static InspectionPhotos? GetPreInspectionPhotos(Booking booking)
+        private static PreInspectionPhotos? GetPreInspectionPhotos(Booking booking)
         {
             var preInspection = booking.CarInspections.FirstOrDefault(i =>
                 i.Type == InspectionType.PreBooking
@@ -162,7 +162,7 @@ public sealed class GetBookingById
             if (preInspection == null)
                 return null;
 
-            return new InspectionPhotos(
+            return new PreInspectionPhotos(
                 [
                     .. preInspection
                         .Photos.Where(p => p.Type == InspectionPhotoType.ExteriorCar)
@@ -187,21 +187,11 @@ public sealed class GetBookingById
                     .. preInspection
                         .Photos.Where(p => p.Type == InspectionPhotoType.TrunkSpace)
                         .Select(p => p.PhotoUrl)
-                ],
-                [], // Scratches are for post-inspection
-                [], // Cleanliness is for post-inspection
-                [], // TollFees are for post-inspection
-                [
-                    .. preInspection
-                        .Photos.Where(p =>
-                            p.Type == InspectionPhotoType.VehicleInspectionCertificate
-                        )
-                        .Select(p => p.PhotoUrl)
                 ]
             );
         }
 
-        private static InspectionPhotos? GetPostInspectionPhotos(Booking booking)
+        private static PostInspectionPhotos? GetPostInspectionPhotos(Booking booking)
         {
             var postInspection = booking.CarInspections.FirstOrDefault(i =>
                 i.Type == InspectionType.PostBooking
@@ -210,16 +200,12 @@ public sealed class GetBookingById
             if (postInspection == null)
                 return null;
 
-            return new InspectionPhotos(
-                [], // ExteriorCar is for pre-inspection
+            return new PostInspectionPhotos(
                 [
                     .. postInspection
                         .Photos.Where(p => p.Type == InspectionPhotoType.FuelGaugeFinal)
                         .Select(p => p.PhotoUrl)
                 ],
-                [], // ParkingLocation is for pre-inspection
-                [], // CarKey is for pre-inspection
-                [], // TrunkSpace is for pre-inspection
                 [
                     .. postInspection
                         .Photos.Where(p => p.Type == InspectionPhotoType.Scratches)
@@ -234,8 +220,7 @@ public sealed class GetBookingById
                     .. postInspection
                         .Photos.Where(p => p.Type == InspectionPhotoType.TollFees)
                         .Select(p => p.PhotoUrl)
-                ],
-                [] // VehicleInspectionCertificate is for pre-inspection
+                ]
             );
         }
     }
@@ -255,12 +240,15 @@ public sealed class GetBookingById
 
     public record UserDetail(Guid Id, string Name, string Phone, string Email, string AvatarUrl);
 
-    public record InspectionPhotos(
+    public record PreInspectionPhotos(
         string[] ExteriorCar,
         string[] FuelGauge,
         string[] ParkingLocation,
         string[] CarKey,
-        string[] TrunkSpace,
+        string[] TrunkSpace
+    );
+
+    public record PostInspectionPhotos(
         string[] Scratches,
         string[] Cleanliness,
         string[] TollFees,
@@ -277,8 +265,8 @@ public sealed class GetBookingById
         bool IsRefund,
         decimal? RefundAmount,
         DateTimeOffset? RefundDate,
-        InspectionPhotos? PreInspectionPhotos = null,
-        InspectionPhotos? PostInspectionPhotos = null
+        PreInspectionPhotos? PreInspectionPhotos = null,
+        PostInspectionPhotos? PostInspectionPhotos = null
     );
 
     public record ContractDetail(
