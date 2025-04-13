@@ -74,7 +74,9 @@ public sealed class GetBookingById
                     booking.Note,
                     booking.IsRefund,
                     booking.RefundAmount ?? 0,
-                    booking.RefundDate
+                    booking.RefundDate,
+                    GetPreInspectionPhotos(booking),
+                    GetPostInspectionPhotos(booking)
                 ),
                 new PaymentDetail(
                     booking.BasePrice,
@@ -135,6 +137,92 @@ public sealed class GetBookingById
 
             return (decryptedDriverPhone, decryptedOwnerPhone);
         }
+
+        private static InspectionPhotos? GetPreInspectionPhotos(Booking booking)
+        {
+            var preInspection = booking.CarInspections.FirstOrDefault(i =>
+                i.Type == InspectionType.PreBooking
+            );
+
+            if (preInspection == null)
+                return null;
+
+            return new InspectionPhotos(
+                [
+                    .. preInspection
+                        .Photos.Where(p => p.Type == InspectionPhotoType.ExteriorCar)
+                        .Select(p => p.PhotoUrl)
+                ],
+                [
+                    .. preInspection
+                        .Photos.Where(p => p.Type == InspectionPhotoType.FuelGauge)
+                        .Select(p => p.PhotoUrl)
+                ],
+                [
+                    .. preInspection
+                        .Photos.Where(p => p.Type == InspectionPhotoType.ParkingLocation)
+                        .Select(p => p.PhotoUrl)
+                ],
+                [
+                    .. preInspection
+                        .Photos.Where(p => p.Type == InspectionPhotoType.CarKey)
+                        .Select(p => p.PhotoUrl)
+                ],
+                [
+                    .. preInspection
+                        .Photos.Where(p => p.Type == InspectionPhotoType.TrunkSpace)
+                        .Select(p => p.PhotoUrl)
+                ],
+                [], // Scratches are for post-inspection
+                [], // Cleanliness is for post-inspection
+                [], // TollFees are for post-inspection
+                [
+                    .. preInspection
+                        .Photos.Where(p =>
+                            p.Type == InspectionPhotoType.VehicleInspectionCertificate
+                        )
+                        .Select(p => p.PhotoUrl)
+                ]
+            );
+        }
+
+        private static InspectionPhotos? GetPostInspectionPhotos(Booking booking)
+        {
+            var postInspection = booking.CarInspections.FirstOrDefault(i =>
+                i.Type == InspectionType.PostBooking
+            );
+
+            if (postInspection == null)
+                return null;
+
+            return new InspectionPhotos(
+                [], // ExteriorCar is for pre-inspection
+                [
+                    .. postInspection
+                        .Photos.Where(p => p.Type == InspectionPhotoType.FuelGaugeFinal)
+                        .Select(p => p.PhotoUrl)
+                ],
+                [], // ParkingLocation is for pre-inspection
+                [], // CarKey is for pre-inspection
+                [], // TrunkSpace is for pre-inspection
+                [
+                    .. postInspection
+                        .Photos.Where(p => p.Type == InspectionPhotoType.Scratches)
+                        .Select(p => p.PhotoUrl)
+                ],
+                [
+                    .. postInspection
+                        .Photos.Where(p => p.Type == InspectionPhotoType.Cleanliness)
+                        .Select(p => p.PhotoUrl)
+                ],
+                [
+                    .. postInspection
+                        .Photos.Where(p => p.Type == InspectionPhotoType.TollFees)
+                        .Select(p => p.PhotoUrl)
+                ],
+                [] // VehicleInspectionCertificate is for pre-inspection
+            );
+        }
     }
 
     // Add record types for each detail section
@@ -152,6 +240,18 @@ public sealed class GetBookingById
 
     public record UserDetail(Guid Id, string Name, string Phone, string Email, string AvatarUrl);
 
+    public record InspectionPhotos(
+        string[] ExteriorCar,
+        string[] FuelGauge,
+        string[] ParkingLocation,
+        string[] CarKey,
+        string[] TrunkSpace,
+        string[] Scratches,
+        string[] Cleanliness,
+        string[] TollFees,
+        string[] VehicleInspectionCertificate
+    );
+
     public record BookingDetail(
         DateTimeOffset StartTime,
         DateTimeOffset EndTime,
@@ -161,7 +261,9 @@ public sealed class GetBookingById
         string Note,
         bool IsRefund,
         decimal? RefundAmount,
-        DateTimeOffset? RefundDate
+        DateTimeOffset? RefundDate,
+        InspectionPhotos? PreInspectionPhotos = null,
+        InspectionPhotos? PostInspectionPhotos = null
     );
 
     public record PaymentDetail(
@@ -213,6 +315,8 @@ public sealed class GetBookingById
                 .Include(b => b.TripTrackings)
                 .Include(b => b.Feedbacks)
                 .ThenInclude(f => f.User)
+                .Include(b => b.CarInspections)
+                .ThenInclude(i => i.Photos)
                 .FirstOrDefaultAsync(b => b.Id == request.Id, cancellationToken);
 
             if (booking == null)
