@@ -19,6 +19,7 @@ public sealed class GetBookingById
         UserDetail Driver,
         UserDetail Owner,
         BookingDetail Booking,
+        ContractDetail? Contract,
         PaymentDetail Payment,
         TripDetail Trip,
         FeedbackDetail[] Feedbacks
@@ -37,6 +38,19 @@ public sealed class GetBookingById
                 aesEncryptionService,
                 keyManagementService
             );
+
+            var contractDetail =
+                booking.Contract != null
+                    ? new ContractDetail(
+                        booking.Contract.Id,
+                        booking.Contract.Terms,
+                        booking.Contract.Status.ToString(),
+                        booking.Contract.StartDate,
+                        booking.Contract.EndDate,
+                        booking.Contract.DriverSignatureDate,
+                        booking.Contract.OwnerSignatureDate
+                    )
+                    : null;
 
             return new(
                 booking.Id,
@@ -78,6 +92,7 @@ public sealed class GetBookingById
                     GetPreInspectionPhotos(booking),
                     GetPostInspectionPhotos(booking)
                 ),
+                contractDetail,
                 new PaymentDetail(
                     booking.BasePrice,
                     booking.PlatformFee,
@@ -266,6 +281,16 @@ public sealed class GetBookingById
         InspectionPhotos? PostInspectionPhotos = null
     );
 
+    public record ContractDetail(
+        Guid Id,
+        string Terms,
+        string Status,
+        DateTimeOffset StartDate,
+        DateTimeOffset EndDate,
+        DateTimeOffset? DriverSignatureDate,
+        DateTimeOffset? OwnerSignatureDate
+    );
+
     public record PaymentDetail(
         decimal BasePrice,
         decimal PlatformFee,
@@ -317,6 +342,7 @@ public sealed class GetBookingById
                 .ThenInclude(f => f.User)
                 .Include(b => b.CarInspections)
                 .ThenInclude(i => i.Photos)
+                .Include(b => b.Contract)
                 .FirstOrDefaultAsync(b => b.Id == request.Id, cancellationToken);
 
             if (booking == null)
