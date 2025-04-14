@@ -20,6 +20,8 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly TestDataEmailService _emailService = new();
     private readonly IBackgroundJobClient _backgroundJobClient = new BackgroundJobClient();
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
+    private const string TEST_SIGNATURE_BASE64 =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
     private readonly IPaymentTokenService _paymentTokenService =
         new Infrastructure.Services.PaymentTokenService(new MemoryCache(new MemoryCacheOptions()));
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
@@ -44,7 +46,12 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _currentUser,
             _paymentTokenService
         );
-        var command = new ApproveBooking.Command(Guid.NewGuid(), true, TEST_BASE_URL);
+        var command = new ApproveBooking.Command(
+            Guid.NewGuid(),
+            true,
+            TEST_BASE_URL,
+            TEST_SIGNATURE_BASE64
+        );
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -69,7 +76,12 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _currentUser,
             _paymentTokenService
         );
-        var command = new ApproveBooking.Command(Guid.NewGuid(), true, TEST_BASE_URL);
+        var command = new ApproveBooking.Command(
+            Guid.NewGuid(),
+            true,
+            TEST_BASE_URL,
+            TEST_SIGNATURE_BASE64
+        );
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -130,7 +142,12 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _currentUser,
             _paymentTokenService
         );
-        var command = new ApproveBooking.Command(booking.Id, true, TEST_BASE_URL);
+        var command = new ApproveBooking.Command(
+            booking.Id,
+            true,
+            TEST_BASE_URL,
+            TEST_SIGNATURE_BASE64
+        );
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -193,7 +210,12 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _currentUser,
             _paymentTokenService
         );
-        var command = new ApproveBooking.Command(booking.Id, isApproved, TEST_BASE_URL);
+        var command = new ApproveBooking.Command(
+            booking.Id,
+            isApproved,
+            TEST_BASE_URL,
+            TEST_SIGNATURE_BASE64
+        );
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -256,7 +278,12 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _currentUser,
             _paymentTokenService
         );
-        var command = new ApproveBooking.Command(booking.Id, isApproved, TEST_BASE_URL);
+        var command = new ApproveBooking.Command(
+            booking.Id,
+            isApproved,
+            TEST_BASE_URL,
+            TEST_SIGNATURE_BASE64
+        );
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -316,7 +343,12 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _currentUser,
             _paymentTokenService
         );
-        var command = new ApproveBooking.Command(booking.Id, true, TEST_BASE_URL);
+        var command = new ApproveBooking.Command(
+            booking.Id,
+            true,
+            TEST_BASE_URL,
+            TEST_SIGNATURE_BASE64
+        );
 
         var result = await handler.Handle(command, CancellationToken.None);
 
@@ -372,12 +404,174 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _currentUser,
             _paymentTokenService
         );
-        var command = new ApproveBooking.Command(booking.Id, true, TEST_BASE_URL);
+        var command = new ApproveBooking.Command(
+            booking.Id,
+            true,
+            TEST_BASE_URL,
+            TEST_SIGNATURE_BASE64
+        );
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
+    }
+
+    [Fact]
+    public async Task Handle_ValidApproval_UpdatesContractWithSignature()
+    {
+        // Arrange
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var driver = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            driverRole,
+            "driver@test.com"
+        );
+        _currentUser.SetUser(owner);
+
+        // Setup car and booking
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+        var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
+            _dbContext,
+            "Automatic"
+        );
+        var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        var car = await TestDataCreateCar.CreateTestCar(
+            _dbContext,
+            owner.Id,
+            model.Id,
+            transmissionType,
+            fuelType,
+            CarStatusEnum.Available
+        );
+
+        var booking = await TestDataCreateBooking.CreateTestBooking(
+            _dbContext,
+            driver.Id,
+            car.Id,
+            BookingStatusEnum.Pending
+        );
+
+        // Create contract for the booking
+        var contract = new Contract
+        {
+            BookingId = booking.Id,
+            Status = ContractStatusEnum.Pending,
+            Terms = "Standard terms",
+            DriverSignature = "driver-signature",
+            DriverSignatureDate = DateTimeOffset.UtcNow.AddDays(-1),
+            StartDate = DateTimeOffset.UtcNow,
+            EndDate = DateTimeOffset.UtcNow.AddDays(7),
+        };
+        await _dbContext.Contracts.AddAsync(contract);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new ApproveBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser,
+            _paymentTokenService
+        );
+        var command = new ApproveBooking.Command(
+            booking.Id,
+            true,
+            TEST_BASE_URL,
+            TEST_SIGNATURE_BASE64
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Contains("Đã phê duyệt booking thành công", result.SuccessMessage);
+
+        // Verify contract was updated with signature
+        var updatedContract = await _dbContext.Contracts.FirstAsync(c => c.BookingId == booking.Id);
+        Assert.NotNull(updatedContract);
+        Assert.Equal(ContractStatusEnum.Confirmed, updatedContract.Status);
+        Assert.Equal(TEST_SIGNATURE_BASE64, updatedContract.OwnerSignature);
+        Assert.NotNull(updatedContract.OwnerSignatureDate);
+
+        // Verify original driver signature is still there
+        Assert.Equal("driver-signature", updatedContract.DriverSignature);
+        Assert.NotNull(updatedContract.DriverSignatureDate);
+    }
+
+    [Fact]
+    public async Task Handle_ContractNotFound_OnlyUpdatesBookingStatus()
+    {
+        // Arrange
+        UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        UserRole driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
+
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var driver = await TestDataCreateUser.CreateTestUser(
+            _dbContext,
+            driverRole,
+            "driver@test.com"
+        );
+        _currentUser.SetUser(owner);
+
+        // Setup car and booking without a contract
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+        var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
+            _dbContext,
+            "Automatic"
+        );
+        var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        var car = await TestDataCreateCar.CreateTestCar(
+            _dbContext,
+            owner.Id,
+            model.Id,
+            transmissionType,
+            fuelType,
+            CarStatusEnum.Available
+        );
+
+        var booking = await TestDataCreateBooking.CreateTestBooking(
+            _dbContext,
+            driver.Id,
+            car.Id,
+            BookingStatusEnum.Pending
+        );
+
+        var handler = new ApproveBooking.Handler(
+            _dbContext,
+            _emailService,
+            _backgroundJobClient,
+            _currentUser,
+            _paymentTokenService
+        );
+        var command = new ApproveBooking.Command(
+            booking.Id,
+            true,
+            TEST_BASE_URL,
+            TEST_SIGNATURE_BASE64
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Contains("Đã phê duyệt booking thành công", result.SuccessMessage);
+
+        // Verify booking was updated
+        var updatedBooking = await _dbContext.Bookings.FirstAsync(b => b.Id == booking.Id);
+        Assert.Equal(BookingStatusEnum.Approved, updatedBooking.Status);
+
+        // Verify no contract was created
+        var contractExists = await _dbContext.Contracts.AnyAsync(c => c.BookingId == booking.Id);
+        Assert.False(contractExists);
     }
 }

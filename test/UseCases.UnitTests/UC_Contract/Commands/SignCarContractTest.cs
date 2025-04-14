@@ -23,6 +23,8 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly IAesEncryptionService _aesService = fixture.AesEncryptionService;
     private readonly IKeyManagementService _keyService = fixture.KeyManagementService;
     private readonly EncryptionSettings _encryptionSettings = fixture.EncryptionSettings;
+    private const string TEST_SIGNATURE_BASE64 =
+        "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
     private readonly GeometryFactory _geometryFactory =
         NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
 
@@ -38,7 +40,7 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         _currentUser.SetUser(owner); // Set owner as current user
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(car.Id);
+        var command = new SignCarContract.Command(car.Id, TEST_SIGNATURE_BASE64);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -63,7 +65,7 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         _currentUser.SetUser(technician); // Set technician as current user
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(car.Id);
+        var command = new SignCarContract.Command(car.Id, TEST_SIGNATURE_BASE64);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -89,12 +91,15 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         // First, have the technician sign
         _currentUser.SetUser(technician);
         var techHandler = new SignCarContract.Handler(_dbContext, _currentUser);
-        await techHandler.Handle(new SignCarContract.Command(car.Id), CancellationToken.None);
+        await techHandler.Handle(
+            new SignCarContract.Command(car.Id, TEST_SIGNATURE_BASE64),
+            CancellationToken.None
+        );
 
         // Then, have the owner sign
         _currentUser.SetUser(owner);
         var ownerHandler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var ownerCommand = new SignCarContract.Command(car.Id);
+        var ownerCommand = new SignCarContract.Command(car.Id, TEST_SIGNATURE_BASE64);
 
         // Act
         var result = await ownerHandler.Handle(ownerCommand, CancellationToken.None);
@@ -122,7 +127,7 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         _currentUser.SetUser(owner);
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(Guid.NewGuid());
+        var command = new SignCarContract.Command(Guid.NewGuid(), TEST_SIGNATURE_BASE64);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -144,7 +149,7 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         var car = await CreateTestCar(owner.Id);
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(car.Id);
+        var command = new SignCarContract.Command(car.Id, TEST_SIGNATURE_BASE64);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -174,7 +179,7 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.SaveChangesAsync();
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(car.Id);
+        var command = new SignCarContract.Command(car.Id, TEST_SIGNATURE_BASE64);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -200,7 +205,7 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.SaveChangesAsync();
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(car.Id);
+        var command = new SignCarContract.Command(car.Id, TEST_SIGNATURE_BASE64);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -228,7 +233,7 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         var (_, _, _, _, car) = await SetupContractScenario(realOwner, technician);
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(car.Id);
+        var command = new SignCarContract.Command(car.Id, TEST_SIGNATURE_BASE64);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -259,7 +264,7 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         var (_, _, _, _, car) = await SetupContractScenario(owner, realTechnician);
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(car.Id);
+        var command = new SignCarContract.Command(car.Id, TEST_SIGNATURE_BASE64);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -289,7 +294,7 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         var (_, _, _, _, car) = await SetupContractScenario(owner, technician);
 
         var handler = new SignCarContract.Handler(_dbContext, _currentUser);
-        var command = new SignCarContract.Command(car.Id);
+        var command = new SignCarContract.Command(car.Id, TEST_SIGNATURE_BASE64);
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
@@ -297,6 +302,107 @@ public class SignCarContractTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Assert
         Assert.Equal(ResultStatus.Forbidden, result.Status);
         Assert.Equal("Bạn không có quyền ký hợp đồng này", result.Errors.First());
+    }
+
+    [Fact]
+    public async Task Handle_OwnerSigning_StoresSignature()
+    {
+        // Arrange
+        var (owner, technician, contract, _, car) = await SetupContractScenario();
+        _currentUser.SetUser(owner); // Set owner as current user
+
+        var handler = new SignCarContract.Handler(_dbContext, _currentUser);
+        var command = new SignCarContract.Command(car.Id, TEST_SIGNATURE_BASE64);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+
+        // Verify signature was stored correctly
+        var updatedContract = await _dbContext.CarContracts.FindAsync(contract.Id);
+        Assert.NotNull(updatedContract);
+        Assert.Equal(TEST_SIGNATURE_BASE64, updatedContract.OwnerSignature);
+        Assert.NotNull(updatedContract.OwnerSignatureDate);
+        Assert.Null(updatedContract.TechnicianSignature);
+    }
+
+    [Fact]
+    public async Task Handle_TechnicianSigning_StoresSignature()
+    {
+        // Arrange
+        var (owner, technician, contract, _, car) = await SetupContractScenario();
+        _currentUser.SetUser(technician); // Set technician as current user
+
+        var handler = new SignCarContract.Handler(_dbContext, _currentUser);
+        var command = new SignCarContract.Command(car.Id, TEST_SIGNATURE_BASE64);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+
+        // Verify signature was stored correctly
+        var updatedContract = await _dbContext.CarContracts.FindAsync(contract.Id);
+        Assert.NotNull(updatedContract);
+        Assert.Equal(TEST_SIGNATURE_BASE64, updatedContract.TechnicianSignature);
+        Assert.NotNull(updatedContract.TechnicianSignatureDate);
+        Assert.Null(updatedContract.OwnerSignature);
+    }
+
+    [Fact]
+    public async Task Handle_BothPartiesSigning_StoresBothSignatures()
+    {
+        // Arrange
+        var (owner, technician, contract, schedule, car) = await SetupContractScenario();
+
+        // First, have the technician sign
+        _currentUser.SetUser(technician);
+        var techHandler = new SignCarContract.Handler(_dbContext, _currentUser);
+        await techHandler.Handle(
+            new SignCarContract.Command(car.Id, "technician-" + TEST_SIGNATURE_BASE64),
+            CancellationToken.None
+        );
+
+        // Then, have the owner sign
+        _currentUser.SetUser(owner);
+        var ownerHandler = new SignCarContract.Handler(_dbContext, _currentUser);
+        var ownerCommand = new SignCarContract.Command(car.Id, "owner-" + TEST_SIGNATURE_BASE64);
+
+        // Act
+        var result = await ownerHandler.Handle(ownerCommand, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+
+        // Verify both signatures were stored correctly
+        var updatedContract = await _dbContext.CarContracts.FindAsync(contract.Id);
+        Assert.NotNull(updatedContract);
+        Assert.Equal("owner-" + TEST_SIGNATURE_BASE64, updatedContract.OwnerSignature);
+        Assert.Equal("technician-" + TEST_SIGNATURE_BASE64, updatedContract.TechnicianSignature);
+        Assert.NotNull(updatedContract.OwnerSignatureDate);
+        Assert.NotNull(updatedContract.TechnicianSignatureDate);
+
+        // Verify schedule status was updated
+        var updatedSchedule = await _dbContext.InspectionSchedules.FindAsync(schedule.Id);
+        Assert.Equal(InspectionScheduleStatusEnum.Signed, updatedSchedule!.Status);
+    }
+
+    [Fact]
+    public void Handle_EmptySignature_ValidationFails()
+    {
+        // Arrange
+        var validator = new SignCarContract.Validator();
+        var command = new SignCarContract.Command(Guid.NewGuid(), "");
+
+        // Act
+        var result = validator.Validate(command);
+
+        // Assert
+        Assert.False(result.IsValid);
+        Assert.Contains(result.Errors, error => error.ErrorMessage == "Chữ ký không được để trống");
     }
 
     #region Helper Methods
