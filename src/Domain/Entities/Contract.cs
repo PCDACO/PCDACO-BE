@@ -15,6 +15,8 @@ public class Contract : BaseEntity
     public string Terms { get; set; } = string.Empty;
     public DateTimeOffset? DriverSignatureDate { get; set; }
     public DateTimeOffset? OwnerSignatureDate { get; set; }
+    public string? DriverSignature { get; set; }
+    public string? OwnerSignature { get; set; }
 
     [ForeignKey(nameof(BookingId))]
     public Booking Booking { get; set; } = null!;

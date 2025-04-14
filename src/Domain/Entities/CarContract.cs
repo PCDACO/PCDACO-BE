@@ -12,6 +12,8 @@ public class CarContract : BaseEntity
     public string Terms { get; set; } = string.Empty;
     public DateTimeOffset? OwnerSignatureDate { get; set; }
     public DateTimeOffset? TechnicianSignatureDate { get; set; }
+    public string? OwnerSignature { get; set; }
+    public string? TechnicianSignature { get; set; }
     public string? InspectionResults { get; set; }
     public CarContractStatusEnum Status { get; set; } = CarContractStatusEnum.Pending;
 
