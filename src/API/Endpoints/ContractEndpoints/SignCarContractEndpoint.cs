@@ -122,11 +122,17 @@ public class SignCarContractEndpoint : ICarterModule
             );
     }
 
-    private static async Task<IResult> Handle(ISender sender, Guid id, [FromBody] string signature)
+    private static async Task<IResult> Handle(
+        ISender sender,
+        Guid id,
+        SignCarContractRequest request
+    )
     {
         var result = await sender.Send(
-            new SignCarContract.Command(CarId: id, Signature: signature)
+            new SignCarContract.Command(CarId: id, Signature: request.Signature)
         );
         return result.MapResult();
     }
+
+    private sealed record SignCarContractRequest(string Signature);
 }
