@@ -47,10 +47,10 @@ public class ApproveBookingEndpoint : ICarterModule
                                         ["isSuccess"] = new OpenApiBoolean(true),
                                         ["message"] = new OpenApiString(
                                             "Đã phê duyệt booking thành công"
-                                        )
-                                    }
-                                }
-                            }
+                                        ),
+                                    },
+                                },
+                            },
                         },
                         ["400"] = new()
                         {
@@ -64,10 +64,10 @@ public class ApproveBookingEndpoint : ICarterModule
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
                                             "Booking id không được để trống"
-                                        )
-                                    }
-                                }
-                            }
+                                        ),
+                                    },
+                                },
+                            },
                         },
                         ["401"] = new() { Description = "Unauthorized - User not authenticated" },
                         ["403"] = new()
@@ -82,10 +82,10 @@ public class ApproveBookingEndpoint : ICarterModule
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
                                             "Bạn không có quyền phê duyệt booking cho xe này!"
-                                        )
-                                    }
-                                }
-                            }
+                                        ),
+                                    },
+                                },
+                            },
                         },
                         ["404"] = new()
                         {
@@ -97,10 +97,10 @@ public class ApproveBookingEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString("Không tìm thấy booking")
-                                    }
-                                }
-                            }
+                                        ["message"] = new OpenApiString("Không tìm thấy booking"),
+                                    },
+                                },
+                            },
                         },
                         ["409"] = new()
                         {
@@ -114,12 +114,12 @@ public class ApproveBookingEndpoint : ICarterModule
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
                                             "Không thể phê duyệt booking ở trạng thái Approved"
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                        ),
+                                    },
+                                },
+                            },
+                        },
+                    },
                 }
             );
     }
@@ -133,11 +133,16 @@ public class ApproveBookingEndpoint : ICarterModule
     {
         var baseUrl = $"{context.Request.Scheme}://{context.Request.Host}";
         Result result = await sender.Send(
-            new ApproveBooking.Command(id, request.IsApproved, baseUrl)
+            new ApproveBooking.Command(
+                id,
+                request.IsApproved,
+                baseUrl,
+                Signature: request.Signature
+            )
         );
 
         return result.MapResult();
     }
 
-    private sealed record ApproveBookingRequest(bool IsApproved);
+    private sealed record ApproveBookingRequest(bool IsApproved, string Signature);
 }

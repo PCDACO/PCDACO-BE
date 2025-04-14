@@ -11,7 +11,7 @@ namespace UseCases.UC_Contract.Commands;
 
 public sealed class SignCarContract
 {
-    public record Command(Guid CarId) : IRequest<Result<Response>>;
+    public record Command(Guid CarId, string Signature) : IRequest<Result<Response>>;
 
     public record Response(Guid ContractId, Guid CarId, string Status)
     {
@@ -73,6 +73,7 @@ public sealed class SignCarContract
 
                 // Update contract
                 contract.OwnerSignatureDate = DateTimeOffset.UtcNow;
+                contract.OwnerSignature = request.Signature;
                 contract.Status = CarContractStatusEnum.OwnerSigned;
 
                 // Update schedule status to signed
@@ -95,6 +96,7 @@ public sealed class SignCarContract
 
                 // Update contract
                 contract.TechnicianSignatureDate = DateTimeOffset.UtcNow;
+                contract.TechnicianSignature = request.Signature;
                 contract.Status = CarContractStatusEnum.TechnicianSigned;
 
                 // Update schedule status to signed
@@ -119,6 +121,7 @@ public sealed class SignCarContract
         public Validator()
         {
             RuleFor(x => x.CarId).NotEmpty().WithMessage("ID xe không được để trống");
+            RuleFor(x => x.Signature).NotEmpty().WithMessage("Chữ ký không được để trống");
         }
     }
 }

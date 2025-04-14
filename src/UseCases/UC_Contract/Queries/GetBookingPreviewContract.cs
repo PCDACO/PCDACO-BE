@@ -78,6 +78,8 @@ public sealed class GetBookingPreviewContract
                 StartDate = request.StartTime,
                 EndDate = request.EndTime,
                 PickupAddress = car.PickupAddress,
+                OwnerSignatureImageUrl = string.Empty,
+                DriverSignatureImageUrl = string.Empty,
             };
 
             string html = ContractTemplateGenerator.GenerateFullContractHtml(contractTemplate);

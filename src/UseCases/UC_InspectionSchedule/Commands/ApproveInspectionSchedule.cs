@@ -109,6 +109,8 @@ public sealed class ApproveInspectionSchedule
                     InspectionResults = request.IsApproved ? "Đã duyệt" : "Không duyệt",
                     InspectionPhotos = schedule.Photos.ToDictionary(p => p.Type, p => p.PhotoUrl),
                     GPSDeviceId = contract.GPSDeviceId.ToString()!,
+                    OwnerSignatureImageUrl = contract.OwnerSignature!,
+                    TechnicianSignatureImageUrl = contract.TechnicianSignature!,
                 };
 
                 string contractHtml = GenerateFullContractHtml(contractTemplate);

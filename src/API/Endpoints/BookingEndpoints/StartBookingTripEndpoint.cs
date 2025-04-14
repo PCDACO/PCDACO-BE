@@ -1,3 +1,4 @@
+using System.Security.Cryptography.Xml;
 using API.Utils;
 using Ardalis.Result;
 using Carter;
@@ -44,10 +45,10 @@ public class StartBookingTripEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(true),
-                                        ["message"] = new OpenApiString("Đã bắt đầu chuyến đi")
-                                    }
-                                }
-                            }
+                                        ["message"] = new OpenApiString("Đã bắt đầu chuyến đi"),
+                                    },
+                                },
+                            },
                         },
                         ["400"] = new()
                         {
@@ -59,10 +60,10 @@ public class StartBookingTripEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString("Vĩ độ không hợp lệ")
-                                    }
-                                }
-                            }
+                                        ["message"] = new OpenApiString("Vĩ độ không hợp lệ"),
+                                    },
+                                },
+                            },
                         },
                         ["401"] = new() { Description = "Unauthorized - User not authenticated" },
                         ["403"] = new()
@@ -78,10 +79,10 @@ public class StartBookingTripEndpoint : ICarterModule
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
                                             "Bạn không có quyền thực hiện chức năng này !"
-                                        )
-                                    }
-                                }
-                            }
+                                        ),
+                                    },
+                                },
+                            },
                         },
                         ["404"] = new()
                         {
@@ -93,10 +94,10 @@ public class StartBookingTripEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString("Không tìm thấy booking")
-                                    }
-                                }
-                            }
+                                        ["message"] = new OpenApiString("Không tìm thấy booking"),
+                                    },
+                                },
+                            },
                         },
                         ["409"] = new()
                         {
@@ -111,12 +112,12 @@ public class StartBookingTripEndpoint : ICarterModule
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
                                             "Bạn phải ở trong phạm vi 10m từ xe để bắt đầu chuyến đi. Hiện tại bạn cách xe 50m"
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                        ),
+                                    },
+                                },
+                            },
+                        },
+                    },
                 }
             );
     }
@@ -128,10 +129,19 @@ public class StartBookingTripEndpoint : ICarterModule
     )
     {
         Result result = await sender.Send(
-            new StartBookingTrip.Command(id, request.Latitude, request.Longitude)
+            new StartBookingTrip.Command(
+                id,
+                request.Latitude,
+                request.Longitude,
+                Signature: request.Signature
+            )
         );
         return result.MapResult();
     }
 
-    private sealed record StartBookingTripRequest(decimal Latitude, decimal Longitude);
+    private sealed record StartBookingTripRequest(
+        decimal Latitude,
+        decimal Longitude,
+        string Signature
+    );
 }

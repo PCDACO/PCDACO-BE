@@ -73,6 +73,8 @@ public sealed class GetCarContract
                 InspectionResults = contract.InspectionResults ?? string.Empty,
                 InspectionPhotos = [],
                 GPSDeviceId = contract.GPSDeviceId?.ToString() ?? string.Empty,
+                OwnerSignatureImageUrl = contract.OwnerSignature ?? string.Empty,
+                TechnicianSignatureImageUrl = contract.TechnicianSignature ?? string.Empty,
             };
 
             string html = GenerateFullContractHtml(contractTemplate);

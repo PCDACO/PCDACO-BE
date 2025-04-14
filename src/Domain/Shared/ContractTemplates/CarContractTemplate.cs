@@ -23,6 +23,8 @@ public static class CarContractTemplateGenerator
         public required string InspectionResults { get; set; }
         public required Dictionary<InspectionPhotoType, string> InspectionPhotos { get; set; }
         public required string GPSDeviceId { get; set; }
+        public required string OwnerSignatureImageUrl { get; set; } = string.Empty;
+        public required string TechnicianSignatureImageUrl { get; set; } = string.Empty;
     }
 
     public static string GenerateFullContractHtml(CarContractTemplate contractTemplate)
@@ -249,6 +251,9 @@ public static class CarContractTemplateGenerator
                             border-radius: 4px;
                             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
                         }}
+                        .signature-image {{
+                            margin-bottom: 10px;
+                        }}
                         .signature-block {{
                             margin-top: 40px;
                             display: flex;
@@ -326,9 +331,17 @@ public static class CarContractTemplateGenerator
                         <!-- Signature Section -->
                         <div class='section signature-block'>
                             <div class='signature'>
+                                {(string.IsNullOrEmpty(contractTemplate.OwnerSignatureImageUrl) ? "" : $@"
+                                <div class='signature-image'>
+                                    <img src='{contractTemplate.OwnerSignatureImageUrl}' alt='Chữ ký chủ xe' />
+                                </div>")}
                                 <p>CHỦ XE<br/>{contractTemplate.OwnerName}</p>
                             </div>
                             <div class='signature'>
+                                {(string.IsNullOrEmpty(contractTemplate.TechnicianSignatureImageUrl) ? "" : $@"
+                                <div class='signature-image'>
+                                    <img src='{contractTemplate.TechnicianSignatureImageUrl}' alt='Chữ ký kiểm định viên' />
+                                </div>")}
                                 <p>ĐẠI DIỆN KIỂM ĐỊNH<br/>{contractTemplate.TechnicianName}</p>
                             </div>
                         </div>
@@ -376,6 +389,6 @@ public static class CarContractTemplateGenerator
             InspectionPhotoType.ParkingLocation => "Vị trí đỗ xe",
             InspectionPhotoType.CarKey => "Chìa khóa xe",
             InspectionPhotoType.TrunkSpace => "Khoang hành lý",
-            _ => type.ToString()
+            _ => type.ToString(),
         };
 }

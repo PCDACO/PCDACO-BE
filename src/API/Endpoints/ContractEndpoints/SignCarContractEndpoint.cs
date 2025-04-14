@@ -1,6 +1,7 @@
 using API.Utils;
 using Carter;
 using MediatR;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Any;
 using UseCases.UC_Contract.Commands;
 using IResult = Microsoft.AspNetCore.Http.IResult;
@@ -121,9 +122,11 @@ public class SignCarContractEndpoint : ICarterModule
             );
     }
 
-    private static async Task<IResult> Handle(ISender sender, Guid id)
+    private static async Task<IResult> Handle(ISender sender, Guid id, [FromBody] string signature)
     {
-        var result = await sender.Send(new SignCarContract.Command(id));
+        var result = await sender.Send(
+            new SignCarContract.Command(CarId: id, Signature: signature)
+        );
         return result.MapResult();
     }
 }

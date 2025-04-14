@@ -95,6 +95,7 @@ public class AssignDeviceToCar
             var newLocation = geometryFactory.CreatePoint(
                 new Coordinate(request.Longtitude, request.Latitude)
             );
+            newLocation.SRID = 4326;
 
             // Find car GPS association
             CarGPS? checkingCarGPS = await context
