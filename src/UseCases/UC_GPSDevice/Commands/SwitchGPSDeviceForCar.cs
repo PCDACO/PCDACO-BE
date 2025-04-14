@@ -63,6 +63,7 @@ public class SwitchGPSDeviceForCar
             var newLocation = geometryFactory.CreatePoint(
                 new Coordinate(request.Longtitude, request.Latitude)
             );
+            newLocation.SRID = 4326;
 
             if (currentCarGPS != null)
             {
