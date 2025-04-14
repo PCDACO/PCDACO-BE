@@ -29,6 +29,8 @@ public static class ContractTemplateGenerator
         public DateTimeOffset EndDate { get; set; }
         public required string PickupAddress { get; set; }
         public int RentalPeriod => (EndDate - StartDate).Days;
+        public required string OwnerSignatureImageUrl { get; set; }
+        public required string DriverSignatureImageUrl { get; set; }
     }
 
     public static string GenerateFullContractHtml(ContractTemplate contractTemplate)
@@ -346,6 +348,9 @@ public static class ContractTemplateGenerator
                                     margin-bottom: 5px;
                                     color: #000;
                                 }}
+                                .signature-image {{
+                                    margin-bottom: 10px;
+                                }}                               
                                 .signature-block {{
                                     margin-top: 40px;
                                     display: flex;
@@ -458,10 +463,18 @@ public static class ContractTemplateGenerator
                                 <!-- Signature Section -->
                                 <div class='section signature-block'>
                                     <div class='signature'>
+                                        {(string.IsNullOrEmpty(contractTemplate.OwnerSignatureImageUrl) ? "" : $@"
+                                        <div class='signature-image'>
+                                            <img src='{contractTemplate.OwnerSignatureImageUrl}' alt='Chữ ký chủ xe' />
+                                        </div>")}
                                         <p>BÊN CHO THUÊ (Bên A)<br/>{contractTemplate.OwnerName}</p>
                                     </div>
                                     <div class='signature'>
-                                         <p>BÊN THUÊ (Bên B)<br/>{contractTemplate.DriverName}</p>
+                                        {(string.IsNullOrEmpty(contractTemplate.DriverSignatureImageUrl) ? "" : $@"
+                                        <div class='signature-image'>
+                                            <img src='{contractTemplate.DriverSignatureImageUrl}' alt='Chữ ký bên thuê xe' />
+                                        </div>")}
+                                        <p>BÊN THUÊ (Bên B)<br/>{contractTemplate.DriverName}</p>
                                     </div>
                                 </div>
 

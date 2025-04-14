@@ -19,7 +19,7 @@ public sealed class ApproveBooking
 {
     private const int PAYMENT_EXPIRATION_HOURS = 12;
 
-    public sealed record Command(Guid BookingId, bool IsApproved, string BaseUrl)
+    public sealed record Command(Guid BookingId, bool IsApproved, string BaseUrl, string Signature)
         : IRequest<Result>;
 
     internal sealed class Handler(
@@ -67,7 +67,7 @@ public sealed class ApproveBooking
                 await RejectOverlappingPendingBookingsAsync(booking, cancellationToken);
 
                 // Update contract with Owner's signature.
-                await UpdateContractForApprovalAsync(booking, cancellationToken);
+                await UpdateContractForApprovalAsync(booking, request.Signature, cancellationToken);
 
                 // Schedule expiration job if booking is not paid
                 if (!booking.IsPaid)
@@ -162,6 +162,7 @@ public sealed class ApproveBooking
         // If the contract exists, update it with the owner's signature and mark as confirmed.
         private async Task UpdateContractForApprovalAsync(
             Booking booking,
+            string signature,
             CancellationToken cancellationToken
         )
         {
@@ -175,6 +176,7 @@ public sealed class ApproveBooking
             if (contract != null)
             {
                 contract.OwnerSignatureDate = DateTimeOffset.UtcNow;
+                contract.OwnerSignature = signature;
                 contract.Status = ContractStatusEnum.Confirmed;
             }
         }
@@ -217,6 +219,7 @@ public sealed class ApproveBooking
                 .WithMessage("Trạng thái phê duyệt không được để trống");
 
             RuleFor(x => x.BaseUrl).NotEmpty().WithMessage("Base URL không được để trống");
+            RuleFor(x => x.Signature).NotEmpty().WithMessage("Chữ ký không được để trống");
         }
     }
 }

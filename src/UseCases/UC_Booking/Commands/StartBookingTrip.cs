@@ -14,8 +14,12 @@ namespace UseCases.UC_Booking.Commands;
 
 public sealed class StartBookingTrip
 {
-    public sealed record Command(Guid BookingId, decimal Latitude, decimal Longitude)
-        : IRequest<Result>;
+    public sealed record Command(
+        Guid BookingId,
+        decimal Latitude,
+        decimal Longitude,
+        string Signature
+    ) : IRequest<Result>;
 
     internal sealed class Handler(
         IAppDBContext context,
@@ -94,6 +98,22 @@ public sealed class StartBookingTrip
                 );
             }
 
+            // Check if booking contract exists
+            var contract = await context.Contracts.FirstOrDefaultAsync(
+                c => c.BookingId == booking.Id,
+                cancellationToken
+            );
+
+            if (contract == null)
+            {
+                logger.LogError("Contract not found for booking {BookingId}", booking.Id);
+                return Result.NotFound("Không tìm thấy hợp đồng cho booking này");
+            }
+
+            // Update driver signature
+            contract.DriverSignature = request.Signature;
+            contract.DriverSignatureDate = DateTimeOffset.UtcNow;
+
             var tracking = new TripTracking
             {
                 Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
@@ -127,6 +147,8 @@ public sealed class StartBookingTrip
             RuleFor(x => x.Longitude)
                 .InclusiveBetween(-180, 180)
                 .WithMessage("Cần đến gần chiếc xe thì mới bắt đầu được");
+
+            RuleFor(x => x.Signature).NotEmpty().WithMessage("Chữ ký không được để trống");
         }
     }
 }
