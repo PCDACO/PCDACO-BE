@@ -98,7 +98,9 @@ public sealed class CompleteInspection
                 CarTerms = schedule.Car.Terms,
                 InspectionResults = request.InspectionResults,
                 InspectionPhotos = schedule.Photos.ToDictionary(p => p.Type, p => p.PhotoUrl),
-                GPSDeviceId = request.GPSDeviceId.ToString()
+                GPSDeviceId = request.GPSDeviceId.ToString(),
+                TechnicianSignatureImageUrl = string.Empty,
+                OwnerSignatureImageUrl = string.Empty,
             };
 
             string contractHtml = GenerateFullContractHtml(contractTemplate);
@@ -110,7 +112,7 @@ public sealed class CompleteInspection
                 {
                     CarId = schedule.CarId,
                     DeviceId = request.GPSDeviceId,
-                    Location = schedule.Car.PickupLocation // Initial location is car's pickup location
+                    Location = schedule.Car.PickupLocation, // Initial location is car's pickup location
                 };
 
                 // Update GPS device status
