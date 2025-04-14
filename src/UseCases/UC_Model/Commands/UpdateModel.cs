@@ -58,6 +58,20 @@ public sealed class UpdateModel
             if (checkingManufacturer is null)
                 return Result.Error("Hãng xe không tồn tại");
 
+            // Check if another model with the same name already exists for this manufacturer
+            bool duplicateNameExists = await context
+                .Models.AsNoTracking()
+                .AnyAsync(
+                    m =>
+                        m.Id != request.ModelId
+                        && m.ManufacturerId == request.ManufacturerId
+                        && m.Name.Trim().ToLower() == request.Name.Trim().ToLower(),
+                    cancellationToken
+                );
+
+            if (duplicateNameExists)
+                return Result.Error("Tên mô hình xe đã tồn tại trong hãng xe này");
+
             updatingModel.ManufacturerId = request.ManufacturerId;
             updatingModel.Name = request.Name;
             updatingModel.ReleaseDate = request.ReleaseDate;

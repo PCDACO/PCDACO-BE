@@ -37,6 +37,19 @@ public sealed class UpdateManufacturer
             if (updatingManufacturer is null)
                 return Result.NotFound("Không tìm thấy hãng xe");
 
+            // Check if another manufacturer with the same name already exists
+            bool duplicateNameExists = await context
+                .Manufacturers.AsNoTracking()
+                .AnyAsync(
+                    m =>
+                        m.Id != request.Id
+                        && m.Name.Trim().ToLower() == request.ManufacturerName.Trim().ToLower(),
+                    cancellationToken
+                );
+
+            if (duplicateNameExists)
+                return Result.Error("Tên hãng xe đã tồn tại");
+
             // Update the manufacturer
             updatingManufacturer.Name = request.ManufacturerName;
             updatingManufacturer.UpdatedAt = DateTimeOffset.UtcNow;
