@@ -40,6 +40,7 @@ public sealed class GetBookingApprovalPreviewContract
                 .ThenInclude(o => o.EncryptionKey)
                 .Include(b => b.User)
                 .ThenInclude(u => u.EncryptionKey)
+                .Include(b => b.Contract)
                 .FirstOrDefaultAsync(b => b.Id == request.BookingId, cancellationToken);
 
             if (booking == null)
@@ -77,6 +78,8 @@ public sealed class GetBookingApprovalPreviewContract
                 StartDate = booking.StartTime,
                 EndDate = booking.EndTime,
                 PickupAddress = booking.Car.PickupAddress,
+                OwnerSignatureImageUrl = booking.Contract?.OwnerSignature ?? string.Empty,
+                DriverSignatureImageUrl = booking.Contract?.DriverSignature ?? string.Empty,
             };
 
             string html = ContractTemplateGenerator.GenerateFullContractHtml(contractTemplate);
