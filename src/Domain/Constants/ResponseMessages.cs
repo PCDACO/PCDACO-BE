@@ -29,10 +29,12 @@ public class ResponseMessages
     public const string GPSDeviceNotFound = "Không tìm thấy thiết bị GPS";
     public const string GPSDeviceIsExisted = "Thiết bị GPS đã tồn tại";
     public const string GPSDeviceHasCarGPS = "Thiết bị GPS đã được đăng kí sử dụng";
-    public const string GPSDeviceIsNotAvailable = "Thiết bị GPS không khả dụng";
+    public const string GPSDeviceIsNotAvailable =
+        "Thiết bị GPS đã được sử dụng, vui lòng gỡ thiết bị trước khi gán vào xe mới";
 
     // CAR GPS
-    public const string CarGPSIsExisted = "Thiết bị GPS đã được gán cho xe này";
+    public const string CarGPSIsExisted =
+        "Xe đã được gán thiết bị GPS, vui lòng gỡ thiết bị trước khi gán vào xe mới";
 
     // DEVICE STATUS
     public const string DeviceStatusNotFound = "Không tìm thấy trạng thái thiết bị";
