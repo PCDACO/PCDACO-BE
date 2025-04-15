@@ -23,7 +23,9 @@ public class GetInspectionScheduleDetail
         CarDetail Car,
         DateTimeOffset CreatedAt,
         Guid ContractId,
-        bool HasGPSDevice
+        bool HasGPSDevice,
+        bool IsTechnicianSigned,
+        bool IsOwnerSigned
     )
     {
         public static async Task<Response> FromEntity(
@@ -75,7 +77,9 @@ public class GetInspectionScheduleDetail
                 ContractId: inspectionSchedule.Car.Contract != null
                     ? inspectionSchedule.Car.Contract.Id
                     : Guid.Empty,
-                HasGPSDevice: inspectionSchedule.Car.GPS != null
+                HasGPSDevice: inspectionSchedule.Car.GPS != null,
+                IsTechnicianSigned: inspectionSchedule.Car.Contract?.TechnicianSignature != null,
+                IsOwnerSigned: inspectionSchedule.Car.Contract?.OwnerSignature != null
             );
         }
     };
