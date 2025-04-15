@@ -18,7 +18,7 @@ public sealed class CreateInspectionSchedule
         string InspectionAddress,
         DateTimeOffset InspectionDate,
         Guid? ReportId = null,
-        bool IsIncident = false
+        InspectionScheduleType Type = InspectionScheduleType.NewCar
     ) : IRequest<Result<Response>>;
 
     public sealed record Response(Guid Id)
@@ -39,25 +39,20 @@ public sealed class CreateInspectionSchedule
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             // Verify car exists and is in pending status
-            var car = await context.Cars.FirstOrDefaultAsync(
-                c => c.Id == request.CarId && !c.IsDeleted,
-                cancellationToken
-            );
+            var car = await context
+                .Cars.IgnoreQueryFilters()
+                .Include(c => c.GPS)
+                .FirstOrDefaultAsync(c => c.Id == request.CarId && !c.IsDeleted, cancellationToken);
 
             if (car is null)
                 return Result.Error(ResponseMessages.CarNotFound);
 
-            // determine inspection schedule type
-            InspectionScheduleType scheduleType = request.IsIncident
-                ? InspectionScheduleType.Incident
-                : InspectionScheduleType.NewCar;
-
-            if (request.IsIncident)
+            if (request.Type == InspectionScheduleType.Incident)
             {
-                // Check if the car is in pending status
+                // Check if the car is in pending or rented status
                 if (car.Status == CarStatusEnum.Pending || car.Status == CarStatusEnum.Rented)
                     return Result.Error(
-                        "Không thể tao lịch kiểm định sự cố cho xe đang chờ duyệt hoặc đã được thuê"
+                        "Không thể tao lịch sự cố cho xe đang chờ duyệt hoặc đã được thuê"
                     );
                 // Check only car doesn't have any active booking can continue
                 var activeBooking = await context
@@ -70,12 +65,35 @@ public sealed class CreateInspectionSchedule
                     )
                     .FirstOrDefaultAsync(cancellationToken);
                 if (activeBooking != null)
-                    return Result.Error(
-                        "Xe đang có lịch đặt không thể tạo lịch kiểm định cho sự cố"
-                    );
+                    return Result.Error("Xe đang có lịch đặt không thể tạo lịch cho sự cố");
 
                 // update car status to maintain
                 car.Status = CarStatusEnum.Maintain;
+                car.UpdatedAt = DateTimeOffset.UtcNow;
+            }
+            else if (request.Type == InspectionScheduleType.ChangeGPS)
+            {
+                // Check cargps of car is null
+                if (car.GPS == null)
+                    return Result.Error(
+                        "Xe chưa được gán thiết bị gps không thể tạo lịch đổi thiết bị gps"
+                    );
+
+                // Check only car doesn't have any active booking can continue
+                var activeBooking = await context
+                    .Bookings.Where(b => b.CarId == request.CarId)
+                    .Where(b =>
+                        b.Status == BookingStatusEnum.Pending
+                        || b.Status == BookingStatusEnum.Ongoing
+                        || b.Status == BookingStatusEnum.ReadyForPickup
+                        || b.Status == BookingStatusEnum.Approved
+                    )
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (activeBooking != null)
+                    return Result.Error("Xe đang có lịch đặt không thể tạo lịch đổi thiết bị gps");
+
+                // update car status to inactive
+                car.Status = CarStatusEnum.Inactive;
                 car.UpdatedAt = DateTimeOffset.UtcNow;
             }
             else if (car.Status != CarStatusEnum.Pending)
@@ -93,7 +111,7 @@ public sealed class CreateInspectionSchedule
                 return Result.Error(ResponseMessages.TechnicianNotFound);
 
             // Check if the report exists and is not deleted and is under review
-            if (request.ReportId != null && request.IsIncident)
+            if (request.ReportId != null && request.Type == InspectionScheduleType.Incident)
             {
                 var report = await context.BookingReports.FirstOrDefaultAsync(
                     r => r.Id == request.ReportId && !r.IsDeleted,
@@ -154,9 +172,7 @@ public sealed class CreateInspectionSchedule
                 InspectionAddress = request.InspectionAddress,
                 InspectionDate = request.InspectionDate,
                 CreatedBy = currentUser.User.Id,
-                Type = request.IsIncident
-                    ? InspectionScheduleType.Incident
-                    : InspectionScheduleType.NewCar,
+                Type = request.Type,
             };
 
             await context.InspectionSchedules.AddAsync(schedule, cancellationToken);

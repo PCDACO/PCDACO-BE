@@ -246,8 +246,9 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(ResultStatus.Ok, result.Status);
 
         // Verify the device count hasn't changed
-        var deviceCount = await _dbContext.GPSDevices.CountAsync();
-        Assert.Equal(1, deviceCount);
+        var device = await _dbContext.GPSDevices.FirstOrDefaultAsync();
+        Assert.NotNull(device);
+        Assert.True(device.Status == DeviceStatusEnum.InUsed);
 
         // Verify a new CarGPS was created using the existing device
         var carGPS = await _dbContext.CarGPSes.FirstOrDefaultAsync(c =>
@@ -299,6 +300,17 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         await _dbContext.GPSDevices.AddAsync(device);
 
+        var device2 = new GPSDevice
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            OSBuildId = "DEVICE-1234",
+            Name = "Test Device",
+            Status = DeviceStatusEnum.InUsed,
+            IsDeleted = false,
+        };
+
+        await _dbContext.GPSDevices.AddAsync(device2);
+
         // Create an existing CarGPS
         var location = _geometryFactory.CreatePoint(new Coordinate(106.6, 10.6));
         location.SRID = 4326;
@@ -307,9 +319,9 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         {
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
             CarId = car.Id,
-            DeviceId = device.Id,
+            DeviceId = device2.Id,
             Location = location,
-            IsDeleted = false,
+            IsDeleted = true,
         };
 
         await _dbContext.CarGPSes.AddAsync(existingCarGPS);
@@ -333,14 +345,17 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Verify the CarGPS data hasn't changed
         var unchangedCarGPS = await _dbContext.CarGPSes.FirstOrDefaultAsync(c =>
-            c.CarId == car.Id && c.DeviceId == device.Id
+            c.CarId == car.Id && c.DeviceId == device2.Id
         );
+
+        Assert.NotNull(unchangedCarGPS);
+        Assert.True(!unchangedCarGPS.IsDeleted);
         Assert.Equal(10.6, unchangedCarGPS!.Location.Y, 6);
         Assert.Equal(106.6, unchangedCarGPS.Location.X, 6);
     }
 
     [Fact]
-    public async Task Handle_RestoresDeletedCarGps_WhenFound()
+    public async Task Handle_ExistingDeviceButNotAvailable_ReturnsError()
     {
         // Arrange
         var (car, _) = await SetupTestCar();
@@ -374,57 +389,30 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         var device = new GPSDevice
         {
             Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            OSBuildId = "DEVICE-456",
+            OSBuildId = "DEVICE-123",
             Name = "Test Device",
-            Status = DeviceStatusEnum.Available,
+            Status = DeviceStatusEnum.InUsed,
             IsDeleted = false,
         };
 
         await _dbContext.GPSDevices.AddAsync(device);
-
-        // Create a deleted CarGPS
-        var location = _geometryFactory.CreatePoint(new Coordinate(106.6, 10.6));
-        location.SRID = 4326;
-
-        var deletedCarGPS = new CarGPS
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            CarId = car.Id,
-            DeviceId = device.Id,
-            Location = location,
-            IsDeleted = true,
-        };
-
-        await _dbContext.CarGPSes.AddAsync(deletedCarGPS);
         await _dbContext.SaveChangesAsync();
-
-        // New coordinates
-        double newLongitude = 106.7004238;
-        double newLatitude = 10.7756587;
 
         var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
-            OSBuildId: "DEVICE-456",
+            OSBuildId: "DEVICE-123",
             DeviceName: "Test Device",
-            Longtitude: newLongitude,
-            Latitude: newLatitude
+            Longtitude: 106.7004238,
+            Latitude: 10.7756587
         );
 
         // Act
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.Ok, result.Status);
-
-        // Verify the CarGPS was restored and location updated
-        var restoredCarGPS = await _dbContext.CarGPSes.FirstOrDefaultAsync(c =>
-            c.CarId == car.Id && c.DeviceId == device.Id
-        );
-        Assert.NotNull(restoredCarGPS);
-        Assert.False(restoredCarGPS.IsDeleted);
-        Assert.Equal(newLatitude, restoredCarGPS.Location.Y, 6);
-        Assert.Equal(newLongitude, restoredCarGPS.Location.X, 6);
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(ResponseMessages.GPSDeviceIsNotAvailable, result.Errors);
     }
 
     [Fact]
@@ -499,89 +487,6 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
             c.CarId == car.Id && c.DeviceId == availableDevice.Id
         );
         Assert.NotNull(carGPS);
-    }
-
-    [Fact]
-    public async Task Handle_CarAlreadyHasGPSWithDifferentDevice_ReturnsSuccess()
-    {
-        // Arrange
-        var (car, _) = await SetupTestCar();
-
-        // Add inspection schedule with InProgress status
-        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
-            _dbContext,
-            "Technician"
-        );
-        var technician = await TestDataCreateUser.CreateTestUser(
-            _dbContext,
-            technicianRole,
-            "tech@example.com"
-        );
-
-        var inspectionSchedule = new InspectionSchedule
-        {
-            Id = Guid.NewGuid(),
-            CarId = car.Id,
-            TechnicianId = technician.Id,
-            Status = InspectionScheduleStatusEnum.InProgress,
-            InspectionAddress = "Test Address",
-            InspectionDate = DateTimeOffset.UtcNow,
-            CreatedBy = technician.Id,
-        };
-
-        await _dbContext.InspectionSchedules.AddAsync(inspectionSchedule);
-
-        // Create first device and associate with car
-        var firstDevice = new GPSDevice
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            OSBuildId = "FIRST-DEVICE",
-            Name = "First Device",
-            Status = DeviceStatusEnum.InUsed,
-            IsDeleted = false,
-        };
-        await _dbContext.GPSDevices.AddAsync(firstDevice);
-
-        var initialLocation = _geometryFactory.CreatePoint(new Coordinate(106.6, 10.6));
-        initialLocation.SRID = 4326;
-
-        var existingCarGPS = new CarGPS
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            CarId = car.Id,
-            DeviceId = firstDevice.Id,
-            Location = initialLocation,
-            IsDeleted = false,
-        };
-        await _dbContext.CarGPSes.AddAsync(existingCarGPS);
-
-        // Create second device for replacement
-        var secondDevice = new GPSDevice
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            OSBuildId = "SECOND-DEVICE",
-            Name = "Second Device",
-            Status = DeviceStatusEnum.Available,
-            IsDeleted = false,
-        };
-        await _dbContext.GPSDevices.AddAsync(secondDevice);
-        await _dbContext.SaveChangesAsync();
-
-        // Set up handler with second device
-        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
-        var command = new AssignDeviceToCar.Command(
-            CarId: car.Id,
-            OSBuildId: "SECOND-DEVICE",
-            DeviceName: "Second Device",
-            Longtitude: 107.0,
-            Latitude: 11.0
-        );
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Ok, result.Status);
     }
 
     [Fact]

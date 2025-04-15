@@ -69,12 +69,27 @@ public class AssignDeviceToCar
             // check device
             GPSDevice? gettingDevice = await context
                 .GPSDevices.IgnoreQueryFilters()
+                .Include(d => d.GPS)
+                .Include(d => d.Contract)
                 .Where(d => d.OSBuildId == request.OSBuildId)
                 .FirstOrDefaultAsync(cancellationToken);
 
             // add new device
             if (gettingDevice is not null)
             {
+                // Check if device is used
+                if (
+                    gettingDevice.Contract != null
+                    || gettingDevice.GPS != null
+                    || gettingDevice.Status != DeviceStatusEnum.Available
+                )
+                {
+                    logger.LogError(
+                        "Device {OSBuildId} is already assigned to another car",
+                        request.OSBuildId
+                    );
+                    return Result.Error(ResponseMessages.GPSDeviceIsNotAvailable);
+                }
                 gettingDevice.Name = request.DeviceName;
                 gettingDevice.Status = DeviceStatusEnum.InUsed;
                 gettingDevice.IsDeleted = false;
@@ -105,27 +120,13 @@ public class AssignDeviceToCar
 
             if (checkingCarGPS is not null)
             {
-                // Car already has GPS association
-                if (checkingCarGPS.DeviceId == gettingDevice.Id && !checkingCarGPS.IsDeleted)
-                {
-                    logger.LogError(
-                        "Device {OSBuildId} is already assigned to Car {CarId}",
-                        request.OSBuildId,
-                        request.CarId
-                    );
-                    // Error if same device is already actively assigned to car
-                    return Result.Error(ResponseMessages.CarGPSIsExisted);
-                }
-
-                // Update association
-                checkingCarGPS.DeviceId = gettingDevice.Id;
-                checkingCarGPS.Location = newLocation;
-
-                // Restore if previously deleted
-                if (checkingCarGPS.IsDeleted)
-                {
-                    checkingCarGPS.Restore();
-                }
+                checkingCarGPS.IsDeleted = false;
+                await context.SaveChangesAsync(cancellationToken);
+                logger.LogError(
+                    "Device {OSBuildId} is already assigned to another car",
+                    request.OSBuildId
+                );
+                return Result.Error(ResponseMessages.CarGPSIsExisted);
             }
             else
             {
