@@ -33,8 +33,7 @@ public class ResponseMessages
         "Thiết bị GPS đã được sử dụng, vui lòng gỡ thiết bị trước khi gán vào xe mới";
 
     // CAR GPS
-    public const string CarGPSIsExisted =
-        "Xe đã được gán thiết bị GPS, vui lòng gỡ thiết bị trước khi gán vào xe mới";
+    public const string CarGPSIsExisted = "Xe đã được gán thiết bị GPS";
 
     // DEVICE STATUS
     public const string DeviceStatusNotFound = "Không tìm thấy trạng thái thiết bị";
