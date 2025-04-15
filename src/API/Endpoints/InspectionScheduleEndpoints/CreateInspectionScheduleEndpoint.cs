@@ -1,6 +1,7 @@
 using API.Utils;
 using Ardalis.Result;
 using Carter;
+using Domain.Enums;
 using MediatR;
 using Microsoft.OpenApi.Any;
 using UseCases.UC_InspectionSchedule.Commands;
@@ -161,7 +162,7 @@ public class CreateInspectionScheduleEndpoint : ICarterModule
                 InspectionAddress: request.InspectionAddress,
                 InspectionDate: request.InspectionDate,
                 ReportId: request.ReportId,
-                IsIncident: request.IsIncident
+                Type: request.Type
             )
         );
         return result.MapResult();
@@ -173,6 +174,6 @@ public class CreateInspectionScheduleEndpoint : ICarterModule
         string InspectionAddress,
         DateTimeOffset InspectionDate,
         Guid? ReportId = null,
-        bool IsIncident = false
+        InspectionScheduleType Type = InspectionScheduleType.NewCar
     );
 }

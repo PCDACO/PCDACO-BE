@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using Domain.Constants;
 using Domain.Entities;
+using Domain.Enums;
 using Domain.Shared;
 using FluentValidation;
 using MediatR;
@@ -59,8 +60,8 @@ public sealed class ApproveInspectionSchedule
 
             // Check if schedule can be updated
             if (
-                schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.Signed
-                && schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.InProgress
+                schedule.Status != InspectionScheduleStatusEnum.Signed
+                && schedule.Status != InspectionScheduleStatusEnum.InProgress
             )
                 return Result.Error(
                     ResponseMessages.OnlyUpdateSignedOrInprogressInspectionSchedule
@@ -70,7 +71,7 @@ public sealed class ApproveInspectionSchedule
             if (DateTimeOffset.UtcNow > schedule.InspectionDate.AddHours(1))
                 return Result.Error(ResponseMessages.InspectionScheduleExpired);
 
-            if (request.IsApproved)
+            if (request.IsApproved && schedule.Type == InspectionScheduleType.NewCar)
             {
                 // Get car contract
                 var contract = await context.CarContracts.FirstOrDefaultAsync(
@@ -118,15 +119,15 @@ public sealed class ApproveInspectionSchedule
                 //update contract
                 contract.Terms = contractHtml;
                 contract.InspectionResults = request.IsApproved ? "Đã duyệt" : "Không duyệt";
-                contract.Status = Domain.Enums.CarContractStatusEnum.Completed;
+                contract.Status = CarContractStatusEnum.Completed;
                 contract.UpdatedAt = DateTimeOffset.UtcNow;
             }
 
             // Update schedule
             schedule.Note = request.Note;
             schedule.Status = request.IsApproved
-                ? Domain.Enums.InspectionScheduleStatusEnum.Approved
-                : Domain.Enums.InspectionScheduleStatusEnum.Rejected;
+                ? InspectionScheduleStatusEnum.Approved
+                : InspectionScheduleStatusEnum.Rejected;
             schedule.UpdatedAt = DateTimeOffset.UtcNow;
             // Set Car Status into available
             if (request.IsApproved)
@@ -135,7 +136,7 @@ public sealed class ApproveInspectionSchedule
                     .Cars.Where(c => !c.IsDeleted)
                     .Where(c => c.Id == schedule.CarId)
                     .ExecuteUpdateAsync(
-                        c => c.SetProperty(c => c.Status, Domain.Enums.CarStatusEnum.Available),
+                        c => c.SetProperty(c => c.Status, CarStatusEnum.Available),
                         cancellationToken: cancellationToken
                     );
             }

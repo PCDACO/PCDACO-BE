@@ -70,6 +70,18 @@ public sealed class UpdateContract
             }
             else
             {
+                //Check if device existed in any contract
+                var existingContract = await context
+                    .CarContracts.Where(c =>
+                        c.GPSDeviceId == schedule.Car.GPS.DeviceId && c.Id != contract.Id
+                    )
+                    .FirstOrDefaultAsync(cancellationToken);
+                if (existingContract != null)
+                {
+                    return Result.Error(
+                        "Thiết bị GPS này đã được gán cho hợp đồng khác, hãy gỡ thiết bị GPS trước"
+                    );
+                }
                 // Update existing contract
                 contract.Status = CarContractStatusEnum.Pending;
             }
