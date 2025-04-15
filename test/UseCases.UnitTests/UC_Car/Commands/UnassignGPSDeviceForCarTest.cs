@@ -41,6 +41,9 @@ public class UnassignGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifet
         // Create CarGPS association
         var carGPS = await CreateCarGPSAssociation(car.Id, device.Id);
 
+        // Create an in progress ChangeGPS inspection schedule for the car
+        await CreateChangeGPSInspectionSchedule(car.Id);
+
         // Create handler and command
         var handler = new UnassignGPSDeviceForCar.Handler(_dbContext);
         var command = new UnassignGPSDeviceForCar.Command(device.Id);
@@ -79,6 +82,9 @@ public class UnassignGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifet
         // Create CarGPS association
         var carGPS = await CreateCarGPSAssociation(car.Id, device.Id);
 
+        // Create an in progress ChangeGPS inspection schedule for the car
+        await CreateChangeGPSInspectionSchedule(car.Id);
+
         // Create handler and command
         var handler = new UnassignGPSDeviceForCar.Handler(_dbContext);
         var command = new UnassignGPSDeviceForCar.Command(device.Id);
@@ -100,6 +106,33 @@ public class UnassignGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifet
             .CarGPSes.IgnoreQueryFilters()
             .FirstOrDefaultAsync(c => c.CarId == car.Id && c.DeviceId == device.Id);
         Assert.Null(deletedCarGPS);
+    }
+
+    [Fact]
+    public async Task Handle_NoChangeGPSSchedule_ReturnsError()
+    {
+        // Arrange
+        var (car, _) = await SetupTestCarWithStatus(CarStatusEnum.Pending);
+
+        // Create GPS device
+        var device = await TestDataGPSDevice.CreateTestGPSDevice(
+            _dbContext,
+            status: DeviceStatusEnum.InUsed
+        );
+
+        // Create CarGPS association without inspection schedule
+        var carGPS = await CreateCarGPSAssociation(car.Id, device.Id);
+
+        // Create handler and command
+        var handler = new UnassignGPSDeviceForCar.Handler(_dbContext);
+        var command = new UnassignGPSDeviceForCar.Command(device.Id);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains("Xe không có lịch đổi thiết bị gps nào đang diễn ra", result.Errors);
     }
 
     [Fact]
@@ -151,49 +184,6 @@ public class UnassignGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifet
         // Assert
         Assert.Equal(ResultStatus.NotFound, result.Status);
         Assert.Contains("Thiết bị GPS không được gán cho xe nào", result.Errors);
-    }
-
-    [Theory]
-    [InlineData(CarStatusEnum.Available)]
-    [InlineData(CarStatusEnum.Maintain)]
-    [InlineData(CarStatusEnum.Rented)]
-    public async Task Handle_CarNotInPendingStatusAndNotDeleted_ReturnsConflict(
-        CarStatusEnum status
-    )
-    {
-        // Arrange
-        var (car, _) = await SetupTestCarWithStatus(status);
-
-        // Create GPS device
-        var device = await TestDataGPSDevice.CreateTestGPSDevice(
-            _dbContext,
-            status: DeviceStatusEnum.InUsed
-        );
-
-        // Create CarGPS association
-        var carGPS = await CreateCarGPSAssociation(car.Id, device.Id);
-
-        var handler = new UnassignGPSDeviceForCar.Handler(_dbContext);
-        var command = new UnassignGPSDeviceForCar.Command(device.Id);
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Conflict, result.Status);
-        Assert.Contains(
-            "Chỉ có thể gỡ thiết bị GPS khỏi xe đã bị xóa hoặc đang trong trạng thái chờ",
-            result.Errors
-        );
-
-        // Verify nothing was changed
-        var unchangedDevice = await _dbContext.GPSDevices.FindAsync(device.Id);
-        Assert.Equal(DeviceStatusEnum.InUsed, unchangedDevice.Status);
-
-        var unchangedCarGPS = await _dbContext.CarGPSes.FirstOrDefaultAsync(c =>
-            c.DeviceId == device.Id
-        );
-        Assert.NotNull(unchangedCarGPS);
     }
 
     [Fact]
@@ -296,6 +286,46 @@ public class UnassignGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifet
         await _dbContext.SaveChangesAsync();
 
         return carGPS;
+    }
+
+    private async Task<InspectionSchedule> CreateChangeGPSInspectionSchedule(Guid carId)
+    {
+        // Create technician role
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+
+        // Create technician
+        var technician = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
+
+        // Create consultant role
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+
+        // Create consultant
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+
+        // Create inspection schedule
+        var inspectionSchedule = new InspectionSchedule
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            CarId = carId,
+            TechnicianId = technician.Id,
+            CreatedBy = consultant.Id,
+            Status = InspectionScheduleStatusEnum.InProgress,
+            Type = InspectionScheduleType.ChangeGPS,
+            InspectionAddress = "Test Address",
+            InspectionDate = DateTimeOffset.UtcNow.AddDays(1),
+            IsDeleted = false,
+        };
+
+        await _dbContext.InspectionSchedules.AddAsync(inspectionSchedule);
+        await _dbContext.SaveChangesAsync();
+
+        return inspectionSchedule;
     }
 
     #endregion
