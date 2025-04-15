@@ -70,7 +70,8 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-//await UpdateDatabase.Execute(app);
+// await DeleteDatabase.Execute(app);
+await UpdateDatabase.Execute(app);
 app.UseAuthentication();
 app.UseMiddleware<AuthMiddleware>();
 app.UseAuthorization();
