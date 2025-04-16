@@ -25,17 +25,19 @@ public class UnassignGPSDeviceForCarEndpoint : ICarterModule
                     Process:
                     1. Validates GPS device exists and is not deleted
                     2. Finds the car associated with this GPS device
-                    3. Verifies if car is in Pending status or is deleted
-                    4. Updates the device status to Available
-                    5. Removes the association between car and device
+                    3. Verifies if car has an in-progress ChangeGPS inspection schedule
+                    4. Checks that the car has no active bookings
+                    5. Updates the device status to Available
+                    6. Removes the association between car and device
 
                     Requirements:
                     - GPS device must exist and be associated with a car
-                    - Car must be in Pending status or already deleted
+                    - Car must have an in-progress ChangeGPS inspection schedule
+                    - Car must not have any active bookings
 
                     This operation is useful for:
-                    - Removing devices from deleted cars
-                    - Reassigning devices from non-active cars to other vehicles
+                    - Removing GPS devices during a scheduled GPS change inspection
+                    - Freeing up GPS devices for use in other vehicles
                     - Maintaining device inventory
                     """,
 
@@ -58,10 +60,9 @@ public class UnassignGPSDeviceForCarEndpoint : ICarterModule
                                 },
                             },
                         },
-                        ["404"] = new()
+                        ["400"] = new()
                         {
-                            Description =
-                                "Not Found - GPS device not found or not associated with any car",
+                            Description = "Bad Request - Car has active bookings",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -72,27 +73,7 @@ public class UnassignGPSDeviceForCarEndpoint : ICarterModule
                                         ["errors"] = new OpenApiArray
                                         {
                                             new OpenApiString(
-                                                "Thiết bị GPS không được gán cho xe nào"
-                                            ),
-                                        },
-                                    },
-                                },
-                            },
-                        },
-                        ["409"] = new()
-                        {
-                            Description = "Conflict - Car is not in Pending status or deleted",
-                            Content =
-                            {
-                                ["application/json"] = new()
-                                {
-                                    Example = new OpenApiObject
-                                    {
-                                        ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["errors"] = new OpenApiArray
-                                        {
-                                            new OpenApiString(
-                                                "Chỉ có thể gỡ thiết bị GPS khỏi xe đã bị xóa hoặc đang trong trạng thái chờ"
+                                                "Xe đang có lịch đặt, không thể gỡ thiết bị GPS"
                                             ),
                                         },
                                     },
@@ -112,6 +93,47 @@ public class UnassignGPSDeviceForCarEndpoint : ICarterModule
                                         ["errors"] = new OpenApiArray
                                         {
                                             new OpenApiString("Không tìm thấy thiết bị GPS"),
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        ["400"] = new()
+                        {
+                            Description = "Bad Request - No change GPS schedule inprogress",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["errors"] = new OpenApiArray
+                                        {
+                                            new OpenApiString(
+                                                "Xe không có lịch đổi thiết bị gps nào đang diễn ra"
+                                            ),
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        ["404"] = new()
+                        {
+                            Description =
+                                "Not Found - GPS device not found or not associated with any car",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["errors"] = new OpenApiArray
+                                        {
+                                            new OpenApiString(
+                                                "Thiết bị GPS không được gán cho xe nào"
+                                            ),
                                         },
                                     },
                                 },

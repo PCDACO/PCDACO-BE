@@ -26,17 +26,18 @@ public class AssignDeviceToCarEndpoint : ICarterModule
 
                     Process:
                     1. Validates car exists and is not deleted
-                    2. Checks if device with OSBuildId exists:
+                    2. Verifies car has an in-progress inspection schedule
+                    3. Checks if device with OSBuildId exists:
                        - If exists and available: Updates status to InUsed
                        - If exists but not available: Returns error
                        - If doesn't exist: Creates a new device
-                    3. Checks CarGPS association:
-                       - If exists and not deleted: Returns error
-                       - If exists but deleted: Restores and updates location
+                    4. Checks CarGPS association:
+                       - If exists: Returns error that car already has a GPS device
                        - If doesn't exist: Creates new association
 
                     Requirements:
                     - Car must exist and not be deleted
+                    - Car must have an in-progress inspection schedule
                     - If device exists, it must be in Available status
                     - Car must not have an active GPS device association
                     """,
@@ -78,7 +79,7 @@ public class AssignDeviceToCarEndpoint : ICarterModule
                         },
                         ["400"] = new()
                         {
-                            Description = "BadRequest - Device not available or already assigned",
+                            Description = "Bad Request - Car already has GPS",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -88,7 +89,7 @@ public class AssignDeviceToCarEndpoint : ICarterModule
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["errors"] = new OpenApiArray
                                         {
-                                            new OpenApiString("Thiết bị GPS không khả dụng"),
+                                            new OpenApiString("Xe đã được gắn thiết bị GPS"),
                                         },
                                     },
                                 },
@@ -96,7 +97,8 @@ public class AssignDeviceToCarEndpoint : ICarterModule
                         },
                         ["400"] = new()
                         {
-                            Description = "Bad Request - Device already assigned to this car",
+                            Description =
+                                "Bad Request - Car does not have an in-progress inspection schedule",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -106,7 +108,29 @@ public class AssignDeviceToCarEndpoint : ICarterModule
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["errors"] = new OpenApiArray
                                         {
-                                            new OpenApiString("Thiết bị GPS này đang được sử dụng"),
+                                            new OpenApiString(
+                                                "Xe chưa có lịch kiểm định nào đang được tiến hành, không thể gán thiết bị GPS !"
+                                            ),
+                                        },
+                                    },
+                                },
+                            },
+                        },
+                        ["400"] = new()
+                        {
+                            Description = "Bad Request - GPS device not available",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["errors"] = new OpenApiArray
+                                        {
+                                            new OpenApiString(
+                                                "Thiết bị GPS đã được sử dụng, vui lòng gỡ thiết bị trước khi gán vào xe mới"
+                                            ),
                                         },
                                     },
                                 },
@@ -115,7 +139,6 @@ public class AssignDeviceToCarEndpoint : ICarterModule
                     },
                 }
             );
-        ;
     }
 
     private async Task<IResult> Handle(ISender sender, Guid id, AssignDeviceToCarRequest request)
