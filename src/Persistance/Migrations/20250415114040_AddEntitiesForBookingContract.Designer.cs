@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using NetTopologySuite.Geometries;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
@@ -12,9 +13,11 @@ using Persistance.Data;
 namespace Persistance.Migrations
 {
     [DbContext(typeof(AppDBContext))]
-    partial class AppDBContextModelSnapshot : ModelSnapshot
+    [Migration("20250415114040_AddEntitiesForBookingContract")]
+    partial class AddEntitiesForBookingContract
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -621,6 +624,61 @@ namespace Persistance.Migrations
                     b.ToTable("CarInspections");
                 });
 
+            modelBuilder.Entity("Domain.Entities.CarReport", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("CarId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("ReportType")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("ReportedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ResolutionComments")
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("ResolvedById")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CarId");
+
+                    b.HasIndex("ReportedById");
+
+                    b.HasIndex("ResolvedById");
+
+                    b.ToTable("CarReports");
+                });
+
             modelBuilder.Entity("Domain.Entities.CarStatistic", b =>
                 {
                     b.Property<Guid>("Id")
@@ -927,7 +985,10 @@ namespace Persistance.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("BookingReportId")
+                    b.Property<Guid?>("BookingReportId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("CarReportId")
                         .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("DeletedAt")
@@ -946,6 +1007,8 @@ namespace Persistance.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BookingReportId");
+
+                    b.HasIndex("CarReportId");
 
                     b.ToTable("ImageReports");
                 });
@@ -1027,6 +1090,9 @@ namespace Persistance.Migrations
                     b.Property<Guid>("CarId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("CarReportId")
+                        .HasColumnType("uuid");
+
                     b.Property<Guid>("CreatedBy")
                         .HasColumnType("uuid");
 
@@ -1065,6 +1131,9 @@ namespace Persistance.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CarId");
+
+                    b.HasIndex("CarReportId")
+                        .IsUnique();
 
                     b.HasIndex("CreatedBy");
 
@@ -1620,13 +1689,13 @@ namespace Persistance.Migrations
                         .HasForeignKey("CompensationPaidUserId");
 
                     b.HasOne("Domain.Entities.User", "ReportedBy")
-                        .WithMany()
+                        .WithMany("ReportedBookingReports")
                         .HasForeignKey("ReportedById")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("Domain.Entities.User", "ResolvedBy")
-                        .WithMany()
+                        .WithMany("ResolvedBookingReports")
                         .HasForeignKey("ResolvedById");
 
                     b.Navigation("Booking");
@@ -1756,6 +1825,31 @@ namespace Persistance.Migrations
                     b.Navigation("Booking");
                 });
 
+            modelBuilder.Entity("Domain.Entities.CarReport", b =>
+                {
+                    b.HasOne("Domain.Entities.Car", "Car")
+                        .WithMany("CarReports")
+                        .HasForeignKey("CarId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.User", "ReportedBy")
+                        .WithMany("ReportedCarReports")
+                        .HasForeignKey("ReportedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.User", "ResolvedBy")
+                        .WithMany("ResolvedCarReports")
+                        .HasForeignKey("ResolvedById");
+
+                    b.Navigation("Car");
+
+                    b.Navigation("ReportedBy");
+
+                    b.Navigation("ResolvedBy");
+                });
+
             modelBuilder.Entity("Domain.Entities.CarStatistic", b =>
                 {
                     b.HasOne("Domain.Entities.Car", "Car")
@@ -1831,11 +1925,15 @@ namespace Persistance.Migrations
                 {
                     b.HasOne("Domain.Entities.BookingReport", "BookingReport")
                         .WithMany("ImageReports")
-                        .HasForeignKey("BookingReportId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("BookingReportId");
+
+                    b.HasOne("Domain.Entities.CarReport", "CarReport")
+                        .WithMany("ImageReports")
+                        .HasForeignKey("CarReportId");
 
                     b.Navigation("BookingReport");
+
+                    b.Navigation("CarReport");
                 });
 
             modelBuilder.Entity("Domain.Entities.InspectionPhoto", b =>
@@ -1861,6 +1959,10 @@ namespace Persistance.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Domain.Entities.CarReport", "CarReport")
+                        .WithOne("InspectionSchedule")
+                        .HasForeignKey("Domain.Entities.InspectionSchedule", "CarReportId");
+
                     b.HasOne("Domain.Entities.User", "Consultant")
                         .WithMany("ConsultantInspectionSchedules")
                         .HasForeignKey("CreatedBy")
@@ -1878,6 +1980,8 @@ namespace Persistance.Migrations
                         .IsRequired();
 
                     b.Navigation("Car");
+
+                    b.Navigation("CarReport");
 
                     b.Navigation("Consultant");
 
@@ -2067,6 +2171,8 @@ namespace Persistance.Migrations
 
                     b.Navigation("CarAvailabilities");
 
+                    b.Navigation("CarReports");
+
                     b.Navigation("CarStatistic")
                         .IsRequired();
 
@@ -2084,6 +2190,13 @@ namespace Persistance.Migrations
             modelBuilder.Entity("Domain.Entities.CarInspection", b =>
                 {
                     b.Navigation("Photos");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CarReport", b =>
+                {
+                    b.Navigation("ImageReports");
+
+                    b.Navigation("InspectionSchedule");
                 });
 
             modelBuilder.Entity("Domain.Entities.EncryptionKey", b =>
@@ -2160,6 +2273,14 @@ namespace Persistance.Migrations
                     b.Navigation("ReceivedTransactions");
 
                     b.Navigation("RefreshTokens");
+
+                    b.Navigation("ReportedBookingReports");
+
+                    b.Navigation("ReportedCarReports");
+
+                    b.Navigation("ResolvedBookingReports");
+
+                    b.Navigation("ResolvedCarReports");
 
                     b.Navigation("SentTransactions");
 
