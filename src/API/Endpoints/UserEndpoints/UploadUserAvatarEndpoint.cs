@@ -125,6 +125,11 @@ public class UploadUserAvatarEndpoint : ICarterModule
         CancellationToken cancellationToken
     )
     {
+        // Create a copy stream
+        using var avatarStream = new MemoryStream();
+        await avatar.CopyToAsync(avatarStream, cancellationToken);
+        avatarStream.Position = 0; // Reset the stream position to the beginning
+
         Result<UploadUserAvatar.Response> result = await sender.Send(
             new UploadUserAvatar.Command(id, avatar.OpenReadStream()),
             cancellationToken
