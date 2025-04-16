@@ -70,10 +70,10 @@ public sealed class GetBookingContract
                 CarColor = contract.Booking.Car.Color,
                 CarDetail = contract.Booking.Car.Description,
                 CarTerms = contract.Booking.Car.Terms,
-                RentalPrice = contract.Booking.BasePrice.ToString("N0"),
+                RentalPrice = contract.RentalPrice.ToString("N0"),
                 StartDate = contract.StartDate,
                 EndDate = contract.EndDate,
-                PickupAddress = contract.Booking.Car.PickupAddress,
+                PickupAddress = contract.PickupAddress,
                 OwnerSignatureImageUrl = contract.OwnerSignature ?? string.Empty,
                 DriverSignatureImageUrl = contract.DriverSignature ?? string.Empty,
             };

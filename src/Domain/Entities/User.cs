@@ -62,6 +62,19 @@ public class User : BaseEntity
     [InverseProperty(nameof(InspectionSchedule.Consultant))]
     public ICollection<InspectionSchedule> ConsultantInspectionSchedules { get; set; } = [];
 
+    // Report relationships
+    [InverseProperty(nameof(BookingReport.ReportedBy))]
+    public ICollection<BookingReport> ReportedBookingReports { get; set; } = [];
+
+    [InverseProperty(nameof(BookingReport.ResolvedBy))]
+    public ICollection<BookingReport> ResolvedBookingReports { get; set; } = [];
+
+    [InverseProperty(nameof(CarReport.ReportedBy))]
+    public ICollection<CarReport> ReportedCarReports { get; set; } = [];
+
+    [InverseProperty(nameof(CarReport.ResolvedBy))]
+    public ICollection<CarReport> ResolvedCarReports { get; set; } = [];
+
     public bool IsAdmin() => Role.Name == "Admin";
 
     public bool IsDriver() => Role.Name == "Driver";

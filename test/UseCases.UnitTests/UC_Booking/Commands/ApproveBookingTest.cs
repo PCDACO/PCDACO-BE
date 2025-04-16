@@ -1,10 +1,12 @@
 using Ardalis.Result;
 using Domain.Entities;
 using Domain.Enums;
+using Domain.Shared;
 using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Persistance.Data;
+using UseCases.Abstractions;
 using UseCases.DTOs;
 using UseCases.Services.PaymentTokenService;
 using UseCases.UC_Booking.Commands;
@@ -19,6 +21,9 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly AppDBContext _dbContext = fixture.DbContext;
     private readonly TestDataEmailService _emailService = new();
     private readonly IBackgroundJobClient _backgroundJobClient = new BackgroundJobClient();
+    private readonly IAesEncryptionService _aesService = fixture.AesEncryptionService;
+    private readonly IKeyManagementService _keyService = fixture.KeyManagementService;
+    private readonly EncryptionSettings _encryptionSettings = fixture.EncryptionSettings;
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private const string TEST_SIGNATURE_BASE64 =
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
@@ -44,7 +49,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             _currentUser,
-            _paymentTokenService
+            _paymentTokenService,
+            _aesService,
+            _keyService,
+            _encryptionSettings
         );
         var command = new ApproveBooking.Command(
             Guid.NewGuid(),
@@ -74,7 +82,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             _currentUser,
-            _paymentTokenService
+            _paymentTokenService,
+            _aesService,
+            _keyService,
+            _encryptionSettings
         );
         var command = new ApproveBooking.Command(
             Guid.NewGuid(),
@@ -140,7 +151,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             _currentUser,
-            _paymentTokenService
+            _paymentTokenService,
+            _aesService,
+            _keyService,
+            _encryptionSettings
         );
         var command = new ApproveBooking.Command(
             booking.Id,
@@ -208,7 +222,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             _currentUser,
-            _paymentTokenService
+            _paymentTokenService,
+            _aesService,
+            _keyService,
+            _encryptionSettings
         );
         var command = new ApproveBooking.Command(
             booking.Id,
@@ -276,7 +293,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             _currentUser,
-            _paymentTokenService
+            _paymentTokenService,
+            _aesService,
+            _keyService,
+            _encryptionSettings
         );
         var command = new ApproveBooking.Command(
             booking.Id,
@@ -341,7 +361,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             _currentUser,
-            _paymentTokenService
+            _paymentTokenService,
+            _aesService,
+            _keyService,
+            _encryptionSettings
         );
         var command = new ApproveBooking.Command(
             booking.Id,
@@ -402,7 +425,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             _currentUser,
-            _paymentTokenService
+            _paymentTokenService,
+            _aesService,
+            _keyService,
+            _encryptionSettings
         );
         var command = new ApproveBooking.Command(
             booking.Id,
@@ -477,7 +503,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             _currentUser,
-            _paymentTokenService
+            _paymentTokenService,
+            _aesService,
+            _keyService,
+            _encryptionSettings
         );
         var command = new ApproveBooking.Command(
             booking.Id,
@@ -550,7 +579,10 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _emailService,
             _backgroundJobClient,
             _currentUser,
-            _paymentTokenService
+            _paymentTokenService,
+            _aesService,
+            _keyService,
+            _encryptionSettings
         );
         var command = new ApproveBooking.Command(
             booking.Id,

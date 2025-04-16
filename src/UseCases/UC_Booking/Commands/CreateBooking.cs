@@ -179,6 +179,8 @@ public sealed class CreateBooking
                 EndDate = booking.EndTime,
                 Terms = fullTerms,
                 DriverSignatureDate = DateTimeOffset.UtcNow,
+                RentalPrice = car.Price,
+                PickupAddress = car.GPS?.Location.ToString() ?? "Địa chỉ không xác định"
             };
 
             context.Bookings.Add(booking);
