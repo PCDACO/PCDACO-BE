@@ -26,10 +26,21 @@ public class UploadUserLicenseImageEndpoint : ICarterModule
         CancellationToken cancellationToken
     )
     {
+        // Create copies of the streams to ensure they're fresh
+        using var frontStream = new MemoryStream();
+        using var backStream = new MemoryStream();
+
+        await licenseImageFront.CopyToAsync(frontStream, cancellationToken);
+        await licenseImageBack.CopyToAsync(backStream, cancellationToken);
+
+        // Reset positions to beginning
+        frontStream.Position = 0;
+        backStream.Position = 0;
+
         Result<UploadUserLicenseImage.Response> result = await sender.Send(
             new UploadUserLicenseImage.Command(
-                LicenseImageFrontUrl: licenseImageFront.OpenReadStream(),
-                LicenseImageBackUrl: licenseImageBack.OpenReadStream()
+                LicenseImageFrontUrl: frontStream,
+                LicenseImageBackUrl: backStream
             ),
             cancellationToken
         );
