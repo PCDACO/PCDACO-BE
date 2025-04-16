@@ -76,8 +76,8 @@ public sealed class UploadUserLicenseImage
 
     public class Validator : AbstractValidator<Command>
     {
-        private readonly string[] allowedExtensions =
-        {
+        private readonly string[] _allowedExtensions =
+        [
             ".jpg",
             ".jpeg",
             ".png",
@@ -88,7 +88,7 @@ public sealed class UploadUserLicenseImage
             ".svg",
             ".heic",
             ".heif",
-        };
+        ];
 
         public Validator()
         {
@@ -99,7 +99,7 @@ public sealed class UploadUserLicenseImage
                 .WithMessage("Kích thước ảnh không được vượt quá 10MB")
                 .Must(ValidateFileType)
                 .WithMessage(
-                    $"Chỉ chấp nhận các định dạng: {string.Join(", ", allowedExtensions)}"
+                    $"Chỉ chấp nhận các định dạng: {string.Join(", ", _allowedExtensions)}"
                 );
 
             RuleFor(x => x.LicenseImageBackUrl)
@@ -109,13 +109,17 @@ public sealed class UploadUserLicenseImage
                 .WithMessage("Kích thước ảnh không được vượt quá 10MB")
                 .Must(ValidateFileType)
                 .WithMessage(
-                    $"Chỉ chấp nhận các định dạng: {string.Join(", ", allowedExtensions)}"
+                    $"Chỉ chấp nhận các định dạng: {string.Join(", ", _allowedExtensions)}"
                 );
         }
 
         private bool ValidateFileSize(Stream file)
         {
-            return file?.Length <= 10 * 1024 * 1024; // 10MB
+            if (file == null)
+                return false;
+            bool validSize = file.Length <= 10 * 1024 * 1024; // 10MB
+            file.Position = 0;
+            return validSize;
         }
 
         private bool ValidateFileType(Stream file)

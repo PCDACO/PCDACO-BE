@@ -291,7 +291,7 @@ public class UploadInspectionSchedulePhotosTest(DatabaseTestBase fixture) : IAsy
         // Setup mock Cloudinary service
         _cloudinaryServices
             .Setup(x =>
-                x.UploadBookingInspectionImageAsync(
+                x.UploadInspectionSchedulePhotosAsync(
                     It.IsAny<string>(),
                     It.IsAny<Stream>(),
                     It.IsAny<CancellationToken>()
@@ -554,7 +554,7 @@ public class UploadInspectionSchedulePhotosTest(DatabaseTestBase fixture) : IAsy
         // Setup mock Cloudinary service
         _cloudinaryServices
             .Setup(x =>
-                x.UploadBookingInspectionImageAsync(
+                x.UploadInspectionSchedulePhotosAsync(
                     It.IsAny<string>(),
                     It.IsAny<Stream>(),
                     It.IsAny<CancellationToken>()

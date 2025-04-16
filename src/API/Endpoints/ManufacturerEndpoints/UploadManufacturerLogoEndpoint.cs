@@ -25,8 +25,13 @@ public class UploadManufacturerLogoEndpoint : ICarterModule
         CancellationToken cancellationToken
     )
     {
+        // Create a copy stream
+        using var logoStream = new MemoryStream();
+        await logo.CopyToAsync(logoStream, cancellationToken);
+        logoStream.Position = 0; // Reset position to the beginning
+
         Result<UploadManufacturerLogo.Response> result = await sender.Send(
-            new UploadManufacturerLogo.Command(id, logo.OpenReadStream()),
+            new UploadManufacturerLogo.Command(id, logoStream),
             cancellationToken
         );
         return result.MapResult();

@@ -57,4 +57,9 @@ public interface ICloudinaryServices
         Stream image,
         CancellationToken cancellationToken = default
     );
+    Task<string> UploadInspectionSchedulePhotosAsync(
+        string name,
+        Stream image,
+        CancellationToken cancellationToken = default
+    );
 }
