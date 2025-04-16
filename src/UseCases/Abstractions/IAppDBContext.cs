@@ -14,6 +14,7 @@ public interface IAppDBContext : IDisposable
     DbSet<Car> Cars { get; }
     DbSet<CarAmenity> CarAmenities { get; }
     DbSet<BookingReport> BookingReports { get; }
+    DbSet<CarReport> CarReports { get; }
     DbSet<CarStatistic> CarStatistics { get; }
     DbSet<Contract> Contracts { get; }
     DbSet<EncryptionKey> EncryptionKeys { get; }

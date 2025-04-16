@@ -16,6 +16,7 @@ public class InspectionSchedule : BaseEntity
     public required Guid CreatedBy { get; set; }
     public InspectionScheduleType Type { get; set; } = InspectionScheduleType.NewCar;
     public Guid? ReportId { get; set; }
+    public Guid? CarReportId { get; set; }
 
     // Navigation properties
     [InverseProperty(nameof(User.TechnicianInspectionSchedules))]
@@ -31,6 +32,9 @@ public class InspectionSchedule : BaseEntity
 
     [ForeignKey(nameof(ReportId))]
     public BookingReport? Report { get; set; }
+
+    [ForeignKey(nameof(CarReportId))]
+    public CarReport? CarReport { get; set; }
 
     public ICollection<InspectionPhoto> Photos { get; set; } = [];
 }

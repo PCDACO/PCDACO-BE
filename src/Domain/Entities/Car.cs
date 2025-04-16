@@ -48,4 +48,5 @@ public class Car : BaseEntity
     public ICollection<Booking> Bookings { get; set; } = [];
     public ICollection<InspectionSchedule> InspectionSchedules { get; set; } = [];
     public ICollection<CarAvailability> CarAvailabilities { get; set; } = [];
+    public ICollection<CarReport> CarReports { get; set; } = [];
 }
