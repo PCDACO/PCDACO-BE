@@ -25,8 +25,9 @@ public sealed class GetBookingContractById
         DateTimeOffset EndDate,
         DateTimeOffset? DriverSignatureDate,
         DateTimeOffset? OwnerSignatureDate,
-        decimal BasePrice,
+        decimal RentalPrice,
         decimal TotalAmount,
+        string? PickupAddress,
         DateTimeOffset CreatedAt
     );
 
@@ -167,8 +168,9 @@ public sealed class GetBookingContractById
                 EndDate: contract.EndDate,
                 DriverSignatureDate: contract.DriverSignatureDate,
                 OwnerSignatureDate: contract.OwnerSignatureDate,
-                BasePrice: contract.Booking.BasePrice,
+                RentalPrice: contract.RentalPrice,
                 TotalAmount: contract.Booking.TotalAmount,
+                PickupAddress: contract.PickupAddress,
                 CreatedAt: GetTimestampFromUuid.Execute(contract.Id)
             );
 
