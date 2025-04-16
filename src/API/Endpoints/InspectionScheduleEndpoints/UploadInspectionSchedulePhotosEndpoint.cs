@@ -163,20 +163,37 @@ public class UploadInspectionPhotosEndpoint : ICarterModule
         CancellationToken cancellationToken = default
     )
     {
-        // Open streams for all images
-        Stream[] streams = [.. photos.Select(p => p.OpenReadStream())];
+        List<Stream> fileStreams = [];
 
-        var result = await sender.Send(
-            new UploadInspectionSchedulePhotos.Command(
-                id,
-                photoType,
-                streams,
-                description,
-                expiryDate
-            ),
-            cancellationToken
-        );
+        foreach (var photo in photos)
+        {
+            var memoryStream = new MemoryStream();
+            await photo.CopyToAsync(memoryStream, cancellationToken);
+            memoryStream.Position = 0;
+            fileStreams.Add(memoryStream);
+        }
 
-        return result.MapResult();
+        try
+        {
+            var result = await sender.Send(
+                new UploadInspectionSchedulePhotos.Command(
+                    id,
+                    photoType,
+                    [.. fileStreams],
+                    description,
+                    expiryDate
+                ),
+                cancellationToken
+            );
+
+            return result.MapResult();
+        }
+        finally
+        {
+            foreach (var stream in fileStreams)
+            {
+                await stream.DisposeAsync();
+            }
+        }
     }
 }

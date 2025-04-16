@@ -79,7 +79,7 @@ public sealed class UploadInspectionSchedulePhotos
                 string fileName =
                     $"Inspection-{inspectionSchedule.Id}-{request.PhotoType}-{Guid.NewGuid()}";
                 uploadTasks.Add(
-                    cloudinaryServices.UploadBookingInspectionImageAsync(
+                    cloudinaryServices.UploadInspectionSchedulePhotosAsync(
                         fileName,
                         photo,
                         cancellationToken
@@ -163,7 +163,11 @@ public sealed class UploadInspectionSchedulePhotos
 
         private bool ValidateFileSize(Stream file)
         {
-            return file?.Length <= MaxFileSizeInMb * 1024 * 1024;
+            if (file == null)
+                return false;
+            bool validSize = file.Length <= MaxFileSizeInMb * 1024 * 1024; // 10MB
+            file.Position = 0;
+            return validSize;
         }
 
         private bool ValidateFileType(Stream file)
