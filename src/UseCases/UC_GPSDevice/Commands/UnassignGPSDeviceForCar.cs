@@ -18,8 +18,7 @@ public class UnassignGPSDeviceForCar
         {
             // Check if the GPS device exists and is not deleted
             var device = await context
-                .GPSDevices.Where(d => !d.IsDeleted)
-                .Where(d => d.Id == request.GPSDeviceId)
+                .GPSDevices.Where(d => d.Id == request.GPSDeviceId)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (device is null)
@@ -29,23 +28,53 @@ public class UnassignGPSDeviceForCar
             var carGPS = await context
                 .CarGPSes.IgnoreQueryFilters()
                 .Include(c => c.Car)
+                .ThenInclude(c => c.InspectionSchedules)
                 .Where(c => c.DeviceId == request.GPSDeviceId)
                 .FirstOrDefaultAsync(cancellationToken);
 
             if (carGPS is null)
                 return Result.NotFound("Thiết bị GPS không được gán cho xe nào");
 
-            // Check if the car is in pending status or deleted
-            if (!carGPS.Car.IsDeleted && carGPS.Car.Status != CarStatusEnum.Pending)
-                return Result.Conflict(
-                    "Chỉ có thể gỡ thiết bị GPS khỏi xe đã bị xóa hoặc đang trong trạng thái chờ"
-                );
+            if (
+                !carGPS.Car.InspectionSchedules.Any(i =>
+                    i.Status == InspectionScheduleStatusEnum.InProgress
+                    && i.Type == InspectionScheduleType.ChangeGPS
+                )
+            )
+                return Result.Error("Xe không có lịch đổi thiết bị gps nào đang diễn ra");
+
+            // Check if the car has any active bookings
+            var hasActiveBookings = await context.Bookings.AnyAsync(
+                b =>
+                    b.CarId == carGPS.Car.Id
+                    && (
+                        b.Status == BookingStatusEnum.Pending
+                        || b.Status == BookingStatusEnum.Ongoing
+                        || b.Status == BookingStatusEnum.ReadyForPickup
+                        || b.Status == BookingStatusEnum.Approved
+                    ),
+                cancellationToken
+            );
+
+            if (hasActiveBookings)
+                return Result.Error("Xe đang có lịch đặt, không thể gỡ thiết bị GPS");
 
             // Update device status to Available
             device.Status = DeviceStatusEnum.Available;
             device.UpdatedAt = DateTimeOffset.UtcNow;
 
-            // remove car gps association in the database
+            // Update the GPSDeviceId field of the contract to null
+            var contract = await context
+                .CarContracts.Where(c => c.GPSDeviceId == request.GPSDeviceId)
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (contract is not null)
+            {
+                contract.GPSDeviceId = null;
+                contract.UpdatedAt = DateTimeOffset.UtcNow;
+            }
+
+            // Remove CarGPS
             context.CarGPSes.Remove(carGPS);
 
             await context.SaveChangesAsync(cancellationToken);

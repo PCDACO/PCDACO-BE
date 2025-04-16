@@ -62,7 +62,7 @@ builder
         tracing.AddOtlpExporter();
     });
 var app = builder.Build();
-
+await UpdateDatabase.Execute(app);
 app.UseStaticFiles();
 
 // Configure the HTTP request pipeline.
@@ -76,7 +76,6 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-await UpdateDatabase.Execute(app);
 app.UseAuthentication();
 app.UseMiddleware<AuthMiddleware>();
 app.UseAuthorization();

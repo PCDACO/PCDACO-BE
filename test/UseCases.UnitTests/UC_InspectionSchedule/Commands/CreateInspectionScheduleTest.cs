@@ -97,7 +97,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             CarId: car.Id,
             InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(1),
-            IsIncident: false // Regular new car inspection
+            Type: InspectionScheduleType.NewCar
         );
 
         // Act
@@ -291,7 +291,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             CarId: car.Id,
             InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(1),
-            IsIncident: false // Regular new car inspection
+            Type: InspectionScheduleType.NewCar
         );
 
         // Act
@@ -357,7 +357,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             CarId: car2.Id,
             InspectionAddress: "123 Main St",
             InspectionDate: requestedDate,
-            IsIncident: false // Same type of inspection
+            Type: InspectionScheduleType.NewCar
         );
 
         // Act
@@ -549,7 +549,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(1),
             ReportId: nonExistentReportId,
-            IsIncident: true // Incident inspection requires report
+            Type: InspectionScheduleType.Incident
         );
 
         // Act
@@ -634,7 +634,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(1),
             ReportId: report.Id,
-            IsIncident: true // Mark as incident inspection
+            Type: InspectionScheduleType.Incident
         );
 
         // Act
@@ -720,7 +720,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             InspectionAddress: "123 Main St",
             InspectionDate: inspectionDate,
             ReportId: report.Id,
-            IsIncident: true // Mark as incident inspection
+            Type: InspectionScheduleType.Incident
         );
 
         // Act
@@ -742,10 +742,10 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
     }
 
     [Theory]
-    [InlineData(true, InspectionScheduleType.Incident)]
-    [InlineData(false, InspectionScheduleType.NewCar)]
+    [InlineData(InspectionScheduleType.Incident, InspectionScheduleType.Incident)]
+    [InlineData(InspectionScheduleType.NewCar, InspectionScheduleType.NewCar)]
     public async Task Handle_IsIncidentFlag_SetsCorrectType(
-        bool isIncident,
+        InspectionScheduleType type,
         InspectionScheduleType expectedType
     )
     {
@@ -774,7 +774,10 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner")
         );
 
-        var carStatus = isIncident ? CarStatusEnum.Available : CarStatusEnum.Pending;
+        var carStatus =
+            type == InspectionScheduleType.Incident
+                ? CarStatusEnum.Available
+                : CarStatusEnum.Pending;
         var car = await CreateTestCar(owner.Id, carStatus);
 
         var inspectionDate = DateTimeOffset.UtcNow.AddDays(1);
@@ -784,7 +787,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             CarId: car.Id,
             InspectionAddress: "123 Main St",
             InspectionDate: inspectionDate,
-            IsIncident: isIncident
+            Type: type
         );
 
         // Act
@@ -877,7 +880,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             InspectionAddress: "123 Main St",
             InspectionDate: inspectionDate,
             ReportId: report.Id,
-            IsIncident: true
+            Type: InspectionScheduleType.Incident
         );
 
         // Act
@@ -937,7 +940,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             CarId: car.Id,
             InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(1),
-            IsIncident: true // Try to create as incident inspection
+            Type: InspectionScheduleType.Incident
         );
 
         // Act
@@ -946,7 +949,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
         Assert.Contains(
-            "Không thể tao lịch kiểm định sự cố cho xe đang chờ duyệt hoặc đã được thuê",
+            "Không thể tao lịch sự cố cho xe đang chờ duyệt hoặc đã được thuê",
             result.Errors
         );
     }
@@ -984,7 +987,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             CarId: car.Id,
             InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(1),
-            IsIncident: true // Try to create as incident inspection
+            Type: InspectionScheduleType.Incident
         );
 
         // Act
@@ -993,7 +996,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
         Assert.Contains(
-            "Không thể tao lịch kiểm định sự cố cho xe đang chờ duyệt hoặc đã được thuê",
+            "Không thể tao lịch sự cố cho xe đang chờ duyệt hoặc đã được thuê",
             result.Errors
         );
     }
@@ -1058,7 +1061,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             CarId: car.Id,
             InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(2),
-            IsIncident: true // Try to create as incident inspection
+            Type: InspectionScheduleType.Incident
         );
 
         // Act
@@ -1066,10 +1069,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
 
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains(
-            "Xe đang có lịch đặt không thể tạo lịch kiểm định cho sự cố",
-            result.Errors
-        );
+        Assert.Contains("Xe đang có lịch đặt không thể tạo lịch cho sự cố", result.Errors);
     }
 
     [Fact]
@@ -1105,7 +1105,7 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             CarId: car.Id,
             InspectionAddress: "123 Main St",
             InspectionDate: DateTimeOffset.UtcNow.AddDays(1),
-            IsIncident: true // Create as incident inspection
+            Type: InspectionScheduleType.Incident
         );
 
         // Act
