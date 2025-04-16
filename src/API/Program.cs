@@ -40,14 +40,20 @@ builder.Services.AddMemoryCache();
 
 // ADD SEQ
 string seqUrl = builder.Configuration["SEQ_URL"] ?? throw new Exception("Missing SEQ_URL");
-builder.Host.UseSerilog((context, configuration) =>
-{
-    configuration.WriteTo.Console();
-    configuration.WriteTo.Seq(
-        serverUrl: seqUrl
-    ).MinimumLevel.Warning();
-});
-builder.Services.AddOpenTelemetry()
+builder.Host.UseSerilog(
+    (context, configuration) =>
+    {
+        configuration
+            .WriteTo.Console(restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Warning)
+            .WriteTo.Seq(
+                serverUrl: seqUrl,
+                restrictedToMinimumLevel: Serilog.Events.LogEventLevel.Information
+            );
+    }
+);
+
+builder
+    .Services.AddOpenTelemetry()
     .ConfigureResource(r => r.AddService("API"))
     .WithTracing(tracing =>
     {
@@ -73,7 +79,7 @@ if (app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseMiddleware<AuthMiddleware>();
 app.UseAuthorization();
-app.UseSerilogRequestLogging();
+app.UseMiddleware<RequestResponseLoggingMiddleware>();
 app.UseHttpsRedirection();
 
 app.MapHub<LocationHub>("location-hub");

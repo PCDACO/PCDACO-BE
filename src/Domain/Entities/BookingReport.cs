@@ -30,12 +30,14 @@ public class BookingReport : BaseEntity
     public User ReportedBy { get; set; } = null!;
 
     [ForeignKey(nameof(ResolvedById))]
-    public User ResolvedBy { get; set; } = null!;
+    public User? ResolvedBy { get; set; }
 
     [ForeignKey(nameof(CompensationPaidUserId))]
     public User? CompensationPaidUser { get; set; }
 
+    [InverseProperty(nameof(InspectionSchedule.Report))]
     public InspectionSchedule? InspectionSchedule { get; set; }
 
+    [InverseProperty(nameof(ImageReport.BookingReport))]
     public ICollection<ImageReport> ImageReports { get; set; } = [];
 }

@@ -16,6 +16,7 @@ public class AppDBContext(DbContextOptions context) : DbContext(context), IAppDB
     public DbSet<Car> Cars => Set<Car>();
     public DbSet<CarAmenity> CarAmenities => Set<CarAmenity>();
     public DbSet<BookingReport> BookingReports => Set<BookingReport>();
+    public DbSet<CarReport> CarReports => Set<CarReport>();
     public DbSet<CarStatistic> CarStatistics => Set<CarStatistic>();
     public DbSet<EncryptionKey> EncryptionKeys => Set<EncryptionKey>();
     public DbSet<Feedback> Feedbacks => Set<Feedback>();

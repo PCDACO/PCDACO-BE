@@ -1,7 +1,8 @@
 using Ardalis.Result;
-using Domain.Constants.EntityNames;
 using Domain.Entities;
 using Domain.Enums;
+using Domain.Shared;
+using Domain.Shared.ContractTemplates;
 using Domain.Shared.EmailTemplates.EmailBookings;
 using FluentValidation;
 using Hangfire;
@@ -12,6 +13,7 @@ using UseCases.BackgroundServices.Bookings;
 using UseCases.DTOs;
 using UseCases.Services.EmailService;
 using UseCases.Services.PaymentTokenService;
+using static Domain.Shared.ContractTemplates.ContractTemplateGenerator;
 
 namespace UseCases.UC_Booking.Commands;
 
@@ -27,7 +29,10 @@ public sealed class ApproveBooking
         IEmailService emailService,
         IBackgroundJobClient backgroundJobClient,
         CurrentUser currentUser,
-        IPaymentTokenService paymentTokenService
+        IPaymentTokenService paymentTokenService,
+        IAesEncryptionService aesEncryptionService,
+        IKeyManagementService keyManagementService,
+        EncryptionSettings encryptionSettings
     ) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -39,6 +44,7 @@ public sealed class ApproveBooking
                 .Bookings.Include(x => x.Car)
                 .ThenInclude(x => x.Model)
                 .Include(x => x.User)
+                .ThenInclude(x => x.EncryptionKey)
                 .Include(x => x.Contract)
                 .FirstOrDefaultAsync(x => x.Id == request.BookingId, cancellationToken);
 
@@ -175,10 +181,78 @@ public sealed class ApproveBooking
 
             if (contract != null)
             {
+                // Get car and owner details
+                var car = await context
+                    .Cars.Include(c => c.Owner)
+                    .ThenInclude(c => c.EncryptionKey)
+                    .Include(c => c.Model)
+                    .Include(c => c.GPS)
+                    .FirstOrDefaultAsync(c => c.Id == booking.CarId, cancellationToken);
+
+                if (car == null)
+                    return;
+
+                // Create contract template
+                var contractTemplate = new ContractTemplate
+                {
+                    ContractNumber = contract.Id.ToString(),
+                    ContractDate = DateTimeOffset.UtcNow,
+                    OwnerName = car.Owner.Name,
+                    OwnerLicenseNumber = await DecryptValue(
+                        car.Owner.EncryptedLicenseNumber,
+                        car.Owner.EncryptionKey,
+                        aesEncryptionService
+                    ),
+                    OwnerAddress = car.Owner.Address,
+                    DriverName = booking.User.Name,
+                    DriverLicenseNumber = await DecryptValue(
+                        booking.User.EncryptedLicenseNumber,
+                        booking.User.EncryptionKey,
+                        aesEncryptionService
+                    ),
+                    DriverAddress = booking.User.Address,
+                    CarManufacturer = car.Model.Name,
+                    CarLicensePlate = car.LicensePlate,
+                    CarSeat = car.Seat.ToString(),
+                    CarColor = car.Color,
+                    CarDetail = car.Description,
+                    CarTerms = car.Terms,
+                    RentalPrice = car.Price.ToString(),
+                    StartDate = booking.StartTime,
+                    EndDate = booking.EndTime,
+                    PickupAddress = car.GPS?.Location.ToString() ?? "Địa chỉ không xác định",
+                    OwnerSignatureImageUrl = signature,
+                    DriverSignatureImageUrl = contract.DriverSignature ?? string.Empty
+                };
+
+                // Generate contract terms
+                string contractHtml = GenerateFullContractHtml(contractTemplate);
+
+                // Update contract
+                contract.Terms = contractHtml;
                 contract.OwnerSignatureDate = DateTimeOffset.UtcNow;
                 contract.OwnerSignature = signature;
                 contract.Status = ContractStatusEnum.Confirmed;
+                contract.UpdatedAt = DateTimeOffset.UtcNow;
             }
+        }
+
+        private async Task<string> DecryptValue(
+            string encryptedValue,
+            EncryptionKey encryptionKey,
+            IAesEncryptionService aesEncryptionService
+        )
+        {
+            var decryptedKey = keyManagementService.DecryptKey(
+                encryptionKey.EncryptedKey,
+                encryptionSettings.Key
+            );
+
+            return await aesEncryptionService.Decrypt(
+                encryptedValue,
+                decryptedKey,
+                encryptionKey.IV
+            );
         }
 
         public async Task SendEmail(

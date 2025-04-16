@@ -33,6 +33,8 @@ public class Booking : BaseEntity
     [ForeignKey(nameof(CarId))]
     public Car Car { get; set; } = null!;
     public Contract Contract { get; set; } = null!;
+
+    [InverseProperty(nameof(BookingReport.Booking))]
     public ICollection<BookingReport> BookingReports { get; set; } = [];
     public ICollection<TripTracking> TripTrackings { get; set; } = [];
     public ICollection<Feedback> Feedbacks { get; set; } = [];
