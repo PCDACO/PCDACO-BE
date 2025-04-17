@@ -22,11 +22,12 @@ public sealed class GetAllInspectionSchedules
         Guid CarId,
         Guid CarOwnerId,
         string CarOwnerName,
+        Guid? ReportId,
         string StatusName,
         string Note,
         string InspectionAddress,
         DateTimeOffset InspectionDate,
-        bool IsIncident,
+        InspectionScheduleType Type,
         DateTimeOffset CreatedAt
     )
     {
@@ -38,11 +39,18 @@ public sealed class GetAllInspectionSchedules
                 schedule.CarId,
                 schedule.Car.OwnerId,
                 schedule.Car.Owner.Name,
+                ReportId: schedule.Type == InspectionScheduleType.NewCar
+                    ? null
+                    : (
+                        schedule.Type == InspectionScheduleType.Incident
+                            ? schedule.ReportId
+                            : schedule.CarReportId
+                    ),
                 schedule.Status.ToString(),
                 schedule.Note,
                 schedule.InspectionAddress,
                 schedule.InspectionDate,
-                schedule.Type == InspectionScheduleType.Incident,
+                Type: schedule.Type,
                 GetTimestampFromUuid.Execute(schedule.Id)
             );
     }
