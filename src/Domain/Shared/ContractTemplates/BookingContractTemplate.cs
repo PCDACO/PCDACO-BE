@@ -350,14 +350,23 @@ public static class ContractTemplateGenerator
                                 }}
                                 .signature-image {{
                                     margin-bottom: 10px;
-                                }}                               
+                                    text-align: center;
+                                }}
+                                .signature-image img {{
+                                    max-width: 100%;
+                                    height: auto;
+                                    max-height: 100px;
+                                }}
                                 .signature-block {{
                                     margin-top: 40px;
                                     display: flex;
                                     justify-content: space-between;
+                                    flex-wrap: wrap;
+                                    gap: 20px;
                                 }}
                                 .signature {{
-                                    width: 40%;
+                                    flex: 1;
+                                    min-width: 200px;
                                     text-align: center;
                                 }}
                                 .signature p {{
@@ -406,6 +415,42 @@ public static class ContractTemplateGenerator
                                     padding-left: 1em;
                                     margin: 1em 0;
                                     color: #666;
+                                }}
+
+                                /* Responsive styles */
+                                @media (max-width: 768px) {{
+                                    .container {{
+                                        padding: 20px;
+                                    }}
+                                    .signature-block {{
+                                        flex-direction: column;
+                                        align-items: center;
+                                    }}
+                                    .signature {{
+                                        width: 100%;
+                                        margin-bottom: 30px;
+                                    }}
+                                    .signature-image img {{
+                                        max-height: 80px;
+                                    }}
+                                    .signature p {{
+                                        margin-top: 40px;
+                                    }}
+                                }}
+
+                                @media (max-width: 480px) {{
+                                    .container {{
+                                        padding: 15px;
+                                    }}
+                                    .header h1 {{
+                                        font-size: 24px;
+                                    }}
+                                    .section-title {{
+                                        font-size: 16px;
+                                    }}
+                                    .signature-image img {{
+                                        max-height: 60px;
+                                    }}
                                 }}
                             </style>
                         </head>
