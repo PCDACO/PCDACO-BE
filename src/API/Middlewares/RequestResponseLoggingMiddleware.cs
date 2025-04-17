@@ -17,6 +17,13 @@ public class RequestResponseLoggingMiddleware(
 
         try
         {
+            // Skip logging for multipart/form-data requests (file uploads)
+            if (context.Request.ContentType?.Contains("multipart/form-data") == true)
+            {
+                await _next(context);
+                return;
+            }
+
             // Enable buffering for the request
             context.Request.EnableBuffering();
 
