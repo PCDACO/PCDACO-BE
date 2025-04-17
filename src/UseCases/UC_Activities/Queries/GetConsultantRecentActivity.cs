@@ -34,6 +34,7 @@ public class GetConsultantRecentActivity
 
                 activities.Add(
                     new ActivityDetails(
+                        Name: schedule.Consultant.Name,
                         AvatarUrl: schedule.Consultant.AvatarUrl,
                         Content: content,
                         HappenedAt: schedule.UpdatedAt ?? GetTimestampFromUuid.Execute(schedule.Id),
@@ -50,6 +51,7 @@ public class GetConsultantRecentActivity
 
                 activities.Add(
                     new ActivityDetails(
+                        Name: report.ReportedBy.Name,
                         AvatarUrl: report.ReportedBy.AvatarUrl,
                         Content: content,
                         HappenedAt: report.UpdatedAt ?? GetTimestampFromUuid.Execute(report.Id),
@@ -108,6 +110,7 @@ public class GetConsultantRecentActivity
     }
 
     public record ActivityDetails(
+        string Name,
         string AvatarUrl,
         string Content,
         DateTimeOffset HappenedAt,
