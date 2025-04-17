@@ -257,16 +257,24 @@ public static class CarContractTemplateGenerator
                         .signature-block {{
                             margin-top: 40px;
                             display: flex;
-                            justify-content: space-between;
+                            flex-wrap: wrap;
+                            justify-content: space-around;
+                            gap: 20px;
                         }}
                         .signature {{
-                            width: 40%;
+                            flex: 1 1 300px;
+                            max-width: 400px;
                             text-align: center;
+                        }}
+                        .signature img.signature-image {{
+                            max-width: 100%;
+                            height: auto;
+                            object-fit: contain;
                         }}
                         .signature p {{
                             border-top: 1px solid #333;
                             padding-top: 10px;
-                            margin-top: 60px;
+                            margin-top: 40px;
                             font-weight: 500;
                         }}
                         .footer {{
@@ -332,15 +340,15 @@ public static class CarContractTemplateGenerator
                         <div class='section signature-block'>
                             <div class='signature'>
                                 {(string.IsNullOrEmpty(contractTemplate.OwnerSignatureImageUrl) ? "" : $@"
-                                <div class='signature-image'>
-                                    <img src='{contractTemplate.OwnerSignatureImageUrl}' alt='Chữ ký chủ xe' />
+                                <div>
+                                    <img class='signature-image' src='{contractTemplate.OwnerSignatureImageUrl}' alt='Chữ ký chủ xe' />
                                 </div>")}
                                 <p>CHỦ XE<br/>{contractTemplate.OwnerName}</p>
                             </div>
                             <div class='signature'>
                                 {(string.IsNullOrEmpty(contractTemplate.TechnicianSignatureImageUrl) ? "" : $@"
-                                <div class='signature-image'>
-                                    <img src='{contractTemplate.TechnicianSignatureImageUrl}' alt='Chữ ký kiểm định viên' />
+                                <div>
+                                    <img class='signature-image' src='{contractTemplate.TechnicianSignatureImageUrl}' alt='Chữ ký kiểm định viên' />
                                 </div>")}
                                 <p>ĐẠI DIỆN KIỂM ĐỊNH<br/>{contractTemplate.TechnicianName}</p>
                             </div>
