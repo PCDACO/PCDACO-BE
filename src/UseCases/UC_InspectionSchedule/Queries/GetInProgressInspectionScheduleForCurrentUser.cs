@@ -22,12 +22,7 @@ public class GetInProgressInspectionScheduleForCurrentUser
         ContractDetail? ContractDetail
     )
     {
-        public static async Task<Response> FromEntity(
-            InspectionSchedule inspectionSchedule,
-            string masterKey,
-            IAesEncryptionService aesEncryptionService,
-            IKeyManagementService keyManagementService
-        )
+        public static Response FromEntity(InspectionSchedule inspectionSchedule)
         {
             return new(
                 Id: inspectionSchedule.Id,
@@ -63,13 +58,8 @@ public class GetInProgressInspectionScheduleForCurrentUser
         Guid? GPSDeviceId
     );
 
-    internal sealed class Handler(
-        IAppDBContext context,
-        CurrentUser currentUser,
-        IAesEncryptionService aesEncryptionService,
-        IKeyManagementService keyManagementService,
-        EncryptionSettings encryptionSettings
-    ) : IRequestHandler<Query, Result<Response>>
+    internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
+        : IRequestHandler<Query, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
             Query request,
@@ -105,15 +95,7 @@ public class GetInProgressInspectionScheduleForCurrentUser
             {
                 return Result.NotFound(ResponseMessages.InspectionScheduleNotFound);
             }
-            return Result.Success(
-                await Response.FromEntity(
-                    result,
-                    encryptionSettings.Key,
-                    aesEncryptionService,
-                    keyManagementService
-                ),
-                ResponseMessages.Fetched
-            );
+            return Result.Success(Response.FromEntity(result), ResponseMessages.Fetched);
         }
     }
 }
