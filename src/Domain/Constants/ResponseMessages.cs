@@ -71,6 +71,8 @@ public class ResponseMessages
     public const string InspectionScheduleNotFound = "Không tìm thấy lịch kiểm định";
     public const string OnlyUpdatePendingInspectionSchedule =
         "Chỉ có thể cập nhật lịch kiểm định đang chờ duyệt";
+    public const string OnlyUpdatePendingOrInprogressInspectionSchedule =
+        "Chỉ có thể cập nhật lịch kiểm định đang chờ duyệt hoặc đang tiến hành";
     public const string OnlyUpdateInProgressInspectionSchedule =
         "Chỉ có thể duyệt lịch kiểm định đang được tiến hành";
     public const string OnlyDeletePendingInspectionSchedule =

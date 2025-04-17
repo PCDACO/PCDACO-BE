@@ -83,7 +83,7 @@ public class UpdateInspectionScheduleEndpoint : ICarterModule
                         ["400"] = new()
                         {
                             Description =
-                                "Bad Request - Schedule not in pending status or has conflicts",
+                                "Bad Request - Schedule not in pending or inprogress status or has conflicts",
                             Content =
                             {
                                 ["application/json"] = new()
@@ -92,7 +92,7 @@ public class UpdateInspectionScheduleEndpoint : ICarterModule
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
-                                            "Chỉ có thể cập nhật lịch kiểm định đang chờ duyệt"
+                                            "Chỉ có thể cập nhật lịch kiểm định đang chờ duyệt hoặc đang tiến hành"
                                         ),
                                     },
                                 },
