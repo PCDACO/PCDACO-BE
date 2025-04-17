@@ -88,7 +88,7 @@ public class GetInProgressInspectionScheduleForCurrentUser
                 .ThenInclude(i => i.Contract)
                 .Include(i => i.Technician)
                 .Where(i => !i.IsDeleted)
-                .Where(i => i.Status == Domain.Enums.InspectionScheduleStatusEnum.InProgress)
+                .Where(i => i.Status == Domain.Enums.InspectionScheduleStatusEnum.InProgress || i.Status == Domain.Enums.InspectionScheduleStatusEnum.Signed)
                 .Where(i => i.TechnicianId == currentUser.User!.Id)
                 .FirstOrDefaultAsync(cancellationToken);
             if (result is null)

@@ -31,6 +31,7 @@ public class GetTechnicianRecentActivity
 
                     // Return the Activity instance; adjust the constructor as needed.
                     return new ActivityDetails(
+                            Name: schedule.Technician.Name,
                         AvatarUrl: schedule.Technician.AvatarUrl,
                         Content: content,
                         HappenedAt: schedule.UpdatedAt ?? GetTimestampFromUuid.Execute(schedule.Id)
@@ -75,14 +76,14 @@ public class GetTechnicianRecentActivity
                     }
                     ;
                 default:
-                {
-                    return "";
-                }
+                    {
+                        return "";
+                    }
             }
         }
     }
 
-    public record ActivityDetails(string AvatarUrl, string Content, DateTimeOffset HappenedAt);
+    public record ActivityDetails(string Name, string AvatarUrl, string Content, DateTimeOffset HappenedAt);
 
     internal sealed class Handler(
         IAppDBContext context,
