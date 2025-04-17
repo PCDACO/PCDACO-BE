@@ -42,6 +42,7 @@ public sealed class CreateInspectionSchedule
             var car = await context
                 .Cars.IgnoreQueryFilters()
                 .Include(c => c.GPS)
+                .Include(c => c.Contract)
                 .FirstOrDefaultAsync(c => c.Id == request.CarId && !c.IsDeleted, cancellationToken);
 
             if (car is null)
@@ -54,6 +55,9 @@ public sealed class CreateInspectionSchedule
                     return Result.Error(
                         "Không thể tao lịch sự cố cho xe đang chờ duyệt hoặc đã được thuê"
                     );
+                if (car.Contract == null)
+                    return Result.Error("Xe không có hợp đồng không thể tạo lịch sự cố");
+
                 // Check only car doesn't have any active booking can continue
                 var activeBooking = await context
                     .Bookings.Where(b => b.CarId == request.CarId)
@@ -78,6 +82,8 @@ public sealed class CreateInspectionSchedule
                     return Result.Error(
                         "Xe chưa được gán thiết bị gps không thể tạo lịch đổi thiết bị gps"
                     );
+                if (car.Contract == null)
+                    return Result.Error("Xe không có hợp đồng không thể tạo lịch đổi thiết bị gps");
 
                 // Check only car doesn't have any active booking can continue
                 var activeBooking = await context

@@ -360,6 +360,8 @@ public static class ContractTemplateGenerator
                                 .signature-block {{
                                     margin-top: 40px;
                                     display: flex;
+                                    flex-wrap: wrap;
+                                    gap: 20px;
                                     justify-content: space-between;
                                     flex-wrap: wrap;
                                     gap: 20px;
@@ -375,6 +377,13 @@ public static class ContractTemplateGenerator
                                     margin-top: 60px;
                                     font-weight: 500;
                                 }}
+
+                                @media (max-width: 768px) {{
+                                    .signature {{
+                                        width: 100%;
+                                    }}
+                                }}
+                                
                                 .footer {{
                                     text-align: center;
                                     font-size: 13px;

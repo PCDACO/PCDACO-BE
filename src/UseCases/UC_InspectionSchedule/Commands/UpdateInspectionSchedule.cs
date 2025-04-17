@@ -44,9 +44,14 @@ public sealed class UpdateInspectionSchedule
             if (schedule is null)
                 return Result.Error(ResponseMessages.InspectionScheduleNotFound);
 
-            // Check if schedule can be updated (only pending schedules can be updated)
-            if (schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.Pending)
-                return Result.Conflict(ResponseMessages.OnlyUpdatePendingInspectionSchedule);
+            // Check if schedule can be updated (only pending or inprogress schedules can be updated)
+            if (
+                schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.Pending
+                && schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.InProgress
+            )
+                return Result.Conflict(
+                    ResponseMessages.OnlyUpdatePendingOrInprogressInspectionSchedule
+                );
 
             // Verify technician exists and is a technician
             var technician = await context
@@ -74,14 +79,6 @@ public sealed class UpdateInspectionSchedule
                 .ToListAsync(cancellationToken);
 
             var requestedTime = request.InspectionDate;
-            // check conflicts with approved schedules
-            var hasApprovedScheduleConflict = technicianSchedules.Any(schedule =>
-                schedule.Status == Domain.Enums.InspectionScheduleStatusEnum.Approved
-                && requestedTime <= schedule.InspectionDate
-            );
-
-            if (hasApprovedScheduleConflict)
-                return Result.Error(ResponseMessages.HasOverLapScheduleWithTheSameTechnician);
 
             // check conflicts with pending or in progress schedules
             var hasActiveScheduleConflict = technicianSchedules.Any(schedule =>

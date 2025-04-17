@@ -72,7 +72,7 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
     }
 
     [Fact]
-    public async Task Handle_ScheduleNotPending_ReturnsError()
+    public async Task Handle_ScheduleNotPendingOrInprogress_ReturnsError()
     {
         // Arrange
         var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
@@ -139,7 +139,10 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
 
         // Assert
         Assert.Equal(ResultStatus.Conflict, result.Status);
-        Assert.Contains(ResponseMessages.OnlyUpdatePendingInspectionSchedule, result.Errors);
+        Assert.Contains(
+            ResponseMessages.OnlyUpdatePendingOrInprogressInspectionSchedule,
+            result.Errors
+        );
     }
 
     [Fact]
@@ -211,101 +214,6 @@ public class UpdateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
         Assert.Contains(ResponseMessages.TechnicianNotFound, result.Errors);
-    }
-
-    [Fact]
-    public async Task Handle_TechnicianHasApprovedScheduleAfterRequestedTime_ReturnsError()
-    {
-        // Arrange
-        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
-            _dbContext,
-            "Consultant"
-        );
-        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
-        _currentUser.SetUser(consultant);
-
-        // Create technician
-        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
-            _dbContext,
-            "Technician"
-        );
-        var technician = await TestDataCreateUser.CreateTestUser(
-            _dbContext,
-            technicianRole,
-            "tech@test.com"
-        );
-
-        // Create owner and car prerequisites
-        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
-        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
-        var carModel = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
-        var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
-            _dbContext,
-            "Automatic"
-        );
-        var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
-
-        // Create cars
-        var car1 = await TestDataCreateCar.CreateTestCar(
-            dBContext: _dbContext,
-            ownerId: owner.Id,
-            modelId: carModel.Id,
-            transmissionType: transmissionType,
-            fuelType: fuelType,
-            carStatus: Domain.Enums.CarStatusEnum.Pending
-        );
-        var car2 = await TestDataCreateCar.CreateTestCar(
-            dBContext: _dbContext,
-            ownerId: owner.Id,
-            modelId: carModel.Id,
-            transmissionType: transmissionType,
-            fuelType: fuelType,
-            carStatus: Domain.Enums.CarStatusEnum.Pending
-        );
-
-        // Create an existing approved schedule for the technician with a future date
-        var futureDate = DateTimeOffset.UtcNow.AddDays(2); // 2 days in the future
-        var approvedSchedule = new InspectionSchedule
-        {
-            TechnicianId = technician.Id,
-            CarId = car1.Id,
-            Status = Domain.Enums.InspectionScheduleStatusEnum.Approved,
-            InspectionAddress = "456 Approved St",
-            InspectionDate = futureDate,
-            CreatedBy = consultant.Id,
-        };
-        await _dbContext.InspectionSchedules.AddAsync(approvedSchedule);
-
-        // Create a pending schedule to update
-        var pendingSchedule = new InspectionSchedule
-        {
-            TechnicianId = technician.Id,
-            CarId = car2.Id,
-            Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
-            InspectionAddress = "123 Pending St",
-            InspectionDate = DateTimeOffset.UtcNow.AddDays(3),
-            CreatedBy = consultant.Id,
-        };
-        await _dbContext.InspectionSchedules.AddAsync(pendingSchedule);
-        await _dbContext.SaveChangesAsync();
-
-        // Try to update pending schedule to a time before the approved schedule
-        var requestedDate = DateTimeOffset.UtcNow.AddDays(1); // 1 day in the future
-        var handler = new UpdateInspectionSchedule.Handler(_dbContext, _currentUser);
-        var command = new UpdateInspectionSchedule.Command(
-            Id: pendingSchedule.Id,
-            TechnicianId: technician.Id,
-            InspectionAddress: "123 Updated St",
-            InspectionDate: requestedDate
-        );
-
-        // Act
-        var result = await handler.Handle(command, CancellationToken.None);
-
-        // Assert
-        Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains(ResponseMessages.HasOverLapScheduleWithTheSameTechnician, result.Errors);
     }
 
     [Fact]

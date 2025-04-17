@@ -1146,6 +1146,15 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             carStatus: status
         );
 
+        //create car contract
+        var carContract = new CarContract
+        {
+            CarId = car.Id,
+            Status = CarContractStatusEnum.Pending,
+        };
+        await _dbContext.CarContracts.AddAsync(carContract);
+        await _dbContext.SaveChangesAsync();
+
         return car;
     }
 }
