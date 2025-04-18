@@ -1,4 +1,6 @@
 using Ardalis.Result;
+
+using Domain.Entities;
 using Domain.Shared;
 using Infrastructure.Encryption;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +11,8 @@ using UseCases.UC_User.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
 using UseCases.Utils;
+
+using UUIDNext;
 
 namespace UseCases.UnitTests.UC_User.Commands;
 
@@ -160,7 +164,11 @@ public class SignUpTest : IAsyncLifetime
     {
         // Arrange
         var userRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var existingUser = await TestDataCreateUser.CreateTestUser(_dbContext, userRole);
+        var (existingUser, originalPhone) = await CreateTestUserWithEncryptedPhone(
+            userRole,
+            "test@example.com",
+            "0987654321"
+        );
         _currentUser.SetUser(existingUser);
 
         var handler = new SignUp.Handler(
@@ -172,11 +180,11 @@ public class SignUpTest : IAsyncLifetime
         );
         var command = new SignUp.Command(
             existingUser.Name,
-            existingUser.Email,
-            existingUser.Password,
+            existingUser.Email, // Using the same email as existing user
+            "password123",
             existingUser.Address,
             DateTimeOffset.UtcNow.AddYears(-30),
-            existingUser.Phone
+            originalPhone
         );
 
         // Act
@@ -192,7 +200,11 @@ public class SignUpTest : IAsyncLifetime
     {
         // Arrange
         var userRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var existingUser = await TestDataCreateUser.CreateTestUser(_dbContext, userRole);
+        var (existingUser, originalPhone) = await CreateTestUserWithEncryptedPhone(
+            userRole,
+            "test@example.com",
+            "0987654321"
+        );
         _currentUser.SetUser(existingUser);
 
         var handler = new SignUp.Handler(
@@ -208,7 +220,7 @@ public class SignUpTest : IAsyncLifetime
             "password",
             "Hanoi",
             DateTimeOffset.UtcNow.AddYears(-30),
-            existingUser.Phone
+            originalPhone // Using the same phone number as existing user
         );
 
         // Act
@@ -265,5 +277,51 @@ public class SignUpTest : IAsyncLifetime
         // Assert
         Assert.False(result.IsValid);
         Assert.Contains(result.Errors, e => e.ErrorMessage == "Mật khẩu phải có ít nhất 6 ký tự");
+    }
+
+    // Helper method to create a user with properly encrypted phone number
+    private async Task<(User User, string OriginalPhone)> CreateTestUserWithEncryptedPhone(
+        UserRole role,
+        string email = "test@example.com",
+        string originalPhone = "0987654321"
+    )
+    {
+        // Generate encryption key and IV
+        (string key, string iv) = await _keyService.GenerateKeyAsync();
+
+        // Encrypt phone number
+        string encryptedPhone = await _aesService.Encrypt(originalPhone, key, iv);
+
+        // Encrypt key with master key
+        string encryptedKey = _keyService.EncryptKey(key, _encryptionSettings.Key);
+
+        // Create encryption key record
+        EncryptionKey encryptionKey = new() { EncryptedKey = encryptedKey, IV = iv };
+        await _dbContext.EncryptionKeys.AddAsync(encryptionKey);
+        await _dbContext.SaveChangesAsync();
+
+        // Create user with encrypted phone
+        User user = new()
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            EncryptionKeyId = encryptionKey.Id,
+            Name = "Test User",
+            Email = email,
+            Password = "password".HashString(),
+            RoleId = role.Id,
+            Address = "Test Address",
+            DateOfBirth = DateTime.UtcNow.AddYears(-30),
+            Phone = encryptedPhone,
+        };
+
+        // Create user statistics
+        UserStatistic userStatistic = new() { UserId = user.Id };
+
+        // Save to database
+        await _dbContext.Users.AddAsync(user);
+        await _dbContext.UserStatistics.AddAsync(userStatistic);
+        await _dbContext.SaveChangesAsync();
+
+        return (user, originalPhone);
     }
 }

@@ -36,10 +36,35 @@ public class SignUp
             CancellationToken cancellationToken
         )
         {
-            User? checkingUser = await context.Users.FirstOrDefaultAsync(
-                x => x.Email == request.Email || x.Phone == request.Phone,
-                cancellationToken
-            );
+            List<User> users = await context
+                .Users.AsNoTracking()
+                .Include(u => u.EncryptionKey)
+                .ToListAsync(cancellationToken);
+
+            foreach (var u in users)
+            {
+                string decryptedKey = keyManagementService.DecryptKey(
+                    u.EncryptionKey.EncryptedKey,
+                    encryptionSettings.Key
+                );
+
+                string decryptedPhone = await aesEncryptionService.Decrypt(
+                    u.Phone,
+                    decryptedKey,
+                    u.EncryptionKey.IV
+                );
+
+                if (u.Email == request.Email)
+                {
+                    return Result.Error("Email đã tồn tại");
+                }
+
+                if (decryptedPhone == request.Phone)
+                {
+                    return Result.Error("Số điện thoại đã tồn tại");
+                }
+            }
+
             UserRole? checkingUserRole = await context.UserRoles.FirstOrDefaultAsync(
                 ur => ur.Name.ToLower() == request.RoleName.ToLower(),
                 cancellationToken
@@ -50,13 +75,6 @@ public class SignUp
             if (checkingUserRole.Name.Equals("admin", StringComparison.CurrentCultureIgnoreCase))
                 return Result.Error("Không thể đăng ký tài khoản với vai trò này");
 
-            if (checkingUser is not null)
-            {
-                if (checkingUser.Email == request.Email)
-                    return Result.Error("Email đã tồn tại");
-                if (checkingUser.Phone == request.Phone)
-                    return Result.Error("Số điện thoại đã tồn tại");
-            }
             string refreshToken = tokenService.GenerateRefreshToken();
             (string key, string iv) = await keyManagementService.GenerateKeyAsync();
             string encryptedPhone = await aesEncryptionService.Encrypt(request.Phone, key, iv);
