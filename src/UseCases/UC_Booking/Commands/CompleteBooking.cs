@@ -145,8 +145,12 @@ public sealed class CompleteBooking
             if (actualDays < (totalBookingDays / 2) && actualDays >= 1)
             {
                 unusedDays = totalBookingDays - actualDays;
-                // Calculate refund as 50% of total booking amount
-                refundAmount = booking.TotalAmount * EARLY_RETURN_REFUND_PERCENTAGE;
+
+                // Calculate refund portions
+                var adminRefundAmount = booking.PlatformFee * EARLY_RETURN_REFUND_PERCENTAGE;
+                var ownerRefundAmount = booking.BasePrice * EARLY_RETURN_REFUND_PERCENTAGE;
+
+                refundAmount = adminRefundAmount + ownerRefundAmount;
 
                 logger.LogInformation(
                     "User {UserId} returned booking {BookingId} early, refund amount: {RefundAmount}",
@@ -154,10 +158,6 @@ public sealed class CompleteBooking
                     booking.Id,
                     refundAmount
                 );
-
-                // Calculate refund portions
-                var adminRefundAmount = refundAmount * 0.1m; // 10% from admin
-                var ownerRefundAmount = refundAmount * 0.9m; // 90% from owner
 
                 // Create refund transactions
                 var adminRefundTransaction = new Transaction
@@ -183,7 +183,7 @@ public sealed class CompleteBooking
                     Status = TransactionStatusEnum.Completed,
                     Amount = ownerRefundAmount,
                     Description = "Hoàn tiền từ Chủ xe: Trả xe sớm",
-                    BalanceAfter = booking.User.Balance + refundAmount
+                    BalanceAfter = booking.User.Balance + ownerRefundAmount
                 };
 
                 // Get the booking's locked balance
