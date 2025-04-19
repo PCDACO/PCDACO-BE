@@ -69,8 +69,8 @@ public sealed class ApproveInspectionSchedule
                     ResponseMessages.OnlyUpdateSignedOrInprogressInspectionSchedule
                 );
 
-            // Check if car is not attached to any gps then return error
-            if (schedule.Car.GPS is null)
+            // Check if car is not attached to any gps when approving then return error
+            if (schedule.Car.GPS is null && request.IsApproved)
                 return Result.Error("Xe chưa được gán thiết bị gps không thể duyệt lịch kiểm định");
 
             // Verify only datetimeoffset.utcnow faster than schedule.InspectionDate 1 hour above can not update
