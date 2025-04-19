@@ -83,7 +83,8 @@ public sealed class CreateBooking
             var activeBookingCount = await context.Bookings.CountAsync(
                 b =>
                     b.UserId == currentUser.User!.Id
-                    && b.Status != BookingStatusEnum.Completed
+                    && b.Status != BookingStatusEnum.Completed,
+                    && b.Status != BookingStatusEnum.Done
                     && b.Status != BookingStatusEnum.Cancelled
                     && b.Status != BookingStatusEnum.Expired
                     && b.Status != BookingStatusEnum.Rejected,
