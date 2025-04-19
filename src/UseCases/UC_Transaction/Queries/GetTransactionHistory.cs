@@ -1,4 +1,5 @@
 using Ardalis.Result;
+using Domain.Constants;
 using Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -23,6 +24,7 @@ public sealed class GetTransactionHistory
     public sealed record Response(
         Guid Id,
         string Type,
+        bool IsIncome,
         decimal Amount,
         decimal BalanceAfter,
         string Description,
@@ -32,10 +34,11 @@ public sealed class GetTransactionHistory
         string ProoUrl
     )
     {
-        public static Response FromEntity(Transaction transaction) =>
+        public static Response FromEntity(Transaction transaction, Guid currentUserId) =>
             new(
                 transaction.Id,
                 transaction.Type.Name,
+                DetermineIsIncome(transaction, currentUserId),
                 transaction.Amount,
                 transaction.BalanceAfter,
                 transaction.Description,
@@ -48,6 +51,18 @@ public sealed class GetTransactionHistory
                 ),
                 transaction.ProofUrl
             );
+
+        private static bool DetermineIsIncome(Transaction transaction, Guid currentUserId)
+        {
+            return transaction.Type.Name switch
+            {
+                TransactionTypeNames.Refund => transaction.ToUserId == currentUserId, // Income for driver, expense for owner/admin
+                TransactionTypeNames.BookingPayment => transaction.ToUserId == currentUserId, // Income for owner, expense for driver
+                TransactionTypeNames.Withdrawal => false, // Always expense (minus sign) for everyone
+                TransactionTypeNames.OwnerEarning => transaction.ToUserId == currentUserId, // Income for owner
+                _ => transaction.ToUserId == currentUserId, // Default case: if user is receiving money (ToUserId) then it's income
+            };
+        }
     }
 
     public record TransactionDetailsDto(Guid? BookingId, string? BankName, string? BankAccountName);
@@ -118,7 +133,7 @@ public sealed class GetTransactionHistory
 
             return Result.Success(
                 OffsetPaginatedResponse<Response>.Map(
-                    transactions.Select(Response.FromEntity),
+                    transactions.Select(t => Response.FromEntity(t, currentUser.User!.Id)),
                     totalCount,
                     request.PageSize,
                     request.PageNumber,
