@@ -42,6 +42,7 @@ public sealed class CreateInspectionSchedule
             var car = await context
                 .Cars.IgnoreQueryFilters()
                 .Include(c => c.GPS)
+                .Include(c => c.Contract)
                 .FirstOrDefaultAsync(c => c.Id == request.CarId && !c.IsDeleted, cancellationToken);
 
             if (car is null)
@@ -54,6 +55,11 @@ public sealed class CreateInspectionSchedule
                     return Result.Error(
                         "Không thể tao lịch sự cố cho xe đang chờ duyệt hoặc đã được thuê"
                     );
+                if (car.GPS == null)
+                    return Result.Error("Xe chưa được gán thiết bị gps không thể tạo lịch sự cố");
+                if (car.Contract == null)
+                    return Result.Error("Xe không có hợp đồng không thể tạo lịch sự cố");
+
                 // Check only car doesn't have any active booking can continue
                 var activeBooking = await context
                     .Bookings.Where(b => b.CarId == request.CarId)
@@ -78,6 +84,8 @@ public sealed class CreateInspectionSchedule
                     return Result.Error(
                         "Xe chưa được gán thiết bị gps không thể tạo lịch đổi thiết bị gps"
                     );
+                if (car.Contract == null)
+                    return Result.Error("Xe không có hợp đồng không thể tạo lịch đổi thiết bị gps");
 
                 // Check only car doesn't have any active booking can continue
                 var activeBooking = await context
@@ -110,20 +118,36 @@ public sealed class CreateInspectionSchedule
             if (technician is null || !technician.IsTechnician())
                 return Result.Error(ResponseMessages.TechnicianNotFound);
 
-            // Check if the report exists and is not deleted and is under review
-            if (request.ReportId != null && request.Type == InspectionScheduleType.Incident)
+            // Check if the report exists and is not deleted and is in pending status
+            BookingReport? bookingReport = null;
+            CarReport? carReport = null;
+            if (request.Type == InspectionScheduleType.Incident)
             {
-                var report = await context.BookingReports.FirstOrDefaultAsync(
-                    r => r.Id == request.ReportId && !r.IsDeleted,
+                bookingReport = await context.BookingReports.FirstOrDefaultAsync(
+                    r => r.Id == request.ReportId,
                     cancellationToken
                 );
-                if (report is null)
+                if (bookingReport is null)
                     return Result.Error(ResponseMessages.ReportNotFound);
-                if (report.Status != BookingReportStatus.UnderReview)
-                    return Result.Error(ResponseMessages.ReportNotUnderReviewed);
+                if (bookingReport.Status != BookingReportStatus.Pending)
+                    return Result.Error("Báo cáo không ở trạng thái chờ");
 
-                report.Status = BookingReportStatus.UnderReview;
-                report.ResolvedById = currentUser.User.Id;
+                bookingReport.Status = BookingReportStatus.UnderReview;
+                bookingReport.ResolvedById = currentUser.User.Id;
+            }
+            if (request.Type == InspectionScheduleType.ChangeGPS)
+            {
+                carReport = await context.CarReports.FirstOrDefaultAsync(
+                    r => r.Id == request.ReportId,
+                    cancellationToken
+                );
+                if (carReport is null)
+                    return Result.Error(ResponseMessages.ReportNotFound);
+                if (carReport.Status != CarReportStatus.Pending)
+                    return Result.Error("Báo cáo không ở trạng thái chờ");
+
+                carReport.Status = CarReportStatus.UnderReview;
+                carReport.ResolvedById = currentUser.User.Id;
             }
 
             var existingActiveSchedule = await context
@@ -168,7 +192,8 @@ public sealed class CreateInspectionSchedule
             {
                 TechnicianId = request.TechnicianId,
                 CarId = request.CarId,
-                ReportId = request.ReportId,
+                ReportId = bookingReport?.Id,
+                CarReportId = carReport?.Id,
                 InspectionAddress = request.InspectionAddress,
                 InspectionDate = request.InspectionDate,
                 CreatedBy = currentUser.User.Id,

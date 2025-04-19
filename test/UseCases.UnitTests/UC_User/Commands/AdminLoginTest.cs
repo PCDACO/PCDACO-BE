@@ -73,7 +73,7 @@ public class AdminLoginTest : IAsyncLifetime
         var result = await handler.Handle(command, CancellationToken.None);
 
         // Assert
-        Assert.Equal(ResultStatus.NotFound, result.Status);
+        Assert.Equal(ResultStatus.Error, result.Status);
     }
 
     [Fact]

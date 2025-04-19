@@ -52,6 +52,18 @@ public sealed class InProgressInspectionSchedule
             if (DateTimeOffset.UtcNow > schedule.InspectionDate.AddMinutes(15))
                 return Result.Conflict(ResponseMessages.InspectionScheduleExpired);
 
+            // Check can not inprogress more than 1 schedule for the same technician
+            var inProgressSchedule = await context
+                .InspectionSchedules.Where(i =>
+                    i.TechnicianId == schedule.TechnicianId
+                    && i.Status == InspectionScheduleStatusEnum.InProgress
+                )
+                .FirstOrDefaultAsync(cancellationToken);
+            if (inProgressSchedule is not null)
+                return Result.Conflict(
+                    "Kiểm định viên đã có lịch kiểm định đang diễn ra, không thể thực hiện thêm"
+                );
+
             // Update schedule
             schedule.Status = InspectionScheduleStatusEnum.InProgress;
             schedule.UpdatedAt = DateTimeOffset.UtcNow;

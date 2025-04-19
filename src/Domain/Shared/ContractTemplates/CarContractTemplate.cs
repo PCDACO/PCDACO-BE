@@ -253,20 +253,34 @@ public static class CarContractTemplateGenerator
                         }}
                         .signature-image {{
                             margin-bottom: 10px;
+                            text-align: center;
+                        }}
+                        .signature-image img {{
+                            max-width: 100%;
+                            height: auto;
+                            max-height: 100px;
                         }}
                         .signature-block {{
                             margin-top: 40px;
                             display: flex;
                             justify-content: space-between;
+                            flex-wrap: wrap;
+                            gap: 20px;
                         }}
                         .signature {{
-                            width: 40%;
+                            flex: 1;
+                            min-width: 200px;
                             text-align: center;
+                        }}
+                        .signature img.signature-image {{
+                            max-width: 100%;
+                            height: auto;
+                            object-fit: contain;
                         }}
                         .signature p {{
                             border-top: 1px solid #333;
                             padding-top: 10px;
-                            margin-top: 60px;
+                            margin-top: 40px;
                             font-weight: 500;
                         }}
                         .footer {{
@@ -274,6 +288,48 @@ public static class CarContractTemplateGenerator
                             font-size: 13px;
                             color: #777;
                             margin-top: 30px;
+                        }}
+
+                        /* Responsive styles */
+                        @media (max-width: 768px) {{
+                            .container {{
+                                padding: 20px;
+                            }}
+                            .signature-block {{
+                                flex-direction: column;
+                                align-items: center;
+                            }}
+                            .signature {{
+                                width: 100%;
+                                margin-bottom: 30px;
+                            }}
+                            .signature-image img {{
+                                max-height: 80px;
+                            }}
+                            .signature p {{
+                                margin-top: 40px;
+                            }}
+                            .inspection-photos {{
+                                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                            }}
+                        }}
+
+                        @media (max-width: 480px) {{
+                            .container {{
+                                padding: 15px;
+                            }}
+                            .header h1 {{
+                                font-size: 24px;
+                            }}
+                            .section-title {{
+                                font-size: 16px;
+                            }}
+                            .signature-image img {{
+                                max-height: 60px;
+                            }}
+                            .inspection-photos {{
+                                grid-template-columns: 1fr;
+                            }}
                         }}
                     </style>
                 </head>
@@ -332,15 +388,15 @@ public static class CarContractTemplateGenerator
                         <div class='section signature-block'>
                             <div class='signature'>
                                 {(string.IsNullOrEmpty(contractTemplate.OwnerSignatureImageUrl) ? "" : $@"
-                                <div class='signature-image'>
-                                    <img src='{contractTemplate.OwnerSignatureImageUrl}' alt='Chữ ký chủ xe' />
+                                <div>
+                                    <img class='signature-image' src='{contractTemplate.OwnerSignatureImageUrl}' alt='Chữ ký chủ xe' />
                                 </div>")}
                                 <p>CHỦ XE<br/>{contractTemplate.OwnerName}</p>
                             </div>
                             <div class='signature'>
                                 {(string.IsNullOrEmpty(contractTemplate.TechnicianSignatureImageUrl) ? "" : $@"
-                                <div class='signature-image'>
-                                    <img src='{contractTemplate.TechnicianSignatureImageUrl}' alt='Chữ ký kiểm định viên' />
+                                <div>
+                                    <img class='signature-image' src='{contractTemplate.TechnicianSignatureImageUrl}' alt='Chữ ký kiểm định viên' />
                                 </div>")}
                                 <p>ĐẠI DIỆN KIỂM ĐỊNH<br/>{contractTemplate.TechnicianName}</p>
                             </div>
