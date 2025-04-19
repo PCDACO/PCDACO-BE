@@ -249,10 +249,10 @@ public sealed class GetBookingById
     );
 
     public record PostInspectionPhotos(
+        string[] FuelGaugeFinal,
         string[] Scratches,
         string[] Cleanliness,
-        string[] TollFees,
-        string[] VehicleInspectionCertificate
+        string[] TollFees
     );
 
     public record BookingDetail(
