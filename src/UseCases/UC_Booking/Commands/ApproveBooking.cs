@@ -222,7 +222,7 @@ public sealed class ApproveBooking
                     EndDate = booking.EndTime,
                     PickupAddress = car.GPS?.Location.ToString() ?? "Địa chỉ không xác định",
                     OwnerSignatureImageUrl = signature,
-                    DriverSignatureImageUrl = contract.DriverSignature ?? string.Empty
+                    DriverSignatureImageUrl = contract.DriverSignature ?? string.Empty,
                 };
 
                 // Generate contract terms
@@ -293,7 +293,10 @@ public sealed class ApproveBooking
                 .WithMessage("Trạng thái phê duyệt không được để trống");
 
             RuleFor(x => x.BaseUrl).NotEmpty().WithMessage("Base URL không được để trống");
-            RuleFor(x => x.Signature).NotEmpty().WithMessage("Chữ ký không được để trống");
+            // when request.IsApproved = true then require signature
+            When(
+                x => x.IsApproved,
+                () => RuleFor(x => x.Signature).NotEmpty().WithMessage("Chữ ký không được để trống"));
         }
     }
 }
