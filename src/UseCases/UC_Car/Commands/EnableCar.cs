@@ -50,6 +50,30 @@ public sealed class EnableCar
             if (car.Status != CarStatusEnum.Inactive)
                 return Result.Error(ResponseMessages.CarMustBeInactiveToBeEnabled);
 
+            // Check if has inprogress schedule with type change gps then return error
+            var inProgressSchedule = await context
+                .InspectionSchedules.AsNoTracking()
+                .Where(i =>
+                    i.CarId == request.Id
+                    && i.Status != InspectionScheduleStatusEnum.Approved
+                    && i.Status != InspectionScheduleStatusEnum.Rejected
+                    && i.Type == InspectionScheduleType.ChangeGPS
+                )
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (inProgressSchedule is not null)
+                return Result.Error(
+                    "Không thể kích hoạt lại xe khi có lịch kiểm định đổi thiết bị chưa được xử lí"
+                );
+
+            // Check if car does not have any gps attached then return error
+            var carGps = await context
+                .CarGPSes.AsNoTracking()
+                .Where(c => c.CarId == request.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (carGps is null)
+                return Result.Error("Xe chưa được gán thiết bị gps không thể kích hoạt lại");
+
             // Update car status to Available
             car.Status = CarStatusEnum.Available;
             car.UpdatedAt = DateTimeOffset.UtcNow;

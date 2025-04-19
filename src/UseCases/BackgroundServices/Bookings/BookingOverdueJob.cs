@@ -13,8 +13,6 @@ namespace UseCases.BackgroundServices.Bookings;
 public class BookingOverdueJob(IAppDBContext context, IEmailService emailService)
 {
     private const int PRE_CANCELLATION_HOURS = 6;
-    private const decimal ADMIN_REFUND_PERCENTAGE = 0.1m;
-    private const decimal OWNER_REFUND_PERCENTAGE = 0.9m;
 
     public async Task HandleOverdueBookings()
     {
@@ -84,9 +82,9 @@ public class BookingOverdueJob(IAppDBContext context, IEmailService emailService
 
     private async Task HandleBookingRefund(Booking booking, User admin, string reason)
     {
-        var refundAmount = booking.TotalAmount;
-        var adminRefundAmount = refundAmount * ADMIN_REFUND_PERCENTAGE;
-        var ownerRefundAmount = refundAmount * OWNER_REFUND_PERCENTAGE;
+        var adminRefundAmount = booking.PlatformFee;
+        var ownerRefundAmount = booking.BasePrice;
+        var refundAmount = adminRefundAmount + ownerRefundAmount;
 
         var refundType = await context.TransactionTypes.FirstAsync(t =>
             t.Name == TransactionTypeNames.Refund
@@ -115,7 +113,7 @@ public class BookingOverdueJob(IAppDBContext context, IEmailService emailService
             Status = TransactionStatusEnum.Completed,
             Amount = ownerRefundAmount,
             Description = $"Hoàn tiền từ Chủ xe: {reason}",
-            BalanceAfter = booking.User.Balance + refundAmount
+            BalanceAfter = booking.User.Balance + ownerRefundAmount
         };
 
         // Find the booking's locked balance

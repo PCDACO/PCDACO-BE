@@ -205,6 +205,26 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
 
         // Setup schedule with inspection date more than 1 hour in the past
         var (car, owner) = await SetupCar();
+
+        // Add gps device
+        var gpsDevice = new GPSDevice
+        {
+            Name = "Test GPS Device",
+            OSBuildId = "OS12345",
+            Status = DeviceStatusEnum.InUsed,
+        };
+        await _dbContext.GPSDevices.AddAsync(gpsDevice);
+        await _dbContext.SaveChangesAsync();
+        // Add car gps
+        var carGPS = new CarGPS
+        {
+            CarId = car.Id,
+            DeviceId = gpsDevice.Id,
+            Location = new NetTopologySuite.Geometries.Point(106.6601, 10.7626) { SRID = 4326 },
+        };
+        await _dbContext.CarGPSes.AddAsync(carGPS);
+        await _dbContext.SaveChangesAsync();
+
         var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
             _dbContext,
             "Consultant"
@@ -257,6 +277,26 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
 
         // Setup car without contract
         var (car, owner) = await SetupCarWithoutContract();
+
+        // Add gps device
+        var gpsDevice = new GPSDevice
+        {
+            Name = "Test GPS Device",
+            OSBuildId = "OS12345",
+            Status = DeviceStatusEnum.InUsed,
+        };
+        await _dbContext.GPSDevices.AddAsync(gpsDevice);
+        await _dbContext.SaveChangesAsync();
+        // Add car gps
+        var carGPS = new CarGPS
+        {
+            CarId = car.Id,
+            DeviceId = gpsDevice.Id,
+            Location = new NetTopologySuite.Geometries.Point(106.6601, 10.7626) { SRID = 4326 },
+        };
+        await _dbContext.CarGPSes.AddAsync(carGPS);
+        await _dbContext.SaveChangesAsync();
+
         var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
             _dbContext,
             "Consultant"
@@ -294,6 +334,75 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         // Assert
         Assert.Equal(ResultStatus.NotFound, result.Status);
         Assert.Contains("Không tìm thấy hợp đồng xe", result.Errors);
+    }
+
+    [Fact]
+    public async Task Handle_CarWithoutGPS_ReturnsError()
+    {
+        // Arrange
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
+        _currentUser.SetUser(technician);
+
+        // Setup car without GPS
+        var (car, owner) = await SetupCarWithoutGPS();
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+
+        // Create contract with signatures
+        var contract = new CarContract
+        {
+            CarId = car.Id,
+            Terms = "Test terms",
+            InspectionResults = "Pending",
+            Status = CarContractStatusEnum.OwnerSigned,
+            OwnerSignature = "base64signature",
+            OwnerSignatureDate = DateTimeOffset.UtcNow,
+            TechnicianSignature = "base64signature",
+            TechnicianSignatureDate = DateTimeOffset.UtcNow,
+        };
+        await _dbContext.CarContracts.AddAsync(contract);
+
+        var schedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car.Id,
+            Status = InspectionScheduleStatusEnum.Signed,
+            InspectionAddress = "123 Main St",
+            InspectionDate = DateTimeOffset.UtcNow.AddMinutes(30),
+            CreatedBy = consultant.Id,
+        };
+        await _dbContext.InspectionSchedules.AddAsync(schedule);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new ApproveInspectionSchedule.Handler(
+            _dbContext,
+            _currentUser,
+            _aesEncryptionService,
+            _keyManagementService,
+            _encryptionSettings
+        );
+        var command = new ApproveInspectionSchedule.Command(
+            Id: schedule.Id,
+            Note: "Test note",
+            IsApproved: true
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(
+            "Xe chưa được gán thiết bị gps không thể duyệt lịch kiểm định",
+            result.Errors
+        );
     }
 
     [Fact]
@@ -359,6 +468,26 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
 
         // Setup car and schedule
         var (car, owner) = await SetupCar();
+
+        // Add gps device
+        var gpsDevice = new GPSDevice
+        {
+            Name = "Test GPS Device",
+            OSBuildId = "OS12345",
+            Status = DeviceStatusEnum.InUsed,
+        };
+        await _dbContext.GPSDevices.AddAsync(gpsDevice);
+        await _dbContext.SaveChangesAsync();
+        // Add car gps
+        var carGPS = new CarGPS
+        {
+            CarId = car.Id,
+            DeviceId = gpsDevice.Id,
+            Location = new NetTopologySuite.Geometries.Point(106.6601, 10.7626) { SRID = 4326 },
+        };
+        await _dbContext.CarGPSes.AddAsync(carGPS);
+        await _dbContext.SaveChangesAsync();
+
         var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
             _dbContext,
             "Consultant"
@@ -367,7 +496,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
 
         // Get the contract but don't set owner signature date
         var contract = await _dbContext.CarContracts.FirstOrDefaultAsync(c => c.CarId == car.Id);
-        contract.TechnicianSignatureDate = DateTimeOffset.UtcNow; // Set technician signature only
+        contract!.TechnicianSignatureDate = DateTimeOffset.UtcNow; // Set technician signature only
         await _dbContext.SaveChangesAsync();
 
         var schedule = new InspectionSchedule
@@ -416,6 +545,26 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
 
         // Setup car and schedule
         var (car, owner) = await SetupCar();
+
+        // Add gps device
+        var gpsDevice = new GPSDevice
+        {
+            Name = "Test GPS Device",
+            OSBuildId = "OS12345",
+            Status = DeviceStatusEnum.InUsed,
+        };
+        await _dbContext.GPSDevices.AddAsync(gpsDevice);
+        await _dbContext.SaveChangesAsync();
+        // Add car gps
+        var carGPS = new CarGPS
+        {
+            CarId = car.Id,
+            DeviceId = gpsDevice.Id,
+            Location = new NetTopologySuite.Geometries.Point(106.6601, 10.7626) { SRID = 4326 },
+        };
+        await _dbContext.CarGPSes.AddAsync(carGPS);
+        await _dbContext.SaveChangesAsync();
+
         var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
             _dbContext,
             "Consultant"
@@ -424,7 +573,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
 
         // Get the contract but don't set technician signature date
         var contract = await _dbContext.CarContracts.FirstOrDefaultAsync(c => c.CarId == car.Id);
-        contract.OwnerSignatureDate = DateTimeOffset.UtcNow; // Set owner signature only
+        contract!.OwnerSignatureDate = DateTimeOffset.UtcNow; // Set owner signature only
         await _dbContext.SaveChangesAsync();
 
         var schedule = new InspectionSchedule
@@ -546,12 +695,30 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
     {
         // Setup car with contract
         var (car, owner) = await SetupCar();
+        // Add gps device
+        var gpsDevice = new GPSDevice
+        {
+            Name = "Test GPS Device",
+            OSBuildId = "OS12345",
+            Status = DeviceStatusEnum.InUsed,
+        };
+        await _dbContext.GPSDevices.AddAsync(gpsDevice);
+        await _dbContext.SaveChangesAsync();
+        // Add car gps
+        var carGPS = new CarGPS
+        {
+            CarId = car.Id,
+            DeviceId = gpsDevice.Id,
+            Location = new NetTopologySuite.Geometries.Point(106.6601, 10.7626) { SRID = 4326 },
+        };
+        await _dbContext.CarGPSes.AddAsync(carGPS);
+        await _dbContext.SaveChangesAsync();
 
         // Get the created contract
         var contract = await _dbContext.CarContracts.FirstOrDefaultAsync(c => c.CarId == car.Id);
 
         // Add signatures to the contract
-        contract.OwnerSignatureDate = DateTimeOffset.UtcNow.AddDays(-1);
+        contract!.OwnerSignatureDate = DateTimeOffset.UtcNow.AddDays(-1);
         contract.TechnicianSignatureDate = DateTimeOffset.UtcNow.AddDays(-1);
         await _dbContext.SaveChangesAsync();
 
@@ -731,6 +898,22 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         if (existingContract != null)
         {
             _dbContext.CarContracts.Remove(existingContract);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        return (car, owner);
+    }
+
+    private async Task<(Car car, User owner)> SetupCarWithoutGPS()
+    {
+        // Create car with encrypted data but without a GPS device
+        var (car, owner) = await SetupCar();
+
+        // Remove the GPS association from the car
+        var existingCarGPS = await _dbContext.CarGPSes.FirstOrDefaultAsync(c => c.CarId == car.Id);
+        if (existingCarGPS != null)
+        {
+            _dbContext.CarGPSes.Remove(existingCarGPS);
             await _dbContext.SaveChangesAsync();
         }
 
