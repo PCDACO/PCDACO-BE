@@ -68,7 +68,10 @@ public sealed class CreateFeedBack
             if (existedFeedback != null)
                 return Result.Error("Feedback đã tồn tại");
 
-            if (booking.Status != BookingStatusEnum.Completed)
+            if (
+                booking.Status != BookingStatusEnum.Completed
+                && booking.Status != BookingStatusEnum.Done
+            )
                 return Result.Error("Chỉ có thể tạo feedback khi chuyến đi đã hoàn thành");
 
             var feedbackType = currentUser.User.IsDriver()
