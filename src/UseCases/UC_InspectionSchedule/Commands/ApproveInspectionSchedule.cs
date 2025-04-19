@@ -48,6 +48,8 @@ public sealed class ApproveInspectionSchedule
                 .ThenInclude(o => o.EncryptionKey)
                 .Include(s => s.Car)
                 .ThenInclude(s => s.Model)
+                .Include(s => s.Car)
+                .ThenInclude(s => s.GPS)
                 .Include(s => s.Technician)
                 .Include(s => s.Photos)
                 .FirstOrDefaultAsync(s => s.Id == request.Id && !s.IsDeleted, cancellationToken);
@@ -66,6 +68,10 @@ public sealed class ApproveInspectionSchedule
                 return Result.Error(
                     ResponseMessages.OnlyUpdateSignedOrInprogressInspectionSchedule
                 );
+
+            // Check if car is not attached to any gps then return error
+            if (schedule.Car.GPS is null)
+                return Result.Error("Xe chưa được gán thiết bị gps không thể duyệt lịch kiểm định");
 
             // Verify only datetimeoffset.utcnow faster than schedule.InspectionDate 1 hour above can not update
             if (DateTimeOffset.UtcNow > schedule.InspectionDate.AddHours(1))
