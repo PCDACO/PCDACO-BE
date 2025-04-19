@@ -24,8 +24,6 @@ public sealed class CancelBooking
         ILogger<Handler> logger
     ) : IRequestHandler<Command, Result>
     {
-        private const decimal ADMIN_REFUND_PERCENTAGE = 0.1m;
-        private const decimal OWNER_REFUND_PERCENTAGE = 0.9m;
         private const decimal REFUND_PERCENTAGE_BEFORE_7_DAYS = 1.0m;
         private const decimal REFUND_PERCENTAGE_BEFORE_5_DAYS = 0.5m;
         private const decimal REFUND_PERCENTAGE_BEFORE_3_DAYS = 0.3m;
@@ -225,9 +223,9 @@ public sealed class CancelBooking
                 throw new InvalidOperationException("Admin user not found");
             }
 
-            var refundAmount = booking.TotalAmount * refundPercentage;
-            var adminRefundAmount = refundAmount * ADMIN_REFUND_PERCENTAGE;
-            var ownerRefundAmount = refundAmount * OWNER_REFUND_PERCENTAGE;
+            var adminRefundAmount = booking.PlatformFee * refundPercentage;
+            var ownerRefundAmount = booking.BasePrice * refundPercentage;
+            var refundAmount = adminRefundAmount + ownerRefundAmount;
 
             var transactionTypes = await context
                 .TransactionTypes.Where(t => new[] { TransactionTypeNames.Refund }.Contains(t.Name))
@@ -259,7 +257,7 @@ public sealed class CancelBooking
                 Status = TransactionStatusEnum.Completed,
                 Amount = ownerRefundAmount,
                 Description = $"Hoàn tiền từ Chủ xe: {reason}",
-                BalanceAfter = booking.User.Balance + refundAmount
+                BalanceAfter = booking.User.Balance + ownerRefundAmount
             };
 
             // Get the booking's locked balance

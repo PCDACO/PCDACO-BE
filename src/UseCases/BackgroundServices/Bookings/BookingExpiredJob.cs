@@ -14,8 +14,6 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
 {
     private const decimal HALF_REFUND_PERCENTAGE = 0.5m;
     private const decimal FULL_REFUND_PERCENTAGE = 1m;
-    const decimal ADMIN_REFUND_PERCENTAGE = 0.1m;
-    const decimal OWNER_REFUND_PERCENTAGE = 0.9m;
 
     public async Task ExpireBookingsAutomatically()
     {
@@ -124,9 +122,9 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
         if (!booking.IsPaid)
             return;
 
-        var refundAmount = booking.TotalAmount * refundPercentage;
-        var adminRefundAmount = refundAmount * ADMIN_REFUND_PERCENTAGE;
-        var ownerRefundAmount = refundAmount * OWNER_REFUND_PERCENTAGE;
+        var adminRefundAmount = booking.PlatformFee * refundPercentage;
+        var ownerRefundAmount = booking.BasePrice * refundPercentage;
+        var refundAmount = adminRefundAmount + ownerRefundAmount;
 
         var refundType = await context.TransactionTypes.FirstAsync(t =>
             t.Name == TransactionTypeNames.Refund
@@ -155,7 +153,7 @@ public class BookingExpiredJob(IAppDBContext context, IEmailService emailService
             Status = TransactionStatusEnum.Completed,
             Amount = ownerRefundAmount,
             Description = $"Hoàn tiền từ Chủ xe: {reason}",
-            BalanceAfter = booking.User.Balance + refundAmount
+            BalanceAfter = booking.User.Balance + ownerRefundAmount
         };
 
         // Find the booking's locked balance
