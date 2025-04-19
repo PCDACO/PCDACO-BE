@@ -113,7 +113,8 @@ public sealed class GetBookingById
                         f.Point,
                         f.Content,
                         f.Type,
-                        f.User.Name
+                        f.User.Name,
+                        f.User.Role.Name.ToString()
                     ))
                 ]
             );
@@ -295,7 +296,8 @@ public sealed class GetBookingById
         int Rating,
         string Content,
         FeedbackTypeEnum Type,
-        string UserName
+        string UserName,
+        string Role
     );
 
     internal sealed class Handler(
@@ -328,6 +330,7 @@ public sealed class GetBookingById
                 .Include(b => b.TripTrackings)
                 .Include(b => b.Feedbacks)
                 .ThenInclude(f => f.User)
+                .ThenInclude(f => f.Role)
                 .Include(b => b.CarInspections)
                 .ThenInclude(i => i.Photos)
                 .Include(b => b.Contract)
