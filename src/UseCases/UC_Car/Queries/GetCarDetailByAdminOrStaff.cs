@@ -42,6 +42,7 @@ public class GetCarDetailByAdminOrStaff
         AmenityDetail[] Amenities,
         BookingSchedule[] Bookings,
         ContractDetail? Contract,
+        FeedbackDetail[] Feedbacks,
         bool HasInspectionSchedule
     )
     {
@@ -115,6 +116,21 @@ public class GetCarDetailByAdminOrStaff
                 lastRented
             );
 
+            var feedbacks = car
+                .Bookings.SelectMany(b => b.Feedbacks)
+                .Where(f => f.Type == FeedbackTypeEnum.ToOwner)
+                .Select(f => new FeedbackDetail(
+                    f.Id,
+                    f.UserId,
+                    f.User.Name,
+                    f.User.AvatarUrl,
+                    f.Point,
+                    f.Content,
+                    GetTimestampFromUuid.Execute(f.Id)
+                ))
+                .OrderByDescending(f => f.CreatedAt)
+                .ToArray();
+
             return new(
                 car.Id,
                 car.Model.Id,
@@ -164,6 +180,7 @@ public class GetCarDetailByAdminOrStaff
                     )),
                 ],
                 contractDetail,
+                feedbacks,
                 car.InspectionSchedules.Any(s =>
                     s.Status == InspectionScheduleStatusEnum.Approved
                     || s.Status == InspectionScheduleStatusEnum.InProgress
@@ -221,6 +238,16 @@ public class GetCarDetailByAdminOrStaff
 
     public record PickupLocationDetail(double Longitude, double Latitude, string Address);
 
+    public record FeedbackDetail(
+        Guid Id,
+        Guid UserId,
+        string UserName,
+        string UserAvatar,
+        int Rating,
+        string Content,
+        DateTimeOffset CreatedAt
+    );
+
     internal sealed class Handler(
         IAppDBContext context,
         IAesEncryptionService aesEncryptionService,
@@ -248,6 +275,9 @@ public class GetCarDetailByAdminOrStaff
                 .Include(c => c.InspectionSchedules)
                 .Include(c => c.Bookings)
                 .ThenInclude(b => b.User)
+                .Include(c => c.Bookings)
+                .ThenInclude(b => b.Feedbacks)
+                .ThenInclude(f => f.User)
                 .Include(c => c.Owner)
                 .ThenInclude(o => o.Feedbacks)
                 .Include(c => c.Owner)
