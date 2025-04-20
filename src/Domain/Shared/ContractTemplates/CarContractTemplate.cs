@@ -248,6 +248,12 @@ public static class CarContractTemplateGenerator
                         .photo-item {{
                             text-align: center;
                         }}
+                        .footer {{
+                            text-align: center;
+                            font-size: 13px;
+                            color: #777;
+                            margin-top: 30px;
+                        }}
                         .photo-item img {{
                             max-width: 100%;
                             height: auto;
