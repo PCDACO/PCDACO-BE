@@ -163,6 +163,10 @@ public static class CarContractTemplateGenerator
                             size: A4;
                         }}
                         body {{
+                            margin: 0;
+                            padding: 0;
+                        }}
+                        .contract-container {{
                             font-family: 'Roboto', sans-serif;
                             background-color: #f4f4f4;
                             margin: 0;
@@ -333,7 +337,7 @@ public static class CarContractTemplateGenerator
                     </style>
                 </head>
                 <body>
-                    <div class='container'>
+                    <div class='contract-container'>
                         <!-- Header Section -->
                         <div class='header'>
                             <h1>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h1>
