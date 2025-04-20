@@ -467,7 +467,7 @@ public static class ContractTemplateGenerator
                             </style>
                         </head>
                         <body>
-                            <div class='contract-container'>
+                            <div class='container'>
                                 <!-- Header Section -->
                                 <div class='header'>
                                     <h1>CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM</h1>
