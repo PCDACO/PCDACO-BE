@@ -2,11 +2,11 @@ using Ardalis.Result;
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
-using Domain.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
 using UseCases.DTOs;
+using UseCases.Utils;
 
 namespace UseCases.UC_Car.Queries;
 
@@ -41,16 +41,11 @@ public class GetCarById
         ImageDetail[] Images,
         AmenityDetail[] Amenities,
         BookingSchedule[] Bookings,
-        ContractDetail? Contract
+        ContractDetail? Contract,
+        FeedbackDetail[] Feedbacks
     )
     {
-        public static async Task<Response> FromEntity(
-            Car car,
-            string masterKey,
-            IAesEncryptionService aesEncryptionService,
-            IKeyManagementService keyManagementService,
-            bool includeContract = false
-        )
+        public static Response FromEntity(Car car, bool includeContract = false)
         {
             ContractDetail? contractDetail = null;
             if (includeContract && car.Contract != null)
@@ -65,6 +60,22 @@ public class GetCarById
                     car.Contract.GPSDeviceId
                 );
             }
+
+            // Get all driver feedbacks for this car's bookings
+            var feedbacks = car
+                .Bookings.SelectMany(b => b.Feedbacks)
+                .Where(f => f.Type == FeedbackTypeEnum.ToOwner)
+                .Select(f => new FeedbackDetail(
+                    f.Id,
+                    f.UserId,
+                    f.User.Name,
+                    f.User.AvatarUrl,
+                    f.Point,
+                    f.Content,
+                    GetTimestampFromUuid.Execute(f.Id)
+                ))
+                .OrderByDescending(f => f.CreatedAt)
+                .ToArray();
 
             return new(
                 car.Id,
@@ -111,9 +122,10 @@ public class GetCarById
                         b.User.AvatarUrl,
                         b.StartTime,
                         b.EndTime
-                    ))
+                    )),
                 ],
-                contractDetail
+                contractDetail,
+                feedbacks
             );
         }
     };
@@ -147,13 +159,18 @@ public class GetCarById
 
     public record PickupLocationDetail(double Longitude, double Latitude, string Address);
 
-    internal sealed class Handler(
-        IAppDBContext context,
-        IAesEncryptionService aesEncryptionService,
-        IKeyManagementService keyManagementService,
-        EncryptionSettings encryptionSettings,
-        CurrentUser currentUser
-    ) : IRequestHandler<Query, Result<Response>>
+    public record FeedbackDetail(
+        Guid Id,
+        Guid UserId,
+        string UserName,
+        string UserAvatar,
+        int Rating,
+        string Content,
+        DateTimeOffset CreatedAt
+    );
+
+    internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
+        : IRequestHandler<Query, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
             Query request,
@@ -171,6 +188,9 @@ public class GetCarById
                     )
                 )
                 .ThenInclude(b => b.User)
+                .Include(c => c.Bookings)
+                .ThenInclude(b => b.Feedbacks)
+                .ThenInclude(f => f.User)
                 .Include(c => c.Owner)
                 .ThenInclude(o => o.Feedbacks)
                 .Include(c => c.Model)
@@ -197,13 +217,7 @@ public class GetCarById
                 || gettingCar.OwnerId == currentUser.User.Id;
 
             return Result<Response>.Success(
-                await Response.FromEntity(
-                    gettingCar,
-                    encryptionSettings.Key,
-                    aesEncryptionService,
-                    keyManagementService,
-                    includeContract: canViewContract
-                ),
+                Response.FromEntity(gettingCar, includeContract: canViewContract),
                 ResponseMessages.Fetched
             );
         }

@@ -37,13 +37,7 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
     public async Task Handle_CarNotFound_ReturnsNotFound()
     {
         // Arrange
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _aesService,
-            _keyService,
-            _encryptionSettings,
-            _currentUser
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(Guid.NewGuid());
 
@@ -74,13 +68,7 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Create contract for the car
         await CreateCarContract(car.Id, CarContractStatusEnum.OwnerSigned);
 
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _aesService,
-            _keyService,
-            _encryptionSettings,
-            _currentUser
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(car.Id);
 
@@ -113,13 +101,7 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Create contract for the car
         await CreateCarContract(car.Id, CarContractStatusEnum.OwnerSigned);
 
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _aesService,
-            _keyService,
-            _encryptionSettings,
-            _currentUser
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(car.Id);
 
@@ -154,13 +136,7 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Create contract for the car
         await CreateCarContract(car.Id, CarContractStatusEnum.OwnerSigned);
 
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _aesService,
-            _keyService,
-            _encryptionSettings,
-            _currentUser
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(car.Id);
 
@@ -195,13 +171,7 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Create contract for the car
         await CreateCarContract(car.Id, CarContractStatusEnum.OwnerSigned);
 
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _aesService,
-            _keyService,
-            _encryptionSettings,
-            _currentUser
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(car.Id);
 
@@ -233,13 +203,7 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Create contract for the car
         await CreateCarContract(car.Id, CarContractStatusEnum.OwnerSigned);
 
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _aesService,
-            _keyService,
-            _encryptionSettings,
-            _currentUser
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(car.Id);
 
@@ -264,13 +228,7 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         string expectedLicensePlate = "ABC-123XY";
         var car = await CreateTestCar(owner.Id, expectedLicensePlate);
 
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _aesService,
-            _keyService,
-            _encryptionSettings,
-            _currentUser
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(car.Id);
 
@@ -327,13 +285,7 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
             now.AddDays(12)
         );
 
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _aesService,
-            _keyService,
-            _encryptionSettings,
-            _currentUser
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(car.Id);
 

@@ -36,6 +36,7 @@ public class GetCarDetailByAdminOrStaffEndpoint : ICarterModule
                     - Location details (current GPS and pickup location)
                     - Images and amenities with full details
                     - Recent bookings (top 4 most recent)
+                    - Driver feedbacks for this car
                     - Contract details if available (terms, signatures, inspection results)
 
                     Note: All sensitive information including license plates are automatically decrypted
@@ -179,6 +180,31 @@ public class GetCarDetailByAdminOrStaffEndpoint : ICarterModule
                                                     ["status"] = new OpenApiString("Completed"),
                                                 },
                                             },
+                                            ["feedbacks"] = new OpenApiArray
+                                            {
+                                                new OpenApiObject
+                                                {
+                                                    ["id"] = new OpenApiString(
+                                                        "123e4567-e89b-12d3-a456-426614174010"
+                                                    ),
+                                                    ["userId"] = new OpenApiString(
+                                                        "123e4567-e89b-12d3-a456-426614174011"
+                                                    ),
+                                                    ["userName"] = new OpenApiString(
+                                                        "Alex Johnson"
+                                                    ),
+                                                    ["userAvatar"] = new OpenApiString(
+                                                        "https://example.com/avatar2.jpg"
+                                                    ),
+                                                    ["rating"] = new OpenApiInteger(5),
+                                                    ["content"] = new OpenApiString(
+                                                        "Excellent car, very clean and well maintained!"
+                                                    ),
+                                                    ["createdAt"] = new OpenApiString(
+                                                        "2024-02-25T14:30:00Z"
+                                                    ),
+                                                },
+                                            },
                                             ["contract"] = new OpenApiObject
                                             {
                                                 ["id"] = new OpenApiString(
@@ -203,7 +229,7 @@ public class GetCarDetailByAdminOrStaffEndpoint : ICarterModule
                                             },
                                         },
                                         ["isSuccess"] = new OpenApiBoolean(true),
-                                        ["message"] = new OpenApiString("Fetched"),
+                                        ["message"] = new OpenApiString("Lấy dữ liệu thành công"),
                                     },
                                 },
                             },

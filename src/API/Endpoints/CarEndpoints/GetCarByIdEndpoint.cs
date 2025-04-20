@@ -37,6 +37,7 @@ public class GetCarByIdEndpoint : ICarterModule
                     - Images and amenities
                     - Statistics (total rentals, average rating)
                     - Future booking schedule
+                    - Driver feedbacks for this car
                     - Contract details (for authorized users)
 
                     Note: License plate is encrypted and will be decrypted for authorized users
@@ -72,7 +73,13 @@ public class GetCarByIdEndpoint : ICarterModule
                                             ["description"] = new OpenApiString(
                                                 "Well-maintained family sedan"
                                             ),
+                                            ["transmissionId"] = new OpenApiString(
+                                                "123e4567-e89b-12d3-a456-426614174008"
+                                            ),
                                             ["transmissionType"] = new OpenApiString("Automatic"),
+                                            ["fuelTypeId"] = new OpenApiString(
+                                                "123e4567-e89b-12d3-a456-426614174009"
+                                            ),
                                             ["fuelType"] = new OpenApiString("Gasoline"),
                                             ["fuelConsumption"] = new OpenApiDouble(7.5),
                                             ["requiresCollateral"] = new OpenApiBoolean(true),
@@ -85,23 +92,23 @@ public class GetCarByIdEndpoint : ICarterModule
                                             ["averageRating"] = new OpenApiDouble(4.5),
                                             ["location"] = new OpenApiObject
                                             {
+                                                ["longitude"] = new OpenApiDouble(106.660172),
                                                 ["latitude"] = new OpenApiDouble(10.762622),
-                                                ["longitude"] = new OpenApiDouble(106.660172)
                                             },
                                             ["pickupLocation"] = new OpenApiObject
                                             {
-                                                ["latitude"] = new OpenApiDouble(10.762622),
                                                 ["longitude"] = new OpenApiDouble(106.660172),
+                                                ["latitude"] = new OpenApiDouble(10.762622),
                                                 ["address"] = new OpenApiString(
                                                     "123 Main Street, City"
-                                                )
+                                                ),
                                             },
                                             ["manufacturer"] = new OpenApiObject
                                             {
                                                 ["id"] = new OpenApiString(
                                                     "123e4567-e89b-12d3-a456-426614174003"
                                                 ),
-                                                ["name"] = new OpenApiString("Toyota")
+                                                ["name"] = new OpenApiString("Toyota"),
                                             },
                                             ["images"] = new OpenApiArray
                                             {
@@ -114,8 +121,8 @@ public class GetCarByIdEndpoint : ICarterModule
                                                         "https://example.com/car.jpg"
                                                     ),
                                                     ["type"] = new OpenApiString("exterior"),
-                                                    ["name"] = new OpenApiString("Front view")
-                                                }
+                                                    ["name"] = new OpenApiString("Front view"),
+                                                },
                                             },
                                             ["amenities"] = new OpenApiArray
                                             {
@@ -128,20 +135,55 @@ public class GetCarByIdEndpoint : ICarterModule
                                                     ["description"] = new OpenApiString(
                                                         "Built-in GPS navigation"
                                                     ),
-                                                    ["icon"] = new OpenApiString("gps-icon.png")
-                                                }
+                                                    ["icon"] = new OpenApiString("gps-icon.png"),
+                                                },
                                             },
                                             ["bookings"] = new OpenApiArray
                                             {
                                                 new OpenApiObject
                                                 {
+                                                    ["bookingId"] = new OpenApiString(
+                                                        "123e4567-e89b-12d3-a456-426614174008"
+                                                    ),
+                                                    ["driverId"] = new OpenApiString(
+                                                        "123e4567-e89b-12d3-a456-426614174009"
+                                                    ),
+                                                    ["driverName"] = new OpenApiString("Jane Doe"),
+                                                    ["avatarUrl"] = new OpenApiString(
+                                                        "https://example.com/avatar.jpg"
+                                                    ),
                                                     ["startTime"] = new OpenApiString(
                                                         "2024-03-20T10:00:00Z"
                                                     ),
                                                     ["endTime"] = new OpenApiString(
                                                         "2024-03-25T10:00:00Z"
-                                                    )
-                                                }
+                                                    ),
+                                                },
+                                            },
+                                            ["feedbacks"] = new OpenApiArray
+                                            {
+                                                new OpenApiObject
+                                                {
+                                                    ["id"] = new OpenApiString(
+                                                        "123e4567-e89b-12d3-a456-426614174010"
+                                                    ),
+                                                    ["userId"] = new OpenApiString(
+                                                        "123e4567-e89b-12d3-a456-426614174011"
+                                                    ),
+                                                    ["userName"] = new OpenApiString(
+                                                        "Alex Johnson"
+                                                    ),
+                                                    ["userAvatar"] = new OpenApiString(
+                                                        "https://example.com/avatar2.jpg"
+                                                    ),
+                                                    ["rating"] = new OpenApiInteger(5),
+                                                    ["content"] = new OpenApiString(
+                                                        "Excellent car, very clean and well maintained!"
+                                                    ),
+                                                    ["createdAt"] = new OpenApiString(
+                                                        "2024-02-25T14:30:00Z"
+                                                    ),
+                                                },
                                             },
                                             ["contract"] = new OpenApiObject
                                             {
@@ -163,14 +205,14 @@ public class GetCarByIdEndpoint : ICarterModule
                                                 ),
                                                 ["gpsDeviceId"] = new OpenApiString(
                                                     "123e4567-e89b-12d3-a456-426614174007"
-                                                )
-                                            }
+                                                ),
+                                            },
                                         },
                                         ["isSuccess"] = new OpenApiBoolean(true),
-                                        ["message"] = new OpenApiString("")
-                                    }
-                                }
-                            }
+                                        ["message"] = new OpenApiString("Lấy dữ liệu thành công"),
+                                    },
+                                },
+                            },
                         },
                         ["401"] = new() { Description = "Unauthorized - User not authenticated" },
                         ["404"] = new()
@@ -183,12 +225,12 @@ public class GetCarByIdEndpoint : ICarterModule
                                     Example = new OpenApiObject
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
-                                        ["message"] = new OpenApiString("Không tìm thấy xe")
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                        ["message"] = new OpenApiString("Không tìm thấy xe"),
+                                    },
+                                },
+                            },
+                        },
+                    },
                 }
             );
     }
