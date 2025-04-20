@@ -351,39 +351,55 @@ public static class ContractTemplateGenerator
                                     margin-bottom: 5px;
                                     color: #000;
                                 }}
-                                .signature-image {{
-                                    margin-bottom: 10px;
-                                    text-align: center;
-                                }}
-                                .signature-image img {{
-                                    max-width: 100%;
-                                    height: auto;
-                                    max-height: 100px;
-                                }}
                                 .signature-block {{
                                     margin-top: 40px;
                                     display: flex;
-                                    flex-wrap: wrap;
-                                    gap: 20px;
                                     justify-content: space-between;
-                                    flex-wrap: wrap;
-                                    gap: 20px;
+                                    padding: 20px 40px;
                                 }}
                                 .signature {{
                                     flex: 1;
-                                    min-width: 200px;
+                                    max-width: 45%;
                                     text-align: center;
+                                    display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                }}
+                                .signature-image {{
+                                    width: 200px;
+                                    height: 100px;
+                                    margin-bottom: 20px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                }}
+                                .signature-image img {{
+                                    max-width: 100%;
+                                    max-height: 100%;
+                                    object-fit: contain;
                                 }}
                                 .signature p {{
                                     border-top: 1px solid #333;
                                     padding-top: 10px;
-                                    margin-top: 60px;
+                                    margin-top: 10px;
                                     font-weight: 500;
+                                    width: 100%;
                                 }}
 
+                                /* Responsive signature styles */
                                 @media (max-width: 768px) {{
+                                    .signature-block {{
+                                        flex-direction: column;
+                                        align-items: center;
+                                        padding: 20px;
+                                    }}
                                     .signature {{
+                                        max-width: 100%;
                                         width: 100%;
+                                        margin-bottom: 30px;
+                                    }}
+                                    .signature:last-child {{
+                                        margin-bottom: 0;
                                     }}
                                 }}
 
@@ -518,20 +534,22 @@ public static class ContractTemplateGenerator
                                 </div>
 
                                 <!-- Signature Section -->
-                                <div class='section signature-block'>
-                                    <div class='signature'>
-                                        {(string.IsNullOrEmpty(contractTemplate.OwnerSignatureImageUrl) ? "" : $@"
-                                        <div class='signature-image'>
-                                            <img src='{contractTemplate.OwnerSignatureImageUrl}' alt='Chữ ký chủ xe' />
-                                        </div>")}
-                                        <p>BÊN CHO THUÊ (Bên A)<br/>{contractTemplate.OwnerName}</p>
-                                    </div>
-                                    <div class='signature'>
-                                        {(string.IsNullOrEmpty(contractTemplate.DriverSignatureImageUrl) ? "" : $@"
-                                        <div class='signature-image'>
-                                            <img src='{contractTemplate.DriverSignatureImageUrl}' alt='Chữ ký bên thuê xe' />
-                                        </div>")}
-                                        <p>BÊN THUÊ (Bên B)<br/>{contractTemplate.DriverName}</p>
+                                <div class='section'>
+                                    <div class='signature-block'>
+                                        <div class='signature'>
+                                            {(string.IsNullOrEmpty(contractTemplate.OwnerSignatureImageUrl) ? "" : $@"
+                                            <div class='signature-image'>
+                                                <img src='{contractTemplate.OwnerSignatureImageUrl}' alt='Chữ ký chủ xe' />
+                                            </div>")}
+                                            <p>BÊN CHO THUÊ (Bên A)<br/>{contractTemplate.OwnerName}</p>
+                                        </div>
+                                        <div class='signature'>
+                                            {(string.IsNullOrEmpty(contractTemplate.DriverSignatureImageUrl) ? "" : $@"
+                                            <div class='signature-image'>
+                                                <img src='{contractTemplate.DriverSignatureImageUrl}' alt='Chữ ký bên thuê xe' />
+                                            </div>")}
+                                            <p>BÊN THUÊ (Bên B)<br/>{contractTemplate.DriverName}</p>
+                                        </div>
                                     </div>
                                 </div>
 
