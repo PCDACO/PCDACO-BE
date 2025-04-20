@@ -1,6 +1,7 @@
 using Ardalis.Result;
 using Domain.Constants;
 using Domain.Entities;
+using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -8,7 +9,7 @@ using UseCases.DTOs;
 
 namespace UseCases.UC_InspectionSchedule.Queries;
 
-public class GetSignedInspectionScheduleForCurrentUser
+public class GetSignedOrInprogressInspectionScheduleForCurrentUser
 {
     public record Query() : IRequest<Result<Response>>;
 
@@ -18,6 +19,7 @@ public class GetSignedInspectionScheduleForCurrentUser
         string OwnerName,
         string Address,
         string LicensePlate,
+        string Status,
         ContractDetail? ContractDetail
     )
     {
@@ -29,6 +31,7 @@ public class GetSignedInspectionScheduleForCurrentUser
                 OwnerName: inspectionSchedule.Car.Owner.Name,
                 Address: inspectionSchedule.InspectionAddress,
                 LicensePlate: inspectionSchedule.Car.LicensePlate,
+                Status: inspectionSchedule.Status.ToString(),
                 ContractDetail: inspectionSchedule.Car.Contract != null
                     ? new ContractDetail(
                         Id: inspectionSchedule.Car.Contract!.Id,
@@ -70,11 +73,14 @@ public class GetSignedInspectionScheduleForCurrentUser
                 return Result.Unauthorized(ResponseMessages.UnauthourizeAccess);
             }
 
+            // Check if car is not attached to any gps then return error
             InspectionSchedule? result = await context
                 .InspectionSchedules.AsNoTracking()
                 .AsSplitQuery()
                 .Include(i => i.Car)
                 .ThenInclude(c => c.Owner)
+                .Include(i => i.Car)
+                .ThenInclude(c => c.GPS)
                 .Include(i => i.Car)
                 .ThenInclude(c => c.CarAmenities)
                 .ThenInclude(ca => ca.Amenity)
@@ -88,7 +94,10 @@ public class GetSignedInspectionScheduleForCurrentUser
                 .ThenInclude(i => i.Contract)
                 .Include(i => i.Technician)
                 .Where(i => !i.IsDeleted)
-                .Where(i => i.Status == Domain.Enums.InspectionScheduleStatusEnum.Signed)
+                .Where(i =>
+                    i.Status == InspectionScheduleStatusEnum.Signed
+                    || i.Status == InspectionScheduleStatusEnum.InProgress
+                )
                 .Where(i => i.TechnicianId == currentUser.User!.Id)
                 .FirstOrDefaultAsync(cancellationToken);
 

@@ -161,7 +161,6 @@ public static class CarContractTemplateGenerator
                         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap');
                         @page {{
                             size: A4;
-                            margin: 2cm;
                         }}
                         body {{
                             font-family: 'Roboto', sans-serif;
