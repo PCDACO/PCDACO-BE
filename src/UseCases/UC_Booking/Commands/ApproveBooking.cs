@@ -125,7 +125,9 @@ public sealed class ApproveBooking
         {
             // First get the overlapping bookings to access their TotalAmount
             var overlappingBookings = await context
-                .Bookings.Where(b =>
+                .Bookings.Include(b => b.User)
+                .Include(b => b.Car.Model)
+                .Where(b =>
                     b.CarId == booking.CarId
                     && b.StartTime < booking.EndTime
                     && b.EndTime > booking.StartTime
