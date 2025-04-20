@@ -113,12 +113,8 @@ public sealed class GetAllBookings
                         )
                         .Matches(EF.Functions.PlainToTsQuery(language, request.SearchTerm))
                     ||
-                    // Special handling for numeric values and IDs
-                    searchWords.Any(word =>
-                        (b.PayOSOrderCode != null && b.PayOSOrderCode.ToString()!.Contains(word))
-                        || b.TotalAmount.ToString().Contains(word)
-                        || b.Id.ToString().Contains(word)
-                    )
+                    // Special handling for numeric values
+                    searchWords.Any(word => b.TotalAmount.ToString().Contains(word))
                 );
             }
 
