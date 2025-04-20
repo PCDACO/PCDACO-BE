@@ -137,13 +137,46 @@ public class GetCarsForStaffs
             {
                 gettingQuery = gettingQuery.Where(c => c.GPS == null);
             }
-            
             gettingQuery = gettingQuery.OrderByDescending(c => c.Id);
-            
             if (!string.IsNullOrWhiteSpace(request.Keyword))
             {
+                string language = "simple";
+                string searchTerm = request.Keyword;
+
+                // Split search terms into words to handle partial matches better
+                var searchWords = searchTerm
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(w => w.Replace("-", "").Replace(" ", ""))
+                    .ToList();
+
                 gettingQuery = gettingQuery.Where(c =>
-                    EF.Functions.ILike(c.Model.Name, $"%{request.Keyword}%")
+                    // Original full-text search for other fields
+                    EF.Functions.ToTsVector(
+                            language,
+                            (c.Model.Name ?? "")
+                                + " "
+                                + (c.Description ?? "")
+                                + " "
+                                + (c.Owner.Name ?? "")
+                                + " "
+                                + (c.Color ?? "")
+                        )
+                        .Matches(EF.Functions.PlainToTsQuery(language, searchTerm))
+                    ||
+                    // Special handling for license plate with different formats
+                    (
+                        c.LicensePlate != null
+                        && searchWords.Any(word =>
+                            c.LicensePlate.Replace("-", "").Replace(" ", "").Contains(word)
+                        )
+                    )
+                    ||
+                    // Handle numeric searches - using string contains for more flexible matching
+                    (
+                        c.Price.ToString().Contains(request.Keyword)
+                        || c.Seat.ToString() == request.Keyword
+                        || c.FuelConsumption.ToString().Contains(request.Keyword)
+                    )
                 );
             }
             int count = await gettingQuery.CountAsync(cancellationToken);

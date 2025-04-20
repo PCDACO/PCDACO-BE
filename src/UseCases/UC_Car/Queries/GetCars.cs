@@ -154,7 +154,38 @@ public class GetCars
                 .ThenInclude(ca => ca.Amenity)
                 .Where(c => !c.IsDeleted)
                 .Where(c => c.Status == Domain.Enums.CarStatusEnum.Available)
-                .Where(c => EF.Functions.ILike(c.Model.Name, $"%{request.Keyword}%"))
+                .Where(c =>
+                    string.IsNullOrWhiteSpace(request.Keyword)
+                    || (
+                        // Full-text search for text fields
+                        EF.Functions.ToTsVector(
+                                "simple",
+                                (c.Model.Name ?? "")
+                                    + " "
+                                    + (c.Description ?? "")
+                                    + " "
+                                    + (c.Color ?? "")
+                                    + " "
+                                    + (c.Model.Manufacturer.Name ?? "")
+                            )
+                            .Matches(EF.Functions.PlainToTsQuery("simple", request.Keyword))
+                        ||
+                        // Special handling for license plate with different formats
+                        (
+                            c.LicensePlate != null
+                            && request.Keyword.Any(word =>
+                                c.LicensePlate.Replace("-", "").Replace(" ", "").Contains(word)
+                            )
+                        )
+                        ||
+                        // Handle numeric searches - using string contains for more flexible matching
+                        (
+                            c.Price.ToString().Contains(request.Keyword)
+                            || c.Seat.ToString() == request.Keyword
+                            || c.FuelConsumption.ToString().Contains(request.Keyword)
+                        )
+                    )
+                )
                 .Where(c =>
                     request.ManufacturerId == null
                     || c.Model.ManufacturerId == request.ManufacturerId

@@ -4,7 +4,6 @@ using Domain.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-
 using UseCases.Abstractions;
 using UseCases.DTOs;
 
@@ -93,11 +92,35 @@ public sealed class GetAllBookings
                 query = query.Where(b => b.IsPaid == request.IsPaid.Value);
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            {
+                string language = "simple";
+                var searchWords = request
+                    .SearchTerm.Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(w => w.Replace("-", "").Replace(" ", ""))
+                    .ToList();
+
                 query = query.Where(b =>
-                    EF.Functions.ILike(b.Car.Model.Name, $"%{request.SearchTerm}%")
-                    || EF.Functions.ILike(b.User.Name, $"%{request.SearchTerm}%")
-                    || EF.Functions.ILike(b.Car.Owner.Name, $"%{request.SearchTerm}%")
+                    // Full-text search for text fields
+                    EF.Functions.ToTsVector(
+                            language,
+                            (b.Car.Model.Name ?? "")
+                                + " "
+                                + (b.User.Name ?? "") // Driver name
+                                + " "
+                                + (b.Car.Owner.Name ?? "") // Owner name
+                                + " "
+                                + (b.Note ?? "")
+                        )
+                        .Matches(EF.Functions.PlainToTsQuery(language, request.SearchTerm))
+                    ||
+                    // Special handling for numeric values and IDs
+                    searchWords.Any(word =>
+                        (b.PayOSOrderCode != null && b.PayOSOrderCode.ToString()!.Contains(word))
+                        || b.TotalAmount.ToString().Contains(word)
+                        || b.Id.ToString().Contains(word)
+                    )
                 );
+            }
 
             // Order by Id descending (newest first)
             query = query.OrderByDescending(b => b.Id);
