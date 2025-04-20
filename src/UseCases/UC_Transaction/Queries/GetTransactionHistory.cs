@@ -31,7 +31,9 @@ public sealed class GetTransactionHistory
         DateTimeOffset CreatedAt,
         string Status,
         TransactionDetailsDto Details,
-        string ProoUrl
+        string ProoUrl,
+        bool IsWithdrawalRequest = false,
+        WithdrawalRequestDetailsDto? WithdrawalDetails = null
     )
     {
         public static Response FromEntity(Transaction transaction, Guid currentUserId) =>
@@ -52,6 +54,31 @@ public sealed class GetTransactionHistory
                 transaction.ProofUrl
             );
 
+        public static Response FromWithdrawalRequest(WithdrawalRequest request) =>
+            new(
+                request.Id,
+                "Withdrawal Request",
+                false, // Withdrawal is always an expense
+                request.Amount,
+                0, // Balance after is not applicable for requests
+                $"Withdrawal request to {request.BankAccount.BankInfo.Name}",
+                GetTimestampFromUuid.Execute(request.Id),
+                request.Status.ToString(),
+                new TransactionDetailsDto(
+                    null,
+                    request.BankAccount.BankInfo.Name,
+                    request.BankAccount.BankAccountName
+                ),
+                string.Empty,
+                true,
+                new WithdrawalRequestDetailsDto(
+                    request.RejectReason,
+                    request.ProcessedAt,
+                    request.AdminNote,
+                    request.TransactionId
+                )
+            );
+
         private static bool DetermineIsIncome(Transaction transaction, Guid currentUserId)
         {
             return transaction.Type.Name switch
@@ -67,6 +94,13 @@ public sealed class GetTransactionHistory
 
     public record TransactionDetailsDto(Guid? BookingId, string? BankName, string? BankAccountName);
 
+    public record WithdrawalRequestDetailsDto(
+        string RejectReason,
+        DateTimeOffset? ProcessedAt,
+        string? AdminNote,
+        Guid? TransactionId
+    );
+
     internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
         : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
     {
@@ -78,7 +112,8 @@ public sealed class GetTransactionHistory
             if (currentUser.User == null)
                 return Result.Forbidden("Bạn cần đăng nhập để xem lịch sử giao dịch");
 
-            var query = context
+            // Get transactions
+            var transactionQuery = context
                 .Transactions.Include(t => t.Type)
                 .Include(t => t.Booking)
                 .Include(t => t.BankAccount)
@@ -88,16 +123,32 @@ public sealed class GetTransactionHistory
                 )
                 .AsQueryable();
 
+            // Get withdrawal requests
+            var withdrawalQuery = context
+                .WithdrawalRequests.Include(w => w.BankAccount)
+                .ThenInclude(b => b.BankInfo)
+                .Where(w => w.UserId == currentUser.User!.Id)
+                .AsQueryable();
+
             // Apply filters
             if (!string.IsNullOrWhiteSpace(request.TransactionType))
             {
-                query = query.Where(t => t.Type.Name == request.TransactionType);
+                transactionQuery = transactionQuery.Where(t =>
+                    t.Type.Name == request.TransactionType
+                );
+
+                // Only show withdrawal requests when specifically filtering for withdrawals
+                if (request.TransactionType != TransactionTypeNames.Withdrawal)
+                {
+                    withdrawalQuery = withdrawalQuery.Where(w => false); // Exclude all
+                }
             }
 
             if (request.FromDate.HasValue)
             {
                 var fromId = UuidToolkit.CreateUuidV7FromSpecificDate(request.FromDate.Value);
-                query = query.Where(t => t.Id.CompareTo(fromId) >= 0);
+                transactionQuery = transactionQuery.Where(t => t.Id.CompareTo(fromId) >= 0);
+                withdrawalQuery = withdrawalQuery.Where(w => w.Id.CompareTo(fromId) >= 0);
             }
 
             if (request.ToDate.HasValue)
@@ -105,35 +156,59 @@ public sealed class GetTransactionHistory
                 var toId = UuidToolkit.CreateUuidV7FromSpecificDate(
                     request.ToDate.Value.AddDays(1)
                 );
-                query = query.Where(t => t.Id.CompareTo(toId) < 0);
+                transactionQuery = transactionQuery.Where(t => t.Id.CompareTo(toId) < 0);
+                withdrawalQuery = withdrawalQuery.Where(w => w.Id.CompareTo(toId) < 0);
             }
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
-                query = query.Where(t =>
+                transactionQuery = transactionQuery.Where(t =>
                     EF.Functions.ILike(t.Description, $"%{request.SearchTerm}%")
                     || EF.Functions.ILike(t.Type.Name, $"%{request.SearchTerm}%")
                 );
+                withdrawalQuery = withdrawalQuery.Where(w =>
+                    EF.Functions.ILike(w.BankAccount.BankInfo.Name, $"%{request.SearchTerm}%")
+                    || EF.Functions.ILike(w.BankAccount.BankAccountName, $"%{request.SearchTerm}%")
+                );
             }
 
-            // Order by Id descending (newest first since using UUID v7)
-            query = query.OrderByDescending(t => t.Id);
+            // Get total counts
+            var totalTransactions = await transactionQuery.CountAsync(cancellationToken);
+            var totalWithdrawals = await withdrawalQuery.CountAsync(cancellationToken);
+            var totalCount = totalTransactions + totalWithdrawals;
 
-            var totalCount = await query.CountAsync(cancellationToken);
+            // Calculate pagination
+            var skip = (request.PageNumber - 1) * request.PageSize;
+            var take = request.PageSize;
 
-            var transactions = await query
-                .Skip((request.PageNumber - 1) * request.PageSize)
-                .Take(request.PageSize)
+            // Get transactions and withdrawal requests
+            var transactions = await transactionQuery
+                .OrderByDescending(t => t.Id)
+                .Skip(skip)
+                .Take(take)
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
 
-            var hasNext = await query
-                .Skip(request.PageSize * request.PageNumber)
-                .AnyAsync(cancellationToken: cancellationToken);
+            var withdrawals = await withdrawalQuery
+                .OrderByDescending(w => w.Id)
+                .Skip(skip)
+                .Take(take)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
+
+            // Combine and sort results
+            var combinedResults = transactions
+                .Select(t => Response.FromEntity(t, currentUser.User!.Id))
+                .Concat(withdrawals.Select(w => Response.FromWithdrawalRequest(w)))
+                .OrderByDescending(r => r.CreatedAt)
+                .Take(request.PageSize)
+                .ToList();
+
+            var hasNext = (skip + take) < totalCount;
 
             return Result.Success(
                 OffsetPaginatedResponse<Response>.Map(
-                    transactions.Select(t => Response.FromEntity(t, currentUser.User!.Id)),
+                    combinedResults,
                     totalCount,
                     request.PageSize,
                     request.PageNumber,
