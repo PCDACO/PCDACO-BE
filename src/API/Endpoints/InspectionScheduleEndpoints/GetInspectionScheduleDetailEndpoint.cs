@@ -117,6 +117,8 @@ public class GetInspectionScheduleDetailEndpoint : ICarterModule
                                                 "3fa85f64-5717-4562-b3fc-2c963f66afb3"
                                             ),
                                             ["hasGPSDevice"] = new OpenApiBoolean(true),
+                                            ["type"] = new OpenApiString("NewCar"),
+                                            ["status"] = new OpenApiString("InProgress"),
                                         },
                                         ["isSuccess"] = new OpenApiBoolean(true),
                                         ["message"] = new OpenApiString("Lấy dữ liệu thành công"),

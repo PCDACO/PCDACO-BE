@@ -26,7 +26,8 @@ public class GetInspectionScheduleDetail
         bool HasGPSDevice,
         bool IsTechnicianSigned,
         bool IsOwnerSigned,
-        string Type
+        string Type,
+        string Status
     )
     {
         public static async Task<Response> FromEntity(
@@ -81,7 +82,8 @@ public class GetInspectionScheduleDetail
                 HasGPSDevice: inspectionSchedule.Car.GPS != null,
                 IsTechnicianSigned: inspectionSchedule.Car.Contract?.TechnicianSignature != null,
                 IsOwnerSigned: inspectionSchedule.Car.Contract?.OwnerSignature != null,
-                Type: inspectionSchedule.Type.ToString()
+                Type: inspectionSchedule.Type.ToString(),
+                Status: inspectionSchedule.Status.ToString()
             );
         }
     };
