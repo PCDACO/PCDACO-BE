@@ -153,55 +153,82 @@ public class GetCars
                 .Include(c => c.CarAmenities)
                 .ThenInclude(ca => ca.Amenity)
                 .Where(c => !c.IsDeleted)
-                .Where(c => c.Status == Domain.Enums.CarStatusEnum.Available)
-                .Where(c =>
-                    string.IsNullOrWhiteSpace(request.Keyword)
-                    || (
-                        // Full-text search for text fields
-                        EF.Functions.ToTsVector(
-                                "simple",
-                                (c.Model.Name ?? "")
-                                    + " "
-                                    + (c.Description ?? "")
-                                    + " "
-                                    + (c.Color ?? "")
-                                    + " "
-                                    + (c.Model.Manufacturer.Name ?? "")
-                            )
-                            .Matches(EF.Functions.PlainToTsQuery("simple", request.Keyword))
-                        ||
-                        // Special handling for license plate with different formats
-                        (
-                            c.LicensePlate != null
-                            && request.Keyword.Any(word =>
-                                c.LicensePlate.Replace("-", "").Replace(" ", "").Contains(word)
-                            )
+                .Where(c => c.Status == Domain.Enums.CarStatusEnum.Available);
+
+            if (!string.IsNullOrWhiteSpace(request.Keyword))
+            {
+                string language = "simple";
+                var searchTerm = request.Keyword;
+
+                // Split search terms into words to handle partial matches better
+                var searchWords = searchTerm
+                    .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+                    .Select(w => w.Replace("-", "").Replace(" ", ""))
+                    .ToList();
+
+                // Apply EF-supported full-text search
+                gettingCarQuery = gettingCarQuery.Where(c =>
+                    EF.Functions.ToTsVector(
+                            language,
+                            (c.Model.Name ?? "")
+                                + " "
+                                + (c.Description ?? "")
+                                + " "
+                                + (c.Color ?? "")
+                                + " "
+                                + (c.Model.Manufacturer.Name ?? "")
                         )
-                        ||
-                        // Handle numeric searches - using string contains for more flexible matching
-                        (
-                            c.Price.ToString().Contains(request.Keyword)
-                            || c.Seat.ToString() == request.Keyword
-                            || c.FuelConsumption.ToString().Contains(request.Keyword)
+                        .Matches(EF.Functions.PlainToTsQuery(language, searchTerm))
+                    ||
+                    // Special handling for license plate with different formats
+                    (
+                        c.LicensePlate != null
+                        && searchWords.Any(word =>
+                            c.LicensePlate.Replace("-", "").Replace(" ", "").Contains(word)
                         )
                     )
-                )
-                .Where(c =>
-                    request.ManufacturerId == null
-                    || c.Model.ManufacturerId == request.ManufacturerId
-                )
-                .Where(c =>
-                    request.Amenities == null
-                    || request.Amenities.Length == 0
-                    || request.Amenities.All(a =>
+                    ||
+                    // Handle numeric searches - using string contains for more flexible matching
+                    (
+                        c.Price.ToString().Contains(request.Keyword)
+                        || c.Seat.ToString() == request.Keyword
+                        || c.FuelConsumption.ToString().Contains(request.Keyword)
+                    )
+                );
+            }
+
+            // Filter by manufacturer
+            if (request.ManufacturerId != null)
+            {
+                gettingCarQuery = gettingCarQuery.Where(c =>
+                    c.Model.ManufacturerId == request.ManufacturerId
+                );
+            }
+
+            // Filter by amenities
+            if (request.Amenities != null && request.Amenities.Length > 0)
+            {
+                gettingCarQuery = gettingCarQuery.Where(c =>
+                    request.Amenities.All(a =>
                         c.CarAmenities.Select(ca => ca.AmenityId).Contains(a)
                     )
-                )
-                .Where(c => request.FuelTypes == null || c.FuelTypeId == request.FuelTypes)
-                .Where(c =>
-                    request.TransmissionTypes == null
-                    || c.TransmissionTypeId == request.TransmissionTypes
                 );
+            }
+
+            // Filter by fuel types
+            if (request.FuelTypes != null)
+            {
+                gettingCarQuery = gettingCarQuery.Where(c => c.FuelTypeId == request.FuelTypes);
+            }
+
+            // Filter by transmission types
+            if (request.TransmissionTypes != null)
+            {
+                gettingCarQuery = gettingCarQuery.Where(c =>
+                    c.TransmissionTypeId == request.TransmissionTypes
+                );
+            }
+
             if (request.StartTime.HasValue && request.EndTime.HasValue)
             {
                 var startDate = request.StartTime.Value.Date;

@@ -138,6 +138,7 @@ public class GetCarsForStaffs
                 gettingQuery = gettingQuery.Where(c => c.GPS == null);
             }
             gettingQuery = gettingQuery.OrderByDescending(c => c.Id);
+
             if (!string.IsNullOrWhiteSpace(request.Keyword))
             {
                 string language = "simple";
