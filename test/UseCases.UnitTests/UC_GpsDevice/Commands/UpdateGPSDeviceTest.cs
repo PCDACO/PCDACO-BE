@@ -56,6 +56,34 @@ public class UpdateGPSDeviceTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.NotNull(updatedDevice.UpdatedAt);
     }
 
+    [Fact]
+    public async Task Handle_DeviceInUsed_ReturnError()
+    {
+        // Arrange
+        var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
+        var adminUser = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
+        _currentUser.SetUser(adminUser);
+
+        var gpsDevice = await TestDataGPSDevice.CreateTestGPSDevice(
+            _dbContext,
+            "Original Name",
+            DeviceStatusEnum.InUsed
+        );
+
+        string newName = "Updated Name";
+        var newStatus = DeviceStatusEnum.Repairing;
+
+        var handler = new UpdateGPSDevice.Handler(_dbContext, _currentUser);
+        var command = new UpdateGPSDevice.Command(gpsDevice.Id, newName, newStatus);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains("Thiết bị đang được sử dụng không thể cập nhật", result.Errors);
+    }
+
     [Theory]
     [InlineData("Owner")]
     [InlineData("Technician")]
