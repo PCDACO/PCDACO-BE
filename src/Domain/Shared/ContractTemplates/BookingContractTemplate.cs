@@ -28,7 +28,7 @@ public static class ContractTemplateGenerator
         public DateTimeOffset StartDate { get; set; }
         public DateTimeOffset EndDate { get; set; }
         public required string PickupAddress { get; set; }
-        public int RentalPeriod => (EndDate - StartDate).Days;
+        public double RentalPeriod => Math.Ceiling((EndDate - StartDate).TotalDays);
         public required string OwnerSignatureImageUrl { get; set; }
         public required string DriverSignatureImageUrl { get; set; }
     }
@@ -78,11 +78,11 @@ public static class ContractTemplateGenerator
                         <br/>
                         - Số ngày thuê: {contractTemplate.RentalPeriod} ngày
                         <br/>
-                        - Tổng giá thuê: {contractTemplate.RentalPrice} × {contractTemplate.RentalPeriod} = {decimal.Parse(contractTemplate.RentalPrice) * contractTemplate.RentalPeriod:N0} VNĐ
+                        - Tổng giá thuê: {contractTemplate.RentalPrice} × {contractTemplate.RentalPeriod} = {decimal.Parse(contractTemplate.RentalPrice) * (decimal)contractTemplate.RentalPeriod:N0} VNĐ
                         <br/>
-                        - Phí dịch vụ (10%): {decimal.Parse(contractTemplate.RentalPrice) * contractTemplate.RentalPeriod * 0.1m:N0} VNĐ
+                        - Phí dịch vụ (10%): {decimal.Parse(contractTemplate.RentalPrice) * (decimal)contractTemplate.RentalPeriod * 0.1m:N0} VNĐ
                         <br/>
-                        - Tổng tiền thanh toán: {decimal.Parse(contractTemplate.RentalPrice) * contractTemplate.RentalPeriod * 1.1m:N0} VNĐ
+                        - Tổng tiền thanh toán: {decimal.Parse(contractTemplate.RentalPrice) * (decimal)contractTemplate.RentalPeriod * 1.1m:N0} VNĐ
                     </p>
                 </div>
 

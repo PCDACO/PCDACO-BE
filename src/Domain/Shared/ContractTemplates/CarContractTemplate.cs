@@ -29,10 +29,6 @@ public static class CarContractTemplateGenerator
 
     public static string GenerateFullContractHtml(CarContractTemplate contractTemplate)
     {
-        string inspectionPhotoSection = GenerateInspectionPhotoSection(
-            contractTemplate.InspectionPhotos
-        );
-
         string standardClauses =
             @$"
             <div class='clause'>
@@ -119,8 +115,6 @@ public static class CarContractTemplateGenerator
                         <li>Chìa khóa và điều khiển từ xa</li>
                         <li>Khoang hành lý</li>
                     </ul>
-
-                    {inspectionPhotoSection}
 
                     <p><strong>Kết luận:</strong> {contractTemplate.InspectionResults}</p>
                 </div>
@@ -422,41 +416,4 @@ public static class CarContractTemplateGenerator
                 </body>
             </html>";
     }
-
-    private static string GenerateInspectionPhotoSection(
-        Dictionary<InspectionPhotoType, string> photos
-    )
-    {
-        StringBuilder photoSection = new();
-        photoSection.Append(
-            "<p><strong>4. Hình ảnh kiểm định:</strong></p><div class='inspection-photos'>"
-        );
-
-        foreach (var photo in photos)
-        {
-            string photoTypeName = GetPhotoTypeDisplayName(photo.Key);
-            photoSection.Append(
-                @$"
-                <div class='photo-item'>
-                    <p>{photoTypeName}:</p>
-                    <img src='{photo.Value}' alt='{photoTypeName}' style='max-width: 200px; margin: 10px 0;'/>
-                </div>"
-            );
-        }
-
-        photoSection.Append("</div>");
-
-        return photoSection.ToString();
-    }
-
-    private static string GetPhotoTypeDisplayName(InspectionPhotoType type) =>
-        type switch
-        {
-            InspectionPhotoType.ExteriorCar => "Ngoại thất xe",
-            InspectionPhotoType.FuelGauge => "Đồng hồ nhiên liệu",
-            InspectionPhotoType.ParkingLocation => "Vị trí đỗ xe",
-            InspectionPhotoType.CarKey => "Chìa khóa xe",
-            InspectionPhotoType.TrunkSpace => "Khoang hành lý",
-            _ => type.ToString(),
-        };
 }
