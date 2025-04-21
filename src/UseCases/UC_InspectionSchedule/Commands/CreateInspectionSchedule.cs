@@ -100,8 +100,8 @@ public sealed class CreateInspectionSchedule
                 if (activeBooking != null)
                     return Result.Error("Xe đang có lịch đặt không thể tạo lịch đổi thiết bị gps");
 
-                // update car status to inactive
-                car.Status = CarStatusEnum.Inactive;
+                // update car status to maintain
+                car.Status = CarStatusEnum.Maintain;
                 car.UpdatedAt = DateTimeOffset.UtcNow;
             }
             else if (car.Status != CarStatusEnum.Pending)
