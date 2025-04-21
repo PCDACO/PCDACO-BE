@@ -70,6 +70,7 @@ public sealed class CancelBooking
                     BookingStatusEnum.Rejected
                     or BookingStatusEnum.Ongoing
                     or BookingStatusEnum.Completed
+                    or BookingStatusEnum.Done
                     or BookingStatusEnum.Cancelled
                     or BookingStatusEnum.Expired
                 )

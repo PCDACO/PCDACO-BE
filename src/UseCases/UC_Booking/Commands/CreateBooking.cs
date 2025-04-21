@@ -112,6 +112,34 @@ public sealed class CreateBooking
             if (car == null)
                 return Result<Response>.NotFound("Không tìm thấy xe phù hợp");
 
+            // Check for owner-specified unavailable dates that would conflict with the booking
+            var startDate = DateOnly.FromDateTime(request.StartTime.Date);
+            var endDate = DateOnly.FromDateTime(request.EndTime.Date);
+
+            var unavailableDates = await context
+                .CarAvailabilities.Where(ca =>
+                    ca.CarId == request.CarId
+                    && !ca.IsAvailable
+                    && DateOnly.FromDateTime(ca.Date.Date) >= startDate
+                    && DateOnly.FromDateTime(ca.Date.Date) <= endDate
+                    && !(
+                        startDate <= DateOnly.FromDateTime(ca.Date.Date)
+                        && endDate >= DateOnly.FromDateTime(ca.Date.Date)
+                    )
+                )
+                .AnyAsync(cancellationToken);
+
+            if (unavailableDates)
+            {
+                logger.LogWarning(
+                    "Car {CarId} is marked as unavailable by owner during the requested period",
+                    request.CarId
+                );
+                return Result.Error(
+                    "Xe không khả dụng trong khoảng thời gian này theo lịch của chủ xe. Vui lòng chọn ngày khác."
+                );
+            }
+
             // Check for booking conflicts with already approved/active bookings only
             bool hasConflict = await context
                 .Bookings.AsNoTracking()

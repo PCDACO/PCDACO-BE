@@ -29,10 +29,6 @@ public static class CarContractTemplateGenerator
 
     public static string GenerateFullContractHtml(CarContractTemplate contractTemplate)
     {
-        string inspectionPhotoSection = GenerateInspectionPhotoSection(
-            contractTemplate.InspectionPhotos
-        );
-
         string standardClauses =
             @$"
             <div class='clause'>
@@ -120,8 +116,6 @@ public static class CarContractTemplateGenerator
                         <li>Khoang hành lý</li>
                     </ul>
 
-                    {inspectionPhotoSection}
-
                     <p><strong>Kết luận:</strong> {contractTemplate.InspectionResults}</p>
                 </div>
             </div>
@@ -163,6 +157,10 @@ public static class CarContractTemplateGenerator
                             size: A4;
                         }}
                         body {{
+                            margin: 0;
+                            padding: 0;
+                        }}
+                        .contract-container {{
                             font-family: 'Roboto', sans-serif;
                             background-color: #f4f4f4;
                             margin: 0;
@@ -244,49 +242,51 @@ public static class CarContractTemplateGenerator
                         .photo-item {{
                             text-align: center;
                         }}
+                        .footer {{
+                            text-align: center;
+                            font-size: 13px;
+                            color: #777;
+                            margin-top: 30px;
+                        }}
                         .photo-item img {{
                             max-width: 100%;
                             height: auto;
                             border-radius: 4px;
                             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
                         }}
-                        .signature-image {{
-                            margin-bottom: 10px;
-                            text-align: center;
-                        }}
-                        .signature-image img {{
-                            max-width: 100%;
-                            height: auto;
-                            max-height: 100px;
-                        }}
                         .signature-block {{
                             margin-top: 40px;
                             display: flex;
                             justify-content: space-between;
-                            flex-wrap: wrap;
-                            gap: 20px;
+                            padding: 20px 40px;
                         }}
                         .signature {{
                             flex: 1;
-                            min-width: 200px;
+                            max-width: 45%;
                             text-align: center;
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
                         }}
-                        .signature img.signature-image {{
+                        .signature-image {{
+                            width: 200px;
+                            height: 100px;
+                            margin-bottom: 20px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                        }}
+                        .signature-image img {{
                             max-width: 100%;
-                            height: auto;
+                            max-height: 100%;
                             object-fit: contain;
                         }}
                         .signature p {{
                             border-top: 1px solid #333;
                             padding-top: 10px;
-                            margin-top: 40px;
+                            margin-top: 10px;
                             font-weight: 500;
-                        }}
-                        .footer {{
-                            text-align: center;
-                            font-size: 13px;
-                            color: #777;
-                            margin-top: 30px;
+                            width: 100%;
                         }}
 
                         /* Responsive styles */
@@ -297,10 +297,15 @@ public static class CarContractTemplateGenerator
                             .signature-block {{
                                 flex-direction: column;
                                 align-items: center;
+                                padding: 20px;
                             }}
                             .signature {{
+                                max-width: 100%;
                                 width: 100%;
                                 margin-bottom: 30px;
+                            }}
+                            .signature:last-child {{
+                                margin-bottom: 0;
                             }}
                             .signature-image img {{
                                 max-height: 80px;
@@ -384,20 +389,22 @@ public static class CarContractTemplateGenerator
                         </div>
 
                         <!-- Signature Section -->
-                        <div class='section signature-block'>
-                            <div class='signature'>
-                                {(string.IsNullOrEmpty(contractTemplate.OwnerSignatureImageUrl) ? "" : $@"
-                                <div>
-                                    <img class='signature-image' src='{contractTemplate.OwnerSignatureImageUrl}' alt='Chữ ký chủ xe' />
-                                </div>")}
-                                <p>CHỦ XE<br/>{contractTemplate.OwnerName}</p>
-                            </div>
-                            <div class='signature'>
-                                {(string.IsNullOrEmpty(contractTemplate.TechnicianSignatureImageUrl) ? "" : $@"
-                                <div>
-                                    <img class='signature-image' src='{contractTemplate.TechnicianSignatureImageUrl}' alt='Chữ ký kiểm định viên' />
-                                </div>")}
-                                <p>ĐẠI DIỆN KIỂM ĐỊNH<br/>{contractTemplate.TechnicianName}</p>
+                        <div class='section'>
+                            <div class='signature-block'>
+                                <div class='signature'>
+                                    {(string.IsNullOrEmpty(contractTemplate.OwnerSignatureImageUrl) ? "" : $@"
+                                    <div class='signature-image'>
+                                        <img src='{contractTemplate.OwnerSignatureImageUrl}' alt='Chữ ký chủ xe' />
+                                    </div>")}
+                                    <p>CHỦ XE<br/>{contractTemplate.OwnerName}</p>
+                                </div>
+                                <div class='signature'>
+                                    {(string.IsNullOrEmpty(contractTemplate.TechnicianSignatureImageUrl) ? "" : $@"
+                                    <div class='signature-image'>
+                                        <img src='{contractTemplate.TechnicianSignatureImageUrl}' alt='Chữ ký kiểm định viên' />
+                                    </div>")}
+                                    <p>ĐẠI DIỆN KIỂM ĐỊNH<br/>{contractTemplate.TechnicianName}</p>
+                                </div>
                             </div>
                         </div>
 
@@ -409,41 +416,4 @@ public static class CarContractTemplateGenerator
                 </body>
             </html>";
     }
-
-    private static string GenerateInspectionPhotoSection(
-        Dictionary<InspectionPhotoType, string> photos
-    )
-    {
-        StringBuilder photoSection = new();
-        photoSection.Append(
-            "<p><strong>4. Hình ảnh kiểm định:</strong></p><div class='inspection-photos'>"
-        );
-
-        foreach (var photo in photos)
-        {
-            string photoTypeName = GetPhotoTypeDisplayName(photo.Key);
-            photoSection.Append(
-                @$"
-                <div class='photo-item'>
-                    <p>{photoTypeName}:</p>
-                    <img src='{photo.Value}' alt='{photoTypeName}' style='max-width: 200px; margin: 10px 0;'/>
-                </div>"
-            );
-        }
-
-        photoSection.Append("</div>");
-
-        return photoSection.ToString();
-    }
-
-    private static string GetPhotoTypeDisplayName(InspectionPhotoType type) =>
-        type switch
-        {
-            InspectionPhotoType.ExteriorCar => "Ngoại thất xe",
-            InspectionPhotoType.FuelGauge => "Đồng hồ nhiên liệu",
-            InspectionPhotoType.ParkingLocation => "Vị trí đỗ xe",
-            InspectionPhotoType.CarKey => "Chìa khóa xe",
-            InspectionPhotoType.TrunkSpace => "Khoang hành lý",
-            _ => type.ToString(),
-        };
 }
