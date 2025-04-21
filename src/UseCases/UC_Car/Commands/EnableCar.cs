@@ -57,7 +57,7 @@ public sealed class EnableCar
                     i.CarId == request.Id
                     && i.Status != InspectionScheduleStatusEnum.Approved
                     && i.Status != InspectionScheduleStatusEnum.Rejected
-                    && i.Type == InspectionScheduleType.ChangeGPS
+                    && i.Status != InspectionScheduleStatusEnum.Expired
                 )
                 .FirstOrDefaultAsync(cancellationToken);
 

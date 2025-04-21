@@ -113,7 +113,7 @@ public class SetCarUnavailabilityEndpoint : ICarterModule
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
-                                            "Không thể thay đổi trạng thái vì ngày {{date}} đã có đơn đặt xe"
+                                            "Ngày bạn chọn đã có lịch đặt xe"
                                         ),
                                     },
                                 },

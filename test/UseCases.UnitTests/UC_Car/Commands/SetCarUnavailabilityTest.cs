@@ -188,7 +188,7 @@ public class SetCarUnavailabilityTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Assert
         Assert.Equal(ResultStatus.Conflict, result.Status);
-        Assert.Contains("Không thể thay đổi trạng thái vì ngày", result.Errors.First());
+        Assert.Contains("Ngày bạn chọn đã có lịch đặt xe", result.Errors.First());
         Assert.Contains("đã có đơn đặt xe", result.Errors.First());
     }
 

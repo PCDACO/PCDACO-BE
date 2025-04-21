@@ -53,9 +53,7 @@ public class SetCarUnavailability
                 .FirstOrDefault();
 
             if (existingBookingDate != default)
-                return Result.Conflict(
-                    $"Không thể thay đổi trạng thái vì ngày {existingBookingDate} đã có đơn đặt xe"
-                );
+                return Result.Conflict($"Ngày bạn chọn đã có lịch đặt xe");
 
             // Get existing car availabilities for this car
             var existingAvailabilities = context.CarAvailabilities.Where(ca =>
