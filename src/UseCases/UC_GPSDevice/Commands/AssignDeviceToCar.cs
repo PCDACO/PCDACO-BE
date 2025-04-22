@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using NetTopologySuite.Geometries;
 using UseCases.Abstractions;
-using UseCases.DTOs;
 
 namespace UseCases.UC_GPSDevice.Commands;
 
@@ -29,7 +28,6 @@ public class AssignDeviceToCar
 
     public class Handler(
         IAppDBContext context,
-        CurrentUser currentUser,
         GeometryFactory geometryFactory,
         ILogger<Handler> logger
     ) : IRequestHandler<Command, Result<Response>>
@@ -39,10 +37,6 @@ public class AssignDeviceToCar
             CancellationToken cancellationToken
         )
         {
-            // Check if current user is technician
-            if (!currentUser.User!.IsTechnician())
-                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
-
             // check car
             Car? gettingCar = await context
                 .Cars.IgnoreQueryFilters()

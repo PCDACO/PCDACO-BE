@@ -1315,10 +1315,10 @@ public class CreateInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
         Assert.Equal(carReport.Id, schedule.CarReportId);
         Assert.Equal(InspectionScheduleType.ChangeGPS, schedule.Type);
 
-        // Verify car status was updated to Maintain
+        // Verify car status was updated to Inactive
         var updatedCar = await _dbContext.Cars.FirstOrDefaultAsync(c => c.Id == car.Id);
         Assert.NotNull(updatedCar);
-        Assert.Equal(CarStatusEnum.Maintain, updatedCar.Status);
+        Assert.Equal(CarStatusEnum.Inactive, updatedCar.Status);
 
         // Verify report status was updated to UnderReview
         var updatedReport = await _dbContext.CarReports.FirstOrDefaultAsync(r =>

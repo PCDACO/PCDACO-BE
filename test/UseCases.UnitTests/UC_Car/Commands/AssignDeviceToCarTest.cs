@@ -8,7 +8,6 @@ using Microsoft.Extensions.Logging;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
 using Persistance.Data;
-using UseCases.DTOs;
 using UseCases.UC_GPSDevice.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
@@ -20,7 +19,6 @@ namespace UseCases.UnitTests.UC_Car.Commands;
 public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
-    private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
     private readonly GeometryFactory _geometryFactory =
         NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
@@ -49,8 +47,6 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
             "tech@example.com"
         );
 
-        _currentUser.SetUser(technician);
-
         var inspectionSchedule = new InspectionSchedule
         {
             Id = Guid.NewGuid(),
@@ -65,12 +61,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.InspectionSchedules.AddAsync(inspectionSchedule);
         await _dbContext.SaveChangesAsync();
 
-        var handler = new AssignDeviceToCar.Handler(
-            _dbContext,
-            _currentUser,
-            _geometryFactory,
-            _logger
-        );
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
             OSBuildId: "TEST-DEVICE",
@@ -108,8 +99,6 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
             "tech@example.com"
         );
 
-        _currentUser.SetUser(technician);
-
         var inspectionSchedule = new InspectionSchedule
         {
             Id = Guid.NewGuid(),
@@ -129,12 +118,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         double longitude = 106.7004238;
         double latitude = 10.7756587;
 
-        var handler = new AssignDeviceToCar.Handler(
-            _dbContext,
-            _currentUser,
-            _geometryFactory,
-            _logger
-        );
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
             OSBuildId: osBuildId,
@@ -176,20 +160,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         string osBuildId = "TESTBUILD456";
         string deviceName = "Test GPS Device";
 
-        //create and set current user is technician
-        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
-            _dbContext,
-            "Technician"
-        );
-        var currentUser = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
-        _currentUser.SetUser(currentUser);
-
-        var handler = new AssignDeviceToCar.Handler(
-            _dbContext,
-            _currentUser,
-            _geometryFactory,
-            _logger
-        );
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: nonExistentCarId,
             OSBuildId: osBuildId,
@@ -230,7 +201,6 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
             technicianRole,
             "tech@example.com"
         );
-        _currentUser.SetUser(technician);
 
         var inspectionSchedule = new InspectionSchedule
         {
@@ -260,12 +230,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.GPSDevices.AddAsync(existingDevice);
         await _dbContext.SaveChangesAsync();
 
-        var handler = new AssignDeviceToCar.Handler(
-            _dbContext,
-            _currentUser,
-            _geometryFactory,
-            _logger
-        );
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
             OSBuildId: existingOsBuildId,
@@ -308,8 +273,6 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
             technicianRole,
             "tech@example.com"
         );
-
-        _currentUser.SetUser(technician);
 
         var inspectionSchedule = new InspectionSchedule
         {
@@ -364,12 +327,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.CarGPSes.AddAsync(existingCarGPS);
         await _dbContext.SaveChangesAsync();
 
-        var handler = new AssignDeviceToCar.Handler(
-            _dbContext,
-            _currentUser,
-            _geometryFactory,
-            _logger
-        );
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
             OSBuildId: "DEVICE-123",
@@ -413,8 +371,6 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
             "tech@example.com"
         );
 
-        _currentUser.SetUser(technician);
-
         var inspectionSchedule = new InspectionSchedule
         {
             Id = Guid.NewGuid(),
@@ -442,12 +398,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.GPSDevices.AddAsync(device);
         await _dbContext.SaveChangesAsync();
 
-        var handler = new AssignDeviceToCar.Handler(
-            _dbContext,
-            _currentUser,
-            _geometryFactory,
-            _logger
-        );
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
             OSBuildId: "DEVICE-123",
@@ -481,8 +432,6 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
             "tech@example.com"
         );
 
-        _currentUser.SetUser(technician);
-
         var inspectionSchedule = new InspectionSchedule
         {
             Id = Guid.NewGuid(),
@@ -511,12 +460,7 @@ public class AssignDeviceToCarTest(DatabaseTestBase fixture) : IAsyncLifetime
         await _dbContext.GPSDevices.AddAsync(availableDevice);
         await _dbContext.SaveChangesAsync();
 
-        var handler = new AssignDeviceToCar.Handler(
-            _dbContext,
-            _currentUser,
-            _geometryFactory,
-            _logger
-        );
+        var handler = new AssignDeviceToCar.Handler(_dbContext, _geometryFactory, _logger);
         var command = new AssignDeviceToCar.Command(
             CarId: car.Id,
             OSBuildId: deviceOsBuildId,

@@ -50,7 +50,6 @@ public sealed class ApproveInspectionSchedule
                 .ThenInclude(s => s.Model)
                 .Include(s => s.Car)
                 .ThenInclude(s => s.GPS)
-                .Include(s => s.CarReport)
                 .Include(s => s.Technician)
                 .Include(s => s.Photos)
                 .FirstOrDefaultAsync(s => s.Id == request.Id && !s.IsDeleted, cancellationToken);
@@ -70,14 +69,8 @@ public sealed class ApproveInspectionSchedule
                     ResponseMessages.OnlyUpdateSignedOrInprogressInspectionSchedule
                 );
 
-            bool isDeactivationReport =
-                schedule.CarReportId != null
-                && schedule.CarReport != null
-                && schedule.CarReport.ReportType == CarReportType.DeactivateCar;
-
             // Check if car is not attached to any gps when approving then return error
-            // Exception: this schedule belongs to a deactivation report
-            if (schedule.Car.GPS is null && request.IsApproved && !isDeactivationReport)
+            if (schedule.Car.GPS is null && request.IsApproved)
                 return Result.Error("Xe chưa được gán thiết bị gps không thể duyệt lịch kiểm định");
 
             // Verify only datetimeoffset.utcnow faster than schedule.InspectionDate 1 hour above can not update
@@ -121,7 +114,7 @@ public sealed class ApproveInspectionSchedule
                     CarPrice = schedule.Car.Price,
                     CarTerms = schedule.Car.Terms,
                     InspectionResults = request.IsApproved ? "Đã duyệt" : "Không duyệt",
-                    InspectionPhotos = [],
+                    InspectionPhotos = schedule.Photos.ToDictionary(p => p.Type, p => p.PhotoUrl),
                     GPSDeviceId = contract.GPSDeviceId.ToString()!,
                     OwnerSignatureImageUrl = contract.OwnerSignature!,
                     TechnicianSignatureImageUrl = contract.TechnicianSignature!,

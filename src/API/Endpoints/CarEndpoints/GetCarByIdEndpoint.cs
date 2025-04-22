@@ -67,7 +67,6 @@ public class GetCarByIdEndpoint : ICarterModule
                                                 "123e4567-e89b-12d3-a456-426614174002"
                                             ),
                                             ["ownerName"] = new OpenApiString("John Smith"),
-                                            ["ownerPhoneNumber"] = new OpenApiString("0987654321"),
                                             ["licensePlate"] = new OpenApiString("51G-123.45"),
                                             ["color"] = new OpenApiString("Black"),
                                             ["seat"] = new OpenApiInteger(4),
@@ -150,9 +149,6 @@ public class GetCarByIdEndpoint : ICarterModule
                                                         "123e4567-e89b-12d3-a456-426614174009"
                                                     ),
                                                     ["driverName"] = new OpenApiString("Jane Doe"),
-                                                    ["driverPhone"] = new OpenApiString(
-                                                        "0987654321"
-                                                    ),
                                                     ["avatarUrl"] = new OpenApiString(
                                                         "https://example.com/avatar.jpg"
                                                     ),
@@ -162,7 +158,6 @@ public class GetCarByIdEndpoint : ICarterModule
                                                     ["endTime"] = new OpenApiString(
                                                         "2024-03-25T10:00:00Z"
                                                     ),
-                                                    ["status"] = new OpenApiString("Pending"),
                                                 },
                                             },
                                             ["feedbacks"] = new OpenApiArray

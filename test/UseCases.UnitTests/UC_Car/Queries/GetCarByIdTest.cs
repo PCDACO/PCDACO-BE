@@ -13,7 +13,6 @@ using UseCases.DTOs;
 using UseCases.UC_Car.Queries;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
-using UseCases.Utils;
 using UUIDNext;
 
 namespace UseCases.UnitTests.UC_Car.Queries;
@@ -38,18 +37,12 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
     public async Task Handle_CarNotFound_ReturnsNotFound()
     {
         // Arrange
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _currentUser,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(Guid.NewGuid());
 
         var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var user = await CreateTestUserWithEncryptedPhone(driverRole);
+        var user = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(user);
 
         // Act
@@ -66,7 +59,7 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Arrange
         // Create owner
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        var owner = await CreateTestUserWithEncryptedPhone(ownerRole);
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(owner);
 
         // Create car
@@ -75,13 +68,7 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Create contract for the car
         await CreateCarContract(car.Id, CarContractStatusEnum.OwnerSigned);
 
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _currentUser,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(car.Id);
 
@@ -103,8 +90,8 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
 
-        var owner = await CreateTestUserWithEncryptedPhone(ownerRole);
-        var admin = await CreateTestUserWithEncryptedPhone(adminRole, "admin@example.com");
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var admin = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
 
         _currentUser.SetUser(admin);
 
@@ -114,13 +101,7 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Create contract for the car
         await CreateCarContract(car.Id, CarContractStatusEnum.OwnerSigned);
 
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _currentUser,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(car.Id);
 
@@ -144,11 +125,8 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
             "Consultant"
         );
 
-        var owner = await CreateTestUserWithEncryptedPhone(ownerRole);
-        var consultant = await CreateTestUserWithEncryptedPhone(
-            consultantRole,
-            "consultant@example.com"
-        );
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
 
         _currentUser.SetUser(consultant);
 
@@ -158,13 +136,7 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Create contract for the car
         await CreateCarContract(car.Id, CarContractStatusEnum.OwnerSigned);
 
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _currentUser,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(car.Id);
 
@@ -188,11 +160,8 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
             "Technician"
         );
 
-        var owner = await CreateTestUserWithEncryptedPhone(ownerRole);
-        var technician = await CreateTestUserWithEncryptedPhone(
-            technicianRole,
-            "technician@example.com"
-        );
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var technician = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
 
         _currentUser.SetUser(technician);
 
@@ -202,13 +171,7 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Create contract for the car
         await CreateCarContract(car.Id, CarContractStatusEnum.OwnerSigned);
 
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _currentUser,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(car.Id);
 
@@ -229,8 +192,8 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
 
-        var owner = await CreateTestUserWithEncryptedPhone(ownerRole);
-        var driver = await CreateTestUserWithEncryptedPhone(driverRole, "driver@example.com");
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var driver = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
 
         _currentUser.SetUser(driver);
 
@@ -240,13 +203,7 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Create contract for the car
         await CreateCarContract(car.Id, CarContractStatusEnum.OwnerSigned);
 
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _currentUser,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(car.Id);
 
@@ -264,20 +221,14 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
     {
         // Arrange
         var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
-        var owner = await CreateTestUserWithEncryptedPhone(ownerRole);
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
         _currentUser.SetUser(owner);
 
         // Create car with known license plate
         string expectedLicensePlate = "ABC-123XY";
         var car = await CreateTestCar(owner.Id, expectedLicensePlate);
 
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _currentUser,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(car.Id);
 
@@ -298,8 +249,8 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
 
         // Create owner and driver
-        var owner = await CreateTestUserWithEncryptedPhone(ownerRole);
-        var driver = await CreateTestUserWithEncryptedPhone(driverRole, "driver@example.com");
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var driver = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
         _currentUser.SetUser(owner);
 
         // Create car
@@ -333,21 +284,8 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
             now.AddDays(10),
             now.AddDays(12)
         );
-        await CreateBooking(
-            driver.Id,
-            car.Id,
-            BookingStatusEnum.Pending,
-            now.AddDays(15),
-            now.AddDays(17)
-        );
 
-        var handler = new GetCarById.Handler(
-            _dbContext,
-            _currentUser,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCarById.Handler(_dbContext, _currentUser);
 
         var query = new GetCarById.Query(car.Id);
 
@@ -361,23 +299,14 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(car.Id, result.Value.Id);
         Assert.Equal(owner.Id, result.Value.OwnerId);
         Assert.Equal(owner.Name, result.Value.OwnerName);
-        Assert.Equal("0987654321", result.Value.OwnerPhoneNumber); // Should have decrypted owner phone
 
         // Check amenities
         Assert.Equal(2, result.Value.Amenities.Length);
 
-        // Check bookings (only pending should be included)
-        Assert.Single(result.Value.Bookings);
+        // Check bookings (only future non-cancelled should be included)
+        Assert.Equal(3, result.Value.Bookings.Length);
         Assert.All(result.Value.Bookings, b => Assert.Equal(driver.Id, b.DriverId));
         Assert.All(result.Value.Bookings, b => Assert.Equal(driver.Name, b.DriverName));
-        Assert.All(
-            result.Value.Bookings,
-            b => Assert.Equal(BookingStatusEnum.Pending.ToString(), b.Status)
-        );
-        Assert.All(
-            result.Value.Bookings,
-            b => Assert.Equal("0987654321", b.DriverPhone) // Should have decrypted driver phone
-        );
 
         // Check manufacturer details
         Assert.NotNull(result.Value.Manufacturer);
@@ -387,50 +316,6 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
     }
 
     #region Helper Methods
-
-    private async Task<User> CreateTestUserWithEncryptedPhone(
-        UserRole role,
-        string email = "test@example.com",
-        string name = "Test User",
-        string phone = "0987654321",
-        string avatarUrl = "http://example.com/avatar.jpg"
-    )
-    {
-        // Generate encryption key and encrypt phone
-        (string key, string iv) = await _keyService.GenerateKeyAsync();
-        string encryptedPhone = await _aesService.Encrypt(phone, key, iv);
-        string encryptedKey = _keyService.EncryptKey(key, _encryptionSettings.Key);
-
-        // Create encryption key record
-        var encryptionKey = new EncryptionKey { EncryptedKey = encryptedKey, IV = iv };
-        await _dbContext.EncryptionKeys.AddAsync(encryptionKey);
-        await _dbContext.SaveChangesAsync();
-
-        // Create user
-        var user = new User
-        {
-            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
-            EncryptionKeyId = encryptionKey.Id,
-            Name = name,
-            Email = email,
-            AvatarUrl = avatarUrl,
-            Password = "password".HashString(),
-            RoleId = role.Id,
-            Address = "Test Address",
-            DateOfBirth = DateTime.UtcNow.AddYears(-30),
-            Phone = encryptedPhone,
-        };
-
-        // Create user statistic
-        var userStatistic = new UserStatistic { UserId = user.Id };
-
-        // Save to database
-        await _dbContext.Users.AddAsync(user);
-        await _dbContext.UserStatistics.AddAsync(userStatistic);
-        await _dbContext.SaveChangesAsync();
-
-        return user;
-    }
 
     private async Task<Car> CreateTestCar(Guid ownerId, string licensePlate)
     {

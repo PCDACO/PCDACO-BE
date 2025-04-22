@@ -7,7 +7,6 @@ using Microsoft.EntityFrameworkCore;
 using NetTopologySuite;
 using NetTopologySuite.Geometries;
 using Persistance.Data;
-using UseCases.DTOs;
 using UseCases.UC_GPSDevice.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
@@ -19,7 +18,6 @@ namespace UseCases.UnitTests.UC_Car.Commands;
 public class UnassignGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifetime
 {
     private readonly AppDBContext _dbContext = fixture.DbContext;
-    private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
     private readonly GeometryFactory _geometryFactory =
         NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
@@ -31,14 +29,6 @@ public class UnassignGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifet
     [Fact]
     public async Task Handle_ValidRequest_PendingCar_Succeeds()
     {
-        //create and set current user is technician
-        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
-            _dbContext,
-            "Technician"
-        );
-        var currentUser = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
-        _currentUser.SetUser(currentUser);
-
         // Arrange
         var (car, _) = await SetupTestCarWithStatus(CarStatusEnum.Pending);
 
@@ -55,7 +45,7 @@ public class UnassignGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifet
         await CreateChangeGPSInspectionSchedule(car.Id);
 
         // Create handler and command
-        var handler = new UnassignGPSDeviceForCar.Handler(_dbContext, _currentUser);
+        var handler = new UnassignGPSDeviceForCar.Handler(_dbContext);
         var command = new UnassignGPSDeviceForCar.Command(device.Id);
 
         // Act
@@ -80,14 +70,6 @@ public class UnassignGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifet
     [Fact]
     public async Task Handle_ValidRequest_DeletedCar_Succeeds()
     {
-        //create and set current user is technician
-        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
-            _dbContext,
-            "Technician"
-        );
-        var currentUser = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
-        _currentUser.SetUser(currentUser);
-
         // Arrange
         var (car, _) = await SetupTestCarWithStatus(CarStatusEnum.Available, isDeleted: true);
 
@@ -104,7 +86,7 @@ public class UnassignGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifet
         await CreateChangeGPSInspectionSchedule(car.Id);
 
         // Create handler and command
-        var handler = new UnassignGPSDeviceForCar.Handler(_dbContext, _currentUser);
+        var handler = new UnassignGPSDeviceForCar.Handler(_dbContext);
         var command = new UnassignGPSDeviceForCar.Command(device.Id);
 
         // Act
@@ -129,14 +111,6 @@ public class UnassignGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifet
     [Fact]
     public async Task Handle_NoChangeGPSSchedule_ReturnsError()
     {
-        //create and set current user is technician
-        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
-            _dbContext,
-            "Technician"
-        );
-        var currentUser = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
-        _currentUser.SetUser(currentUser);
-
         // Arrange
         var (car, _) = await SetupTestCarWithStatus(CarStatusEnum.Pending);
 
@@ -150,7 +124,7 @@ public class UnassignGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifet
         var carGPS = await CreateCarGPSAssociation(car.Id, device.Id);
 
         // Create handler and command
-        var handler = new UnassignGPSDeviceForCar.Handler(_dbContext, _currentUser);
+        var handler = new UnassignGPSDeviceForCar.Handler(_dbContext);
         var command = new UnassignGPSDeviceForCar.Command(device.Id);
 
         // Act
@@ -164,18 +138,10 @@ public class UnassignGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifet
     [Fact]
     public async Task Handle_GPSDeviceNotFound_ReturnsError()
     {
-        //create and set current user is technician
-        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
-            _dbContext,
-            "Technician"
-        );
-        var currentUser = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
-        _currentUser.SetUser(currentUser);
-
         // Arrange
         var nonExistentDeviceId = Guid.NewGuid();
 
-        var handler = new UnassignGPSDeviceForCar.Handler(_dbContext, _currentUser);
+        var handler = new UnassignGPSDeviceForCar.Handler(_dbContext);
         var command = new UnassignGPSDeviceForCar.Command(nonExistentDeviceId);
 
         // Act
@@ -189,18 +155,10 @@ public class UnassignGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifet
     [Fact]
     public async Task Handle_DeletedGPSDevice_ReturnsError()
     {
-        //create and set current user is technician
-        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
-            _dbContext,
-            "Technician"
-        );
-        var currentUser = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
-        _currentUser.SetUser(currentUser);
-
         // Arrange
         var device = await TestDataGPSDevice.CreateTestGPSDevice(_dbContext, isDeleted: true);
 
-        var handler = new UnassignGPSDeviceForCar.Handler(_dbContext, _currentUser);
+        var handler = new UnassignGPSDeviceForCar.Handler(_dbContext);
         var command = new UnassignGPSDeviceForCar.Command(device.Id);
 
         // Act
@@ -214,18 +172,10 @@ public class UnassignGPSDeviceForCarTest(DatabaseTestBase fixture) : IAsyncLifet
     [Fact]
     public async Task Handle_DeviceNotAssociatedWithCar_ReturnsNotFound()
     {
-        //create and set current user is technician
-        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
-            _dbContext,
-            "Technician"
-        );
-        var currentUser = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
-        _currentUser.SetUser(currentUser);
-
         // Arrange
         var device = await TestDataGPSDevice.CreateTestGPSDevice(_dbContext);
 
-        var handler = new UnassignGPSDeviceForCar.Handler(_dbContext, _currentUser);
+        var handler = new UnassignGPSDeviceForCar.Handler(_dbContext);
         var command = new UnassignGPSDeviceForCar.Command(device.Id);
 
         // Act

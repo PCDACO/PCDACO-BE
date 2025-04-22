@@ -2,7 +2,6 @@ using Ardalis.Result;
 using Domain.Constants;
 using Domain.Entities;
 using Domain.Enums;
-using Domain.Shared;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
@@ -21,7 +20,6 @@ public class GetCarById
         string ModelName,
         Guid OwnerId,
         string OwnerName,
-        string OwnerPhoneNumber,
         string LicensePlate,
         string Color,
         int Seat,
@@ -47,13 +45,7 @@ public class GetCarById
         FeedbackDetail[] Feedbacks
     )
     {
-        public static async Task<Response> FromEntityAsync(
-            Car car,
-            IAesEncryptionService aesEncryptionService,
-            IKeyManagementService keyManagementService,
-            string masterKey,
-            bool includeContract = false
-        )
+        public static Response FromEntity(Car car, bool includeContract = false)
         {
             ContractDetail? contractDetail = null;
             if (includeContract && car.Contract != null)
@@ -85,65 +77,12 @@ public class GetCarById
                 .OrderByDescending(f => f.CreatedAt)
                 .ToArray();
 
-            // Decrypt owner's phone
-            string decryptedOwnerPhone = string.Empty;
-            if (car.Owner.EncryptionKey != null)
-            {
-                string ownerDecryptedKey = keyManagementService.DecryptKey(
-                    car.Owner.EncryptionKey.EncryptedKey,
-                    masterKey
-                );
-
-                decryptedOwnerPhone = await aesEncryptionService.Decrypt(
-                    car.Owner.Phone,
-                    ownerDecryptedKey,
-                    car.Owner.EncryptionKey.IV
-                );
-            }
-
-            // Process bookings and decrypt driver phones
-            var bookingSchedules = new List<BookingSchedule>();
-            foreach (var booking in car.Bookings)
-            {
-                string decryptedDriverPhone = string.Empty;
-                if (booking.User?.EncryptionKey != null)
-                {
-                    string driverDecryptedKey = keyManagementService.DecryptKey(
-                        booking.User.EncryptionKey.EncryptedKey,
-                        masterKey
-                    );
-
-                    decryptedDriverPhone = await aesEncryptionService.Decrypt(
-                        booking.User.Phone,
-                        driverDecryptedKey,
-                        booking.User.EncryptionKey.IV
-                    );
-                }
-
-                if (booking.Status != BookingStatusEnum.Pending)
-                    continue;
-
-                bookingSchedules.Add(
-                    new BookingSchedule(
-                        booking.Id,
-                        booking.User!.Id,
-                        booking.User.Name,
-                        decryptedDriverPhone,
-                        booking.User.AvatarUrl,
-                        booking.StartTime,
-                        booking.EndTime,
-                        booking.Status.ToString()
-                    )
-                );
-            }
-
             return new(
                 car.Id,
                 car.Model.Id,
                 car.Model.Name,
                 car.Owner.Id,
                 car.Owner.Name,
-                decryptedOwnerPhone,
                 car.LicensePlate,
                 car.Color,
                 car.Seat,
@@ -175,7 +114,16 @@ public class GetCarById
                         a.Amenity.IconUrl
                     )),
                 ],
-                [.. bookingSchedules.OrderByDescending(b => b.BookingId)],
+                [
+                    .. car.Bookings.Select(b => new BookingSchedule(
+                        b.Id,
+                        b.User.Id,
+                        b.User.Name,
+                        b.User.AvatarUrl,
+                        b.StartTime,
+                        b.EndTime
+                    )),
+                ],
                 contractDetail,
                 feedbacks
             );
@@ -194,11 +142,9 @@ public class GetCarById
         Guid BookingId,
         Guid DriverId,
         string DriverName,
-        string DriverPhone,
         string AvatarUrl,
         DateTimeOffset StartTime,
-        DateTimeOffset EndTime,
-        string Status
+        DateTimeOffset EndTime
     );
 
     public record ContractDetail(
@@ -223,13 +169,8 @@ public class GetCarById
         DateTimeOffset CreatedAt
     );
 
-    internal sealed class Handler(
-        IAppDBContext context,
-        CurrentUser currentUser,
-        IAesEncryptionService aesEncryptionService,
-        IKeyManagementService keyManagementService,
-        EncryptionSettings encryptionSettings
-    ) : IRequestHandler<Query, Result<Response>>
+    internal sealed class Handler(IAppDBContext context, CurrentUser currentUser)
+        : IRequestHandler<Query, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
             Query request,
@@ -247,12 +188,9 @@ public class GetCarById
                     )
                 )
                 .ThenInclude(b => b.User)
-                .ThenInclude(u => u.EncryptionKey)
                 .Include(c => c.Bookings)
                 .ThenInclude(b => b.Feedbacks)
                 .ThenInclude(f => f.User)
-                .Include(c => c.Owner)
-                .ThenInclude(o => o.EncryptionKey)
                 .Include(c => c.Owner)
                 .ThenInclude(o => o.Feedbacks)
                 .Include(c => c.Model)
@@ -279,13 +217,7 @@ public class GetCarById
                 || gettingCar.OwnerId == currentUser.User.Id;
 
             return Result<Response>.Success(
-                await Response.FromEntityAsync(
-                    car: gettingCar,
-                    aesEncryptionService: aesEncryptionService,
-                    keyManagementService: keyManagementService,
-                    masterKey: encryptionSettings.Key,
-                    includeContract: canViewContract
-                ),
+                Response.FromEntity(gettingCar, includeContract: canViewContract),
                 ResponseMessages.Fetched
             );
         }
