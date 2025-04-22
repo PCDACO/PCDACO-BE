@@ -32,7 +32,8 @@ public sealed class ApproveBooking
         IPaymentTokenService paymentTokenService,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
-        EncryptionSettings encryptionSettings
+        EncryptionSettings encryptionSettings,
+        ContractSettings contractSettings
     ) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
@@ -73,7 +74,12 @@ public sealed class ApproveBooking
                 await RejectOverlappingPendingBookingsAsync(booking, cancellationToken);
 
                 // Update contract with Owner's signature.
-                await UpdateContractForApprovalAsync(booking, request.Signature, cancellationToken);
+                await UpdateContractForApprovalAsync(
+                    booking,
+                    request.Signature,
+                    contractSettings,
+                    cancellationToken
+                );
 
                 // Schedule expiration job if booking is not paid
                 if (!booking.IsPaid)
@@ -171,6 +177,7 @@ public sealed class ApproveBooking
         private async Task UpdateContractForApprovalAsync(
             Booking booking,
             string signature,
+            ContractSettings contractSettings,
             CancellationToken cancellationToken
         )
         {
@@ -228,7 +235,7 @@ public sealed class ApproveBooking
                 };
 
                 // Generate contract terms
-                string contractHtml = GenerateFullContractHtml(contractTemplate);
+                string contractHtml = GenerateFullContractHtml(contractTemplate, contractSettings);
 
                 // Update contract
                 contract.Terms = contractHtml;
@@ -298,7 +305,8 @@ public sealed class ApproveBooking
             // when request.IsApproved = true then require signature
             When(
                 x => x.IsApproved,
-                () => RuleFor(x => x.Signature).NotEmpty().WithMessage("Chữ ký không được để trống"));
+                () => RuleFor(x => x.Signature).NotEmpty().WithMessage("Chữ ký không được để trống")
+            );
         }
     }
 }
