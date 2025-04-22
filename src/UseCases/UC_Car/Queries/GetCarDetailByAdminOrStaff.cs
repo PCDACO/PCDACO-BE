@@ -69,12 +69,16 @@ public class GetCarDetailByAdminOrStaff
 
             // Calculate total earnings from completed bookings
             decimal totalEarnings = car
-                .Bookings.Where(b => b.Status == BookingStatusEnum.Completed)
+                .Bookings.Where(b =>
+                    b.Status == BookingStatusEnum.Completed || b.Status == BookingStatusEnum.Done
+                )
                 .Sum(b => b.TotalAmount);
 
             // Find the last rented date (most recent completed booking end time)
             DateTimeOffset? lastRented = car
-                .Bookings.Where(b => b.Status == BookingStatusEnum.Completed)
+                .Bookings.Where(b =>
+                    b.Status == BookingStatusEnum.Completed || b.Status == BookingStatusEnum.Done
+                )
                 .OrderByDescending(b => b.EndTime)
                 .FirstOrDefault()
                 ?.EndTime;
