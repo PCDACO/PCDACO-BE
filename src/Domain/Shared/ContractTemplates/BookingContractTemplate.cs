@@ -33,7 +33,10 @@ public static class ContractTemplateGenerator
         public required string DriverSignatureImageUrl { get; set; }
     }
 
-    public static string GenerateFullContractHtml(ContractTemplate contractTemplate)
+    public static string GenerateFullContractHtml(
+        ContractTemplate contractTemplate,
+        ContractSettings contractSettings
+    )
     {
         string standardClauses =
             @$"
@@ -125,7 +128,7 @@ public static class ContractTemplateGenerator
                 <div class='clause'>
                     <strong>Điều 8: Điều khoản về thế chấp và xử lý phạt nguội</strong>
                     <p>
-                        a) Trước khi nhận xe, Bên B (Người thuê xe) phải nộp tiền thế chấp tối thiểu là 15.000.000 VNĐ bằng tiền mặt.
+                        a) Trước khi nhận xe, Bên B (Người thuê xe) phải nộp tiền thế chấp tối thiểu là {contractSettings.CollateralPrice:N0} VNĐ bằng tiền mặt.
                         <br/>
                         b) Số tiền thế chấp sẽ được giữ bởi Bên A (Chủ xe) trong vòng 1 tháng sau khi kết thúc chuyến đi.
                         <br/>

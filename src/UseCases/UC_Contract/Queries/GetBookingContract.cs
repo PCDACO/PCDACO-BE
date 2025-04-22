@@ -19,7 +19,8 @@ public sealed class GetBookingContract
         IAppDBContext context,
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
-        EncryptionSettings encryptionSettings
+        EncryptionSettings encryptionSettings,
+        ContractSettings contractSettings
     ) : IRequestHandler<Query, Result<Response>>
     {
         public async Task<Result<Response>> Handle(
@@ -78,7 +79,7 @@ public sealed class GetBookingContract
                 DriverSignatureImageUrl = contract.DriverSignature ?? string.Empty,
             };
 
-            string html = ContractTemplateGenerator.GenerateFullContractHtml(contractTemplate);
+            string html = ContractTemplateGenerator.GenerateFullContractHtml(contractTemplate, contractSettings);
 
             return Result.Success(new Response(html));
         }

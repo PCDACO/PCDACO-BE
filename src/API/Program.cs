@@ -33,6 +33,7 @@ builder.Services.AddSingleton(cloudinary);
 builder.Services.AddServices(builder.Configuration);
 builder.Services.AddPayOSService(builder.Configuration);
 builder.Services.AddEmailService(builder.Configuration);
+builder.Services.AddContractService(builder.Configuration);
 builder.Services.AddSignalR();
 builder.Services.AddHangFireService(builder.Configuration);
 

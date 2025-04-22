@@ -24,6 +24,7 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly IAesEncryptionService _aesService = fixture.AesEncryptionService;
     private readonly IKeyManagementService _keyService = fixture.KeyManagementService;
     private readonly EncryptionSettings _encryptionSettings = fixture.EncryptionSettings;
+    private readonly ContractSettings _contractSettings = new();
     private readonly CurrentUser _currentUser = fixture.CurrentUser;
     private const string TEST_SIGNATURE_BASE64 =
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==";
@@ -52,7 +53,8 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _paymentTokenService,
             _aesService,
             _keyService,
-            _encryptionSettings
+            _encryptionSettings,
+            _contractSettings
         );
         var command = new ApproveBooking.Command(
             Guid.NewGuid(),
@@ -85,7 +87,8 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _paymentTokenService,
             _aesService,
             _keyService,
-            _encryptionSettings
+            _encryptionSettings,
+            _contractSettings
         );
         var command = new ApproveBooking.Command(
             Guid.NewGuid(),
@@ -154,7 +157,8 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _paymentTokenService,
             _aesService,
             _keyService,
-            _encryptionSettings
+            _encryptionSettings,
+            _contractSettings
         );
         var command = new ApproveBooking.Command(
             booking.Id,
@@ -225,7 +229,8 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _paymentTokenService,
             _aesService,
             _keyService,
-            _encryptionSettings
+            _encryptionSettings,
+            _contractSettings
         );
         var command = new ApproveBooking.Command(
             booking.Id,
@@ -296,7 +301,8 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _paymentTokenService,
             _aesService,
             _keyService,
-            _encryptionSettings
+            _encryptionSettings,
+            _contractSettings
         );
         var command = new ApproveBooking.Command(
             booking.Id,
@@ -364,7 +370,8 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _paymentTokenService,
             _aesService,
             _keyService,
-            _encryptionSettings
+            _encryptionSettings,
+            _contractSettings
         );
         var command = new ApproveBooking.Command(
             booking.Id,
@@ -428,7 +435,8 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _paymentTokenService,
             _aesService,
             _keyService,
-            _encryptionSettings
+            _encryptionSettings,
+            _contractSettings
         );
         var command = new ApproveBooking.Command(
             booking.Id,
@@ -506,7 +514,8 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _paymentTokenService,
             _aesService,
             _keyService,
-            _encryptionSettings
+            _encryptionSettings,
+            _contractSettings
         );
         var command = new ApproveBooking.Command(
             booking.Id,
@@ -582,7 +591,8 @@ public class ApproveBookingTests(DatabaseTestBase fixture) : IAsyncLifetime
             _paymentTokenService,
             _aesService,
             _keyService,
-            _encryptionSettings
+            _encryptionSettings,
+            _contractSettings
         );
         var command = new ApproveBooking.Command(
             booking.Id,
