@@ -118,9 +118,6 @@ public sealed class GetTransactionHistory
                 .Include(t => t.Booking)
                 .Include(t => t.BankAccount)
                 .ThenInclude(b => b!.BankInfo)
-                .Where(t =>
-                    t.FromUserId == currentUser.User!.Id || t.ToUserId == currentUser.User!.Id
-                )
                 .AsQueryable();
 
             // Get withdrawal requests
@@ -129,6 +126,22 @@ public sealed class GetTransactionHistory
                 .ThenInclude(b => b.BankInfo)
                 .Where(w => w.UserId == currentUser.User!.Id)
                 .AsQueryable();
+
+            if (currentUser.User.IsAdmin())
+            {
+                transactionQuery = transactionQuery.Where(t =>
+                    t.Type.Name == TransactionTypeNames.BookingPayment
+                    || t.Type.Name == TransactionTypeNames.Withdrawal
+                    || t.Type.Name == TransactionTypeNames.Refund
+                );
+            }
+            else
+            {
+                // For non-admin users, keep existing filter
+                transactionQuery = transactionQuery.Where(t =>
+                    t.FromUserId == currentUser.User!.Id || t.ToUserId == currentUser.User!.Id
+                );
+            }
 
             // Apply filters
             if (!string.IsNullOrWhiteSpace(request.TransactionType))
