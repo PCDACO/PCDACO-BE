@@ -62,19 +62,7 @@ public sealed class UploadUserAvatar
 
     public sealed class Validator : AbstractValidator<Command>
     {
-        private readonly string[] _allowedExtensions =
-        [
-            ".jpg",
-            ".jpeg",
-            ".png",
-            ".gif",
-            ".bmp",
-            ".tiff",
-            ".webp",
-            ".svg",
-            ".heic",
-            ".heif",
-        ];
+        private readonly string[] _allowedExtensions = [".jpg", ".jpeg", ".png"];
 
         public Validator()
         {
@@ -120,44 +108,8 @@ public sealed class UploadUserAvatar
             if (fileBytes.Length < 4)
                 return false;
 
-            return fileBytes[..2].SequenceEqual(new byte[] { 0xFF, 0xD8 })
-                || // JPEG and JPG
-                fileBytes[..4].SequenceEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47 })
-                || // PNG
-                fileBytes[..3].SequenceEqual(new byte[] { 0x47, 0x49, 0x46 })
-                || // GIF
-                fileBytes[..2].SequenceEqual(new byte[] { 0x42, 0x4D })
-                || // BMP
-                fileBytes[..4].SequenceEqual(new byte[] { 0x52, 0x49, 0x46, 0x46 })
-                || // WebP
-                fileBytes[..4].SequenceEqual(new byte[] { 0x49, 0x49, 0x2A, 0x00 })
-                || // TIFF (Little-endian)
-                fileBytes[..4].SequenceEqual(new byte[] { 0x4D, 0x4D, 0x00, 0x2A })
-                || // TIFF (Big-endian)
-                Encoding.UTF8.GetString(fileBytes).Contains("<svg")
-                || // SVG
-                (
-                    fileBytes.Length >= 12
-                    && fileBytes[4] == 0x66
-                    && fileBytes[5] == 0x74
-                    && fileBytes[6] == 0x79
-                    && fileBytes[7] == 0x70
-                    && (
-                        (
-                            fileBytes[8] == 0x68
-                            && fileBytes[9] == 0x65
-                            && fileBytes[10] == 0x69
-                            && fileBytes[11] == 0x63
-                        )
-                        || // HEIC
-                        (
-                            fileBytes[8] == 0x68
-                            && fileBytes[9] == 0x65
-                            && fileBytes[10] == 0x69
-                            && fileBytes[11] == 0x66
-                        )
-                    )
-                ); // HEIF
+            return fileBytes[..2].SequenceEqual(new byte[] { 0xFF, 0xD8 }) // JPEG and JPG
+                || fileBytes[..4].SequenceEqual(new byte[] { 0x89, 0x50, 0x4E, 0x47 }); // PNG
         }
     }
 }
