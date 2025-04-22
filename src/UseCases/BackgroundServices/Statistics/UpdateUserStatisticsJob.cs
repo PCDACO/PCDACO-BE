@@ -22,7 +22,11 @@ public class UpdateUserStatisticsJob(IAppDBContext context)
                         us => us.TotalCompleted,
                         us =>
                             context.Bookings.Count(b =>
-                                b.UserId == us.UserId && b.Status == BookingStatusEnum.Completed
+                                b.UserId == us.UserId
+                                && (
+                                    b.Status == BookingStatusEnum.Completed
+                                    || b.Status == BookingStatusEnum.Done
+                                )
                             )
                     )
                     .SetProperty(

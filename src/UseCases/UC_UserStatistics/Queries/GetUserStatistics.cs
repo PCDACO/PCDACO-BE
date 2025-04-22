@@ -61,7 +61,14 @@ public sealed class GetUserStatistics
                     ? await context
                         .Bookings.AsNoTracking()
                         .Where(b => b.UserId == user.Id && !b.IsDeleted)
-                        .CountAsync(b => b.Status == BookingStatusEnum.Completed, cancellationToken)
+                        .CountAsync(
+                            b =>
+                                (
+                                    b.Status == BookingStatusEnum.Completed
+                                    || b.Status == BookingStatusEnum.Done
+                                ),
+                            cancellationToken
+                        )
                     : 0;
 
             int totalRejected =

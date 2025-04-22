@@ -18,7 +18,11 @@ public class UpdateCarStatisticsJob(IAppDBContext context)
                     cs => cs.TotalCompleted,
                     cs =>
                         context.Bookings.Count(b =>
-                            b.CarId == cs.CarId && b.Status == BookingStatusEnum.Completed
+                            b.CarId == cs.CarId
+                            && (
+                                b.Status == BookingStatusEnum.Completed
+                                || b.Status == BookingStatusEnum.Done
+                            )
                         )
                 )
                 .SetProperty(
