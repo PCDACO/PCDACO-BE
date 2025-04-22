@@ -21,6 +21,7 @@ public sealed class GetBookingPreviewContract
         IAesEncryptionService aesEncryptionService,
         IKeyManagementService keyManagementService,
         EncryptionSettings encryptionSettings,
+        ContractSettings contractSettings,
         CurrentUser currentUser
     ) : IRequestHandler<Query, Result<Response>>
     {
@@ -82,7 +83,10 @@ public sealed class GetBookingPreviewContract
                 DriverSignatureImageUrl = string.Empty,
             };
 
-            string html = ContractTemplateGenerator.GenerateFullContractHtml(contractTemplate);
+            string html = ContractTemplateGenerator.GenerateFullContractHtml(
+                contractTemplate,
+                contractSettings
+            );
 
             return Result.Success(new Response(html));
         }
