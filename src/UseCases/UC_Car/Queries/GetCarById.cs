@@ -120,7 +120,13 @@ public class GetCarById
                     );
                 }
 
-                if (booking.Status != BookingStatusEnum.Pending)
+                if (
+                    booking.Status != BookingStatusEnum.Approved
+                    && booking.Status != BookingStatusEnum.ReadyForPickup
+                    && booking.Status != BookingStatusEnum.Ongoing
+                    && booking.Status != BookingStatusEnum.Completed
+                    && booking.Status != BookingStatusEnum.Done
+                )
                     continue;
 
                 bookingSchedules.Add(
@@ -131,7 +137,7 @@ public class GetCarById
                         decryptedDriverPhone,
                         booking.User.AvatarUrl,
                         booking.StartTime,
-                        booking.EndTime,
+                        booking.ActualReturnTime,
                         booking.Status.ToString()
                     )
                 );

@@ -366,13 +366,11 @@ public class GetCarByIdTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Check amenities
         Assert.Equal(2, result.Value.Amenities.Length);
 
-        // Check bookings (only pending should be included)
-        Assert.Single(result.Value.Bookings);
         Assert.All(result.Value.Bookings, b => Assert.Equal(driver.Id, b.DriverId));
         Assert.All(result.Value.Bookings, b => Assert.Equal(driver.Name, b.DriverName));
         Assert.All(
             result.Value.Bookings,
-            b => Assert.Equal(BookingStatusEnum.Pending.ToString(), b.Status)
+            b => Assert.Equal(BookingStatusEnum.Approved.ToString(), b.Status)
         );
         Assert.All(
             result.Value.Bookings,

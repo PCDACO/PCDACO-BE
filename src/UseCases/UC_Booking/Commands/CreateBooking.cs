@@ -154,7 +154,7 @@ public sealed class CreateBooking
                         && (
                             // Check if any dates overlap
                             b.StartTime.Date <= request.EndTime.Date
-                            && b.EndTime.Date >= request.StartTime.Date
+                            && b.ActualReturnTime.Date >= request.StartTime.Date
                         ),
                     cancellationToken
                 );
