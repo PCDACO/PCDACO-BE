@@ -5,6 +5,7 @@ using FluentValidation;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using UseCases.Abstractions;
+using UseCases.DTOs;
 
 namespace UseCases.UC_GPSDevice.Commands;
 
@@ -12,10 +13,15 @@ public class UnassignGPSDeviceForCar
 {
     public record Command(Guid GPSDeviceId) : IRequest<Result>;
 
-    public class Handler(IAppDBContext context) : IRequestHandler<Command, Result>
+    public class Handler(IAppDBContext context, CurrentUser currentUser)
+        : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
+            // Check if current user is admin or technician
+            if (!currentUser.User!.IsAdmin() && !currentUser.User.IsTechnician())
+                return Result.Forbidden(ResponseMessages.ForbiddenAudit);
+
             // Check if the GPS device exists and is not deleted
             var device = await context
                 .GPSDevices.Where(d => d.Id == request.GPSDeviceId)

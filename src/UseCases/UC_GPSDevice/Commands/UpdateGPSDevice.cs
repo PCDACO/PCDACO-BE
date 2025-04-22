@@ -34,6 +34,9 @@ public class UpdateGPSDevice
                 .FirstOrDefaultAsync(cancellationToken);
             if (updatingGPSDevice is null)
                 return Result.Error(ResponseMessages.GPSDeviceNotFound);
+            // check only device not in use can be updated
+            if (updatingGPSDevice.Status == DeviceStatusEnum.InUsed)
+                return Result.Error("Thiết bị đang được sử dụng không thể cập nhật");
             // update the device
             updatingGPSDevice.Update(request.Name, request.Status);
             // save to DB
