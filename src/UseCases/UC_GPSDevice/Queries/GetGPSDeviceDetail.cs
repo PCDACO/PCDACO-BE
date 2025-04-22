@@ -19,7 +19,7 @@ public class GetGPSDeviceDetail
         Guid Id,
         string OSBuildId,
         string Name,
-        string Status,
+        DeviceStatusEnum Status,
         DateTimeOffset CreatedAt,
         CarDetail? CarDetail
     )
@@ -166,7 +166,7 @@ public class GetGPSDeviceDetail
                 device.Id,
                 device.OSBuildId,
                 device.Name,
-                device.Status.ToString(),
+                device.Status,
                 GetTimestampFromUuid.Execute(device.Id),
                 carDetail
             );
