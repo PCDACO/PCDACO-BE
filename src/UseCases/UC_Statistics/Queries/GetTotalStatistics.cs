@@ -124,7 +124,10 @@ public sealed class GetTotalStatistics
                 // Calculate revenue for this month
                 decimal monthlyRevenue = await context
                     .Bookings.Where(b =>
-                        b.Status == BookingStatusEnum.Completed
+                        (
+                            b.Status == BookingStatusEnum.Completed
+                            || b.Status == BookingStatusEnum.Done
+                        )
                         && !b.IsDeleted
                         && b.ActualReturnTime >= startOfMonth
                         && b.ActualReturnTime <= endOfMonth
@@ -152,7 +155,12 @@ public sealed class GetTotalStatistics
                         GetTimestampFromUuid.Execute(b.Id) >= startOfMonth
                         && GetTimestampFromUuid.Execute(b.Id) <= endOfMonth
                     )
-                    .Where(b => b.Status == BookingStatusEnum.Completed)
+                    .Where(b =>
+                        (
+                            b.Status == BookingStatusEnum.Completed
+                            || b.Status == BookingStatusEnum.Done
+                        )
+                    )
                     .Select(b => b.Id)
                     .Distinct()
                     .Count();
