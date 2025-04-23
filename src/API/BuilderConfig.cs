@@ -110,9 +110,12 @@ public static class BuilderConfig
             options.AddPolicy(
                 "AllowAll",
                 builder =>
-                {
-                    builder.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader();
-                }
+                    // Allow all origins
+                    builder
+                        .SetIsOriginAllowed(_ => true)
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials()
             );
         });
 
