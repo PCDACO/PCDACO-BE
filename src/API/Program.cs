@@ -82,6 +82,7 @@ app.UseMiddleware<AuthMiddleware>();
 app.UseAuthorization();
 app.UseMiddleware<RequestResponseLoggingMiddleware>();
 app.UseHttpsRedirection();
+app.UseCors("AllowAll");
 
 app.MapHub<LocationHub>("location-hub");
 app.MapHub<ScheduleHub>("schedule-hub");
