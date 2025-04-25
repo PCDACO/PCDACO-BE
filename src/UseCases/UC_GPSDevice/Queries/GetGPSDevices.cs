@@ -16,17 +16,19 @@ public class GetGPSDevices
         : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
-        Guid Id,
-        string OSBuildId,
-        string Name,
-        DeviceStatusEnum Status,
-        DateTimeOffset CreatedAt
+     Guid Id,
+     string OSBuildId,
+     Guid? CarId,
+     string Name,
+     string Status,
+     DateTimeOffset CreatedAt
     )
     {
         public static Response FromEntity(GPSDevice device) =>
             new(
                 device.Id,
                 device.OSBuildId,
+                device.GPS?.CarId ?? null,
                 device.Name,
                 device.Status,
                 GetTimestampFromUuid.Execute(device.Id)
@@ -41,8 +43,9 @@ public class GetGPSDevices
             CancellationToken cancellationToken
         )
         {
-            IQueryable<GPSDevice> gpsQuery = context
-                .GPSDevices.AsNoTracking()
+            IQueryable<GPSDevice> gpsQuery = context.GPSDevices
+                .AsNoTracking()
+                .Include(g => g.GPS).ThenInclude(g => g.Car)
                 .Where(gps => !gps.IsDeleted)
                 .Where(gps => EF.Functions.ILike(gps.Name, $"%{request.Keyword}%"))
                 .OrderByDescending(gps => gps.Id);
