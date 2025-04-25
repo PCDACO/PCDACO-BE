@@ -20,7 +20,7 @@ public class GetGPSDevices
      string OSBuildId,
      Guid? CarId,
      string Name,
-     string Status,
+     DeviceStatusEnum Status,
      DateTimeOffset CreatedAt
     )
     {
