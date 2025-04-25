@@ -18,7 +18,7 @@ public class GetGPSDevices
     public record Response(
      Guid Id,
      string OSBuildId,
-     Guid? CarId,
+     CarDetail? Car,
      string Name,
      DeviceStatusEnum Status,
      DateTimeOffset CreatedAt
@@ -28,12 +28,20 @@ public class GetGPSDevices
             new(
                 device.Id,
                 device.OSBuildId,
-                device.GPS?.CarId ?? null,
+                Car: device.GPS.Car != null ? new(
+                    device.GPS.Car.Id,
+                    device.GPS.Car.IsDeleted
+                    ) : null,
                 device.Name,
                 device.Status,
                 GetTimestampFromUuid.Execute(device.Id)
             );
-    };
+    }
+
+    public record CarDetail(
+        Guid Id,
+        bool IsDeleted
+    );
 
     public class Handler(IAppDBContext context)
         : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
