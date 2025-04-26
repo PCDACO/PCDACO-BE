@@ -63,11 +63,16 @@ public sealed class ProcessBookingPayment
             if (booking.IsPaid)
                 return Result.Error("Chuyến đi này đã được thanh toán!");
 
+            var paymentAmount = booking.ExtensionAmount ?? booking.TotalAmount;
+            var description = booking.ExtensionAmount.HasValue
+                ? "Thanh toan gia han"
+                : "Thanh toan don hang";
+
             // Create payment link
             var paymentResult = await paymentService.CreatePaymentLinkAsync(
                 booking.Id,
-                booking.TotalAmount,
-                $"Thanh toan don hang",
+                paymentAmount,
+                description,
                 currentUser.User.Name
             );
 
@@ -83,7 +88,7 @@ public sealed class ProcessBookingPayment
                     ExcessFee: booking.ExcessDayFee,
                     BasePrice: booking.BasePrice,
                     PlatformFee: booking.PlatformFee,
-                    TotalAmount: booking.TotalAmount,
+                    TotalAmount: paymentAmount,
                     PaymentUrl: paymentResult.CheckoutUrl,
                     QrCode: paymentResult.QrCode
                 )
