@@ -123,6 +123,7 @@ public class GetCars
         {
             IQueryable<Car> gettingCarQuery = context
                 .Cars.AsNoTracking()
+                .AsSplitQuery()
                 .Include(c => c.Owner)
                 .ThenInclude(o => o.Feedbacks)
                 .Include(c => c.Model)
@@ -274,8 +275,8 @@ public class GetCars
                 OffsetPaginatedResponse<Response>.Map(
                     processedCars.Select(Response.FromEntity),
                     count,
-                    0,
-                    0,
+                    request.PageNumber,
+                    request.PageSize,
                     hasNext
                 ),
                 ResponseMessages.Fetched
