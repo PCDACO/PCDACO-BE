@@ -45,11 +45,16 @@ public sealed class ProcessBookingPaymentByToken
             if (booking.IsPaid)
                 return Result.Error("Chuyến đi này đã được thanh toán!");
 
+            var paymentAmount = booking.ExtensionAmount ?? booking.TotalAmount;
+            var description = booking.ExtensionAmount.HasValue
+                ? "Thanh toan gia han"
+                : "Thanh toan don hang";
+
             // Create payment link
             var paymentResult = await paymentService.CreatePaymentLinkAsync(
                 booking.Id,
-                booking.TotalAmount,
-                $"Thanh toan don hang",
+                paymentAmount,
+                description,
                 booking.User.Name
             );
 

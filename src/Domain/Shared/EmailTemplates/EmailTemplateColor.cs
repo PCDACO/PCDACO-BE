@@ -22,6 +22,11 @@ public static class EmailTemplateColors
     public const string CompleteBackground = "#e8f3f5";
     public const string CompleteAccent = "#1976D2";
 
+    // Warning colors for expired/timeout notifications
+    public const string WarningHeader = "#FF9800"; // Orange
+    public const string WarningBackground = "#fff3e0"; // Light Orange
+    public const string WarningAccent = "#F57C00"; // Dark Orange
+
     public const string Warning = "#fff3e0";
     public const string Footer = "#666";
 }

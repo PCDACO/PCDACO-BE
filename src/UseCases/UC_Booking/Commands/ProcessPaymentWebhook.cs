@@ -113,6 +113,9 @@ public sealed class ProcessPaymentWebhook
 
             // Update booking and statistics
             booking.IsPaid = true;
+            booking.PayOSOrderCode = null;
+            booking.ExtensionAmount = null;
+            booking.IsExtensionPaid = true;
 
             context.Transactions.AddRange(
                 bookingPayment,
