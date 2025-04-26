@@ -145,6 +145,7 @@ public static class ContractTemplateGenerator
                         f) Nếu Bên B không thanh toán số tiền phát sinh (bao gồm khoản chênh lệch từ tiền thế chấp hoặc phạt mới)
                         và không cung cấp biên lai xác nhận thanh toán trong thời gian quy định, thì Bên B sẽ không được phép đặt đơn thuê xe mới
                         cho đến khi các khoản nợ được thanh toán đầy đủ và có biên lai chứng từ hợp lệ.
+                        g) Trong trường hợp vi phạm bị cơ quan nhà nước giữ xe, BÊN THUÊ chịu chi phí thuê xe cho đến khi FreeDriver nhận lại xe.
                     </p>
                 </div>
 
@@ -215,6 +216,12 @@ public static class ContractTemplateGenerator
                         <br/>
                         - Bên B có quyền tự xử lý vệ sinh xe hoặc đổ xăng bổ sung trong vòng 2 giờ kể từ thời điểm trả xe
                           để tránh các khoản phí phạt.
+                        <br/>
+                        - Đối với xe xăng:
+                            + Trong trường hợp xe được trả lại trong tình trạng không đủ nhiên liệu như khi nhận xe, thì tiền đổ xăng cho phần chênh lệch được tính theo đơn giá 30.000 VND/lít. Không hoàn xăng khi đổ dư.
+                        - Đối với xe điện:
+                            + Thu phí điện và pin từ BÊN THUÊ theo đơn giá 2,000VND / 1 km di chuyển.
+                            + (Phí chưa bao gồm thuế VAT)
                     </p>
                 </div>
 
