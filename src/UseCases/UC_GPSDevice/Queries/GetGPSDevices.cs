@@ -16,32 +16,28 @@ public class GetGPSDevices
         : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
-     Guid Id,
-     string OSBuildId,
-     CarDetail? Car,
-     string Name,
-     DeviceStatusEnum Status,
-     DateTimeOffset CreatedAt
+        Guid Id,
+        string OSBuildId,
+        CarDetail? Car,
+        string Name,
+        DeviceStatusEnum Status,
+        DateTimeOffset CreatedAt
     )
     {
         public static Response FromEntity(GPSDevice device) =>
             new(
                 device.Id,
                 device.OSBuildId,
-                Car: device.GPS.Car != null ? new(
-                    device.GPS.Car.Id,
-                    device.GPS.Car.IsDeleted
-                    ) : null,
+                Car: device.GPS?.Car != null
+                    ? new(device.GPS.Car.Id, device.GPS.Car.IsDeleted)
+                    : null,
                 device.Name,
                 device.Status,
                 GetTimestampFromUuid.Execute(device.Id)
             );
     }
 
-    public record CarDetail(
-        Guid Id,
-        bool IsDeleted
-    );
+    public record CarDetail(Guid Id, bool IsDeleted);
 
     public class Handler(IAppDBContext context)
         : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
@@ -51,9 +47,10 @@ public class GetGPSDevices
             CancellationToken cancellationToken
         )
         {
-            IQueryable<GPSDevice> gpsQuery = context.GPSDevices
-                .AsNoTracking()
-                .Include(g => g.GPS).ThenInclude(g => g.Car)
+            IQueryable<GPSDevice> gpsQuery = context
+                .GPSDevices.AsNoTracking()
+                .Include(g => g.GPS)
+                .ThenInclude(g => g.Car)
                 .Where(gps => !gps.IsDeleted)
                 .Where(gps => EF.Functions.ILike(gps.Name, $"%{request.Keyword}%"))
                 .OrderByDescending(gps => gps.Id);
