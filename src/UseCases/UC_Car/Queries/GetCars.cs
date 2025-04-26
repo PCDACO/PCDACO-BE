@@ -21,11 +21,11 @@ public class GetCars
         Guid[]? Amenities,
         Guid? FuelTypes,
         Guid? TransmissionTypes,
-        Guid? LastCarId,
-        int Limit,
         string Keyword,
         DateTimeOffset? StartTime,
-        DateTimeOffset? EndTime
+        DateTimeOffset? EndTime,
+        int PageNumber = 1,
+        int PageSize = 10
     ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
@@ -56,12 +56,7 @@ public class GetCars
         AmenityDetail[] Amenities
     )
     {
-        public static async Task<Response> FromEntity(
-            Car car,
-            string masterKey,
-            IAesEncryptionService aesEncryptionService,
-            IKeyManagementService keyManagementService
-        )
+        public static Response FromEntity(Car car)
         {
             return new(
                 Id: car.Id,
@@ -95,7 +90,7 @@ public class GetCars
                 Images:
                 [
                     .. car.ImageCars?.Select(i => new ImageDetail(i.Id, i.Url, i.Type.Name, i.Name))
-                        ?? []
+                        ?? [],
                 ],
                 Amenities:
                 [
@@ -118,13 +113,8 @@ public class GetCars
 
     public record AmenityDetail(Guid Id, string Name, string Description, string Icon);
 
-    public class Handler(
-        IAppDBContext context,
-        GeometryFactory geometryFactory,
-        IAesEncryptionService aesEncryptionService,
-        IKeyManagementService keyManagementService,
-        EncryptionSettings encryptionSettings
-    ) : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
+    public class Handler(IAppDBContext context, GeometryFactory geometryFactory)
+        : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
     {
         public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(
             Query request,
@@ -249,13 +239,15 @@ public class GetCars
                 );
             }
             gettingCarQuery = gettingCarQuery
-                .Where(c => request.LastCarId == null || request.LastCarId > c.Id)
                 .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point))
                 .ThenByDescending(c => c.Id);
             int count = await gettingCarQuery.CountAsync(cancellationToken);
             List<Car> carResult = await gettingCarQuery
-                .Take(request.Limit)
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
                 .ToListAsync(cancellationToken);
+            // Calculate HasNext
+            bool hasNext = gettingCarQuery.Skip(request.PageNumber * request.PageSize).Any();
             var processedCars = carResult
                 .Select(car =>
                 {
@@ -280,21 +272,11 @@ public class GetCars
                 .ToList();
             return Result.Success(
                 OffsetPaginatedResponse<Response>.Map(
-                    (
-                        await Task.WhenAll(
-                            processedCars.Select(async c =>
-                                await Response.FromEntity(
-                                    c,
-                                    encryptionSettings.Key,
-                                    aesEncryptionService,
-                                    keyManagementService
-                                )
-                            )
-                        )
-                    ).AsEnumerable(),
+                    processedCars.Select(Response.FromEntity),
                     count,
                     0,
-                    0
+                    0,
+                    hasNext
                 ),
                 ResponseMessages.Fetched
             );

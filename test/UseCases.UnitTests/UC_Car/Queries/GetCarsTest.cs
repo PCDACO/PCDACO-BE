@@ -24,9 +24,6 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
     private readonly Func<Task> _resetDatabase = fixture.ResetDatabaseAsync;
     private readonly GeometryFactory _geometryFactory =
         NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-    private readonly IAesEncryptionService _aesService = fixture.AesEncryptionService;
-    private readonly IKeyManagementService _keyService = fixture.KeyManagementService;
-    private readonly EncryptionSettings _encryptionSettings = fixture.EncryptionSettings;
 
     public Task InitializeAsync() => Task.CompletedTask;
 
@@ -81,13 +78,7 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             "GHI-13579"
         );
 
-        var handler = new GetCars.Handler(
-            _dbContext,
-            _geometryFactory,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCars.Handler(_dbContext, _geometryFactory);
 
         var query = new GetCars.Query(
             Latitude: null,
@@ -97,8 +88,6 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             Amenities: null,
             FuelTypes: null,
             TransmissionTypes: null,
-            LastCarId: null,
-            Limit: 10,
             Keyword: string.Empty,
             StartTime: null,
             EndTime: null
@@ -111,6 +100,7 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Equal(3, result.Value.TotalItems); // Only available cars should be returned
         Assert.Equal(3, result.Value.Items.Count());
+        Assert.All(result.Value.Items, item => Assert.Equal("Available", item.Status));
     }
 
     [Fact]
@@ -167,13 +157,7 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             "DEF-24680"
         );
 
-        var handler = new GetCars.Handler(
-            _dbContext,
-            _geometryFactory,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCars.Handler(_dbContext, _geometryFactory);
 
         var query = new GetCars.Query(
             Latitude: null,
@@ -183,8 +167,6 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             Amenities: null,
             FuelTypes: null,
             TransmissionTypes: null,
-            LastCarId: null,
-            Limit: 10,
             Keyword: string.Empty,
             StartTime: null,
             EndTime: null
@@ -254,13 +236,7 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
         // No amenities for car3
 
-        var handler = new GetCars.Handler(
-            _dbContext,
-            _geometryFactory,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCars.Handler(_dbContext, _geometryFactory);
 
         var query = new GetCars.Query(
             Latitude: null,
@@ -270,8 +246,6 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             Amenities: new[] { amenity1.Id, amenity2.Id },
             FuelTypes: null,
             TransmissionTypes: null,
-            LastCarId: null,
-            Limit: 10,
             Keyword: string.Empty,
             StartTime: null,
             EndTime: null
@@ -284,6 +258,12 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Equal(1, result.Value.TotalItems); // Only car1 has both amenities
         Assert.Equal(car1.Id, result.Value.Items.First().Id);
+
+        // Verify amenities in the response
+        var responseAmenities = result.Value.Items.First().Amenities;
+        Assert.Equal(2, responseAmenities.Length);
+        Assert.Contains(responseAmenities, a => a.Id == amenity1.Id);
+        Assert.Contains(responseAmenities, a => a.Id == amenity2.Id);
     }
 
     [Fact]
@@ -344,13 +324,7 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             "GHI-13579"
         );
 
-        var handler = new GetCars.Handler(
-            _dbContext,
-            _geometryFactory,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCars.Handler(_dbContext, _geometryFactory);
 
         var query = new GetCars.Query(
             Latitude: null,
@@ -360,8 +334,6 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             Amenities: null,
             FuelTypes: electricFuel.Id,
             TransmissionTypes: automaticTransmission.Id,
-            LastCarId: null,
-            Limit: 10,
             Keyword: string.Empty,
             StartTime: null,
             EndTime: null
@@ -375,7 +347,9 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
         Assert.Equal(1, result.Value.TotalItems); // Only one car matches both criteria
         var car = result.Value.Items.First();
         Assert.Equal(electricFuel.Id, car.FuelTypeId);
+        Assert.Equal("Electric", car.FuelType);
         Assert.Equal(automaticTransmission.Id, car.TransmissionId);
+        Assert.Equal("Automatic", car.TransmissionType);
     }
 
     [Fact]
@@ -431,13 +405,7 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             "DEF-24680"
         );
 
-        var handler = new GetCars.Handler(
-            _dbContext,
-            _geometryFactory,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCars.Handler(_dbContext, _geometryFactory);
 
         var query = new GetCars.Query(
             Latitude: null,
@@ -447,8 +415,6 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             Amenities: null,
             FuelTypes: null,
             TransmissionTypes: null,
-            LastCarId: null,
-            Limit: 10,
             Keyword: "SUV",
             StartTime: null,
             EndTime: null
@@ -519,13 +485,7 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             centerLongitude + 0.1
         ); // ~15km away
 
-        var handler = new GetCars.Handler(
-            _dbContext,
-            _geometryFactory,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCars.Handler(_dbContext, _geometryFactory);
 
         var query = new GetCars.Query(
             Latitude: (decimal)centerLatitude,
@@ -535,8 +495,6 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             Amenities: null,
             FuelTypes: null,
             TransmissionTypes: null,
-            LastCarId: null,
-            Limit: 10,
             Keyword: string.Empty,
             StartTime: null,
             EndTime: null
@@ -548,6 +506,18 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Equal(2, result.Value.TotalItems); // Only the first 2 cars should be within 5km
+
+        // Verify that location data is included in the response
+        foreach (var car in result.Value.Items)
+        {
+            Assert.NotNull(car.Location);
+            // Verify cars are within reasonable distance
+            var distance = Math.Sqrt(
+                Math.Pow(car.Location.Latitude - centerLatitude, 2)
+                    + Math.Pow(car.Location.Longtitude - centerLongitude, 2)
+            );
+            Assert.True(distance * 111320 < 5000); // Approximate conversion to meters
+        }
     }
 
     [Fact]
@@ -623,13 +593,7 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
 
         // Car 3: No bookings
 
-        var handler = new GetCars.Handler(
-            _dbContext,
-            _geometryFactory,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCars.Handler(_dbContext, _geometryFactory);
 
         // Query for cars available in 2 days (should exclude car 2)
         var queryDate = DateTime.UtcNow.AddDays(2);
@@ -641,8 +605,6 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             Amenities: null,
             FuelTypes: null,
             TransmissionTypes: null,
-            LastCarId: null,
-            Limit: 10,
             Keyword: string.Empty,
             StartTime: queryDate,
             EndTime: queryDate.AddDays(1)
@@ -654,15 +616,21 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Equal(2, result.Value.TotalItems); // Car 1 and Car 3 should be available
-        // Car 2 should be excluded (marked as rented) due to booking conflict
-        Assert.DoesNotContain(
-            result.Value.Items,
-            item => item.Id == car2.Id && item.Status == "Available"
-        );
+
+        // Car 2 should be excluded due to booking conflict or marked as Rented
+        var car2Status = result.Value.Items.FirstOrDefault(item => item.Id == car2.Id)?.Status;
+        if (car2Status != null)
+        {
+            Assert.Equal("Rented", car2Status);
+        }
+        else
+        {
+            Assert.DoesNotContain(result.Value.Items, item => item.Id == car2.Id);
+        }
     }
 
     [Fact]
-    public async Task Handle_UsesPagination_WhenLastCarIdProvided()
+    public async Task Handle_UsesPagination_Correctly()
     {
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
@@ -676,57 +644,22 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
 
-        // Create cars with specific IDs to ensure ordering
-        var car1 = await CreateTestCar(
-            owner.Id,
-            model.Id,
-            transmission.Id,
-            fuelType.Id,
-            CarStatusEnum.Available,
-            "CAR-00001"
-        );
-        var car2 = await CreateTestCar(
-            owner.Id,
-            model.Id,
-            transmission.Id,
-            fuelType.Id,
-            CarStatusEnum.Available,
-            "CAR-00002"
-        );
-        var car3 = await CreateTestCar(
-            owner.Id,
-            model.Id,
-            transmission.Id,
-            fuelType.Id,
-            CarStatusEnum.Available,
-            "CAR-00003"
-        );
-        var car4 = await CreateTestCar(
-            owner.Id,
-            model.Id,
-            transmission.Id,
-            fuelType.Id,
-            CarStatusEnum.Available,
-            "CAR-00004"
-        );
-        var car5 = await CreateTestCar(
-            owner.Id,
-            model.Id,
-            transmission.Id,
-            fuelType.Id,
-            CarStatusEnum.Available,
-            "CAR-00005"
-        );
+        // Create 5 cars
+        for (int i = 1; i <= 5; i++)
+        {
+            await CreateTestCar(
+                owner.Id,
+                model.Id,
+                transmission.Id,
+                fuelType.Id,
+                CarStatusEnum.Available,
+                $"CAR-{i:D5}"
+            );
+        }
 
-        var handler = new GetCars.Handler(
-            _dbContext,
-            _geometryFactory,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        var handler = new GetCars.Handler(_dbContext, _geometryFactory);
 
-        // First page query (2 items)
+        // First page query (2 items per page)
         var firstPageQuery = new GetCars.Query(
             Latitude: null,
             Longtitude: null,
@@ -735,18 +668,14 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             Amenities: null,
             FuelTypes: null,
             TransmissionTypes: null,
-            LastCarId: null,
-            Limit: 2,
             Keyword: string.Empty,
             StartTime: null,
-            EndTime: null
+            EndTime: null,
+            PageNumber: 1,
+            PageSize: 2
         );
 
-        // Act - First page
-        var firstPageResult = await handler.Handle(firstPageQuery, CancellationToken.None);
-        var lastCarId = firstPageResult.Value.Items.Last().Id;
-
-        // Second page query (use last car ID from first page)
+        // Second page query
         var secondPageQuery = new GetCars.Query(
             Latitude: null,
             Longtitude: null,
@@ -755,37 +684,46 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             Amenities: null,
             FuelTypes: null,
             TransmissionTypes: null,
-            LastCarId: lastCarId,
-            Limit: 2,
             Keyword: string.Empty,
             StartTime: null,
-            EndTime: null
+            EndTime: null,
+            PageNumber: 2,
+            PageSize: 2
         );
 
-        // Act - Second page
+        // Act
+        var firstPageResult = await handler.Handle(firstPageQuery, CancellationToken.None);
         var secondPageResult = await handler.Handle(secondPageQuery, CancellationToken.None);
 
         // Assert
         Assert.Equal(ResultStatus.Ok, firstPageResult.Status);
-        Assert.Equal(2, firstPageResult.Value.Items.Count());
-
         Assert.Equal(ResultStatus.Ok, secondPageResult.Status);
-        Assert.Equal(2, secondPageResult.Value.Items.Count());
+
+        Assert.Equal(5, firstPageResult.Value.TotalItems); // Total count should be 5
+        Assert.Equal(2, firstPageResult.Value.Items.Count()); // First page has 2 items
+        Assert.Equal(2, secondPageResult.Value.Items.Count()); // Second page has 2 items
+
+        // Check that hasNext is correct
+        Assert.True(firstPageResult.Value.HasNext);
+        Assert.True(secondPageResult.Value.HasNext); // There should be a third page
 
         // Ensure no overlap between pages
-        var firstPageIds = firstPageResult.Value.Items.Select(c => c.Id);
-        var secondPageIds = secondPageResult.Value.Items.Select(c => c.Id);
+        var firstPageIds = firstPageResult.Value.Items.Select(c => c.Id).ToList();
+        var secondPageIds = secondPageResult.Value.Items.Select(c => c.Id).ToList();
         Assert.Empty(firstPageIds.Intersect(secondPageIds));
     }
 
     [Fact]
-    public async Task Handle_DecryptsLicensePlate_ForEachCar()
+    public async Task Handle_ReturnsCarDetails_WithAllRelatedData()
     {
         // Arrange
         UserRole ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
         var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
 
-        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(
+            _dbContext,
+            "BMW"
+        );
         var model = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
         var transmission = await TestDataTransmissionType.CreateTestTransmissionType(
             _dbContext,
@@ -793,24 +731,31 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
         );
         var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
 
-        // Create a car with known license plate
-        string plainLicensePlate = "TEST-9999";
-        await CreateTestCar(
+        var amenities = await TestDataCreateAmenity.CreateTestAmenities(_dbContext);
+
+        // Create car with specific details
+        var car = await CreateTestCar(
             owner.Id,
             model.Id,
             transmission.Id,
             fuelType.Id,
             CarStatusEnum.Available,
-            plainLicensePlate
+            "BMW-X5-123",
+            10.7756587,
+            106.7004238,
+            "Black",
+            5,
+            "Luxury SUV with all features",
+            8.5m,
+            250.00m,
+            true
         );
 
-        var handler = new GetCars.Handler(
-            _dbContext,
-            _geometryFactory,
-            _aesService,
-            _keyService,
-            _encryptionSettings
-        );
+        // Add amenities
+        await AddAmenityToCar(car.Id, amenities[0].Id);
+        await AddAmenityToCar(car.Id, amenities[1].Id);
+
+        var handler = new GetCars.Handler(_dbContext, _geometryFactory);
 
         var query = new GetCars.Query(
             Latitude: null,
@@ -820,8 +765,6 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             Amenities: null,
             FuelTypes: null,
             TransmissionTypes: null,
-            LastCarId: null,
-            Limit: 10,
             Keyword: string.Empty,
             StartTime: null,
             EndTime: null
@@ -833,7 +776,20 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
         // Assert
         Assert.Equal(ResultStatus.Ok, result.Status);
         Assert.Equal(1, result.Value.TotalItems);
-        Assert.Equal(plainLicensePlate, result.Value.Items.First().LicensePlate);
+
+        var carResponse = result.Value.Items.First();
+        Assert.Equal("Test Model", carResponse.ModelName);
+        Assert.Equal("Black", carResponse.Color);
+        Assert.Equal(5, carResponse.Seat);
+        Assert.Equal("Luxury SUV with all features", carResponse.Description);
+        Assert.Equal("Automatic", carResponse.TransmissionType);
+        Assert.Equal("Electric", carResponse.FuelType);
+        Assert.Equal(8.5m, carResponse.FuelConsumption);
+        Assert.True(carResponse.RequiresCollateral);
+        Assert.Equal(250.00m, carResponse.Price);
+        Assert.Equal("BMW", carResponse.Manufacturer.Name);
+        Assert.Equal(2, carResponse.Amenities.Length);
+        Assert.NotNull(carResponse.Location);
     }
 
     #region Helper Methods
@@ -846,7 +802,13 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
         CarStatusEnum status,
         string licensePlate,
         double latitude = 10.7756587,
-        double longitude = 106.7004238
+        double longitude = 106.7004238,
+        string color = "Red",
+        int seat = 4,
+        string description = "Test car description",
+        decimal fuelConsumption = 7.5m,
+        decimal price = 100m,
+        bool requiresCollateral = false
     )
     {
         // Create pickup location point
@@ -864,12 +826,12 @@ public class GetCarsTest(DatabaseTestBase fixture) : IAsyncLifetime
             FuelTypeId = fuelTypeId,
             TransmissionTypeId = transmissionTypeId,
             Status = status,
-            Color = "Red",
-            Seat = 4,
-            Description = "Test car description",
-            FuelConsumption = 7.5m,
-            Price = 100m,
-            RequiresCollateral = false,
+            Color = color,
+            Seat = seat,
+            Description = description,
+            FuelConsumption = fuelConsumption,
+            Price = price,
+            RequiresCollateral = requiresCollateral,
             Terms = "Standard terms",
             PickupLocation = pickupLocation,
             PickupAddress = "Test Address",
