@@ -145,13 +145,26 @@ public sealed class ApproveInspectionSchedule
             // Set Car Status into available
             if (request.IsApproved)
             {
-                await context
-                    .Cars.Where(c => !c.IsDeleted)
-                    .Where(c => c.Id == schedule.CarId)
-                    .ExecuteUpdateAsync(
-                        c => c.SetProperty(c => c.Status, CarStatusEnum.Available),
-                        cancellationToken: cancellationToken
-                    );
+                if (isDeactivationReport)
+                {
+                    await context
+                        .Cars.Where(c => !c.IsDeleted)
+                        .Where(c => c.Id == schedule.CarId)
+                        .ExecuteUpdateAsync(
+                            c => c.SetProperty(c => c.Status, CarStatusEnum.Inactive),
+                            cancellationToken: cancellationToken
+                        );
+                }
+                else
+                {
+                    await context
+                        .Cars.Where(c => !c.IsDeleted)
+                        .Where(c => c.Id == schedule.CarId)
+                        .ExecuteUpdateAsync(
+                            c => c.SetProperty(c => c.Status, CarStatusEnum.Available),
+                            cancellationToken: cancellationToken
+                        );
+                }
             }
             await context.SaveChangesAsync(cancellationToken);
             return Result.Success(Response.FromEntity(schedule), ResponseMessages.Updated);

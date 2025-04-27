@@ -84,7 +84,13 @@ public class GetCarReportById
                         report.InspectionSchedule.InspectionAddress,
                         report.InspectionSchedule.InspectionDate,
                         report.InspectionSchedule.Note,
-                        [.. report.InspectionSchedule.Photos.Select(p => p.PhotoUrl)]
+                        [
+                            .. report.InspectionSchedule.Photos.Select(p => new PhotoDetail(
+                                p.Id,
+                                p.PhotoUrl,
+                                p.Type.ToString()
+                            )),
+                        ]
                     )
                     : null
             );
@@ -113,8 +119,10 @@ public class GetCarReportById
         string? InspectionAddress,
         DateTimeOffset? InspectionDate,
         string? Note,
-        string[]? PhotoUrls
+        PhotoDetail[]? Photos
     );
+
+    public sealed record PhotoDetail(Guid Id, string Url, string Type);
 
     private sealed class Handler(
         IAppDBContext context,

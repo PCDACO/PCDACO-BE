@@ -50,13 +50,16 @@ public sealed class EnableCar
             if (car.Status != CarStatusEnum.Inactive)
                 return Result.Error(ResponseMessages.CarMustBeInactiveToBeEnabled);
 
-            // Check if car does not have any gps attached then return error
+            // Check if car does not have any gps attached then car status is pending
             var carGps = await context
                 .CarGPSes.AsNoTracking()
                 .Where(c => c.CarId == request.Id)
                 .FirstOrDefaultAsync(cancellationToken);
             if (carGps is null)
-                return Result.Error("Xe chưa được gán thiết bị gps không thể kích hoạt lại");
+            {
+                car.Status = CarStatusEnum.Pending;
+                car.UpdatedAt = DateTimeOffset.UtcNow;
+            }
 
             // Update car status to Available
             car.Status = CarStatusEnum.Available;

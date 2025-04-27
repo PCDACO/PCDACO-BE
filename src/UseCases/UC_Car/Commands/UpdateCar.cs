@@ -54,6 +54,16 @@ public sealed class UpdateCar
                 .Cars.FirstOrDefaultAsync(c => c.Id == request.CarId, cancellationToken);
             if (checkingCar is null)
                 return Result.Error(ResponseMessages.CarNotFound);
+
+            // Check if license plate exists
+            var checkingLicensePlate = await context
+                .Cars.AsNoTracking()
+                .FirstOrDefaultAsync(
+                    c => c.LicensePlate == request.LicensePlate && c.Id != request.CarId, // check for other cars
+                    cancellationToken
+                );
+            if (checkingLicensePlate is not null)
+                return Result.Error("Biển số xe đã tồn tại trong hệ thống !");
             
             //Check if car belongs to any active bookings then cannot update
             var activeBookings = context

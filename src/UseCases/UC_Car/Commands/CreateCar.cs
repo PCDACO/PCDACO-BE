@@ -69,6 +69,17 @@ public sealed class CreateCar
                 return Result.Error(
                     "Bằng lái xe của bạn không hợp lệ hoặc đã hết hạn. Vui lòng cập nhật thông tin bằng lái xe trước khi tạo xe."
                 );
+
+            // Check if license plate exists
+            var checkingLicensePlate = await context
+                .Cars.AsNoTracking()
+                .FirstOrDefaultAsync(
+                    c => c.LicensePlate == request.LicensePlate,
+                    cancellationToken
+                );
+            if (checkingLicensePlate is not null)
+                return Result.Error("Biển số xe đã tồn tại trong hệ thống !");
+                
             // Check if amenities are exist
             if (request.AmenityIds.Length > 0)
             {
