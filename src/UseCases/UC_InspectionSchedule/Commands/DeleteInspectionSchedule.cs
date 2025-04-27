@@ -33,11 +33,9 @@ public sealed class DeleteInspectionSchedule
             if (schedule.Status != Domain.Enums.InspectionScheduleStatusEnum.Pending)
                 return Result.Conflict(ResponseMessages.OnlyDeletePendingInspectionSchedule);
 
-            // verify only datetimeoffset.utcnow faster than schedule.InspectionDate 1 day can delete
-            if (DateTimeOffset.UtcNow.AddDays(1) > schedule.InspectionDate)
-                return Result.Error(
-                    ResponseMessages.CannotDeleteScheduleHasInspectionDateLessThen1DayFromNow
-                );
+            // Verify schedule is not in inspection time or greater
+            if (DateTimeOffset.UtcNow >= schedule.InspectionDate)
+                return Result.Error(ResponseMessages.CannotDeleteScheduleInProgressOrInThePast);
 
             // Soft delete the schedule
             schedule.Delete();

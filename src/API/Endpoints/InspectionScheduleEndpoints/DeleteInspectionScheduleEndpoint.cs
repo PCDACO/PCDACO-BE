@@ -1,6 +1,9 @@
 using API.Utils;
 using Ardalis.Result;
 using Carter;
+
+using Domain.Constants;
+
 using MediatR;
 using Microsoft.OpenApi.Any;
 using UseCases.UC_InspectionSchedule.Commands;
@@ -63,7 +66,7 @@ public class DeleteInspectionScheduleEndpoint : ICarterModule
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
-                                            "Không thể xóa lịch kiểm định có ngày kiểm định cách ngày hiện tại ít hơn 1 ngày"
+                                            ResponseMessages.CannotDeleteScheduleInProgressOrInThePast
                                         ),
                                     },
                                 },

@@ -60,10 +60,12 @@ public sealed class EnableCar
                 car.Status = CarStatusEnum.Pending;
                 car.UpdatedAt = DateTimeOffset.UtcNow;
             }
-
-            // Update car status to Available
-            car.Status = CarStatusEnum.Available;
-            car.UpdatedAt = DateTimeOffset.UtcNow;
+            else
+            {
+                // Update car status to Available
+                car.Status = CarStatusEnum.Available;
+                car.UpdatedAt = DateTimeOffset.UtcNow;
+            }
 
             await context.SaveChangesAsync(cancellationToken);
 
