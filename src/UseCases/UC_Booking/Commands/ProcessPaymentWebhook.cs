@@ -151,8 +151,6 @@ public sealed class ProcessPaymentWebhook
                     )
             );
 
-            ScheduleBalanceUnlockJob(booking, cancellationToken);
-
             return Result.Success();
         }
 
@@ -253,30 +251,6 @@ public sealed class ProcessPaymentWebhook
                 ownerEmail,
                 "Thông Báo: Có Yêu Cầu Đặt Xe Mới",
                 ownerEmailTemplate
-            );
-        }
-
-        private static void ScheduleBalanceUnlockJob(
-            Booking booking,
-            CancellationToken cancellationToken
-        )
-        {
-            // Schedule balance unlock job for the later of:
-            // 1. 3 days before start (cancellation period)
-            // 2. Half of the booking duration (early return refund period)
-            var bookingDuration = (booking.EndTime - booking.StartTime).TotalDays;
-            var halfwayPoint = booking.StartTime.AddDays(Math.Ceiling(bookingDuration / 2));
-            var unlockDate = new DateTimeOffset(
-                Math.Max(
-                    booking.StartTime.AddDays(-3).Ticks, // Cancellation period
-                    halfwayPoint.Ticks // Early return period
-                ),
-                TimeSpan.Zero
-            );
-
-            BackgroundJob.Schedule<UnlockOwnerBalanceJob>(
-                job => job.UnlockBalance(booking.Id),
-                unlockDate
             );
         }
     }
