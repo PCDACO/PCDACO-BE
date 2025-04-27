@@ -111,11 +111,22 @@ public sealed class ProcessPaymentWebhook
                 Amount = ownerEarningTransaction.Amount
             };
 
-            // Update booking and statistics
-            booking.IsPaid = true;
-            booking.PayOSOrderCode = null;
-            booking.ExtensionAmount = null;
-            booking.IsExtensionPaid = true;
+            bool isExtensionPayment = webhookData.description == "Thanh toan gia han";
+
+            if (isExtensionPayment)
+            {
+                // Handle extension payment logic
+                booking.IsPaid = true;
+                booking.ExtensionAmount = null; // Reset if necessary
+                booking.IsExtensionPaid = true; // Mark as paid
+            }
+            else
+            {
+                // Handle regular booking payment logic
+                booking.IsPaid = true;
+                booking.ExtensionAmount = null; // Reset if necessary
+                booking.IsExtensionPaid = false; // Ensure this is false for regular payments
+            }
 
             context.Transactions.AddRange(
                 bookingPayment,
