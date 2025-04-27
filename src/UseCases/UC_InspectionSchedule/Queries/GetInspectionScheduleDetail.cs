@@ -146,6 +146,7 @@ public class GetInspectionScheduleDetail
                 .Include(i => i.Car)
                 .ThenInclude(c => c.Contract)
                 .Include(i => i.Technician)
+                .Include(i => i.Photos)
                 .Where(i => !i.IsDeleted)
                 .Where(i => i.Id == request.Id)
                 .FirstOrDefaultAsync(cancellationToken);
