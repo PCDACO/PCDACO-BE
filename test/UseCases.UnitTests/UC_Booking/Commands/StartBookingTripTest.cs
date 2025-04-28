@@ -193,7 +193,10 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             driver.Id,
             car.Id,
-            BookingStatusEnum.ReadyForPickup
+            BookingStatusEnum.ReadyForPickup,
+            null,
+            null,
+            true
         );
 
         // Setup contract for the booking
@@ -295,7 +298,10 @@ public class StartBookingTripTests(DatabaseTestBase fixture) : IAsyncLifetime
             _dbContext,
             driver.Id,
             car.Id,
-            BookingStatusEnum.ReadyForPickup
+            BookingStatusEnum.ReadyForPickup,
+            null,
+            null,
+            true
         );
 
         // Setup contract for the booking

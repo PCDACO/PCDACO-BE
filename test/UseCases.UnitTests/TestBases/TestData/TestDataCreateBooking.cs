@@ -13,7 +13,8 @@ public static class TestDataCreateBooking
         Guid carId,
         BookingStatusEnum status,
         DateTime? startTime = null,
-        DateTime? endTime = null
+        DateTime? endTime = null,
+        bool isPaid = false
     ) =>
         new()
         {
@@ -29,6 +30,7 @@ public static class TestDataCreateBooking
             ExcessDay = 0,
             ExcessDayFee = 0,
             TotalAmount = 110m,
+            IsPaid = isPaid,
             Note = "Test note",
         };
 
@@ -38,7 +40,8 @@ public static class TestDataCreateBooking
         Guid carId,
         BookingStatusEnum status,
         DateTime? startTime = null,
-        DateTime? endTime = null
+        DateTime? endTime = null,
+        bool? isPaid = false
     )
     {
         var booking = CreateBooking(userId, carId, status, startTime, endTime);
