@@ -186,8 +186,7 @@ public class GetCarDetailByAdminOrStaff
                 contractDetail,
                 feedbacks,
                 car.InspectionSchedules.Any(s =>
-                    s.Status == InspectionScheduleStatusEnum.Approved
-                    || s.Status == InspectionScheduleStatusEnum.InProgress
+                    s.Status == InspectionScheduleStatusEnum.InProgress
                     || s.Status == InspectionScheduleStatusEnum.Pending
                     || s.Status == InspectionScheduleStatusEnum.Signed
                 )
