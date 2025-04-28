@@ -50,6 +50,19 @@ public sealed class ProcessBookingPayment
                     "Bạn không có quyền thực hiện chức năng này với booking này!"
                 );
 
+            // Check payment status based on payment type
+            bool isExtensionPayment = booking.ExtensionAmount.HasValue;
+            if (isExtensionPayment)
+            {
+                if (booking.IsExtensionPaid == true)
+                    return Result.Error("Phí gia hạn này đã được thanh toán!");
+            }
+            else
+            {
+                if (booking.IsPaid)
+                    return Result.Error("Chuyến đi này đã được thanh toán!");
+            }
+
             if (
                 booking.Status == BookingStatusEnum.Pending
                 || booking.Status == BookingStatusEnum.Rejected
@@ -59,9 +72,6 @@ public sealed class ProcessBookingPayment
                 return Result.Error(
                     "Chỉ có thể thanh toán chuyến đi khi đã được chủ xe chấp thuận!"
                 );
-
-            if (booking.IsPaid)
-                return Result.Error("Chuyến đi này đã được thanh toán!");
 
             var paymentAmount = booking.ExtensionAmount ?? booking.TotalAmount;
             var description = booking.ExtensionAmount.HasValue
