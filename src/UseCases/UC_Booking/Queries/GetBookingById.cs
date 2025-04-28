@@ -89,6 +89,8 @@ public sealed class GetBookingById
                     booking.IsRefund,
                     booking.RefundAmount ?? 0,
                     booking.RefundDate,
+                    booking.ExtensionAmount,
+                    booking.IsExtensionPaid,
                     GetPreInspectionPhotos(booking),
                     GetPostInspectionPhotos(booking)
                 ),
@@ -266,6 +268,8 @@ public sealed class GetBookingById
         bool IsRefund,
         decimal? RefundAmount,
         DateTimeOffset? RefundDate,
+        decimal? ExtensionAmount,
+        bool? IsExtensionPaid,
         PreInspectionPhotos? PreInspectionPhotos = null,
         PostInspectionPhotos? PostInspectionPhotos = null
     );

@@ -27,7 +27,8 @@ public class GetInspectionScheduleDetail
         bool IsTechnicianSigned,
         bool IsOwnerSigned,
         string Type,
-        string Status
+        string Status,
+        PhotoDetail[] Photos
     )
     {
         public static async Task<Response> FromEntity(
@@ -83,10 +84,20 @@ public class GetInspectionScheduleDetail
                 IsTechnicianSigned: inspectionSchedule.Car.Contract?.TechnicianSignature != null,
                 IsOwnerSigned: inspectionSchedule.Car.Contract?.OwnerSignature != null,
                 Type: inspectionSchedule.Type.ToString(),
-                Status: inspectionSchedule.Status.ToString()
+                Status: inspectionSchedule.Status.ToString(),
+                Photos:
+                [
+                    .. inspectionSchedule.Photos.Select(p => new PhotoDetail(
+                        Id: p.Id,
+                        Url: p.PhotoUrl,
+                        Type: p.Type.ToString()
+                    )),
+                ]
             );
         }
     };
+
+    public record PhotoDetail(Guid Id, string Url, string Type);
 
     public record CarDetail(
         Guid Id,
@@ -135,6 +146,7 @@ public class GetInspectionScheduleDetail
                 .Include(i => i.Car)
                 .ThenInclude(c => c.Contract)
                 .Include(i => i.Technician)
+                .Include(i => i.Photos)
                 .Where(i => !i.IsDeleted)
                 .Where(i => i.Id == request.Id)
                 .FirstOrDefaultAsync(cancellationToken);

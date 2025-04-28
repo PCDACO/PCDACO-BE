@@ -51,9 +51,14 @@ public sealed class ProcessPaymentWebhook
                 return Result.NotFound("Không tìm thấy booking");
             }
 
+            bool isExtensionPayment = webhookData.description == "Thanh toan gia han";
+
+            var transactionType = isExtensionPayment
+                ? TransactionTypeNames.ExtensionPayment
+                : TransactionTypeNames.BookingPayment;
+
             var paymentExists = await context.Transactions.AnyAsync(
-                t =>
-                    t.BookingId == booking.Id && t.Type.Name == TransactionTypeNames.BookingPayment,
+                t => t.BookingId == booking.Id && t.Type.Name == transactionType,
                 cancellationToken
             );
 
@@ -71,13 +76,14 @@ public sealed class ProcessPaymentWebhook
                     new[]
                     {
                         TransactionTypeNames.BookingPayment,
+                        TransactionTypeNames.ExtensionPayment,
                         TransactionTypeNames.PlatformFee,
                         TransactionTypeNames.OwnerEarning
                     }.Contains(t.Name)
                 )
                 .ToListAsync(cancellationToken);
 
-            if (transactionTypes.Count != 3)
+            if (transactionTypes.Count != 4)
                 return Result.Error("Loại giao dịch không hợp lệ");
 
             var admin = await context.Users.FirstOrDefaultAsync(
@@ -96,6 +102,7 @@ public sealed class ProcessPaymentWebhook
                 transactionTypes,
                 TransactionStatusEnum.Completed,
                 admin,
+                isExtensionPayment,
                 out Transaction bookingPayment,
                 out Transaction platformFeeTransaction,
                 out Transaction ownerEarningTransaction
@@ -111,8 +118,17 @@ public sealed class ProcessPaymentWebhook
                 Amount = ownerEarningTransaction.Amount
             };
 
-            // Update booking and statistics
-            booking.IsPaid = true;
+            if (isExtensionPayment)
+            {
+                // Handle extension payment logic
+                booking.ExtensionAmount = null; // Reset if necessary
+                booking.IsExtensionPaid = true;
+            }
+            else
+            {
+                // Handle regular booking payment logic
+                booking.IsPaid = true;
+            }
 
             context.Transactions.AddRange(
                 bookingPayment,
@@ -135,24 +151,6 @@ public sealed class ProcessPaymentWebhook
                     )
             );
 
-            // Schedule balance unlock job for the later of:
-            // 1. 3 days before start (cancellation period)
-            // 2. Half of the booking duration (early return refund period)
-            var bookingDuration = (booking.EndTime - booking.StartTime).TotalDays;
-            var halfwayPoint = booking.StartTime.AddDays(Math.Ceiling(bookingDuration / 2));
-            var unlockDate = new DateTimeOffset(
-                Math.Max(
-                    booking.StartTime.AddDays(-3).Ticks, // Cancellation period
-                    halfwayPoint.Ticks // Early return period
-                ),
-                TimeSpan.Zero
-            );
-
-            BackgroundJob.Schedule<UnlockOwnerBalanceJob>(
-                job => job.UnlockBalance(booking.Id),
-                unlockDate
-            );
-
             return Result.Success();
         }
 
@@ -161,12 +159,13 @@ public sealed class ProcessPaymentWebhook
             List<TransactionType> transactionTypes,
             TransactionStatusEnum transactionStatus,
             User admin,
+            bool isExtensionPayment,
             out Transaction bookingPayment,
             out Transaction platformFeeTransaction,
             out Transaction ownerEarningTransaction
         )
         {
-            // Create transaction for booking payment.
+            // Create transaction for booking payment or extension payment.
             bookingPayment = new Transaction
             {
                 FromUserId = booking.UserId,
@@ -174,10 +173,17 @@ public sealed class ProcessPaymentWebhook
                 BookingId = booking.Id,
                 BankAccountId = null,
                 TypeId = transactionTypes
-                    .First(t => t.Name == TransactionTypeNames.BookingPayment)
+                    .First(t =>
+                        t.Name
+                        == (
+                            isExtensionPayment
+                                ? TransactionTypeNames.ExtensionPayment
+                                : TransactionTypeNames.BookingPayment
+                        )
+                    )
                     .Id,
                 Status = transactionStatus,
-                Amount = booking.TotalAmount
+                Amount = isExtensionPayment ? booking.ExtensionAmount!.Value : booking.TotalAmount
             };
 
             // Create transaction for platform (admin) earning.

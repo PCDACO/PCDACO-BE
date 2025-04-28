@@ -19,10 +19,10 @@ public class InspectionScheduleExpiredJob(
         var schedulesToExpire = await context
             .InspectionSchedules.Where(s => !s.IsDeleted)
             .Where(s =>
-                // More than 15 minutes past scheduled time and not in progress
+                // More than 15 minutes past scheduled time and still pending
                 (
                     s.InspectionDate.AddMinutes(15) < now
-                    && s.Status != InspectionScheduleStatusEnum.InProgress
+                    && s.Status == InspectionScheduleStatusEnum.Pending
                 )
                 ||
                 // More than 1 hour past scheduled time and neither approved nor rejected

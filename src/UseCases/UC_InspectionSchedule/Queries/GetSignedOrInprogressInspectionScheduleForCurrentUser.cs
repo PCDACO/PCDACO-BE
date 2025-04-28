@@ -20,6 +20,7 @@ public class GetSignedOrInprogressInspectionScheduleForCurrentUser
         string Address,
         string LicensePlate,
         string Status,
+        InspectionScheduleType Type,
         ContractDetail? ContractDetail
     )
     {
@@ -32,6 +33,7 @@ public class GetSignedOrInprogressInspectionScheduleForCurrentUser
                 Address: inspectionSchedule.InspectionAddress,
                 LicensePlate: inspectionSchedule.Car.LicensePlate,
                 Status: inspectionSchedule.Status.ToString(),
+                Type: inspectionSchedule.Type,
                 ContractDetail: inspectionSchedule.Car.Contract != null
                     ? new ContractDetail(
                         Id: inspectionSchedule.Car.Contract!.Id,

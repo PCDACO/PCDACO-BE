@@ -95,11 +95,19 @@ public sealed class ApproveCarReport
             report.ResolvedAt = DateTimeOffset.UtcNow;
             report.ResolvedById = currentUser.User!.Id;
 
-            // If approved, update the car status to Available
-            if (request.IsApproved && report.Car.Status == CarStatusEnum.Inactive)
+            // If approved
+            if (request.IsApproved)
             {
-                report.Car.Status = CarStatusEnum.Available;
-                report.Car.UpdatedAt = DateTimeOffset.UtcNow;
+                if (report.ReportType == CarReportType.DeactivateCar)
+                {
+                    report.Car.Status = CarStatusEnum.Inactive;
+                    report.Car.UpdatedAt = DateTimeOffset.UtcNow;
+                }
+                else
+                {
+                    report.Car.Status = CarStatusEnum.Available;
+                    report.Car.UpdatedAt = DateTimeOffset.UtcNow;
+                }
             }
 
             await context.SaveChangesAsync(cancellationToken);

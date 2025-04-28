@@ -8,6 +8,7 @@ public class TransactionTypeGenerator
     private static readonly string[] _transactionTypes =
     [
         TransactionTypeNames.BookingPayment,
+        TransactionTypeNames.ExtensionPayment,
         TransactionTypeNames.PlatformFee,
         TransactionTypeNames.OwnerEarning,
         TransactionTypeNames.Withdrawal,

@@ -39,17 +39,32 @@ public sealed class ProcessBookingPaymentByToken
             if (
                 booking.Status != BookingStatusEnum.Approved
                 && booking.Status != BookingStatusEnum.ReadyForPickup
+                && booking.Status != BookingStatusEnum.Ongoing
             )
                 return Result.Error("Chỉ có thể thanh toán chuyến đi khi được phê duyệt!");
 
-            if (booking.IsPaid)
-                return Result.Error("Chuyến đi này đã được thanh toán!");
+            // Check payment status based on payment type
+            bool isExtensionPayment = booking.ExtensionAmount.HasValue;
+
+            if (isExtensionPayment)
+            {
+                if (booking.IsExtensionPaid == true)
+                    return Result.Error("Phí gia hạn này đã được thanh toán!");
+            }
+            else
+            {
+                if (booking.IsPaid)
+                    return Result.Error("Chuyến đi này đã được thanh toán!");
+            }
+
+            var paymentAmount = booking.ExtensionAmount ?? booking.TotalAmount;
+            var description = isExtensionPayment ? "Thanh toan gia han" : "Thanh toan don hang";
 
             // Create payment link
             var paymentResult = await paymentService.CreatePaymentLinkAsync(
                 booking.Id,
-                booking.TotalAmount,
-                $"Thanh toan don hang",
+                paymentAmount,
+                description,
                 booking.User.Name
             );
 
@@ -65,7 +80,7 @@ public sealed class ProcessBookingPaymentByToken
                     ExcessFee: booking.ExcessDayFee,
                     BasePrice: booking.BasePrice,
                     PlatformFee: booking.PlatformFee,
-                    TotalAmount: booking.TotalAmount,
+                    TotalAmount: paymentAmount,
                     PaymentUrl: paymentResult.CheckoutUrl,
                     QrCode: paymentResult.QrCode
                 )

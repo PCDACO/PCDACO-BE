@@ -25,6 +25,8 @@ public class Booking : BaseEntity
     public bool IsRefund { get; set; } = false;
     public decimal? RefundAmount { get; set; } = null;
     public DateTimeOffset? RefundDate { get; set; } = null;
+    public decimal? ExtensionAmount { get; set; }
+    public bool? IsExtensionPaid { get; set; }
 
     // Navigation properties
     [ForeignKey(nameof(UserId))]
