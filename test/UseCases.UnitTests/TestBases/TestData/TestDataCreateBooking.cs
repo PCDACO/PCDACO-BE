@@ -1,6 +1,5 @@
 using Domain.Entities;
 using Domain.Enums;
-
 using Persistance.Data;
 using UUIDNext;
 
@@ -13,7 +12,8 @@ public static class TestDataCreateBooking
         Guid carId,
         BookingStatusEnum status,
         DateTime? startTime = null,
-        DateTime? endTime = null
+        DateTime? endTime = null,
+        bool? isPaid = false
     ) =>
         new()
         {
@@ -29,6 +29,7 @@ public static class TestDataCreateBooking
             ExcessDay = 0,
             ExcessDayFee = 0,
             TotalAmount = 110m,
+            IsPaid = isPaid ?? false,
             Note = "Test note",
         };
 
@@ -38,10 +39,11 @@ public static class TestDataCreateBooking
         Guid carId,
         BookingStatusEnum status,
         DateTime? startTime = null,
-        DateTime? endTime = null
+        DateTime? endTime = null,
+        bool? isPaid = false
     )
     {
-        var booking = CreateBooking(userId, carId, status, startTime, endTime);
+        var booking = CreateBooking(userId, carId, status, startTime, endTime, isPaid);
 
         await dBContext.Bookings.AddAsync(booking);
         await dBContext.SaveChangesAsync();

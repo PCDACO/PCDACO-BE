@@ -438,7 +438,8 @@ public class ExtendBookingDay
                     booking.StartTime,
                     booking.EndTime,
                     newTotalAmount // Return only the additional amount
-                )
+                ),
+                "Gia hạn thời gian trả xe thành công"
             );
         }
 
