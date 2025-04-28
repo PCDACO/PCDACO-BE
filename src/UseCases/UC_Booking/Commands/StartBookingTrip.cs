@@ -73,8 +73,8 @@ public sealed class StartBookingTrip
                 return Result.NotFound("Không tìm thấy thiết bị GPS của xe");
             }
 
-            // if (!booking.IsPaid)
-            //     return Result.Error("Cần thanh toán trước khi bắt đầu chuyến đi");
+            if (!booking.IsPaid)
+                return Result.Error("Cần thanh toán trước khi bắt đầu chuyến đi");
 
             // Create driver's location point
             var driverLocation = geometryFactory.CreatePoint(
