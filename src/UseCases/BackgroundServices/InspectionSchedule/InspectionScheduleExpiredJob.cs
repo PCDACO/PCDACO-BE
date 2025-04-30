@@ -18,6 +18,7 @@ public class InspectionScheduleExpiredJob(
         // Get schedules that need to be expired
         var schedulesToExpire = await context
             .InspectionSchedules.IgnoreQueryFilters()
+            .AsSplitQuery()
             .Include(s => s.Car)
             .ThenInclude(c => c.Contract)
             .Where(s => !s.IsDeleted)
