@@ -61,14 +61,34 @@ public sealed class ApproveInspectionSchedule
             if (schedule.TechnicianId != currentUser.User.Id)
                 return Result.Forbidden("Bạn không phải là kiểm định viên được chỉ định");
 
-            // Check if schedule can be updated
-            if (
-                schedule.Status != InspectionScheduleStatusEnum.Signed
-                && schedule.Status != InspectionScheduleStatusEnum.InProgress
-            )
-                return Result.Error(
-                    ResponseMessages.OnlyUpdateSignedOrInprogressInspectionSchedule
-                );
+            // Check if schedule can be approved or rejected
+            if (request.IsApproved)
+            {
+                // For approval, schedule must be InProgress or Signed
+                if (
+                    schedule.Status != InspectionScheduleStatusEnum.Signed
+                    && schedule.Status != InspectionScheduleStatusEnum.InProgress
+                )
+                {
+                    return Result.Error(
+                        "Chỉ có thể phê duyệt lịch kiểm định ở trạng thái đã ký hoặc đang xử lý"
+                    );
+                }
+            }
+            else
+            {
+                // For rejection, schedule must be Pending, InProgress or Signed
+                if (
+                    schedule.Status != InspectionScheduleStatusEnum.Signed
+                    && schedule.Status != InspectionScheduleStatusEnum.InProgress
+                    && schedule.Status != InspectionScheduleStatusEnum.Pending
+                )
+                {
+                    return Result.Error(
+                        "Chỉ có thể từ chối lịch kiểm định ở trạng thái chờ xử lý, đã ký hoặc đang xử lý"
+                    );
+                }
+            }
 
             bool isDeactivationReport =
                 schedule.CarReportId != null

@@ -187,7 +187,7 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
         Assert.Contains(
-            ResponseMessages.OnlyUpdateSignedOrInprogressInspectionSchedule,
+            "Chỉ có thể phê duyệt lịch kiểm định ở trạng thái đã ký hoặc đang xử lý",
             result.Errors
         );
     }
@@ -737,6 +737,307 @@ public class ApproveInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLif
         Assert.Equal(InspectionScheduleStatusEnum.Rejected, updatedSchedule.Status);
         Assert.Equal("Rejected due to maintenance issues", updatedSchedule.Note);
         Assert.NotNull(updatedSchedule.UpdatedAt);
+    }
+
+    [Theory]
+    [InlineData(InspectionScheduleStatusEnum.Approved)]
+    [InlineData(InspectionScheduleStatusEnum.Rejected)]
+    [InlineData(InspectionScheduleStatusEnum.Expired)]
+    [InlineData(InspectionScheduleStatusEnum.Pending)]
+    public async Task Handle_ApprovalWithInvalidStatus_ReturnsError(
+        InspectionScheduleStatusEnum status
+    )
+    {
+        // Arrange
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
+        _currentUser.SetUser(technician);
+
+        // Setup car with GPS and contract
+        var (car, owner) = await SetupCar();
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+
+        // Add GPS to car
+        var gpsDevice = new GPSDevice
+        {
+            Name = "Test GPS Device",
+            OSBuildId = "OS12345",
+            Status = DeviceStatusEnum.InUsed,
+        };
+        await _dbContext.GPSDevices.AddAsync(gpsDevice);
+        await _dbContext.SaveChangesAsync();
+
+        var carGPS = new CarGPS
+        {
+            CarId = car.Id,
+            DeviceId = gpsDevice.Id,
+            Location = new NetTopologySuite.Geometries.Point(106.6601, 10.7626) { SRID = 4326 },
+        };
+        await _dbContext.CarGPSes.AddAsync(carGPS);
+        await _dbContext.SaveChangesAsync();
+
+        // Set up contract with signatures
+        var contract = await _dbContext.CarContracts.FirstOrDefaultAsync(c => c.CarId == car.Id);
+        contract!.OwnerSignatureDate = DateTimeOffset.UtcNow;
+        contract.TechnicianSignatureDate = DateTimeOffset.UtcNow;
+        contract.OwnerSignature = "base64signature";
+        contract.TechnicianSignature = "base64signature";
+        await _dbContext.SaveChangesAsync();
+
+        // Create schedule with invalid status for approval
+        var schedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car.Id,
+            Status = status, // Invalid status for approval
+            InspectionAddress = "123 Main St",
+            InspectionDate = DateTimeOffset.UtcNow.AddMinutes(30),
+            CreatedBy = consultant.Id,
+        };
+        await _dbContext.InspectionSchedules.AddAsync(schedule);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new ApproveInspectionSchedule.Handler(
+            _dbContext,
+            _currentUser,
+            _aesEncryptionService,
+            _keyManagementService,
+            _encryptionSettings
+        );
+        var command = new ApproveInspectionSchedule.Command(
+            Id: schedule.Id,
+            Note: "Test note",
+            IsApproved: true
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(
+            "Chỉ có thể phê duyệt lịch kiểm định ở trạng thái đã ký hoặc đang xử lý",
+            result.Errors
+        );
+    }
+
+    [Theory]
+    [InlineData(InspectionScheduleStatusEnum.Approved)]
+    [InlineData(InspectionScheduleStatusEnum.Rejected)]
+    [InlineData(InspectionScheduleStatusEnum.Expired)]
+    public async Task Handle_RejectionWithInvalidStatus_ReturnsError(
+        InspectionScheduleStatusEnum status
+    )
+    {
+        // Arrange
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
+        _currentUser.SetUser(technician);
+
+        // Setup car with contract
+        var (car, owner) = await SetupCar();
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+
+        // Create schedule with invalid status for rejection
+        var schedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car.Id,
+            Status = status, // Invalid status for rejection
+            InspectionAddress = "123 Main St",
+            InspectionDate = DateTimeOffset.UtcNow.AddMinutes(30),
+            CreatedBy = consultant.Id,
+        };
+        await _dbContext.InspectionSchedules.AddAsync(schedule);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new ApproveInspectionSchedule.Handler(
+            _dbContext,
+            _currentUser,
+            _aesEncryptionService,
+            _keyManagementService,
+            _encryptionSettings
+        );
+        var command = new ApproveInspectionSchedule.Command(
+            Id: schedule.Id,
+            Note: "Test note",
+            IsApproved: false
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(
+            "Chỉ có thể từ chối lịch kiểm định ở trạng thái chờ xử lý, đã ký hoặc đang xử lý",
+            result.Errors
+        );
+    }
+
+    [Theory]
+    [InlineData(InspectionScheduleStatusEnum.Signed)]
+    [InlineData(InspectionScheduleStatusEnum.InProgress)]
+    public async Task Handle_ApprovalWithValidStatus_Succeeds(InspectionScheduleStatusEnum status)
+    {
+        // Arrange
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
+        _currentUser.SetUser(technician);
+
+        // Setup car with GPS and contract
+        var (car, owner) = await SetupCar();
+
+        // Add GPS to car
+        var gpsDevice = new GPSDevice
+        {
+            Name = "Test GPS Device",
+            OSBuildId = "OS12345",
+            Status = DeviceStatusEnum.InUsed,
+        };
+        await _dbContext.GPSDevices.AddAsync(gpsDevice);
+        await _dbContext.SaveChangesAsync();
+
+        var carGPS = new CarGPS
+        {
+            CarId = car.Id,
+            DeviceId = gpsDevice.Id,
+            Location = new NetTopologySuite.Geometries.Point(106.6601, 10.7626) { SRID = 4326 },
+        };
+        await _dbContext.CarGPSes.AddAsync(carGPS);
+        await _dbContext.SaveChangesAsync();
+
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+
+        // Set up contract with signatures
+        var contract = await _dbContext.CarContracts.FirstOrDefaultAsync(c => c.CarId == car.Id);
+        contract!.OwnerSignatureDate = DateTimeOffset.UtcNow;
+        contract.TechnicianSignatureDate = DateTimeOffset.UtcNow;
+        contract.OwnerSignature = "base64signature";
+        contract.TechnicianSignature = "base64signature";
+        await _dbContext.SaveChangesAsync();
+
+        // Create schedule with valid status for approval
+        var schedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car.Id,
+            Status = status, // Valid status for approval
+            InspectionAddress = "123 Main St",
+            InspectionDate = DateTimeOffset.UtcNow.AddMinutes(30),
+            CreatedBy = consultant.Id,
+            Type = InspectionScheduleType.NewCar,
+        };
+        await _dbContext.InspectionSchedules.AddAsync(schedule);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new ApproveInspectionSchedule.Handler(
+            _dbContext,
+            _currentUser,
+            _aesEncryptionService,
+            _keyManagementService,
+            _encryptionSettings
+        );
+        var command = new ApproveInspectionSchedule.Command(
+            Id: schedule.Id,
+            Note: "Test approval with valid status",
+            IsApproved: true
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Contains(ResponseMessages.Updated, result.SuccessMessage);
+
+        // Verify schedule was approved
+        var updatedSchedule = await _dbContext.InspectionSchedules.FindAsync(schedule.Id);
+        Assert.NotNull(updatedSchedule);
+        Assert.Equal(InspectionScheduleStatusEnum.Approved, updatedSchedule.Status);
+    }
+
+    [Theory]
+    [InlineData(InspectionScheduleStatusEnum.Pending)]
+    [InlineData(InspectionScheduleStatusEnum.Signed)]
+    [InlineData(InspectionScheduleStatusEnum.InProgress)]
+    public async Task Handle_RejectionWithValidStatus_Succeeds(InspectionScheduleStatusEnum status)
+    {
+        // Arrange
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
+        _currentUser.SetUser(technician);
+
+        // Setup car with contract
+        var (car, owner) = await SetupCar();
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
+        );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+
+        // Create schedule with valid status for rejection
+        var schedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car.Id,
+            Status = status, // Valid status for rejection
+            InspectionAddress = "123 Main St",
+            InspectionDate = DateTimeOffset.UtcNow.AddMinutes(30),
+            CreatedBy = consultant.Id,
+        };
+        await _dbContext.InspectionSchedules.AddAsync(schedule);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new ApproveInspectionSchedule.Handler(
+            _dbContext,
+            _currentUser,
+            _aesEncryptionService,
+            _keyManagementService,
+            _encryptionSettings
+        );
+        var command = new ApproveInspectionSchedule.Command(
+            Id: schedule.Id,
+            Note: "Test rejection with valid status",
+            IsApproved: false
+        );
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Ok, result.Status);
+        Assert.Contains(ResponseMessages.Updated, result.SuccessMessage);
+
+        // Verify schedule was rejected
+        var updatedSchedule = await _dbContext.InspectionSchedules.FindAsync(schedule.Id);
+        Assert.NotNull(updatedSchedule);
+        Assert.Equal(InspectionScheduleStatusEnum.Rejected, updatedSchedule.Status);
+        Assert.Equal("Test rejection with valid status", updatedSchedule.Note);
     }
 
     [Fact]
