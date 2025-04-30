@@ -59,7 +59,7 @@ public class AssignDeviceToCar
             // Check car must has any inprogress inspection schedule to continue
             if (
                 !gettingCar.InspectionSchedules.Any(s =>
-                    s.Status == InspectionScheduleStatusEnum.InProgress
+                    s.IsDeleted == false && s.Status == InspectionScheduleStatusEnum.InProgress
                 )
             )
             {
