@@ -17,7 +17,10 @@ public class InspectionScheduleExpiredJob(
 
         // Get schedules that need to be expired
         var schedulesToExpire = await context
-            .InspectionSchedules.Where(s => !s.IsDeleted)
+            .InspectionSchedules.IgnoreQueryFilters()
+            .Include(s => s.Car)
+            .ThenInclude(c => c.Contract)
+            .Where(s => !s.IsDeleted)
             .Where(s =>
                 // More than 15 minutes past scheduled time and still pending
                 (
@@ -43,6 +46,18 @@ public class InspectionScheduleExpiredJob(
         {
             schedule.Status = InspectionScheduleStatusEnum.Expired;
             schedule.UpdatedAt = now;
+
+            // Reset signature in the associated car contract if it exists
+            if (schedule.Car?.Contract != null)
+            {
+                var contract = schedule.Car.Contract;
+                contract.OwnerSignature = null;
+                contract.OwnerSignatureDate = null;
+                contract.TechnicianSignature = null;
+                contract.TechnicianSignatureDate = null;
+                contract.Status = CarContractStatusEnum.Pending;
+                contract.UpdatedAt = now;
+            }
         }
 
         await context.SaveChangesAsync(CancellationToken.None);
