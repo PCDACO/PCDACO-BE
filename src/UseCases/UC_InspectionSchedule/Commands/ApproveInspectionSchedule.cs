@@ -50,6 +50,8 @@ public sealed class ApproveInspectionSchedule
                 .ThenInclude(s => s.Model)
                 .Include(s => s.Car)
                 .ThenInclude(s => s.GPS)
+                .Include(s => s.Car)
+                .ThenInclude(s => s.Contract)
                 .Include(s => s.CarReport)
                 .Include(s => s.Technician)
                 .Include(s => s.Photos)
@@ -162,6 +164,21 @@ public sealed class ApproveInspectionSchedule
                 ? InspectionScheduleStatusEnum.Approved
                 : InspectionScheduleStatusEnum.Rejected;
             schedule.UpdatedAt = DateTimeOffset.UtcNow;
+
+            // reset contract signature if schedule is not approved
+            if (!request.IsApproved && schedule.Type == InspectionScheduleType.NewCar)
+            {
+                var contract = schedule.Car?.Contract;
+                if (contract != null)
+                {
+                    contract.OwnerSignature = null;
+                    contract.OwnerSignatureDate = null;
+                    contract.TechnicianSignature = null;
+                    contract.TechnicianSignatureDate = null;
+                    contract.Status = CarContractStatusEnum.Pending;
+                    contract.UpdatedAt = DateTimeOffset.UtcNow;
+                }
+            }
             // Set Car Status into available
             if (request.IsApproved)
             {

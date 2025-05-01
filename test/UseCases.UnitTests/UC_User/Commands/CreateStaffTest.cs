@@ -1,5 +1,6 @@
 using Ardalis.Result;
 using Domain.Constants;
+using Domain.Entities;
 using Domain.Shared;
 using Infrastructure.Encryption;
 using Microsoft.EntityFrameworkCore;
@@ -9,6 +10,8 @@ using UseCases.DTOs;
 using UseCases.UC_User.Commands;
 using UseCases.UnitTests.TestBases;
 using UseCases.UnitTests.TestBases.TestData;
+using UseCases.Utils;
+using UUIDNext;
 
 namespace UseCases.UnitTests.UC_User.Commands;
 
@@ -41,7 +44,12 @@ public class CreateStaffTest : IAsyncLifetime
     {
         // Arrange
         var driverRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Driver");
-        var user = await TestDataCreateUser.CreateTestUser(_dbContext, driverRole);
+        var user = await CreateUserWithEncryptedPhone(
+            driverRole,
+            "driver@test.com",
+            "Test Driver",
+            "1234567890"
+        );
         _currentUser.SetUser(user);
 
         var handler = new CreateStaff.Handler(
@@ -82,7 +90,12 @@ public class CreateStaffTest : IAsyncLifetime
         // Arrange
         var adminRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Admin");
         var staffRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, roleName);
-        var admin = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
+        var admin = await CreateUserWithEncryptedPhone(
+            adminRole,
+            "admin@test.com",
+            "Admin User",
+            "9876543210"
+        );
         _currentUser.SetUser(admin);
 
         var handler = new CreateStaff.Handler(
@@ -128,11 +141,17 @@ public class CreateStaffTest : IAsyncLifetime
             _dbContext,
             "Consultant"
         );
-        var admin = await TestDataCreateUser.CreateTestUser(_dbContext, adminRole);
-        var existingUser = await TestDataCreateUser.CreateTestUser(
-            _dbContext,
+        var admin = await CreateUserWithEncryptedPhone(
+            adminRole,
+            "admin@test.com",
+            "Admin User",
+            "9876543211"
+        );
+        var existingUser = await CreateUserWithEncryptedPhone(
             consultantRole,
-            "existing@test.com"
+            "existing@test.com",
+            "Existing User",
+            "5555555555"
         );
         _currentUser.SetUser(admin);
 
@@ -195,5 +214,49 @@ public class CreateStaffTest : IAsyncLifetime
 
         // Assert
         Assert.False(result.IsValid);
+    }
+
+    private async Task<User> CreateUserWithEncryptedPhone(
+        UserRole userRole,
+        string email = "test@example.com",
+        string name = "Test User",
+        string phoneNumber = "1234567890",
+        string avatarUrl = "http://example.com/avatar.jpg"
+    )
+    {
+        // Generate encryption key and encrypt phone number
+        (string key, string iv) = await _keyService.GenerateKeyAsync();
+        string encryptedPhone = await _aesService.Encrypt(phoneNumber, key, iv);
+        string encryptedKey = _keyService.EncryptKey(key, _encryptionSettings.Key);
+
+        // Create encryption key record
+        var encryptionKey = new EncryptionKey { EncryptedKey = encryptedKey, IV = iv };
+        await _dbContext.EncryptionKeys.AddAsync(encryptionKey);
+        await _dbContext.SaveChangesAsync();
+
+        // Create user with encrypted phone
+        var user = new User
+        {
+            Id = Uuid.NewDatabaseFriendly(Database.PostgreSql),
+            EncryptionKeyId = encryptionKey.Id,
+            Name = name,
+            Email = email,
+            AvatarUrl = avatarUrl,
+            Password = "password".HashString(),
+            RoleId = userRole.Id,
+            Address = "Test Address",
+            DateOfBirth = DateTime.UtcNow.AddYears(-30),
+            Phone = encryptedPhone,
+        };
+
+        // Create user statistics
+        var userStatistic = new UserStatistic { UserId = user.Id };
+
+        // Save to database
+        await _dbContext.Users.AddAsync(user);
+        await _dbContext.UserStatistics.AddAsync(userStatistic);
+        await _dbContext.SaveChangesAsync();
+
+        return user;
     }
 }
