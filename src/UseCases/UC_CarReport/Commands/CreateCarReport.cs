@@ -39,6 +39,21 @@ public sealed class CreateCarReport
             if (car.OwnerId != currentUser.User!.Id)
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
+            var activeBooking = await context
+                .Bookings.Where(b =>
+                    b.CarId == request.CarId
+                    && (
+                        b.Status == BookingStatusEnum.Pending
+                        || b.Status == BookingStatusEnum.Approved
+                        || b.Status == BookingStatusEnum.ReadyForPickup
+                        || b.Status == BookingStatusEnum.Ongoing
+                    )
+                )
+                .AnyAsync(cancellationToken);
+
+            if (activeBooking)
+                return Result.Error("Không thể báo cáo xe đang có booking hoạt động");
+
             var report = new CarReport
             {
                 CarId = request.CarId,

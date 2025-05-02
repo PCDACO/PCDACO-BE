@@ -70,14 +70,22 @@ public class GetCarDetailByAdminOrStaff
             // Calculate total earnings from completed bookings
             decimal totalEarnings = car
                 .Bookings.Where(b =>
-                    b.Status == BookingStatusEnum.Completed || b.Status == BookingStatusEnum.Done
+                    b.IsDeleted == false
+                    && (
+                        b.Status == BookingStatusEnum.Completed
+                        || b.Status == BookingStatusEnum.Done
+                    )
                 )
                 .Sum(b => b.TotalAmount);
 
             // Find the last rented date (most recent completed booking end time)
             DateTimeOffset? lastRented = car
                 .Bookings.Where(b =>
-                    b.Status == BookingStatusEnum.Completed || b.Status == BookingStatusEnum.Done
+                    b.IsDeleted == false
+                    && (
+                        b.Status == BookingStatusEnum.Completed
+                        || b.Status == BookingStatusEnum.Done
+                    )
                 )
                 .OrderByDescending(b => b.EndTime)
                 .FirstOrDefault()
@@ -85,7 +93,8 @@ public class GetCarDetailByAdminOrStaff
 
             // Get all bookings sorted by date (using UUID creation time) and taking top 4
             var sortedBookings = car
-                .Bookings.OrderByDescending(b => GetTimestampFromUuid.Execute(b.Id))
+                .Bookings.Where(b => b.IsDeleted == false)
+                .OrderByDescending(b => GetTimestampFromUuid.Execute(b.Id))
                 .Take(4)
                 .ToList();
 
@@ -186,10 +195,12 @@ public class GetCarDetailByAdminOrStaff
                 contractDetail,
                 feedbacks,
                 car.InspectionSchedules.Any(s =>
-                    s.Status == InspectionScheduleStatusEnum.Approved
-                    || s.Status == InspectionScheduleStatusEnum.InProgress
-                    || s.Status == InspectionScheduleStatusEnum.Pending
-                    || s.Status == InspectionScheduleStatusEnum.Signed
+                    s.IsDeleted == false
+                    && (
+                        s.Status == InspectionScheduleStatusEnum.InProgress
+                        || s.Status == InspectionScheduleStatusEnum.Pending
+                        || s.Status == InspectionScheduleStatusEnum.Signed
+                    )
                 )
             );
         }

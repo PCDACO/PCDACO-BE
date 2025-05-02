@@ -102,12 +102,32 @@ public sealed class UploadPaperImages
 
     public class Validator : AbstractValidator<Command>
     {
+        private static readonly string[] AllowedImageExtensions = [".jpg", ".jpeg", ".png"];
+        
         public Validator()
         {
             RuleFor(x => x.CarId)
                 .NotEmpty().WithMessage("Phải chọn xe cần cập nhật !");
             RuleFor(x => x.PaperImages)
-                .NotEmpty().WithMessage("Phải chọn ảnh !");
+                .NotEmpty()
+                .WithMessage("Phải chọn ảnh !")
+                .Must(ValidateImages)
+                .WithMessage(
+                    $"Ảnh không được vượt quá 10MB và chỉ chấp nhận định dạng: {string.Join(", ", AllowedImageExtensions)}"
+                );
+        }
+
+        private static bool ValidateImages(ImageFile[]? images)
+        {
+            if (images == null)
+                return false;
+
+            return images.All(image =>
+                image.Content.Length <= 10 * 1024 * 1024 // 10MB
+                && AllowedImageExtensions.Contains(
+                    Path.GetExtension(image.FileName).ToLowerInvariant()
+                )
+            );
         }
     }
 }

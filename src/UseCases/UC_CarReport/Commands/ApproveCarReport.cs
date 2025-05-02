@@ -87,6 +87,14 @@ public sealed class ApproveCarReport
             if (request.IsApproved && report.Status != CarReportStatus.UnderReview)
                 return Result.Error(ResponseMessages.ReportNotUnderReviewed);
 
+            if (
+                (
+                    report.InspectionSchedule == null
+                    || report.InspectionSchedule.Status != InspectionScheduleStatusEnum.Approved
+                ) && request.IsApproved
+            )
+                return Result.Error("Lịch kiểm tra chưa được kỹ thuật viên duyệt");
+
             report.Status = request.IsApproved
                 ? CarReportStatus.Resolved
                 : CarReportStatus.Rejected;
