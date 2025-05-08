@@ -41,13 +41,14 @@ public static class CarContractTemplateGenerator
             <div class='clause'>
                 <strong>Điều 2: Quyền và nghĩa vụ của Bên A (Chủ xe)</strong>
                 <p>
-                    a) Cam kết xe đăng ký là tài sản hợp pháp, có đầy đủ giấy tờ theo quy định của pháp luật.<br/>
+                    a) Cam kết xe đăng ký là tài sản hợp pháp, có đầy đủ giấy tờ theo quy định của pháp luật và cung cấp cho Nền tảng khi có yêu cầu.<br/>
                     b) Đảm bảo xe luôn trong tình trạng hoạt động tốt, an toàn cho người thuê.<br/>
-                    c) Thực hiện bảo dưỡng, bảo trì xe định kỳ theo khuyến cáo của nhà sản xuất.<br/>
+                    c) Thực hiện bảo dưỡng, bảo trì xe định kỳ theo khuyến cáo của nhà sản xuất và cung cấp bằng chứng khi Nền tảng yêu cầu.<br/>
                     d) Chịu trách nhiệm về tình trạng pháp lý và kỹ thuật của xe.<br/>
                     e) Tuân thủ quy định về giá cho thuê và các chính sách của nền tảng.<br/>
-                    f) Mua bảo hiểm đầy đủ cho xe theo quy định.<br/>
-                    g) Chịu phí dịch vụ theo thỏa thuận với nền tảng.
+                    f) Mua bảo hiểm trách nhiệm dân sự bắt buộc và khuyến khích mua bảo hiểm vật chất thân vỏ còn hiệu lực cho xe theo quy định pháp luật.<br/>
+                    g) Chịu phí dịch vụ theo thỏa thuận với nền tảng.<br/>
+                    h) Thông báo kịp thời cho Nền tảng về bất kỳ thay đổi nào liên quan đến tình trạng pháp lý, kỹ thuật của xe (VD: sửa chữa lớn, hết hạn đăng kiểm, tai nạn...).
                 </p>
             </div>
 
@@ -58,7 +59,8 @@ public static class CarContractTemplateGenerator
                     b) Hỗ trợ giải quyết tranh chấp giữa chủ xe và khách thuê.<br/>
                     c) Bảo mật thông tin của chủ xe theo quy định.<br/>
                     d) Thực hiện kiểm định và đánh giá xe định kỳ.<br/>
-                    e) Có quyền tạm ngừng hoặc chấm dứt hợp đồng nếu phát hiện vi phạm.
+                    e) Có quyền tạm ngừng hoặc chấm dứt hợp đồng nếu phát hiện vi phạm.<br/>
+                    f) Có quyền yêu cầu Bên A cung cấp các giấy tờ liên quan đến xe (đăng ký, đăng kiểm, bảo hiểm) và bằng chứng bảo dưỡng.
                 </p>
             </div>
 
@@ -80,6 +82,7 @@ public static class CarContractTemplateGenerator
                     &nbsp;&nbsp;&nbsp;- Theo dõi vị trí xe trong quá trình cho thuê<br/>
                     &nbsp;&nbsp;&nbsp;- Đảm bảo an toàn và phòng chống trộm cắp<br/>
                     &nbsp;&nbsp;&nbsp;- Hỗ trợ giải quyết tranh chấp nếu có<br/>
+                    &nbsp;&nbsp;&nbsp;- Thu thập dữ liệu hành trình phục vụ quản lý, vận hành và cải thiện dịch vụ (đảm bảo tuân thủ quy định bảo mật dữ liệu). <br/>
                     c) Chủ xe không được tự ý tháo gỡ hoặc làm hỏng thiết bị GPS.<br/>
                     d) Chi phí lắp đặt và bảo trì thiết bị GPS do nền tảng chi trả.<br/>
                     e) Trong trường hợp thiết bị GPS bị hỏng, chủ xe phải thông báo ngay cho nền tảng.
@@ -121,7 +124,41 @@ public static class CarContractTemplateGenerator
             </div>
 
             <div class='clause'>
-                <strong>Điều 7: Điều khoản chung</strong>
+                <strong>Điều 7: Đăng kiểm xe</strong>
+                <p>
+                    a) Bên A (Chủ xe) có trách nhiệm đảm bảo xe luôn có giấy chứng nhận đăng kiểm còn hiệu lực theo quy định của pháp luật Việt Nam trong suốt thời gian tham gia nền tảng.<br/>
+                    b) Bên A phải cung cấp bản sao giấy chứng nhận đăng kiểm hợp lệ cho Nền tảng khi đăng ký và khi có yêu cầu.<br/>
+                    c) Mọi chi phí liên quan đến việc đăng kiểm xe do Bên A chịu trách nhiệm.<br/>
+                    d) Bên A phải thông báo ngay lập tức cho Nền tảng nếu giấy chứng nhận đăng kiểm bị thu hồi hoặc xe không còn đủ điều kiện lưu hành an toàn.
+                </p>
+            </div>
+
+            <div class='clause'>
+                <strong>Điều 8: Bảo hiểm và Xử lý Thiệt hại</strong>
+                <p>
+                    a) Bên A chịu trách nhiệm mua và duy trì bảo hiểm TNDS bắt buộc và bảo hiểm vật chất thân vỏ (khuyến nghị) cho xe trong suốt thời gian hợp đồng.<br/>
+                    b) Khi xảy ra sự kiện bảo hiểm (tai nạn, hư hỏng, mất cắp...), Bên A và/hoặc người thuê (tùy tình huống) có trách nhiệm thông báo ngay cho Nền tảng và công ty bảo hiểm.<br/>
+                    c) Quy trình xử lý bồi thường bảo hiểm sẽ tuân theo quy định của công ty bảo hiểm và thỏa thuận giữa Bên A và Nền tảng (nếu có chính sách hỗ trợ riêng).<br/>
+                    d) Trách nhiệm đối với phần miễn thường và các chi phí không được bảo hiểm chi trả sẽ được xác định dựa trên nguyên nhân gây ra thiệt hại và theo chính sách giải quyết của Nền tảng.
+                </p>
+            </div>
+
+            <div class='clause'>
+                <strong>Điều 9: Các hành vi bị cấm</strong>
+                <p>
+                    Xe đăng ký trên Nền tảng không được sử dụng cho các mục đích sau:<br/>
+                    &nbsp;&nbsp;&nbsp;- Chở hàng cấm, hàng hóa bất hợp pháp.<br/>
+                    &nbsp;&nbsp;&nbsp;- Tham gia đua xe, lái thử tốc độ hoặc các hoạt động nguy hiểm tương tự.<br/>
+                    &nbsp;&nbsp;&nbsp;- Sử dụng vào mục đích phạm tội hoặc vi phạm pháp luật.<br/>
+                    &nbsp;&nbsp;&nbsp;- Cho thuê lại hoặc giao xe cho người khác không có trong hợp đồng thuê xe qua Nền tảng.<br/>
+                    &nbsp;&nbsp;&nbsp;- Lái xe khi đã sử dụng rượu bia hoặc chất kích thích.<br/>
+                    Vi phạm các quy định này có thể dẫn đến việc chấm dứt hợp đồng ngay lập tức và Bên A có thể phải chịu trách nhiệm pháp lý liên quan.
+                </p>
+            </div>
+
+
+            <div class='clause'>
+                <strong>Điều 10: Điều khoản chung</strong>
                 <p>
                     a) Hợp đồng có hiệu lực kể từ ngày ký.<br/>
                     b) Mọi thay đổi trong hợp đồng phải được hai bên đồng ý bằng văn bản.<br/>
@@ -131,11 +168,12 @@ public static class CarContractTemplateGenerator
             </div>
 
             <div class='clause'>
-                <strong>Điều 8: Chấm dứt hợp đồng</strong>
+                <strong>Điều 11: Chấm dứt hợp đồng</strong>
                 <p>
                     a) Hai bên có quyền chấm dứt hợp đồng với thông báo trước 30 ngày.<br/>
-                    b) Nền tảng có quyền đơn phương chấm dứt nếu phát hiện vi phạm nghiêm trọng.<br/>
-                    c) Việc chấm dứt hợp đồng không ảnh hưởng đến các giao dịch đang thực hiện.
+                    b) Nền tảng có quyền đơn phương chấm dứt ngay lập tức nếu phát hiện Bên A vi phạm nghiêm trọng các điều khoản hợp đồng, bao gồm nhưng không giới hạn: xe không có đăng kiểm hợp lệ, giấy tờ xe không hợp pháp, xe bị sử dụng vào mục đích cấm, không hợp tác xử lý các vấn đề phát sinh.<br/>
+                    c) Việc chấm dứt hợp đồng không ảnh hưởng đến các giao dịch đang thực hiện hoặc các nghĩa vụ tài chính còn tồn đọng.<br/>
+                    d) Khi hợp đồng chấm dứt, Bên A có trách nhiệm phối hợp với Nền tảng để tháo dỡ thiết bị GPS (nếu có) và hoàn tất các nghĩa vụ còn lại.
                 </p>
             </div>";
 

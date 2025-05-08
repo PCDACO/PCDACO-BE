@@ -28,7 +28,10 @@ public class GetInspectionScheduleDetailEndpoint : ICarterModule
                     - Car owner information with decrypted phone number
                     - Car details and specifications
                     - Amenities associated with the car
-                    - Contract ID and GPS device status
+                    - Contract status indicators (technician/owner signatures)
+                    - Inspection schedule type and status
+                    - Photos related to the inspection
+                    - GPS device status
 
                     Notes:
                     - All users with valid authentication can access this endpoint
@@ -117,8 +120,33 @@ public class GetInspectionScheduleDetailEndpoint : ICarterModule
                                                 "3fa85f64-5717-4562-b3fc-2c963f66afb3"
                                             ),
                                             ["hasGPSDevice"] = new OpenApiBoolean(true),
+                                            ["isTechnicianSigned"] = new OpenApiBoolean(true),
+                                            ["isOwnerSigned"] = new OpenApiBoolean(true),
                                             ["type"] = new OpenApiString("NewCar"),
                                             ["status"] = new OpenApiString("InProgress"),
+                                            ["photos"] = new OpenApiArray
+                                            {
+                                                new OpenApiObject
+                                                {
+                                                    ["id"] = new OpenApiString(
+                                                        "3fa85f64-5717-4562-b3fc-2c963f66afb4"
+                                                    ),
+                                                    ["url"] = new OpenApiString(
+                                                        "https://example.com/photos/inspection1.jpg"
+                                                    ),
+                                                    ["type"] = new OpenApiString("ExteriorCar"),
+                                                },
+                                                new OpenApiObject
+                                                {
+                                                    ["id"] = new OpenApiString(
+                                                        "3fa85f64-5717-4562-b3fc-2c963f66afb5"
+                                                    ),
+                                                    ["url"] = new OpenApiString(
+                                                        "https://example.com/photos/inspection2.jpg"
+                                                    ),
+                                                    ["type"] = new OpenApiString("InteriorCar"),
+                                                },
+                                            },
                                         },
                                         ["isSuccess"] = new OpenApiBoolean(true),
                                         ["message"] = new OpenApiString("Lấy dữ liệu thành công"),

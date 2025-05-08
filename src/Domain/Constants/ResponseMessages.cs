@@ -77,16 +77,16 @@ public class ResponseMessages
         "Chỉ có thể duyệt lịch kiểm định đang được tiến hành";
     public const string OnlyDeletePendingInspectionSchedule =
         "Chỉ có thể xóa lịch kiểm định đang chờ duyệt";
-    public const string CannotDeleteScheduleHasInspectionDateLessThen1DayFromNow =
-        "Không thể xóa lịch kiểm định có ngày kiểm định cách ngày hiện tại ít hơn 1 ngày";
+    public const string CannotDeleteScheduleInProgressOrInThePast =
+        "Không thể xóa lịch kiểm định trong quá khứ hoặc đang tiến hành";
     public const string InspectionScheduleExpired =
         "Chỉ được thực hiện kiểm định trong khoảng 15 phút sau thời gian kiểm định";
     public const string TechnicianHasInspectionScheduleWithinOneHour =
-        "Không thể tạo lịch kiểm định cùng loại có thời gian kiểm định cách nhau ít hơn 1 giờ so với lịch kiểm định khác";
+        "Không thể tạo lịch kiểm định có thời gian kiểm định cách nhau ít hơn 1 giờ so với lịch kiểm định khác";
     public const string CarHadExpiredInspectionScheduleWithThisTechnician =
         "Không thể tạo lịch kiểm định với cùng 1 kỹ thuật viên sau khi lịch kiểm định quá hạn. Vui lòng chọn kỹ thuật viên khác";
     public const string HasOverLapScheduleWithTheSameTechnician =
-        "Thời gian kiểm định đã được tạo cho kỹ thuật viên này bị trùng với lịch kiểm định cùng loại đã được duyệt";
+        "Thời gian kiểm định đã được tạo cho kỹ thuật viên này bị trùng với lịch kiểm định đã được duyệt";
     public const string OnlyUpdateSignedOrInprogressInspectionSchedule =
         "Chỉ có thể cập nhật lịch kiểm định đã được ký hợp đồng";
 

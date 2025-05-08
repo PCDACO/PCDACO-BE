@@ -61,7 +61,14 @@ public sealed class GetUserStatistics
                     ? await context
                         .Bookings.AsNoTracking()
                         .Where(b => b.UserId == user.Id && !b.IsDeleted)
-                        .CountAsync(b => b.Status == BookingStatusEnum.Completed, cancellationToken)
+                        .CountAsync(
+                            b =>
+                                (
+                                    b.Status == BookingStatusEnum.Completed
+                                    || b.Status == BookingStatusEnum.Done
+                                ),
+                            cancellationToken
+                        )
                     : 0;
 
             int totalRejected =
@@ -96,7 +103,13 @@ public sealed class GetUserStatistics
                     .Bookings.AsNoTracking()
                     .Where(b => !b.IsDeleted)
                     .Include(b => b.Car)
-                    .Where(b => b.Car.OwnerId == user.Id && b.Status == BookingStatusEnum.Completed)
+                    .Where(b =>
+                        b.Car.OwnerId == user.Id
+                        && (
+                            b.Status == BookingStatusEnum.Completed
+                            || b.Status == BookingStatusEnum.Done
+                        )
+                    )
                     .SumAsync(b => b.BasePrice, cancellationToken);
             }
 
@@ -116,7 +129,10 @@ public sealed class GetUserStatistics
                     feedbacks = feedbacks
                         .Where(f =>
                             f.Booking.UserId == user.Id
-                            && f.Booking.Status == BookingStatusEnum.Completed
+                            && (
+                                f.Booking.Status == BookingStatusEnum.Completed
+                                || f.Booking.Status == BookingStatusEnum.Done
+                            )
                             && f.Type == FeedbackTypeEnum.ToDriver
                         )
                         .ToList();
@@ -126,7 +142,10 @@ public sealed class GetUserStatistics
                     feedbacks = feedbacks
                         .Where(f =>
                             f.Booking.Car.OwnerId == user.Id
-                            && f.Booking.Status == BookingStatusEnum.Completed
+                            && (
+                                f.Booking.Status == BookingStatusEnum.Completed
+                                || f.Booking.Status == BookingStatusEnum.Done
+                            )
                             && f.Type == FeedbackTypeEnum.ToOwner
                         )
                         .ToList();

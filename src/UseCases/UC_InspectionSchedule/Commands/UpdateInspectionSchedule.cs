@@ -36,10 +36,12 @@ public sealed class UpdateInspectionSchedule
                 return Result.Forbidden(ResponseMessages.ForbiddenAudit);
 
             // Get the existing schedule
-            var schedule = await context.InspectionSchedules.FirstOrDefaultAsync(
-                s => s.Id == request.Id && !s.IsDeleted,
-                cancellationToken
-            );
+            var schedule = await context
+                .InspectionSchedules.IgnoreQueryFilters()
+                .AsSplitQuery()
+                .Include(i => i.Car)
+                .ThenInclude(c => c.Contract)
+                .FirstOrDefaultAsync(s => s.Id == request.Id && !s.IsDeleted, cancellationToken);
 
             if (schedule is null)
                 return Result.Error(ResponseMessages.InspectionScheduleNotFound);
@@ -88,6 +90,24 @@ public sealed class UpdateInspectionSchedule
 
             if (hasActiveScheduleConflict)
                 return Result.Error(ResponseMessages.TechnicianHasInspectionScheduleWithinOneHour);
+
+            // Reset signature in the associated car contract if technician is changed
+            if (
+                schedule.TechnicianId != request.TechnicianId
+                && schedule.Type == Domain.Enums.InspectionScheduleType.NewCar
+            )
+            {
+                var contract = schedule.Car?.Contract;
+                if (contract != null)
+                {
+                    contract.OwnerSignature = null;
+                    contract.OwnerSignatureDate = null;
+                    contract.TechnicianSignature = null;
+                    contract.TechnicianSignatureDate = null;
+                    contract.Status = Domain.Enums.CarContractStatusEnum.Pending;
+                    contract.UpdatedAt = DateTimeOffset.UtcNow;
+                }
+            }
 
             // Update schedule
             schedule.TechnicianId = request.TechnicianId;

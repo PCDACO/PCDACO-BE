@@ -17,10 +17,10 @@ public class GetPersonalCars
         Guid[]? Amenities,
         Guid? FuelTypes,
         Guid? TransmissionTypes,
-        Guid? LastCarId,
-        int Limit,
         CarStatusEnum? Status,
-        string? Keyword = ""
+        string? Keyword = "",
+        int PageNumber = 1,
+        int PageSize = 10
     ) : IRequest<Result<OffsetPaginatedResponse<Response>>>;
 
     public record Response(
@@ -51,13 +51,7 @@ public class GetPersonalCars
         ContractDetail? Contract
     )
     {
-        public static async Task<Response> FromEntity(
-            Car car,
-            string masterKey,
-            IAesEncryptionService aesEncryptionService,
-            IKeyManagementService keyManagementService,
-            bool includeContract = false
-        )
+        public static Response FromEntity(Car car, bool includeContract = false)
         {
             ContractDetail? contractDetail = null;
             if (includeContract && car.Contract != null)
@@ -104,7 +98,7 @@ public class GetPersonalCars
                 Images:
                 [
                     .. car.ImageCars?.Select(i => new ImageDetail(i.Id, i.Url, i.Type.Name, i.Name))
-                        ?? []
+                        ?? [],
                 ],
                 Amenities:
                 [
@@ -140,13 +134,8 @@ public class GetPersonalCars
         Guid? GPSDeviceId
     );
 
-    public class Handler(
-        IAppDBContext context,
-        IAesEncryptionService aesEncryptionService,
-        IKeyManagementService keyManagementService,
-        EncryptionSettings encryptionSettings,
-        CurrentUser currentUser
-    ) : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
+    public class Handler(IAppDBContext context, CurrentUser currentUser)
+        : IRequestHandler<Query, Result<OffsetPaginatedResponse<Response>>>
     {
         public async Task<Result<OffsetPaginatedResponse<Response>>> Handle(
             Query request,
@@ -195,7 +184,6 @@ public class GetPersonalCars
                     || c.TransmissionTypeId == request.TransmissionTypes
                 );
             gettingCarQuery = gettingCarQuery
-                .Where(c => request.LastCarId == null || request.LastCarId > c.Id)
                 .OrderByDescending(c => c.Owner.Feedbacks.Average(f => f.Point))
                 .ThenByDescending(c => c.Id);
 
@@ -205,26 +193,22 @@ public class GetPersonalCars
                     EF.Functions.Like(c.Model.Name, $"%{request.Keyword}%")
                 );
             }
+            // Get total result count
             int count = await gettingCarQuery.CountAsync(cancellationToken);
-            List<Car> carResult = await gettingCarQuery.ToListAsync(cancellationToken);
+            // Paginate the result
+            List<Car> carResult = await gettingCarQuery
+                .Skip((request.PageNumber - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .ToListAsync(cancellationToken);
+            // Calculate HasNext
+            bool hasNext = gettingCarQuery.Skip(request.PageNumber * request.PageSize).Any();
             return Result.Success(
                 OffsetPaginatedResponse<Response>.Map(
-                    (
-                        await Task.WhenAll(
-                            carResult.Select(async c =>
-                                await Response.FromEntity(
-                                    c,
-                                    encryptionSettings.Key,
-                                    aesEncryptionService,
-                                    keyManagementService,
-                                    includeContract: canViewContract
-                                )
-                            )
-                        )
-                    ).AsEnumerable(),
+                    carResult.Select(c => Response.FromEntity(c, canViewContract)),
                     count,
-                    0,
-                    0
+                    request.PageNumber,
+                    request.PageSize,
+                    hasNext
                 ),
                 ResponseMessages.Fetched
             );

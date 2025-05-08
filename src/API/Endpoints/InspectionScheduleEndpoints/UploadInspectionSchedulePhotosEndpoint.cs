@@ -35,7 +35,7 @@ public class UploadInspectionPhotosEndpoint : ICarterModule
                     - Only technicians can upload inspection photos
                     - Only active inspection schedules (InProgress/Signed) support photo uploads
                     - Maximum file size: 10MB per photo
-                    - Supported formats: jpg, jpeg, png, gif, bmp, tiff, webp, svg, heic, heif
+                    - Supported formats: jpg, jpeg, png
                     - When uploading VehicleInspectionCertificate photos, expiry date is required
                     """,
 
@@ -103,7 +103,7 @@ public class UploadInspectionPhotosEndpoint : ICarterModule
                                                 "Kích thước ảnh không được vượt quá 10MB"
                                             ),
                                             new OpenApiString(
-                                                "Chỉ chấp nhận các định dạng: .jpg, .jpeg, .png, .gif, .bmp, .tiff, .webp, .svg, .heic, .heif"
+                                                "Chỉ chấp nhận các định dạng: .jpg, .jpeg, .png"
                                             ),
                                             new OpenApiString(
                                                 "Ngày hết hạn giấy kiểm định không được để trống"

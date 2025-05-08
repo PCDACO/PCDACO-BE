@@ -19,7 +19,7 @@ public class GetGPSDeviceDetail
         Guid Id,
         string OSBuildId,
         string Name,
-        string Status,
+        DeviceStatusEnum Status,
         DateTimeOffset CreatedAt,
         CarDetail? CarDetail
     )
@@ -54,12 +54,18 @@ public class GetGPSDeviceDetail
 
                 // Calculate total earnings from completed bookings
                 decimal totalEarnings = car
-                    .Bookings.Where(b => b.Status == BookingStatusEnum.Completed)
+                    .Bookings.Where(b =>
+                        b.Status == BookingStatusEnum.Completed
+                        || b.Status == BookingStatusEnum.Done
+                    )
                     .Sum(b => b.TotalAmount);
 
                 // Find the last rented date (most recent completed booking end time)
                 DateTimeOffset? lastRented = car
-                    .Bookings.Where(b => b.Status == BookingStatusEnum.Completed)
+                    .Bookings.Where(b =>
+                        b.Status == BookingStatusEnum.Completed
+                        || b.Status == BookingStatusEnum.Done
+                    )
                     .OrderByDescending(b => b.EndTime)
                     .FirstOrDefault()
                     ?.EndTime;
@@ -160,7 +166,7 @@ public class GetGPSDeviceDetail
                 device.Id,
                 device.OSBuildId,
                 device.Name,
-                device.Status.ToString(),
+                device.Status,
                 GetTimestampFromUuid.Execute(device.Id),
                 carDetail
             );

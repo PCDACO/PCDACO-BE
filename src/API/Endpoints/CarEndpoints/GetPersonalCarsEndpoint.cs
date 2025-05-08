@@ -35,24 +35,25 @@ public class GetPersonalCarsEndpoint : ICarterModule
                       * Car owners
 
                     Filtering Options:
-                    - Car model
-                    - Amenities
-                    - Fuel type
-                    - Transmission type
-                    - Car status
+                    - Manufacturer (manufacturerId)
+                    - Amenities (amenities[])
+                    - Fuel type (fuel)
+                    - Transmission type (transmission)
+                    - Car status (status)
+                    - Keyword search (keyword) - searches in model name
 
                     Pagination:
-                    - Cursor-based pagination using lastId
-                    - Configurable limit (default: 10)
-                    - Sorted by owner rating and creation date
+                    - Uses offset-based pagination
+                    - Configurable page number and size (default: page 1, size 10)
+                    - Sorted by owner rating and car ID (descending)
 
                     Details Included:
-                    - Car specifications
-                    - Location information
-                    - Statistics (rentals, ratings)
-                    - Images and amenities
+                    - Car specifications (model, fuel, transmission, seats, etc.)
+                    - Location information (GPS coordinates if available)
+                    - Statistics (total rentals, average rating)
+                    - Images and amenities with full details
                     - Contract details (for authorized roles)
-                    - Decrypted license plates
+                    - Manufacturer details
                     """,
 
                     Responses =
@@ -87,8 +88,14 @@ public class GetPersonalCarsEndpoint : ICarterModule
                                                 ["description"] = new OpenApiString(
                                                     "Well-maintained family sedan"
                                                 ),
+                                                ["transmissionTypeId"] = new OpenApiString(
+                                                    "123e4567-e89b-12d3-a456-426614174010"
+                                                ),
                                                 ["transmissionType"] = new OpenApiString(
                                                     "Automatic"
+                                                ),
+                                                ["fuelTypeId"] = new OpenApiString(
+                                                    "123e4567-e89b-12d3-a456-426614174011"
                                                 ),
                                                 ["fuelType"] = new OpenApiString("Gasoline"),
                                                 ["fuelConsumption"] = new OpenApiDouble(7.5),
@@ -100,6 +107,48 @@ public class GetPersonalCarsEndpoint : ICarterModule
                                                 ["status"] = new OpenApiString("Available"),
                                                 ["totalRented"] = new OpenApiInteger(15),
                                                 ["averageRating"] = new OpenApiDouble(4.5),
+                                                ["location"] = new OpenApiObject
+                                                {
+                                                    ["longitude"] = new OpenApiDouble(106.660172),
+                                                    ["latitude"] = new OpenApiDouble(10.762622),
+                                                },
+                                                ["manufacturer"] = new OpenApiObject
+                                                {
+                                                    ["id"] = new OpenApiString(
+                                                        "123e4567-e89b-12d3-a456-426614174005"
+                                                    ),
+                                                    ["name"] = new OpenApiString("Toyota"),
+                                                },
+                                                ["images"] = new OpenApiArray
+                                                {
+                                                    new OpenApiObject
+                                                    {
+                                                        ["id"] = new OpenApiString(
+                                                            "123e4567-e89b-12d3-a456-426614174006"
+                                                        ),
+                                                        ["url"] = new OpenApiString(
+                                                            "https://example.com/images/car1.jpg"
+                                                        ),
+                                                        ["type"] = new OpenApiString("Exterior"),
+                                                        ["name"] = new OpenApiString("Front view"),
+                                                    },
+                                                },
+                                                ["amenities"] = new OpenApiArray
+                                                {
+                                                    new OpenApiObject
+                                                    {
+                                                        ["id"] = new OpenApiString(
+                                                            "123e4567-e89b-12d3-a456-426614174007"
+                                                        ),
+                                                        ["name"] = new OpenApiString(
+                                                            "Air Conditioning"
+                                                        ),
+                                                        ["description"] = new OpenApiString(
+                                                            "Climate control"
+                                                        ),
+                                                        ["icon"] = new OpenApiString("ac-icon"),
+                                                    },
+                                                },
                                                 ["contract"] = new OpenApiObject
                                                 {
                                                     ["id"] = new OpenApiString(
@@ -118,16 +167,19 @@ public class GetPersonalCarsEndpoint : ICarterModule
                                                     ),
                                                     ["gpsDeviceId"] = new OpenApiString(
                                                         "123e4567-e89b-12d3-a456-426614174004"
-                                                    )
-                                                }
-                                            }
+                                                    ),
+                                                },
+                                            },
                                         },
-                                        ["totalItems"] = new OpenApiInteger(100),
+                                        ["total"] = new OpenApiInteger(100),
+                                        ["pageNumber"] = new OpenApiInteger(1),
+                                        ["pageSize"] = new OpenApiInteger(10),
+                                        ["hasNext"] = new OpenApiBoolean(true),
                                         ["isSuccess"] = new OpenApiBoolean(true),
-                                        ["message"] = new OpenApiString("Lấy dữ liệu thành công")
-                                    }
-                                }
-                            }
+                                        ["message"] = new OpenApiString("Lấy dữ liệu thành công"),
+                                    },
+                                },
+                            },
                         },
                         ["401"] = new() { Description = "Unauthorized - User not authenticated" },
                         ["403"] = new()
@@ -142,12 +194,12 @@ public class GetPersonalCarsEndpoint : ICarterModule
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
                                             "Bạn không có quyền truy cập"
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                        ),
+                                    },
+                                },
+                            },
+                        },
+                    },
                 }
             );
     }
@@ -155,13 +207,13 @@ public class GetPersonalCarsEndpoint : ICarterModule
     private async Task<IResult> Handle(
         ISender sender,
         [FromQuery(Name = "manufacturerId")] Guid? manufacturerId,
-        [FromQuery(Name = "lastId")] Guid? lastCarId,
         [FromQuery(Name = "amenities")] Guid[]? amenities,
         [FromQuery(Name = "fuel")] Guid? fuel,
         [FromQuery(Name = "transmission")] Guid? transmission,
         [FromQuery(Name = "status")] CarStatusEnum? status,
         [FromQuery(Name = "keyword")] string? keyword = "",
-        [FromQuery(Name = "limit")] int? limit = 10
+        [FromQuery(Name = "index")] int? pageNumber = 1,
+        [FromQuery(Name = "size")] int? pageSize = 10
     )
     {
         Result<OffsetPaginatedResponse<GetPersonalCars.Response>> result = await sender.Send(
@@ -170,10 +222,10 @@ public class GetPersonalCarsEndpoint : ICarterModule
                 Amenities: amenities,
                 FuelTypes: fuel,
                 TransmissionTypes: transmission,
-                LastCarId: lastCarId,
-                Limit: limit!.Value,
                 Status: status,
-                Keyword: keyword
+                Keyword: keyword,
+                PageNumber: pageNumber ?? 1,
+                PageSize: pageSize ?? 10
             )
         );
         return result.MapResult();

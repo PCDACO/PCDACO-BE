@@ -17,4 +17,7 @@ public enum InspectionPhotoType
 
     // Vehicle inspection certificate
     VehicleInspectionCertificate,
+
+    // Other types
+    Other, // Other types of inspection photos
 }
