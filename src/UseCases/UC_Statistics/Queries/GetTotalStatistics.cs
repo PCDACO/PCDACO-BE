@@ -132,15 +132,14 @@ public sealed class GetTotalStatistics
 
                 // Count active users for this month
                 int monthlyActiveUsers = context
-                    .Bookings.AsNoTracking()
-                    .Include(b => b.User)
+                    .Users.AsNoTracking()
+                    .Include(u => u.Role)
                     .AsEnumerable()
-                    .Where(b =>
-                        GetTimestampFromUuid.Execute(b.Id) >= startOfMonth
-                        && GetTimestampFromUuid.Execute(b.Id) <= endOfMonth
+                    .Where(u =>
+                        GetTimestampFromUuid.Execute(u.Id) >= startOfMonth
+                        && GetTimestampFromUuid.Execute(u.Id) <= endOfMonth
                     )
-                    .Select(b => b.UserId)
-                    .Distinct()
+                    .Where(u => u.IsDriver() || u.IsOwner())
                     .Count();
 
                 // Count completed bookings for this month
