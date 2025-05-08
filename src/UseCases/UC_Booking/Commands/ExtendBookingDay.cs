@@ -382,6 +382,7 @@ public class ExtendBookingDay
             booking.BasePrice += newBasePrice;
             booking.PlatformFee += newPlatformFee;
             booking.TotalAmount += newTotalAmount;
+            booking.ExtensionAmount = newTotalAmount;
             booking.IsExtensionPaid = false;
 
             // Update contract
