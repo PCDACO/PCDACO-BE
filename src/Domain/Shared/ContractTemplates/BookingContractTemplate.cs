@@ -45,7 +45,7 @@ public static class ContractTemplateGenerator
                     <p>
                         Bên A đồng ý cho Bên B thuê xe với các thông tin như đã mô tả ở phần thông tin xe thuê.
                         Việc giao nhận xe phải được thực hiện tại địa điểm đã thỏa thuận: {contractTemplate.PickupAddress}.
-                        Bên B phải sử dụng tính năng 'Bắt đầu chuyến đi' và 'Kết thúc chuyến đi' trên ứng dụng khi giao nhận xe.
+                        Khi giao và nhận xe, hai bên có trách nhiệm cùng kiểm tra tình trạng xe (ngoại thất, nội thất, nhiên liệu, giấy tờ, trang bị đi kèm) và xác nhận thông qua tính năng 'Bắt đầu chuyến đi' và 'Kết thúc chuyến đi' trên ứng dụng, bao gồm việc chụp ảnh/quay video làm bằng chứng.
                     </p>
                 </div>
 
@@ -92,8 +92,8 @@ public static class ContractTemplateGenerator
                 <div class='clause'>
                     <strong>Điều 4: Quyền và nghĩa vụ của Bên A (Chủ xe)</strong>
                     <p>
-                        a) Bên A cam kết bàn giao xe đúng như mô tả và đảm bảo xe có đầy đủ giấy tờ hợp pháp. <br/>
-                        b) Bên A có trách nhiệm bảo trì, bảo dưỡng xe định kỳ, đảm bảo xe luôn trong tình trạng sử dụng tốt. <br/>
+                        a) Bên A cam kết bàn giao xe đúng như mô tả, trong tình trạng vận hành an toàn và đảm bảo xe có đầy đủ giấy tờ hợp pháp (đăng ký, đăng kiểm còn hạn, bảo hiểm TNDS bắt buộc còn hiệu lực). <br/>
+                        b) Bên A có trách nhiệm bảo trì, bảo dưỡng xe định kỳ. <br/>
                         c) Nếu xảy ra tranh chấp về quyền sở hữu hoặc sử dụng xe, Bên A chịu trách nhiệm giải quyết theo pháp luật.
                     </p>
                 </div>
@@ -103,7 +103,11 @@ public static class ContractTemplateGenerator
                     <p>
                         a) Bên B có trách nhiệm sử dụng xe đúng mục đích, bảo quản xe cẩn thận và không được tự ý thay đổi cấu trúc xe nếu chưa được Bên A đồng ý.<br/>
                         b) Bên B cam kết thanh toán đầy đủ số tiền thuê theo thỏa thuận. <br/>
-                        c) Trong trường hợp Bên B vi phạm quy định giao thông, gây ra tai nạn, hoặc không tuân thủ các điều khoản bảo quản xe, Bên B phải chịu phạt và bồi thường thiệt hại cho Bên A theo quy định của pháp luật.
+                        c) Trong trường hợp Bên B vi phạm quy định giao thông, gây ra tai nạn, hoặc không tuân thủ các điều khoản bảo quản xe, Bên B phải chịu phạt và bồi thường thiệt hại cho Bên A theo quy định của pháp luật. <br/>
+                        d) Bên B chỉ được phép sử dụng xe trong phạm vi lãnh thổ Việt Nam, trừ khi có thỏa thuận khác bằng văn bản với Bên A. Không được phép lái xe vào các khu vực nguy hiểm hoặc đường không phù hợp với loại xe. <br/>
+                        e) Bên B phải trả xe đúng thời gian và địa điểm đã thỏa thuận trong hợp đồng. <br/>
+                        f) Bên B không được tự ý tháo thiết bị định vị ra khỏi xe, nếu bị phát hiện sẽ bị phạt 5 triệu đồng và bồi thường thiệt hại cho Bên A. <br/>
+                        g) Bên B không được đem xe cho người khác thuê lại hoặc cho mượn mà không có sự đồng ý của Bên A. <br/>
                     </p>
                 </div>
 
@@ -130,27 +134,32 @@ public static class ContractTemplateGenerator
                     <p>
                         a) Trước khi nhận xe, Bên B (Người thuê xe) phải nộp tiền thế chấp tối thiểu là {contractSettings.CollateralPrice:N0} VNĐ bằng tiền mặt.
                         <br/>
-                        b) Số tiền thế chấp sẽ được giữ bởi Bên A (Chủ xe) trong vòng 1 tháng sau khi kết thúc chuyến đi.
+                        b) Số tiền thế chấp sẽ được giữ bởi Bên A (Chủ xe) trong vòng tối đa 30 ngày sau khi kết thúc chuyến đi để đảm bảo thanh toán các khoản phạt nguội, chi phí sửa chữa thiệt hại (nếu có), phí vệ sinh, phí nhiên liệu thiếu hụt hoặc các vi phạm hợp đồng khác từ Bên B.
                         <br/>
-                        c) Trong thời gian 1 tháng, nếu có phạt nguội (ví dụ vi phạm giao thông như vượt đèn đỏ, xử phạt nguội, v.v.),
-                        Bên A có quyền trừ số tiền phạt vào số tiền thế chấp. Trong trường hợp tiền thế chấp không đủ,
-                        Bên B phải thanh toán khoản chênh lệch trong vòng 5 ngày kể từ khi nhận thông báo.
+                        c) Trong thời gian giữ tiền thế chấp, nếu phát sinh các khoản chi phí thuộc trách nhiệm của Bên B (phạt nguội, sửa chữa, vệ sinh...), Bên A có quyền trích trừ từ tiền thế chấp. Nếu tiền thế chấp không đủ, Bên B phải thanh toán phần còn thiếu trong vòng 5 ngày kể từ khi nhận thông báo.
                         <br/>
-                        d) Sau 1 tháng, nếu không còn phạt phát sinh hoặc sau khi đã trừ hết phạt,
-                        Bên A bắt buộc hoàn trả lại số tiền thế chấp còn lại cho Bên B.
+                        d) Sau thời gian quy định tại mục (b), nếu không phát sinh hoặc đã xử lý xong các khoản chi phí thuộc trách nhiệm của Bên B, Bên A có trách nhiệm hoàn trả số tiền thế chấp còn lại cho Bên B.
                         <br/>
-                        e) Nếu sau 1 tháng, giấy phạt mới được gửi về, Bên A sẽ báo cáo lại hệ thống,
-                        và theo đó Bên B phải thanh toán số tiền phạt phát sinh theo chính sách của nền tảng.
+                        e) Nếu thông báo phạt nguội hoặc các chi phí khác liên quan đến thời gian thuê của Bên B được gửi đến sau khi tiền thế chấp đã hoàn trả, Bên B vẫn có trách nhiệm thanh toán đầy đủ các khoản này theo yêu cầu của Bên A/Nền tảng.
                         <br/>
-                        f) Nếu Bên B không thanh toán số tiền phát sinh (bao gồm khoản chênh lệch từ tiền thế chấp hoặc phạt mới)
-                        và không cung cấp biên lai xác nhận thanh toán trong thời gian quy định, thì Bên B sẽ không được phép đặt đơn thuê xe mới
-                        cho đến khi các khoản nợ được thanh toán đầy đủ và có biên lai chứng từ hợp lệ.
-                        g) Trong trường hợp vi phạm bị cơ quan nhà nước giữ xe, BÊN THUÊ chịu chi phí thuê xe cho đến khi FreeDriver nhận lại xe.
+                        f) Nếu Bên B không thanh toán các khoản chi phí phát sinh đúng hạn, Bên B sẽ bị hạn chế sử dụng dịch vụ của Nền tảng cho đến khi hoàn tất nghĩa vụ thanh toán.
+                        <br/>
+                        g) Trong trường hợp vi phạm bị cơ quan nhà nước giữ xe, Bên B chịu chi phí thuê xe cho đến khi Bên A nhận lại xe, cùng các chi phí phát sinh khác để lấy xe ra.
                     </p>
                 </div>
 
                 <div class='clause'>
-                    <strong>Điều 9: Quy định về vi phạm và hạn chế quyền đặt xe</strong>
+                    <strong>Điều 9: Bảo hiểm, Sự cố kỹ thuật và Miễn thường</strong>
+                    <p>
+                        a) Bên A đảm bảo xe có bảo hiểm TNDS bắt buộc còn hiệu lực. Việc mua bảo hiểm vật chất thân vỏ là trách nhiệm của Bên A nhưng không bắt buộc.<br/>
+                        b) Trường hợp xảy ra tai nạn/sự cố thuộc phạm vi bảo hiểm vật chất (nếu có) và lỗi được xác định thuộc về Bên B: Bên B chịu trách nhiệm thanh toán phần miễn thường bảo hiểm và các chi phí phát sinh không được bảo hiểm chi trả. Khoản này có thể được khấu trừ từ tiền thế chấp.<br/>
+                        c) Trường hợp xe gặp sự cố kỹ thuật (hỏng hóc) không do lỗi của Bên B: Bên B cần thông báo ngay cho Bên A và Nền tảng. Bên A chịu trách nhiệm phối hợp xử lý (sửa chữa, cứu hộ). Bên B có thể được hoàn trả một phần tiền thuê tương ứng với thời gian gián đoạn hoặc được hỗ trợ sắp xếp phương tiện thay thế tùy theo chính sách của Nền tảng và thỏa thuận với Bên A.<br/>
+                        d) Bên B phải hợp tác đầy đủ với Bên A và công ty bảo hiểm trong quá trình xử lý bồi thường.
+                    </p>
+                </div>
+
+                <div class='clause'>
+                    <strong>Điều 10: Quy định về vi phạm và hạn chế quyền đặt xe</strong>
                     <p>
                         a) Hệ thống sẽ theo dõi và ghi nhận các hành vi vi phạm, bao gồm số lần hủy đơn và các vi phạm giao thông,
                         từ phía Bên B (Người thuê xe).
@@ -164,7 +173,7 @@ public static class ContractTemplateGenerator
                 </div>
 
                 <div class='clause'>
-                    <strong>Điều 10: Giải quyết tranh chấp và khiếu nại</strong>
+                    <strong>Điều 11: Giải quyết tranh chấp và khiếu nại</strong>
                     <p>
                         a) Trong trường hợp có tranh chấp liên quan đến việc trả xe, phạt nguội, hoặc thiệt hại hiệu quả, cả hai bên
                         có trách nhiệm cung cấp đầy đủ bằng chứng như hình ảnh kiểm định, biên lai thanh toán, báo cáo vi phạm, v.v.
@@ -179,15 +188,15 @@ public static class ContractTemplateGenerator
                 </div>
 
                 <div class='clause'>
-                    <strong>Điều 11: Quy định về vệ sinh và nhiên liệu xe</strong>
+                    <strong>Điều 12: Quy định về vệ sinh và nhiên liệu xe</strong>
                     <p>
                         a) Điều kiện giao xe:
                         <br/>
-                        - Bên A (Chủ xe) có trách nhiệm bàn giao xe trong tình trạng sạch sẽ, vệ sinh cả nội thất và ngoại thất.
+                        - Bên A (Chủ xe) có trách nhiệm bàn giao xe trong tình trạng sạch sẽ, không có mùi lạ, nội thất và ngoại thất không có rác thải.
                         <br/>
                         - Mức nhiên liệu khi giao xe phải đạt tối thiểu 90% (hoặc đồng hồ báo F - Full).
                         <br/>
-                        - Hai bên sẽ chụp ảnh và ghi nhận tình trạng vệ sinh, mức nhiên liệu vào biên bản bàn giao xe.
+                        - Hai bên sẽ chụp ảnh và ghi nhận tình trạng vệ sinh, mức nhiên liệu vào ứng dụng khi bàn giao xe.
                         <br/>
                         <br/>
                         b) Điều kiện trả xe:
@@ -210,7 +219,7 @@ public static class ContractTemplateGenerator
                         <br/>
                         d) Quy trình xử lý:
                         <br/>
-                        - Khi trả xe, hai bên sẽ kiểm tra và ghi nhận tình trạng vệ sinh, mức nhiên liệu vào biên bản.
+                        - Khi trả xe, hai bên sẽ kiểm tra và ghi nhận tình trạng vệ sinh, mức nhiên liệu vào ứng dụng.
                         <br/>
                         - Nếu phát hiện vi phạm, Bên A có quyền giữ lại một phần tiền đặt cọc để chi trả các khoản phí phạt.
                         <br/>
@@ -226,7 +235,7 @@ public static class ContractTemplateGenerator
                 </div>
 
                 <div class='clause'>
-                    <strong>Điều 12: Chính sách hủy chuyến và hoàn tiền</strong>
+                    <strong>Điều 13: Chính sách hủy chuyến và hoàn tiền</strong>
                     <p>
                         a) Quy định hủy chuyến từ phía Bên B (Người thuê):
                         <br/>
