@@ -42,11 +42,7 @@ public sealed class GetTotalStatistics
                 .SumAsync(b => b.TotalAmount, cancellationToken);
 
             // Count active users
-            int totalActiveUsers = context
-                .Bookings.Include(b => b.User)
-                .Select(b => b.UserId)
-                .Distinct()
-                .Count();
+            int totalActiveUsers = context.Users.Count(u => !u.IsDeleted);
 
             // Count active transactions
             int activeTransactions = await context
