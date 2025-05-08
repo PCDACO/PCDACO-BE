@@ -103,9 +103,11 @@ public static class ContractTemplateGenerator
                     <p>
                         a) Bên B có trách nhiệm sử dụng xe đúng mục đích, bảo quản xe cẩn thận và không được tự ý thay đổi cấu trúc xe nếu chưa được Bên A đồng ý.<br/>
                         b) Bên B cam kết thanh toán đầy đủ số tiền thuê theo thỏa thuận. <br/>
-                        c) Trong trường hợp Bên B vi phạm quy định giao thông, gây ra tai nạn, hoặc không tuân thủ các điều khoản bảo quản xe, Bên B phải chịu phạt và bồi thường thiệt hại cho Bên A theo quy định của pháp luật.
-                        d) Bên B chỉ được phép sử dụng xe trong phạm vi lãnh thổ Việt Nam, trừ khi có thỏa thuận khác bằng văn bản với Bên A. Không được phép lái xe vào các khu vực nguy hiểm hoặc đường không phù hợp với loại xe.
-                        e) Bên B phải trả xe đúng thời gian và địa điểm đã thỏa thuận trong hợp đồng.
+                        c) Trong trường hợp Bên B vi phạm quy định giao thông, gây ra tai nạn, hoặc không tuân thủ các điều khoản bảo quản xe, Bên B phải chịu phạt và bồi thường thiệt hại cho Bên A theo quy định của pháp luật. <br/>
+                        d) Bên B chỉ được phép sử dụng xe trong phạm vi lãnh thổ Việt Nam, trừ khi có thỏa thuận khác bằng văn bản với Bên A. Không được phép lái xe vào các khu vực nguy hiểm hoặc đường không phù hợp với loại xe. <br/>
+                        e) Bên B phải trả xe đúng thời gian và địa điểm đã thỏa thuận trong hợp đồng. <br/>
+                        f) Bên B không được tự ý tháo thiết bị định vị ra khỏi xe, nếu bị phát hiện sẽ bị phạt 5 triệu đồng và bồi thường thiệt hại cho Bên A. <br/>
+                        g) Bên B không được đem xe cho người khác thuê lại hoặc cho mượn mà không có sự đồng ý của Bên A. <br/>
                     </p>
                 </div>
 
