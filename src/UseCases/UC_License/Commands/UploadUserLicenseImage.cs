@@ -48,16 +48,23 @@ public sealed class UploadUserLicenseImage
                 return Result.NotFound("Không tìm thấy giấy phép lái xe");
 
             // Upload new images
-            var frontImageUrl = await cloudinaryServices.UploadDriverLicenseImageAsync(
-                $"License-User-{user.Id}-FrontImage",
-                request.LicenseImageFrontUrl,
-                cancellationToken
-            );
-            var backImageUrl = await cloudinaryServices.UploadDriverLicenseImageAsync(
-                $"License-User-{user.Id}-BackImage",
-                request.LicenseImageBackUrl,
-                cancellationToken
-            );
+            var uploadTasks = new[]
+            {
+                cloudinaryServices.UploadDriverLicenseImageAsync(
+                    $"License-User-{user.Id}-FrontImage",
+                    request.LicenseImageFrontUrl,
+                    cancellationToken
+                ),
+                cloudinaryServices.UploadDriverLicenseImageAsync(
+                    $"License-User-{user.Id}-BackImage",
+                    request.LicenseImageBackUrl,
+                    cancellationToken
+                ),
+            };
+
+            string[] imageUrls = await Task.WhenAll(uploadTasks);
+            string frontImageUrl = imageUrls[0];
+            string backImageUrl = imageUrls[1];
 
             // Update license images
             user.LicenseImageFrontUrl = frontImageUrl;
