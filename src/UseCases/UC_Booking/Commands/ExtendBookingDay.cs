@@ -382,6 +382,7 @@ public class ExtendBookingDay
             booking.BasePrice += newBasePrice;
             booking.PlatformFee += newPlatformFee;
             booking.TotalAmount += newTotalAmount;
+            booking.ExtensionAmount = newTotalAmount;
             booking.IsExtensionPaid = false;
 
             // Update contract
@@ -469,6 +470,7 @@ public class ExtendBookingDay
             booking.BasePrice = oldBasePrice;
             booking.PlatformFee = oldPlatformFee;
             booking.TotalAmount = oldTotalAmount;
+            booking.ExtensionAmount = null;
             booking.UpdatedAt = DateTimeOffset.UtcNow;
 
             // Revert contract dates
