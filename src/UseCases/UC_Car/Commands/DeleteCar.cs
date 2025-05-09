@@ -54,6 +54,10 @@ public sealed class DeleteCar
                 );
             if (activeInspectionSchedules.Any())
                 return Result.Error("Xe đang có lịch kiểm định không thể xóa!");
+            // Check if any gps device is attached to the car can not delete
+            var carGPS = context.CarGPSes.AsNoTracking().Where(g => g.CarId == deletingCar.Id);
+            if (carGPS.Any())
+                return Result.Error("Vui lòng gỡ thiết bị gps trước khi xóa xe!");
             // Soft delete image car
             await context
                 .ImageCars.Where(ic => ic.CarId == deletingCar.Id)

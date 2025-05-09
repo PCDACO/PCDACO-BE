@@ -126,7 +126,7 @@ public class DeleteInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
     }
 
     [Fact]
-    public async Task Handle_ScheduleDateWithinOneDay_ReturnsError()
+    public async Task Handle_ScheduleDateIsNow_ReturnsError()
     {
         // Arrange
         var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
@@ -170,7 +170,7 @@ public class DeleteInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
             CarId = car.Id,
             Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
             InspectionAddress = "123 Main St",
-            InspectionDate = DateTimeOffset.UtcNow.AddHours(20), // Less than 1 day away
+            InspectionDate = DateTimeOffset.UtcNow, // now
             CreatedBy = consultant.Id,
         };
         await _dbContext.InspectionSchedules.AddAsync(schedule);
@@ -184,10 +184,69 @@ public class DeleteInspectionScheduleTest(DatabaseTestBase fixture) : IAsyncLife
 
         // Assert
         Assert.Equal(ResultStatus.Error, result.Status);
-        Assert.Contains(
-            ResponseMessages.CannotDeleteScheduleHasInspectionDateLessThen1DayFromNow,
-            result.Errors
+        Assert.Contains(ResponseMessages.CannotDeleteScheduleInProgressOrInThePast, result.Errors);
+    }
+
+    [Fact]
+    public async Task Handle_ScheduleDateIsLessThanNow_ReturnsError()
+    {
+        // Arrange
+        var consultantRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Consultant"
         );
+        var consultant = await TestDataCreateUser.CreateTestUser(_dbContext, consultantRole);
+        _currentUser.SetUser(consultant);
+
+        // Create technician
+        var technicianRole = await TestDataCreateUserRole.CreateTestUserRole(
+            _dbContext,
+            "Technician"
+        );
+        var technician = await TestDataCreateUser.CreateTestUser(_dbContext, technicianRole);
+
+        // Create owner and car prerequisites
+        var ownerRole = await TestDataCreateUserRole.CreateTestUserRole(_dbContext, "Owner");
+        var owner = await TestDataCreateUser.CreateTestUser(_dbContext, ownerRole);
+        var manufacturer = await TestDataCreateManufacturer.CreateTestManufacturer(_dbContext);
+        var carModel = await TestDataCreateModel.CreateTestModel(_dbContext, manufacturer.Id);
+        var transmissionType = await TestDataTransmissionType.CreateTestTransmissionType(
+            _dbContext,
+            "Automatic"
+        );
+        var fuelType = await TestDataFuelType.CreateTestFuelType(_dbContext, "Electric");
+
+        // Create car
+        var car = await TestDataCreateCar.CreateTestCar(
+            dBContext: _dbContext,
+            ownerId: owner.Id,
+            modelId: carModel.Id,
+            transmissionType: transmissionType,
+            fuelType: fuelType,
+            carStatus: Domain.Enums.CarStatusEnum.Pending
+        );
+
+        var schedule = new InspectionSchedule
+        {
+            TechnicianId = technician.Id,
+            CarId = car.Id,
+            Status = Domain.Enums.InspectionScheduleStatusEnum.Pending,
+            InspectionAddress = "123 Main St",
+            InspectionDate = DateTimeOffset.UtcNow.AddMinutes(-1), // Less than now
+            CreatedBy = consultant.Id,
+        };
+        await _dbContext.InspectionSchedules.AddAsync(schedule);
+        await _dbContext.SaveChangesAsync();
+
+        var handler = new DeleteInspectionSchedule.Handler(_dbContext, _currentUser);
+        var command = new DeleteInspectionSchedule.Command(schedule.Id);
+
+        // Act
+        var result = await handler.Handle(command, CancellationToken.None);
+
+        // Assert
+        Assert.Equal(ResultStatus.Error, result.Status);
+        Assert.Contains(ResponseMessages.CannotDeleteScheduleInProgressOrInThePast, result.Errors);
     }
 
     [Fact]

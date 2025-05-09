@@ -33,17 +33,16 @@ public sealed class GetTotalStatistics
             CancellationToken cancellationToken
         )
         {
-            // Calculate total revenue (from completed bookings)
+            // Calculate total revenue (from completed or done bookings)
             decimal totalRevenue = await context
-                .Bookings.Where(b => b.Status == BookingStatusEnum.Completed && !b.IsDeleted)
+                .Bookings.Where(b =>
+                    (b.Status == BookingStatusEnum.Done || b.Status == BookingStatusEnum.Completed)
+                    && !b.IsDeleted
+                )
                 .SumAsync(b => b.TotalAmount, cancellationToken);
 
             // Count active users
-            int totalActiveUsers = context
-                .Bookings.Include(b => b.User)
-                .Select(b => b.UserId)
-                .Distinct()
-                .Count();
+            int totalActiveUsers = context.Users.Count(u => !u.IsDeleted);
 
             // Count active transactions
             int activeTransactions = await context
@@ -55,11 +54,17 @@ public sealed class GetTotalStatistics
                 )
                 .CountAsync(cancellationToken);
 
-            // Count total rented cars (cars that have been in at least one completed booking)
+            // Count total rented cars
             int totalRentedCars = context
                 .Bookings.AsNoTracking()
                 .Include(b => b.Car)
-                .Where(b => b.Status == BookingStatusEnum.Completed && !b.IsDeleted)
+                .Where(b =>
+                    b.Status != BookingStatusEnum.Expired
+                    && b.Status != BookingStatusEnum.Cancelled
+                    && b.Status != BookingStatusEnum.Rejected
+                    && b.Status != BookingStatusEnum.Pending
+                    && !b.IsDeleted
+                )
                 .Select(b => b.CarId)
                 .Distinct()
                 .Count();
@@ -83,18 +88,18 @@ public sealed class GetTotalStatistics
 
             string[] monthNames =
             {
-                "Jan",
-                "Feb",
-                "Mar",
-                "Apr",
-                "May",
-                "Jun",
-                "Jul",
-                "Aug",
-                "Sep",
-                "Oct",
-                "Nov",
-                "Dec",
+                "T1",
+                "T2",
+                "T3",
+                "T4",
+                "T5",
+                "T6",
+                "T7",
+                "T8",
+                "T9",
+                "T10",
+                "T11",
+                "T12",
             };
 
             // Get last 12 months of data
@@ -115,7 +120,10 @@ public sealed class GetTotalStatistics
                 // Calculate revenue for this month
                 decimal monthlyRevenue = await context
                     .Bookings.Where(b =>
-                        b.Status == BookingStatusEnum.Completed
+                        (
+                            b.Status == BookingStatusEnum.Completed
+                            || b.Status == BookingStatusEnum.Done
+                        )
                         && !b.IsDeleted
                         && b.ActualReturnTime >= startOfMonth
                         && b.ActualReturnTime <= endOfMonth
@@ -124,36 +132,37 @@ public sealed class GetTotalStatistics
 
                 // Count active users for this month
                 int monthlyActiveUsers = context
-                    .Bookings
-                    .AsNoTracking()
-                    .Include(b => b.User)
+                    .Users.AsNoTracking()
+                    .Include(u => u.Role)
                     .AsEnumerable()
-                    .Where(b =>
-                        GetTimestampFromUuid.Execute(b.Id) >= startOfMonth
-                        && GetTimestampFromUuid.Execute(b.Id) <= endOfMonth
+                    .Where(u =>
+                        GetTimestampFromUuid.Execute(u.Id) >= startOfMonth
+                        && GetTimestampFromUuid.Execute(u.Id) <= endOfMonth
                     )
-                    .Select(b => b.UserId)
-                    .Distinct()
+                    .Where(u => u.IsDriver() || u.IsOwner())
                     .Count();
 
                 // Count completed bookings for this month
                 int monthlyBookings = context
-                    .Bookings
-                    .AsNoTracking()
+                    .Bookings.AsNoTracking()
                     .AsEnumerable()
                     .Where(b =>
                         GetTimestampFromUuid.Execute(b.Id) >= startOfMonth
                         && GetTimestampFromUuid.Execute(b.Id) <= endOfMonth
                     )
-                    .Where(b => b.Status == BookingStatusEnum.Completed)
+                    .Where(b =>
+                        (
+                            b.Status == BookingStatusEnum.Completed
+                            || b.Status == BookingStatusEnum.Done
+                        )
+                    )
                     .Select(b => b.Id)
                     .Distinct()
                     .Count();
 
                 // Count completed bookings for this month
                 int monthlyCars = context
-                    .Cars
-                    .AsNoTracking()
+                    .Cars.AsNoTracking()
                     .AsEnumerable()
                     .Where(b =>
                         GetTimestampFromUuid.Execute(b.Id) >= startOfMonth
@@ -173,19 +182,20 @@ public sealed class GetTotalStatistics
             }
 
             return Result.Success(
-                    value: new Response(
-                        TotalRevenue: totalRevenue,
-                        ActiveUsers: totalActiveUsers,
-                        ActiveTransactions: activeTransactions,
-                        TotalRentedCars: totalRentedCars,
-                        TotalBookingCancelled: totalBookingCancelled,
-                        CancellationLoss: cancellationLoss,
-                        RevenueOverTime: revenueOverTime,
-                        ActiveUsersOverTime: activeUsersOverTime,
-                        BookingsOverTime: bookingsOverTime,
-                        ActiveCarsOverTime: carsOverTime),
-                    successMessage: "Lấy thống kê hệ thống thành công"
-                    );
+                value: new Response(
+                    TotalRevenue: totalRevenue,
+                    ActiveUsers: totalActiveUsers,
+                    ActiveTransactions: activeTransactions,
+                    TotalRentedCars: totalRentedCars,
+                    TotalBookingCancelled: totalBookingCancelled,
+                    CancellationLoss: cancellationLoss,
+                    RevenueOverTime: revenueOverTime,
+                    ActiveUsersOverTime: activeUsersOverTime,
+                    BookingsOverTime: bookingsOverTime,
+                    ActiveCarsOverTime: carsOverTime
+                ),
+                successMessage: "Lấy thống kê hệ thống thành công"
+            );
         }
     }
 }

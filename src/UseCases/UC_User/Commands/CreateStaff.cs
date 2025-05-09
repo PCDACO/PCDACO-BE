@@ -46,19 +46,34 @@ public sealed class CreateStaff
             if (!new[] { "consultant", "technician" }.Contains(request.RoleName.ToLower()))
                 return Result.Error(ResponseMessages.MustBeConsultantOrTechnician);
 
-            // Check if user already exists
-            User? existingUser = await context.Users.FirstOrDefaultAsync(
-                x =>
-                    EF.Functions.ILike(x.Email, request.Email)
-                    || EF.Functions.ILike(x.Phone, request.Phone),
-                cancellationToken
-            );
+            // Check if email or phone already exists
+            List<User> users = await context
+                .Users.AsNoTracking()
+                .Include(u => u.EncryptionKey)
+                .ToListAsync(cancellationToken);
 
-            if (existingUser is not null)
+            foreach (var u in users)
             {
-                return existingUser.Email.ToLower() == request.Email.ToLower()
-                    ? Result.Error(ResponseMessages.EmailAddressIsExisted)
-                    : Result.Error(ResponseMessages.PhoneNumberIsExisted);
+                string decryptedKey = keyManagementService.DecryptKey(
+                    u.EncryptionKey.EncryptedKey,
+                    encryptionSettings.Key
+                );
+
+                string decryptedPhone = await aesEncryptionService.Decrypt(
+                    u.Phone,
+                    decryptedKey,
+                    u.EncryptionKey.IV
+                );
+
+                if (u.Email == request.Email)
+                {
+                    return Result.Error(ResponseMessages.EmailAddressIsExisted);
+                }
+
+                if (decryptedPhone == request.Phone)
+                {
+                    return Result.Error(ResponseMessages.PhoneNumberIsExisted);
+                }
             }
 
             // Get role

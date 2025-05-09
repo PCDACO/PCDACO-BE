@@ -95,7 +95,25 @@ public class ApproveInspectionScheduleEndpoint : ICarterModule
                                     {
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
-                                            ResponseMessages.OnlyUpdateSignedOrInprogressInspectionSchedule
+                                            "Chỉ có thể phê duyệt lịch kiểm định ở trạng thái đã ký hoặc đang xử lý"
+                                        ),
+                                    },
+                                },
+                            },
+                        },
+                        ["400"] = new()
+                        {
+                            Description =
+                                "Bad request - Schedule in wrong state, expired, or contract issues",
+                            Content =
+                            {
+                                ["application/json"] = new()
+                                {
+                                    Example = new OpenApiObject
+                                    {
+                                        ["isSuccess"] = new OpenApiBoolean(false),
+                                        ["message"] = new OpenApiString(
+                                            "Chỉ có thể từ chối lịch kiểm định ở trạng thái chờ xử lý, đã ký hoặc đang xử lý"
                                         ),
                                     },
                                 },

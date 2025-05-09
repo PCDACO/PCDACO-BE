@@ -29,27 +29,31 @@ public class GetCarsEndpoint : ICarterModule
                     - Available to all authenticated users
 
                     Filter Options:
-                    - Location-based (latitude, longitude, radius)
-                    - Car model
-                    - Amenities
+                    - Location-based (latitude, longitude, radius in meters)
+                    - Car model manufacturer
+                    - Amenities (all specified amenities must be present)
                     - Fuel type
                     - Transmission type
-                    - Date range availability
-                    - Keyword search
+                    - Date range availability (excludes cars with bookings in the specified period)
+                    - Keyword search (matches model, description, color, manufacturer, license plate)
 
                     Pagination:
-                    - Uses cursor-based pagination with lastId
-                    - Configurable limit (default: 10)
+                    - Uses offset-based pagination
+                    - Configurable page number and size (default: page 1, size 10)
+                    - Results ordered by owner ratings and car ID
 
                     Details Included:
                     - Car information (model, specifications, price)
                     - Owner details
-                    - Location details
-                    - Images
-                    - Amenities
+                    - Location details (GPS coordinates if available)
+                    - Images with type information
+                    - Amenities with full details
                     - Statistics (total rentals, average rating)
 
-                    Note: License plate is encrypted and will be decrypted for authorized users
+                    Note: 
+                    - License plate is encrypted and will be decrypted for authorized users
+                    - Cars with status other than 'Available' are excluded
+                    - If date range is specified, cars with booking conflicts will show as 'Rented'
                     """,
 
                     Responses =
@@ -87,8 +91,14 @@ public class GetCarsEndpoint : ICarterModule
                                                 ["description"] = new OpenApiString(
                                                     "Well-maintained family sedan"
                                                 ),
+                                                ["transmissionId"] = new OpenApiString(
+                                                    "123e4567-e89b-12d3-a456-426614174003"
+                                                ),
                                                 ["transmissionType"] = new OpenApiString(
                                                     "Automatic"
+                                                ),
+                                                ["fuelTypeId"] = new OpenApiString(
+                                                    "123e4567-e89b-12d3-a456-426614174004"
                                                 ),
                                                 ["fuelType"] = new OpenApiString("Gasoline"),
                                                 ["fuelConsumption"] = new OpenApiDouble(7.5),
@@ -102,17 +112,57 @@ public class GetCarsEndpoint : ICarterModule
                                                 ["averageRating"] = new OpenApiDouble(4.5),
                                                 ["location"] = new OpenApiObject
                                                 {
+                                                    ["longitude"] = new OpenApiDouble(106.660172),
                                                     ["latitude"] = new OpenApiDouble(10.762622),
-                                                    ["longitude"] = new OpenApiDouble(106.660172)
-                                                }
-                                            }
+                                                },
+                                                ["manufacturer"] = new OpenApiObject
+                                                {
+                                                    ["id"] = new OpenApiString(
+                                                        "123e4567-e89b-12d3-a456-426614174005"
+                                                    ),
+                                                    ["name"] = new OpenApiString("Toyota"),
+                                                },
+                                                ["images"] = new OpenApiArray
+                                                {
+                                                    new OpenApiObject
+                                                    {
+                                                        ["id"] = new OpenApiString(
+                                                            "123e4567-e89b-12d3-a456-426614174006"
+                                                        ),
+                                                        ["url"] = new OpenApiString(
+                                                            "https://example.com/images/car1.jpg"
+                                                        ),
+                                                        ["type"] = new OpenApiString("Exterior"),
+                                                        ["name"] = new OpenApiString("Front view"),
+                                                    },
+                                                },
+                                                ["amenities"] = new OpenApiArray
+                                                {
+                                                    new OpenApiObject
+                                                    {
+                                                        ["id"] = new OpenApiString(
+                                                            "123e4567-e89b-12d3-a456-426614174007"
+                                                        ),
+                                                        ["name"] = new OpenApiString(
+                                                            "Air Conditioning"
+                                                        ),
+                                                        ["description"] = new OpenApiString(
+                                                            "Climate control"
+                                                        ),
+                                                        ["icon"] = new OpenApiString("ac-icon"),
+                                                    },
+                                                },
+                                            },
                                         },
                                         ["total"] = new OpenApiInteger(100),
+                                        ["pageNumber"] = new OpenApiInteger(1),
+                                        ["pageSize"] = new OpenApiInteger(10),
+                                        ["hasNext"] = new OpenApiBoolean(true),
                                         ["isSuccess"] = new OpenApiBoolean(true),
-                                        ["message"] = new OpenApiString("")
-                                    }
-                                }
-                            }
+                                        ["message"] = new OpenApiString("Lấy dữ liệu thành công"),
+                                    },
+                                },
+                            },
                         },
                         ["401"] = new() { Description = "Unauthorized - User not authenticated" },
                         ["400"] = new()
@@ -127,12 +177,12 @@ public class GetCarsEndpoint : ICarterModule
                                         ["isSuccess"] = new OpenApiBoolean(false),
                                         ["message"] = new OpenApiString(
                                             "Invalid parameters provided"
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
+                                        ),
+                                    },
+                                },
+                            },
+                        },
+                    },
                 }
             );
     }
@@ -143,14 +193,14 @@ public class GetCarsEndpoint : ICarterModule
         [FromQuery(Name = "longtitude")] decimal? longtitude,
         [FromQuery(Name = "radius")] decimal? radius,
         [FromQuery(Name = "manufacturerId")] Guid? manufacturerId,
-        [FromQuery(Name = "lastId")] Guid? lastCarId,
         [FromQuery(Name = "amenities")] Guid[]? amenities,
         [FromQuery(Name = "fuel")] Guid? fuel,
         [FromQuery(Name = "transmission")] Guid? transmission,
         [FromQuery(Name = "startTime")] DateTimeOffset? startTime,
         [FromQuery(Name = "endTime")] DateTimeOffset? endTime,
-        [FromQuery(Name = "limit")] int? limit = 10,
-        [FromQuery(Name = "keyword")] string? keyword = ""
+        [FromQuery(Name = "keyword")] string? keyword = "",
+        [FromQuery(Name = "index")] int? pageNumber = 1,
+        [FromQuery(Name = "size")] int? pageSize = 10
     )
     {
         Result<OffsetPaginatedResponse<GetCars.Response>> result = await sender.Send(
@@ -162,11 +212,11 @@ public class GetCarsEndpoint : ICarterModule
                 amenities,
                 fuel,
                 transmission,
-                lastCarId,
-                limit!.Value,
                 keyword ?? "",
                 startTime,
-                endTime
+                endTime,
+                pageNumber ?? 1,
+                pageSize ?? 10
             )
         );
         return result.MapResult();

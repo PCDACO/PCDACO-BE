@@ -87,7 +87,12 @@ public sealed class ApproveCarReport
             if (request.IsApproved && report.Status != CarReportStatus.UnderReview)
                 return Result.Error(ResponseMessages.ReportNotUnderReviewed);
 
-            if (report.InspectionSchedule!.Status != InspectionScheduleStatusEnum.Approved)
+            if (
+                (
+                    report.InspectionSchedule == null
+                    || report.InspectionSchedule.Status != InspectionScheduleStatusEnum.Approved
+                ) && request.IsApproved
+            )
                 return Result.Error("Lịch kiểm tra chưa được kỹ thuật viên duyệt");
 
             report.Status = request.IsApproved
@@ -98,11 +103,19 @@ public sealed class ApproveCarReport
             report.ResolvedAt = DateTimeOffset.UtcNow;
             report.ResolvedById = currentUser.User!.Id;
 
-            // If approved, update the car status to Available
-            if (request.IsApproved && report.Car.Status == CarStatusEnum.Inactive)
+            // If approved
+            if (request.IsApproved)
             {
-                report.Car.Status = CarStatusEnum.Available;
-                report.Car.UpdatedAt = DateTimeOffset.UtcNow;
+                if (report.ReportType == CarReportType.DeactivateCar)
+                {
+                    report.Car.Status = CarStatusEnum.Inactive;
+                    report.Car.UpdatedAt = DateTimeOffset.UtcNow;
+                }
+                else
+                {
+                    report.Car.Status = CarStatusEnum.Available;
+                    report.Car.UpdatedAt = DateTimeOffset.UtcNow;
+                }
             }
 
             await context.SaveChangesAsync(cancellationToken);

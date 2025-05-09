@@ -50,6 +50,8 @@ public sealed class ApproveInspectionSchedule
                 .ThenInclude(s => s.Model)
                 .Include(s => s.Car)
                 .ThenInclude(s => s.GPS)
+                .Include(s => s.Car)
+                .ThenInclude(s => s.Contract)
                 .Include(s => s.CarReport)
                 .Include(s => s.Technician)
                 .Include(s => s.Photos)
@@ -61,14 +63,34 @@ public sealed class ApproveInspectionSchedule
             if (schedule.TechnicianId != currentUser.User.Id)
                 return Result.Forbidden("Bạn không phải là kiểm định viên được chỉ định");
 
-            // Check if schedule can be updated
-            if (
-                schedule.Status != InspectionScheduleStatusEnum.Signed
-                && schedule.Status != InspectionScheduleStatusEnum.InProgress
-            )
-                return Result.Error(
-                    ResponseMessages.OnlyUpdateSignedOrInprogressInspectionSchedule
-                );
+            // Check if schedule can be approved or rejected
+            if (request.IsApproved)
+            {
+                // For approval, schedule must be InProgress or Signed
+                if (
+                    schedule.Status != InspectionScheduleStatusEnum.Signed
+                    && schedule.Status != InspectionScheduleStatusEnum.InProgress
+                )
+                {
+                    return Result.Error(
+                        "Chỉ có thể phê duyệt lịch kiểm định ở trạng thái đã ký hoặc đang xử lý"
+                    );
+                }
+            }
+            else
+            {
+                // For rejection, schedule must be Pending, InProgress or Signed
+                if (
+                    schedule.Status != InspectionScheduleStatusEnum.Signed
+                    && schedule.Status != InspectionScheduleStatusEnum.InProgress
+                    && schedule.Status != InspectionScheduleStatusEnum.Pending
+                )
+                {
+                    return Result.Error(
+                        "Chỉ có thể từ chối lịch kiểm định ở trạng thái chờ xử lý, đã ký hoặc đang xử lý"
+                    );
+                }
+            }
 
             bool isDeactivationReport =
                 schedule.CarReportId != null
@@ -142,16 +164,44 @@ public sealed class ApproveInspectionSchedule
                 ? InspectionScheduleStatusEnum.Approved
                 : InspectionScheduleStatusEnum.Rejected;
             schedule.UpdatedAt = DateTimeOffset.UtcNow;
+
+            // reset contract signature if schedule is not approved
+            if (!request.IsApproved && schedule.Type == InspectionScheduleType.NewCar)
+            {
+                var contract = schedule.Car?.Contract;
+                if (contract != null)
+                {
+                    contract.OwnerSignature = null;
+                    contract.OwnerSignatureDate = null;
+                    contract.TechnicianSignature = null;
+                    contract.TechnicianSignatureDate = null;
+                    contract.Status = CarContractStatusEnum.Pending;
+                    contract.UpdatedAt = DateTimeOffset.UtcNow;
+                }
+            }
             // Set Car Status into available
             if (request.IsApproved)
             {
-                await context
-                    .Cars.Where(c => !c.IsDeleted)
-                    .Where(c => c.Id == schedule.CarId)
-                    .ExecuteUpdateAsync(
-                        c => c.SetProperty(c => c.Status, CarStatusEnum.Available),
-                        cancellationToken: cancellationToken
-                    );
+                if (isDeactivationReport)
+                {
+                    await context
+                        .Cars.Where(c => !c.IsDeleted)
+                        .Where(c => c.Id == schedule.CarId)
+                        .ExecuteUpdateAsync(
+                            c => c.SetProperty(c => c.Status, CarStatusEnum.Inactive),
+                            cancellationToken: cancellationToken
+                        );
+                }
+                else
+                {
+                    await context
+                        .Cars.Where(c => !c.IsDeleted)
+                        .Where(c => c.Id == schedule.CarId)
+                        .ExecuteUpdateAsync(
+                            c => c.SetProperty(c => c.Status, CarStatusEnum.Available),
+                            cancellationToken: cancellationToken
+                        );
+                }
             }
             await context.SaveChangesAsync(cancellationToken);
             return Result.Success(Response.FromEntity(schedule), ResponseMessages.Updated);

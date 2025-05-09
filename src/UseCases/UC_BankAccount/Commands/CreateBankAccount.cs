@@ -60,6 +60,37 @@ public sealed class CreateBankAccount
             if (bankInfo is null)
                 return Result.NotFound(ResponseMessages.BankInfoNotFound);
 
+            // Check for existing account numbers
+            // Get all bank accounts of this bank
+            var existingAccounts = await context
+                .BankAccounts.AsNoTracking()
+                .Include(ba => ba.EncryptionKey)
+                .Where(ba => ba.BankInfoId == request.BankInfoId)
+                .ToListAsync(cancellationToken);
+
+            // Check for duplicate account numbers
+            foreach (var account in existingAccounts)
+            {
+                string decryptedKey = keyManagementService.DecryptKey(
+                    account.EncryptionKey.EncryptedKey,
+                    encryptionSettings.Key
+                );
+
+                string decryptedAccountNumber = await aesEncryptionService.Decrypt(
+                    account.EncryptedBankAccount,
+                    decryptedKey,
+                    account.EncryptionKey.IV
+                );
+
+                if (
+                    decryptedAccountNumber == request.AccountNumber
+                    && account.BankInfoId == request.BankInfoId
+                )
+                {
+                    return Result.Error("Số tài khoản này đã tồn tại trong ngân hàng đã chọn");
+                }
+            }
+
             // Check if primary account needs to be updated
             if (request.IsPrimary)
             {

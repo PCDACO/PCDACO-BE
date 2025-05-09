@@ -24,8 +24,7 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             uploadParams,
             cancellationToken
         );
-        Console.WriteLine("upload" + uploadResult.Url);
-        return uploadResult.Url?.AbsoluteUri ?? throw new Exception("Error uploading image");
+        return uploadResult.SecureUrl?.ToString() ?? throw new Exception("Error uploading image");
     }
 
     public async Task<string> UploadPaperImageAsync(
@@ -46,7 +45,7 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             uploadParams,
             cancellationToken
         );
-        return uploadResult.Url?.AbsoluteUri ?? throw new Exception("Error uploading image");
+        return uploadResult.SecureUrl?.ToString() ?? throw new Exception("Error uploading image");
     }
 
     public async Task<string> UploadReportImageAsync(
@@ -67,7 +66,7 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             uploadParams,
             cancellationToken
         );
-        return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
+        return uploadResult.SecureUrl?.ToString() ?? throw new Exception("Error uploading image");
     }
 
     public async Task<string> UploadUserImageAsync(
@@ -88,7 +87,7 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             uploadParams,
             cancellationToken
         );
-        return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
+        return uploadResult.SecureUrl?.ToString() ?? throw new Exception("Error uploading image");
     }
 
     public async Task<string> UploadFeedbackImageAsync(
@@ -109,7 +108,7 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             uploadParams,
             cancellationToken
         );
-        return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
+        return uploadResult.SecureUrl?.ToString() ?? throw new Exception("Error uploading image");
     }
 
     public async Task<string> UploadDriverLicenseImageAsync(
@@ -131,7 +130,7 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             uploadParams,
             cancellationToken
         );
-        return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
+        return uploadResult.SecureUrl?.ToString() ?? throw new Exception("Error uploading image");
     }
 
     public async Task<string> UploadAmenityIconAsync(
@@ -152,7 +151,7 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             uploadParams,
             cancellationToken
         );
-        return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
+        return uploadResult?.SecureUrl?.ToString() ?? throw new Exception("Error uploading image");
     }
 
     public async Task<string> UploadBookingInspectionImageAsync(
@@ -175,7 +174,7 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             cancellationToken
         );
 
-        return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
+        return uploadResult.SecureUrl?.ToString() ?? throw new Exception("Error uploading image");
     }
 
     public async Task<string> UploadInspectionSchedulePhotosAsync(
@@ -198,7 +197,7 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             cancellationToken
         );
 
-        return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
+        return uploadResult.SecureUrl?.ToString() ?? throw new Exception("Error uploading image");
     }
 
     public async Task<string> UploadTransactionProofAsync(
@@ -221,7 +220,7 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             cancellationToken
         );
 
-        return uploadResult.Url.AbsoluteUri
+        return uploadResult.SecureUrl?.ToString()
             ?? throw new Exception("Error uploading transaction proof");
     }
 
@@ -245,7 +244,7 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             cancellationToken
         );
 
-        return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
+        return uploadResult.SecureUrl?.ToString() ?? throw new Exception("Error uploading image");
     }
 
     public async Task<string> UploadCompensationPaidImageAsync(
@@ -268,6 +267,6 @@ public class CloudinaryServices(Cloudinary cloudinary) : ICloudinaryServices
             cancellationToken
         );
 
-        return uploadResult.Url.AbsoluteUri ?? throw new Exception("Error uploading image");
+        return uploadResult.SecureUrl?.ToString() ?? throw new Exception("Error uploading image");
     }
 }
