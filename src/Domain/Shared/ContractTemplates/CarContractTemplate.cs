@@ -83,7 +83,7 @@ public static class CarContractTemplateGenerator
                     &nbsp;&nbsp;&nbsp;- Đảm bảo an toàn và phòng chống trộm cắp<br/>
                     &nbsp;&nbsp;&nbsp;- Hỗ trợ giải quyết tranh chấp nếu có<br/>
                     &nbsp;&nbsp;&nbsp;- Thu thập dữ liệu hành trình phục vụ quản lý, vận hành và cải thiện dịch vụ (đảm bảo tuân thủ quy định bảo mật dữ liệu). <br/>
-                    c) Chủ xe không được tự ý tháo gỡ hoặc làm hỏng thiết bị GPS.<br/>
+                    c) Chủ xe không được tự ý tháo gỡ hoặc làm hỏng thiết bị GPS, nếu bị phát hiện sẽ bị phạt 5 triệu đồng.<br/>
                     d) Chi phí lắp đặt và bảo trì thiết bị GPS do nền tảng chi trả.<br/>
                     e) Trong trường hợp thiết bị GPS bị hỏng, chủ xe phải thông báo ngay cho nền tảng.
                 </p>
