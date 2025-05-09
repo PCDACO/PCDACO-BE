@@ -102,6 +102,11 @@ public sealed class ApproveInspectionSchedule
             if (schedule.Car.GPS is null && request.IsApproved && !isDeactivationReport)
                 return Result.Error("Xe chưa được gán thiết bị gps không thể duyệt lịch kiểm định");
 
+            if (schedule.Car.GPS != null && request.IsApproved && isDeactivationReport)
+                return Result.Error(
+                    "Vui lòng gỡ thiết bị gps trước khi duyệt lịch cho báo cáo rút xe khỏi hệ thống"
+                );
+
             // Verify only datetimeoffset.utcnow faster than schedule.InspectionDate 1 hour above can not update
             if (DateTimeOffset.UtcNow > schedule.InspectionDate.AddHours(1))
                 return Result.Error(ResponseMessages.InspectionScheduleExpired);
@@ -202,6 +207,16 @@ public sealed class ApproveInspectionSchedule
                             cancellationToken: cancellationToken
                         );
                 }
+            }
+            if (!request.IsApproved && schedule.Type != InspectionScheduleType.NewCar)
+            {
+                await context
+                    .Cars.Where(c => !c.IsDeleted)
+                    .Where(c => c.Id == schedule.CarId)
+                    .ExecuteUpdateAsync(
+                        c => c.SetProperty(c => c.Status, CarStatusEnum.Available),
+                        cancellationToken: cancellationToken
+                    );
             }
             await context.SaveChangesAsync(cancellationToken);
             return Result.Success(Response.FromEntity(schedule), ResponseMessages.Updated);
