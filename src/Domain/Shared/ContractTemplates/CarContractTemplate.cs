@@ -83,7 +83,7 @@ public static class CarContractTemplateGenerator
                     &nbsp;&nbsp;&nbsp;- Đảm bảo an toàn và phòng chống trộm cắp<br/>
                     &nbsp;&nbsp;&nbsp;- Hỗ trợ giải quyết tranh chấp nếu có<br/>
                     &nbsp;&nbsp;&nbsp;- Thu thập dữ liệu hành trình phục vụ quản lý, vận hành và cải thiện dịch vụ (đảm bảo tuân thủ quy định bảo mật dữ liệu). <br/>
-                    c) Chủ xe không được tự ý tháo gỡ hoặc làm hỏng thiết bị GPS.<br/>
+                    c) Chủ xe không được tự ý tháo gỡ hoặc làm hỏng thiết bị GPS, nếu bị phát hiện sẽ bị phạt 5 triệu đồng.<br/>
                     d) Chi phí lắp đặt và bảo trì thiết bị GPS do nền tảng chi trả.<br/>
                     e) Trong trường hợp thiết bị GPS bị hỏng, chủ xe phải thông báo ngay cho nền tảng.
                 </p>
@@ -136,7 +136,7 @@ public static class CarContractTemplateGenerator
             <div class='clause'>
                 <strong>Điều 8: Bảo hiểm và Xử lý Thiệt hại</strong>
                 <p>
-                    a) Bên A chịu trách nhiệm mua và duy trì bảo hiểm TNDS bắt buộc và bảo hiểm vật chất thân vỏ (khuyến nghị) cho xe trong suốt thời gian hợp đồng.<br/>
+                    a) Bên A chịu trách nhiệm mua và duy trì bảo hiểm trách nhiệm dân sự bắt buộc và bảo hiểm vật chất thân vỏ (khuyến nghị) cho xe trong suốt thời gian hợp đồng.<br/>
                     b) Khi xảy ra sự kiện bảo hiểm (tai nạn, hư hỏng, mất cắp...), Bên A và/hoặc người thuê (tùy tình huống) có trách nhiệm thông báo ngay cho Nền tảng và công ty bảo hiểm.<br/>
                     c) Quy trình xử lý bồi thường bảo hiểm sẽ tuân theo quy định của công ty bảo hiểm và thỏa thuận giữa Bên A và Nền tảng (nếu có chính sách hỗ trợ riêng).<br/>
                     d) Trách nhiệm đối với phần miễn thường và các chi phí không được bảo hiểm chi trả sẽ được xác định dựa trên nguyên nhân gây ra thiệt hại và theo chính sách giải quyết của Nền tảng.
@@ -170,7 +170,7 @@ public static class CarContractTemplateGenerator
             <div class='clause'>
                 <strong>Điều 11: Chấm dứt hợp đồng</strong>
                 <p>
-                    a) Hai bên có quyền chấm dứt hợp đồng với thông báo trước 30 ngày.<br/>
+                    a) Hai bên có quyền chấm dứt hợp đồng với thông báo trên hệ thống trước 30 ngày.<br/>
                     b) Nền tảng có quyền đơn phương chấm dứt ngay lập tức nếu phát hiện Bên A vi phạm nghiêm trọng các điều khoản hợp đồng, bao gồm nhưng không giới hạn: xe không có đăng kiểm hợp lệ, giấy tờ xe không hợp pháp, xe bị sử dụng vào mục đích cấm, không hợp tác xử lý các vấn đề phát sinh.<br/>
                     c) Việc chấm dứt hợp đồng không ảnh hưởng đến các giao dịch đang thực hiện hoặc các nghĩa vụ tài chính còn tồn đọng.<br/>
                     d) Khi hợp đồng chấm dứt, Bên A có trách nhiệm phối hợp với Nền tảng để tháo dỡ thiết bị GPS (nếu có) và hoàn tất các nghĩa vụ còn lại.
