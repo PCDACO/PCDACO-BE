@@ -7,10 +7,10 @@ using Domain.Shared.EmailTemplates.EmailBookings;
 using Hangfire;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Net.payOS.Types;
 using UseCases.Abstractions;
-using UseCases.BackgroundServices.Bookings;
 using UseCases.Services.EmailService;
 using Transaction = Domain.Entities.Transaction;
 
@@ -20,8 +20,12 @@ public sealed class ProcessPaymentWebhook
 {
     public sealed record Command(WebhookType WebhookType) : IRequest<Result>;
 
-    public class Handler(IAppDBContext context, IEmailService emailService, ILogger<Handler> logger)
-        : IRequestHandler<Command, Result>
+    public class Handler(
+        IAppDBContext context,
+        IEmailService emailService,
+        ILogger<Handler> logger,
+        IMemoryCache cache
+    ) : IRequestHandler<Command, Result>
     {
         public async Task<Result> Handle(Command request, CancellationToken cancellationToken)
         {
@@ -129,6 +133,9 @@ public sealed class ProcessPaymentWebhook
                 // Handle regular booking payment logic
                 booking.IsPaid = true;
             }
+
+            var cacheKey = $"PaymentLink_{booking.Id}";
+            cache.Remove(cacheKey);
 
             context.Transactions.AddRange(
                 bookingPayment,
